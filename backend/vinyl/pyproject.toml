@@ -1,0 +1,91 @@
+[project]
+dependencies = [
+    "turntable-spoonbill[duckdb, bigquery, snowflake, postgres]>=10.0.2",
+    "typer>=0.12.3",
+    "rustworkx>=0.15.0",
+    "pydantic>=2.7.4",
+    "python-dotenv>=1.0.1",
+    "sqlglot[rs]>=23.4",
+    "toml>=0.10.2",
+    "geopandas>=1.0.0",
+    "lets-plot>=4.3.3",
+    "watchdog[watchmedo]>=4.0.1",
+    "cryptography>=42.0.8",
+    "fsspec>=2024.6.1",
+    "tqdm>=4.66.4",
+    "textual>=0.70.0",
+    "netext>=0.2.1",
+    "platformdirs>=4.2.2",
+    "fastapi>=0.111.0",
+    "uvicorn>=0.30.1",
+    "httpx>=0.27.0",
+    "ngrok>=1.3.0",
+    "websockets>=10.0",
+    "posthog>=3.5.0",
+    "pandas>=2.2.2",
+    "orjson>=3.10.5",
+    "ruff>=0.5.0",
+    "bidict>=0.23.1",
+    "mpire[dill]>=2.10.2",
+    "deepmerge>=1.1.1",
+    "dbt-extractor>=0.5.1",
+]
+name = "vinyl"
+version = "0.0.26"
+description = "Python backend for Notebook"
+readme = "README.md"
+authors = [
+    { name = "Ian Tracey", email = "ian@turntable.so" },
+    { name = "Justin Leder", email = "justin@turntable.so" },
+]
+requires-python = ">=3.11, <3.12"
+
+[project.scripts]
+vinyl = "vinyl.cli.main:app"
+
+# Rye configuration
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.rye]
+dev-dependencies = [
+    "types-toml>=0.10.8.20240310",
+    "types-pytz>=2024.1.0.20240417",
+    "types-pyyaml>=6.0.12.20240311",
+    "mypy>=1.10.0",
+    "pyinstrument>=4.6.2",
+    "ipython>=8.24.0",
+    "pytest>=8.2.1",
+]
+managed = true
+
+[tool.vinyl]
+module_name = "internal_project"
+tz = "America/Los_Angeles"
+dark-mode = true
+
+[tool.hatch.build]
+exclude = [".*venv"] # Exclude all venv files by default
+
+[tool.hatch.build.targets.wheel]
+packages = ["vinyl"]
+
+
+[tool.pytest.ini_options]
+addopts = "tests/ --color=yes -v"
+DJANGO_SETTINGS_MODULE = "api.settings"
+
+[tool.ruff.lint]
+ignore = ["E711"]
+
+# CIBuildWheel configuration
+[tool.cibuildwheel]
+before-all = [
+    "pip install toml",
+    "python build/install_dependencies.py --use-pip",
+]
+archs = "native"

@@ -1,0 +1,154 @@
+[project]
+name = "turntable-notebook-backend"
+version = "0.0.1"
+description = "Python backend for Notebook"
+readme = "README.md"
+authors = [
+    { name = "Ian Tracey", email = "ian@turntable.so" },
+    { name = "Justin Leder", email = "justin@turntable.so" },
+]
+requires-python = ">=3.11, <3.12"
+dependencies = [
+    "fastapi>=0.111.0",
+    "sse-starlette>=2.1.0",
+    "openai>=1.30.1",
+    "networkx>=3.3",
+    "rustworkx>=0.15.0",
+    "textual>=0.70.0",
+    "toml>=0.10.2",
+    "duckdb>=0.10.2",
+    "python-dotenv>=1.0.1",
+    "google-auth>=2.29.0",
+    "typer>=0.12.3",
+    "posthog>=3.5.0",
+    "netext>=0.2.1",
+    "supabase>=2.4.5",
+    "githubkit>=0.11.4",
+    "hatchet-sdk>=0.24.0",
+    "bs4>=0.0.2",
+    "deepmerge>=1.1.1",
+    "orjson>=3.10.5",
+    "pydantic>=2.7.4",
+    "ruff>=0.5.0",
+    "rich>=13.7.1",
+    "diskcache>=5.6.3",
+    "turntable-cli>=0.4.8",
+    "dbtenv @ git+https://github.com/turntable-so/dbtenv.git@main#subdirectory=dbtenv",
+    "turntable-spoonbill[bigquery,duckdb,postgres,snowflake,sqlite] == 10.0.2",
+    "pyarrow>=16.1.0",
+    "fastapi-cache2 @ git+https://github.com/turntable-so/fastapi-cache",
+    "mpire[dill]>=2.10.2",
+    "acryl-datahub>=0.13.2.4",
+    "Fernet>=1.0.1",
+    "uv>=0.2.5",
+    "certifi>=2024.6.2",
+    "redis>=5.0.5",
+    "dbt-extractor>=0.5.1",
+    "shandy-sqlfmt[jinjafmt]>=0.21.3",
+    "django>=5.0.6",
+    "djangorestframework>=3.15.2",
+    "psycopg2>=2.9.9",
+    "gunicorn>=22.0.0",
+    "djangorestframework-simplejwt>=5.3.1",
+    "dj-rest-auth[with_social]>=6.0.0",
+    "django-cors-headers>=4.4.0",
+    "djoser>=2.2.3",
+    "redis-cli>=1.0.1",
+    "pgvector>=0.3.0",
+    "instructor>=1.3.4",
+    "litellm>=1.41.4",
+    "turntable-spoonbill[duckdb, bigquery, snowflake, postgres]>=10.0.2",
+    "sqlglot[rs]>=23.4",
+    "geopandas>=1.0.0",
+    "lets-plot>=4.3.3",
+    "watchdog[watchmedo]>=4.0.1",
+    "cryptography>=42.0.8",
+    "fsspec>=2024.6.1",
+    "tqdm>=4.66.4",
+    "uvicorn>=0.30.1",
+    "httpx>=0.27.0",
+    "ngrok>=1.3.0",
+    "websockets>=10.0",
+    "pandas>=2.2.2",
+    "bidict>=0.23.1",
+    "django-storages[s3]>=1.14.3",
+    "django-invitations>=2.1.0",
+    "boto3==1.34.20",
+    "urllib3>=2.2",
+    # build from source to avoid issue like [this](https://github.com/home-assistant/core/issues/95192)
+    "dj-database-url>=2.2.0",
+    "adrf>=0.1.6",
+    "django-polymorphic @ git+https://github.com/jazzband/django-polymorphic.git@v4.0.0a#egg=django-polymorphic",
+]
+
+[project.scripts]
+vinyl = "vinyl.cli.main:app"
+hatchet = "workflows.main:start"
+encrypt_secret = "scripts.encrypt_secret:main"
+pull_db = "datastore.development:pull_db"
+repair_db = "datastore.development:repair_db"
+create_dev_db = "datastore.development:create_dev_db"
+dump_db = "datastore.development:dump_db"
+create_user = "datastore.users:create_user"
+populate_dev_db = "datastore.development:populate_dev_db"
+manage = "manage:main"
+
+# Rye configuration
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.rye]
+virtual = true
+managed = true
+dev-dependencies = [
+    "types-toml>=0.10.8.20240310",
+    "types-pytz>=2024.1.0.20240417",
+    "types-pyyaml>=6.0.12.20240311",
+    "mypy>=1.10.0",
+    "watchdog>=4.0.0",
+    "pyinstrument>=4.6.2",
+    "ipython>=8",
+    "pytest>=8.2.1",
+    "selenium>=4.21.0",
+    "chromedriver-autoinstaller>=0.6.4",
+    "lxml>=5.2.2",
+    "mpire[dashboard]>=2.10.2",
+    "google-cloud-storage>=2.17.0",
+    "google-cloud-dataproc>=5.9.3",
+    "psycopg2-binary>=2.9.9",
+    "psycopg2>=2.9.9",
+    "pytest-django>=4.8.0",
+    "dbt-postgres>=1.8.2",
+    "harlequin>=1.23.1",
+    "pyright>=1.1.374",
+]
+
+[tool.vinyl]
+module_name = "internal_project"
+tz = "America/Los_Angeles"
+dark-mode = true
+
+[tool.hatch.build]
+exclude = [".*venv"] # Exclude all venv files by default
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
+
+
+[tool.pytest.ini_options]
+testpaths = [
+    "app/services/tests",
+    "app/core/tests",
+    "vinyl/tests",
+    "ai/tests",
+    "workflows/tests",
+    "tests/",
+]
+addopts = "--color=yes -v"
+
+[tool.ruff.lint]
+ignore = ["E711"]

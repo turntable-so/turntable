@@ -1,0 +1,127 @@
+.vinyl-container {
+  position: relative;
+  cursor: grab;
+}
+
+.vinyl-container:active {
+  cursor: grabbing;
+}
+
+.vinyl {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #000, #333);
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
+  animation: spin 2s linear infinite, pulse 1s ease-in-out infinite;
+}
+
+.reflection {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 255, 255, 0.8) 10%,
+    transparent 90%
+  );
+  opacity: 0.7;
+  animation: spin 1s linear infinite;
+  transform: rotate(90deg);
+}
+
+.reflection-top {
+  clip-path: polygon(50% 50%, 0% 0%, 0% 100%, 0% 50%);
+}
+
+.reflection-bottom {
+  clip-path: polygon(50% 50%, 100% 50%, 100% 100%, 90% 100%);
+}
+
+.groove {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: repeating-radial-gradient(
+    circle,
+    transparent,
+    transparent 1px,
+    #000 1px,
+    #000 2px
+  );
+  opacity: 0.3;
+}
+
+.label {
+  position: absolute;
+  top: 25%;
+  left: 25%;
+  width: 50%;
+  height: 50%;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.label .groove {
+  background: repeating-radial-gradient(
+    circle,
+    transparent,
+    transparent 0.25px,
+    #000 0.25,
+    #000 0.5px
+  );
+  opacity: 0.1;
+}
+
+.inner-label {
+  position: absolute;
+  top: 20%;
+  left: 20%;
+  width: 60%;
+  height: 60%;
+  border-radius: 50%;
+  background: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hole {
+  position: absolute;
+  top: 45%;
+  left: 45%;
+  width: 10%;
+  height: 10%;
+  border-radius: 50%;
+  box-shadow: inset 0px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.paused {
+  animation-play-state: paused;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1); /* Scale up at 50% of the animation */
+  }
+}
