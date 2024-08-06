@@ -1,0 +1,27 @@
+.react-flow__node-custom .react-flow__handle {
+  height: 12px;
+  border-radius: 2px;
+  background-color: #778899;
+  visibility: hidden;
+}
+
+.columnIcon {
+  font-size: 12px !important;
+}
+
+.react-flow__node.annotation .react-flow__handle {
+  display: none;
+}
+
+.custom-node__header {
+  padding: 8px 10px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.custom-node__body {
+  padding: 10px;
+}
+
+.custom-node__select {
+  position: relative;
+}

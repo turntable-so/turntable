@@ -1,0 +1,4196 @@
+{
+    "name": "snowflake",
+    "keywords": [
+        "ACCOUNT",
+        "ALL",
+        "ALTER",
+        "AND",
+        "ANY",
+        "AS",
+        "BETWEEN",
+        "BY",
+        "CASE",
+        "CAST",
+        "CHECK",
+        "COLUMN",
+        "CONNECT",
+        "CONNECTION",
+        "CONSTRAINT",
+        "CREATE",
+        "CROSS",
+        "CURRENT",
+        "CURRENT_DATE",
+        "CURRENT_TIME",
+        "CURRENT_TIMESTAMP",
+        "CURRENT_USER",
+        "DATABASE",
+        "DELETE",
+        "DISTINCT",
+        "DROP",
+        "ELSE",
+        "EXISTS",
+        "FALSE",
+        "FOLLOWING",
+        "FOR",
+        "FROM",
+        "FULL",
+        "GRANT",
+        "GROUP",
+        "GSCLUSTER",
+        "HAVING",
+        "ILIKE",
+        "IN",
+        "INCREMENT",
+        "INNER",
+        "INSERT",
+        "INTERSECT",
+        "INTO",
+        "IS",
+        "ISSUE",
+        "JOIN",
+        "LATERAL",
+        "LEFT",
+        "LIKE",
+        "LOCALTIME",
+        "LOCALTIMESTAMP",
+        "MINUS",
+        "NATURAL",
+        "NOT",
+        "NULL",
+        "OF",
+        "ON",
+        "OR",
+        "ORDER",
+        "ORGANIZATION",
+        "QUALIFY",
+        "REGEXP",
+        "REVOKE",
+        "RIGHT",
+        "RLIKE",
+        "ROW",
+        "ROWS",
+        "SAMPLE",
+        "SCHEMA",
+        "SELECT",
+        "SET",
+        "SOME",
+        "START",
+        "TABLE",
+        "TABLESAMPLE",
+        "THEN",
+        "TO",
+        "TRIGGER",
+        "TRUE",
+        "TRY_CAST",
+        "UNION",
+        "UNIQUE",
+        "UPDATE",
+        "USING",
+        "VALUES",
+        "VIEW",
+        "WHEN",
+        "WHENEVER",
+        "WHERE",
+        "WITH"
+    ],
+    "functions": [
+        {
+            "name": "ABS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ACOS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ACOSH",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ADD_MONTHS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ALERT_HISTORY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ALL_USER_NAMES",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ANY_VALUE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "APPLICATION_JSON",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "APPROX_COUNT_DISTINCT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "APPROX_PERCENTILE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "APPROX_PERCENTILE_ACCUMULATE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "APPROX_PERCENTILE_COMBINE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "APPROX_PERCENTILE_ESTIMATE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "APPROX_TOP_K",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "APPROX_TOP_K_ACCUMULATE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "APPROX_TOP_K_COMBINE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "APPROX_TOP_K_ESTIMATE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "APPROXIMATE_JACCARD_INDEX",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "APPROXIMATE_SIMILARITY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_AGG",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_APPEND",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_CAT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_COMPACT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_CONSTRUCT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_CONSTRUCT_COMPACT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_CONTAINS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_DISTINCT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_EXCEPT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_FLATTEN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_GENERATE_RANGE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_INSERT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_INTERSECTION",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_MAX",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_MIN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_POSITION",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_PREPEND",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_REMOVE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_REMOVE_AT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_SIZE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_SLICE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_SORT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_TO_STRING",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_UNION_AGG",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_UNIQUE_AGG",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ARRAYS_OVERLAP",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ARRAYS_TO_OBJECT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "AS_<object_type>",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "AS_ARRAY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "AS_BINARY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "AS_BOOLEAN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "AS_CHAR , AS_VARCHAR",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "AS_DATE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "AS_DECIMAL , AS_NUMBER",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "AS_DOUBLE , AS_REAL",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "AS_INTEGER",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "AS_OBJECT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "AS_TIME",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "AS_TIMESTAMP_*",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ASCII",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ASIN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ASINH",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ATAN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ATAN2",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ATANH",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "AUTO_REFRESH_REGISTRATION_HISTORY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "AUTOMATIC_CLUSTERING_HISTORY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "AVG",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "BASE64_DECODE_BINARY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "BASE64_DECODE_STRING",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "BASE64_ENCODE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "[ NOT ] BETWEEN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "BIT_LENGTH",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "BITAND",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "BITAND_AGG",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "BITMAP_BIT_POSITION",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "BITMAP_BUCKET_NUMBER",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "BITMAP_CONSTRUCT_AGG",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "BITMAP_COUNT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "BITMAP_OR_AGG",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "BITNOT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "BITOR",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "BITOR_AGG",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "BITSHIFTLEFT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "BITSHIFTRIGHT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "BITXOR",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "BITXOR_AGG",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "BOOLAND",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "BOOLAND_AGG",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "BOOLNOT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "BOOLOR",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "BOOLOR_AGG",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "BOOLXOR",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "BOOLXOR_AGG",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "BUILD_SCOPED_FILE_URL",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "BUILD_STAGE_FILE_URL",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CASE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CAST , ::",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CBRT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CEIL",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CHARINDEX",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CHECK_JSON",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CHECK_XML",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CHR , CHAR",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "COALESCE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "COLLATE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "COLLATION",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "COMPLETE (SNOWFLAKE.CORTEX)",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "COMPLETE_TASK_GRAPHS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "COMPRESS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CONCAT , ||",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CONCAT_WS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CONDITIONAL_CHANGE_EVENT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CONDITIONAL_TRUE_EVENT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CONTAINS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CONVERT_TIMEZONE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "COPY_HISTORY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CORR",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "COS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "COSH",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "COT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "COUNT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "COUNT_IF",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "COVAR_POP",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "COVAR_SAMP",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CUME_DIST",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CURRENT_ACCOUNT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CURRENT_ACCOUNT_NAME",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CURRENT_AVAILABLE_ROLES",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CURRENT_CLIENT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CURRENT_DATABASE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CURRENT_DATE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CURRENT_IP_ADDRESS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CURRENT_ORGANIZATION_NAME",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CURRENT_REGION",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CURRENT_ROLE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CURRENT_ROLE_TYPE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CURRENT_SCHEMA",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CURRENT_SCHEMAS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CURRENT_SECONDARY_ROLES",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CURRENT_SESSION",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CURRENT_STATEMENT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CURRENT_TASK_GRAPHS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CURRENT_TIME",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CURRENT_TIMESTAMP",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CURRENT_TRANSACTION",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CURRENT_USER",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CURRENT_VERSION",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "CURRENT_WAREHOUSE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "DATA_METRIC_FUNCTION_REFERENCES",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "DATA_METRIC_SCHEDULED_TIME",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "DATA_TRANSFER_HISTORY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "DATABASE_REFRESH_HISTORY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "DATABASE_REFRESH_PROGRESS , DATABASE_REFRESH_PROGRESS_BY_JOB",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "DATABASE_REPLICATION_USAGE_HISTORY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "DATABASE_STORAGE_USAGE_HISTORY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "DATE_FROM_PARTS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "DATE_PART",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "DATE_TRUNC",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "DATEADD",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "DATEDIFF",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "DAYNAME",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "DECODE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "DECOMPRESS_BINARY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "DECOMPRESS_STRING",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "DECRYPT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "DECRYPT_RAW",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "DEGREES",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "DENSE_RANK",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "DIV0",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "DIV0NULL",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "DUPLICATE_COUNT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "DYNAMIC_TABLE_GRAPH_HISTORY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "DYNAMIC_TABLE_REFRESH_HISTORY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "DYNAMIC_TABLES",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "EDITDISTANCE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "EMAIL_INTEGRATION_CONFIG",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "EMBED_TEXT_768 (SNOWFLAKE.CORTEX)",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "EMBED_TEXT_1024 (SNOWFLAKE.CORTEX)",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ENCRYPT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ENCRYPT_RAW",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ENDSWITH",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "EQUAL_NULL",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "EXP",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "EXPLAIN_JSON",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "EXTERNAL_FUNCTIONS_HISTORY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "EXTERNAL_TABLE_FILES",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "EXTERNAL_TABLE_FILE_REGISTRATION_HISTORY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "EXTRACT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "EXTRACT_ANSWER (SNOWFLAKE.CORTEX)",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "EXTRACT_SEMANTIC_CATEGORIES",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "FACTORIAL",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "FILTER",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "FINETUNE ('CANCEL') (SNOWFLAKE.CORTEX)",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "FINETUNE ('CREATE') (SNOWFLAKE.CORTEX)",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "FINETUNE ('DESCRIBE') (SNOWFLAKE.CORTEX)",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "FINETUNE ('SHOW') (SNOWFLAKE.CORTEX)",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "FINETUNE (SNOWFLAKE.CORTEX)",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "FIRST_VALUE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "FLATTEN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "FLOOR",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "FRESHNESS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "GENERATE_COLUMN_DESCRIPTION",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "GENERATOR",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "GET",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "GET_ABSOLUTE_PATH",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "GET_ANACONDA_PACKAGES_REPODATA",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "GET_CONDITION_QUERY_UUID",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "GET_DDL",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "GET_IGNORE_CASE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "GET_OBJECT_REFERENCES",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "GET_PATH , :",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "GET_PRESIGNED_URL",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "GET_QUERY_OPERATOR_STATS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "GET_RELATIVE_PATH",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "GET_STAGE_LOCATION",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "GETBIT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "GETDATE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "GETVARIABLE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "GREATEST",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "GREATEST_IGNORE_NULLS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "GROUPING",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "GROUPING_ID",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_CELL_TO_BOUNDARY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_CELL_TO_CHILDREN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_CELL_TO_CHILDREN_STRING",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_CELL_TO_PARENT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_CELL_TO_POINT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_COMPACT_CELLS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_COMPACT_CELLS_STRINGS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_COVERAGE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_COVERAGE_STRINGS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_GET_RESOLUTION",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_GRID_DISK",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_GRID_DISTANCE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_GRID_PATH",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_INT_TO_STRING",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_IS_PENTAGON",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_IS_VALID_CELL",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_LATLNG_TO_CELL",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_LATLNG_TO_CELL_STRING",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_POINT_TO_CELL",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_POINT_TO_CELL_STRING",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_POLYGON_TO_CELLS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_POLYGON_TO_CELLS_STRINGS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_STRING_TO_INT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_TRY_COVERAGE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_TRY_COVERAGE_STRINGS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_TRY_GRID_DISTANCE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_TRY_GRID_PATH",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_TRY_POLYGON_TO_CELLS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_TRY_POLYGON_TO_CELLS_STRINGS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_UNCOMPACT_CELLS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "H3_UNCOMPACT_CELLS_STRINGS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "HASH",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "HASH_AGG",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "HAVERSINE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "HEX_DECODE_BINARY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "HEX_DECODE_STRING",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "HEX_ENCODE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "HLL",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "HLL_ACCUMULATE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "HLL_COMBINE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "HLL_ESTIMATE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "HLL_EXPORT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "HLL_IMPORT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "HOUR / MINUTE / SECOND",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "IFF",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "IFNULL",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "[ NOT ] ILIKE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ILIKE ANY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "[ NOT ] IN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "INFER_SCHEMA",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "INITCAP",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "INSERT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "INTEGRATION",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "INVOKER_ROLE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "INVOKER_SHARE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "IS [ NOT ] DISTINCT FROM",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "IS [ NOT ] NULL",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "IS_<object_type>",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "IS_ARRAY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "IS_BINARY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "IS_BOOLEAN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "IS_CHAR , IS_VARCHAR",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "IS_DATABASE_ROLE_IN_SESSION",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "IS_DATE , IS_DATE_VALUE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "IS_DECIMAL",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "IS_DOUBLE , IS_REAL",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "IS_GRANTED_TO_INVOKER_ROLE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "IS_INSTANCE_ROLE_IN_SESSION",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "IS_INTEGER",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "IS_NULL_VALUE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "IS_OBJECT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "IS_ROLE_IN_SESSION",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "IS_TIME",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "IS_TIMESTAMP_*",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "JAROWINKLER_SIMILARITY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "JSON_EXTRACT_PATH_TEXT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "KURTOSIS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "LAG",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "LAST_DAY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "LAST_QUERY_ID",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "LAST_SUCCESSFUL_SCHEDULED_TIME",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "LAST_TRANSACTION",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "LAST_VALUE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "LEAD",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "LEAST",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "LEAST_IGNORE_NULLS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "LEFT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "LENGTH, LEN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "[ NOT ] LIKE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "LIKE ALL",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "LIKE ANY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "LISTAGG",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "LN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "LOCALTIME",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "LOCALTIMESTAMP",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "LOG",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "LOGIN_HISTORY , LOGIN_HISTORY_BY_USER",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "LOWER",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "LPAD",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "LTRIM",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "MAP_CAT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "MAP_CONTAINS_KEY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "MAP_DELETE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "MAP_INSERT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "MAP_KEYS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "MAP_PICK",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "MAP_SIZE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "MATERIALIZED_VIEW_REFRESH_HISTORY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "MAX",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "MAX_BY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "MD5 , MD5_HEX",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "MD5_BINARY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "MD5_NUMBER \u2014 Obsoleted",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "MD5_NUMBER_LOWER64",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "MD5_NUMBER_UPPER64",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "MEDIAN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "MIN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "MIN_BY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "MINHASH",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "MINHASH_COMBINE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "MOD",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "MODE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "MONTHNAME",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "MONTHS_BETWEEN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "NETWORK_RULE_REFERENCES",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "NEXT_DAY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "NORMAL",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "NOTIFICATION_HISTORY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "NTH_VALUE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "NTILE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "NULL_COUNT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "NULLIF",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "NULLIFZERO",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "NVL",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "NVL2",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "OBJECT_AGG",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "OBJECT_CONSTRUCT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "OBJECT_CONSTRUCT_KEEP_NULL",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "OBJECT_DELETE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "OBJECT_INSERT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "OBJECT_KEYS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "OBJECT_PICK",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "OCTET_LENGTH",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "PARSE_IP",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "PARSE_JSON",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "PARSE_URL",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "PARSE_XML",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "PERCENT_RANK",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "PERCENTILE_CONT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "PERCENTILE_DISC",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "PI",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "PIPE_USAGE_HISTORY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "POLICY_CONTEXT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "POLICY_REFERENCES",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "POSITION",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "POW, POWER",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "PREVIOUS_DAY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "QUERY_ACCELERATION_HISTORY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "QUERY_HISTORY , QUERY_HISTORY_BY_*",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "RADIANS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "RANDOM",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "RANDSTR",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "RANK",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "RATIO_TO_REPORT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "[ NOT ] REGEXP",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "REGEXP_COUNT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "REGEXP_INSTR",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "REGEXP_LIKE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "REGEXP_REPLACE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "REGEXP_SUBSTR",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "REGEXP_SUBSTR_ALL",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "REGR_AVGX",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "REGR_AVGY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "REGR_COUNT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "REGR_INTERCEPT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "REGR_R2",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "REGR_SLOPE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "REGR_SXX",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "REGR_SXY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "REGR_SYY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "REGR_VALX",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "REGR_VALY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "REPEAT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "REPLACE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "REPLICATION_GROUP_REFRESH_HISTORY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "REPLICATION_GROUP_REFRESH_PROGRESS, REPLICATION_GROUP_REFRESH_PROGRESS_BY_JOB",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "REPLICATION_GROUP_USAGE_HISTORY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "REPLICATION_USAGE_HISTORY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "REST_EVENT_HISTORY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "RESULT_SCAN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "REVERSE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "RIGHT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "[ NOT ] RLIKE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ROUND",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ROW_COUNT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ROW_NUMBER",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "RPAD",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "RTRIM",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "RTRIMMED_LENGTH",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SCHEDULED_TIME",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SEARCH_OPTIMIZATION_HISTORY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SENTIMENT (SNOWFLAKE.CORTEX)",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SEQ1 / SEQ2 / SEQ4 / SEQ8",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SERVERLESS_TASK_HISTORY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SHA1 , SHA1_HEX",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SHA1_BINARY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SHA2 , SHA2_HEX",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SHA2_BINARY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SHOW_PYTHON_PACKAGES_DEPENDENCIES",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SIGN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SIN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SINH",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SKEW",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SOUNDEX",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SOUNDEX_P123",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SPACE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SPLIT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SPLIT_PART",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SPLIT_TO_TABLE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SQRT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SQUARE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_AREA",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_ASEWKB",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_ASEWKT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_ASGEOJSON",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_ASWKB , ST_ASBINARY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_ASWKT , ST_ASTEXT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_AZIMUTH",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_BUFFER",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_CENTROID",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_COLLECT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_CONTAINS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_COVEREDBY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_COVERS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_DIFFERENCE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_DIMENSION",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_DISJOINT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_DISTANCE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_DWITHIN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_ENDPOINT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_ENVELOPE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_GEOGFROMGEOHASH",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_GEOGPOINTFROMGEOHASH",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_GEOGRAPHYFROMWKB",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_GEOGRAPHYFROMWKT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_GEOHASH",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_GEOMETRYFROMWKB",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_GEOMETRYFROMWKT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_GEOMFROMGEOHASH",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_GEOMPOINTFROMGEOHASH",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_HAUSDORFFDISTANCE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_INTERSECTION",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_INTERSECTION_AGG",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_INTERSECTS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_ISVALID",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_LENGTH",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_MAKEGEOMPOINT , ST_GEOM_POINT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_MAKELINE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_MAKEPOINT , ST_POINT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_MAKEPOLYGON , ST_POLYGON",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_MAKEPOLYGONORIENTED",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_NPOINTS , ST_NUMPOINTS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_PERIMETER",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_POINTN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_SETSRID",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_SIMPLIFY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_SRID",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_STARTPOINT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_SYMDIFFERENCE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_TRANSFORM",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_UNION",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_UNION_AGG",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_WITHIN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_X",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_XMAX",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_XMIN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_Y",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_YMAX",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ST_YMIN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "STAGE_DIRECTORY_FILE_REGISTRATION_HISTORY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "STAGE_STORAGE_USAGE_HISTORY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "STARTSWITH",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "STDDEV, STDDEV_SAMP",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "STDDEV_POP",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "STRIP_NULL_VALUE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "STRTOK",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "STRTOK_SPLIT_TO_TABLE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "STRTOK_TO_ARRAY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SUBSTR , SUBSTRING",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SUM",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SUMMARIZE (SNOWFLAKE.CORTEX)",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSDATE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$ABORT_SESSION",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$ABORT_TRANSACTION",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$ADD_EVENT (for Snowflake Scripting)",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$ALLOWLIST",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$ALLOWLIST_PRIVATELINK",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$AUTHORIZE_PRIVATELINK",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$AUTHORIZE_STAGE_PRIVATELINK_ACCESS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$BEHAVIOR_CHANGE_BUNDLE_STATUS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$BLOCK_INTERNAL_STAGES_PUBLIC_ACCESS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$CANCEL_ALL_QUERIES",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$CANCEL_QUERY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$CLEANUP_DATABASE_ROLE_GRANTS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$CLIENT_VERSION_INFO",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$CLUSTERING_DEPTH",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$CLUSTERING_INFORMATION",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$CLUSTERING_RATIO \u2014 Deprecated",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$CONVERT_PIPES_SQS_TO_SNS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$CREATE_BILLING_EVENT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$CURRENT_USER_TASK_NAME",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$DATABASE_REFRESH_HISTORY \u2014 Deprecated",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$DATABASE_REFRESH_PROGRESS , SYSTEM$DATABASE_REFRESH_PROGRESS_BY_JOB \u2014 Deprecated",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$DISABLE_BEHAVIOR_CHANGE_BUNDLE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$DISABLE_DATABASE_REPLICATION",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$ENABLE_BEHAVIOR_CHANGE_BUNDLE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$ESTIMATE_QUERY_ACCELERATION",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$ESTIMATE_SEARCH_OPTIMIZATION_COSTS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$EXPLAIN_JSON_TO_TEXT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$EXPLAIN_PLAN_JSON",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$EXTERNAL_TABLE_PIPE_STATUS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$FINISH_OAUTH_FLOW",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$GENERATE_SAML_CSR",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$GENERATE_SCIM_ACCESS_TOKEN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$GET_AWS_SNS_IAM_POLICY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$GET_CLASSIFICATION_RESULT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$GET_CMK_AKV_CONSENT_URL",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$GET_CMK_CONFIG",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$GET_CMK_INFO",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$GET_CMK_KMS_KEY_POLICY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$GET_COMPUTE_POOL_STATUS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$GET_DIRECTORY_TABLE_STATUS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$GET_GCP_KMS_CMK_GRANT_ACCESS_CMD",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$GET_ICEBERG_TABLE_INFORMATION",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$GET_LOGIN_FAILURE_DETAILS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$GET_PREDECESSOR_RETURN_VALUE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$GET_PRIVATELINK",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$GET_PRIVATELINK_AUTHORIZED_ENDPOINTS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$GET_PRIVATELINK_CONFIG",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$GET_SERVICE_LOGS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$GET_SERVICE_STATUS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$GET_SNOWFLAKE_PLATFORM_INFO",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$GET_TAG",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$GET_TAG_ALLOWED_VALUES",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$GET_TAG_ON_CURRENT_COLUMN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$GET_TAG_ON_CURRENT_TABLE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$GET_TASK_GRAPH_CONFIG",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$GLOBAL_ACCOUNT_SET_PARAMETER",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$INTERNAL_STAGES_PUBLIC_ACCESS_STATUS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$LAST_CHANGE_COMMIT_TIME",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$LINK_ACCOUNT_OBJECTS_BY_NAME",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$LOG, SYSTEM$LOG_<level> (for Snowflake Scripting)",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$MIGRATE_SAML_IDP_REGISTRATION",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$PIPE_FORCE_RESUME",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$PIPE_REBINDING_WITH_NOTIFICATION_CHANNEL",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$PIPE_STATUS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$QUERY_REFERENCE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$REFERENCE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$REGISTER_CMK_INFO",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$REGISTRY_LIST_IMAGES \u2014 Deprecated",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$REVOKE_PRIVATELINK",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$REVOKE_STAGE_PRIVATELINK_ACCESS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$SET_RETURN_VALUE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$SET_SPAN_ATTRIBUTES (for Snowflake Scripting)",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$SHOW_ACTIVE_BEHAVIOR_CHANGE_BUNDLES",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$SHOW_BUDGETS_IN_ACCOUNT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$SHOW_OAUTH_CLIENT_SECRETS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$SNOWPIPE_STREAMING_UPDATE_CHANNEL_OFFSET_TOKEN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$START_OAUTH_FLOW",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$STREAM_BACKLOG",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$STREAM_GET_TABLE_TIMESTAMP",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$STREAM_HAS_DATA",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$TASK_DEPENDENTS_ENABLE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$TASK_RUNTIME_INFO",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$TYPEOF",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$UNBLOCK_INTERNAL_STAGES_PUBLIC_ACCESS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$USER_TASK_CANCEL_ONGOING_EXECUTIONS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$VALIDATE_STORAGE_INTEGRATION",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$VERIFY_CMK_INFO",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$VERIFY_EXTERNAL_OAUTH_TOKEN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$WAIT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$WHITELIST \u2014 Deprecated",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTEM$WHITELIST_PRIVATELINK \u2014 Deprecated",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "SYSTIMESTAMP",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TAG_REFERENCES",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TAG_REFERENCES_ALL_COLUMNS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TAG_REFERENCES_WITH_LINEAGE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TAN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TANH",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TASK_DEPENDENTS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TASK_HISTORY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TEXT_HTML",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TEXT_PLAIN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TIME_FROM_PARTS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TIME_SLICE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TIMEADD",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TIMEDIFF",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TIMESTAMP_FROM_PARTS",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TIMESTAMPADD",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TIMESTAMPDIFF",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TO_ARRAY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TO_BINARY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TO_BOOLEAN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TO_CHAR , TO_VARCHAR",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TO_DATE , DATE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TO_DECIMAL , TO_NUMBER , TO_NUMERIC",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TO_DOUBLE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TO_GEOGRAPHY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TO_GEOMETRY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TO_JSON",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TO_OBJECT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TO_TIME , TIME",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TO_TIMESTAMP / TO_TIMESTAMP_*",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TO_VARIANT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TO_XML",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TOP_INSIGHTS (SNOWFLAKE.ML)",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TRANSFORM",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TRANSLATE (SNOWFLAKE.CORTEX)",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TRANSLATE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TRIM",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TRUNCATE , TRUNC",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TRUNC",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TRY_BASE64_DECODE_BINARY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TRY_BASE64_DECODE_STRING",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TRY_CAST",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TRY_DECRYPT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TRY_DECRYPT_RAW",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TRY_HEX_DECODE_BINARY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TRY_HEX_DECODE_STRING",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TRY_PARSE_JSON",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TRY_TO_BINARY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TRY_TO_BOOLEAN",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TRY_TO_DATE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TRY_TO_DECIMAL, TRY_TO_NUMBER, TRY_TO_NUMERIC",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TRY_TO_DOUBLE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TRY_TO_GEOGRAPHY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TRY_TO_GEOMETRY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TRY_TO_TIME",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TRY_TO_TIMESTAMP / TRY_TO_TIMESTAMP_*",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "TYPEOF",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "UNICODE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "UNIFORM",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "UNIQUE_COUNT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "UPPER",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "UUID_STRING",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "VALIDATE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "VALIDATE_PIPE_LOAD",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "VAR_POP",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "VAR_SAMP",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "VARIANCE , VARIANCE_SAMP",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "VARIANCE_POP",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "VECTOR_COSINE_SIMILARITY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "VECTOR_INNER_PRODUCT",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "VECTOR_L2_DISTANCE",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "WAREHOUSE_LOAD_HISTORY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "WAREHOUSE_METERING_HISTORY",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "WIDTH_BUCKET",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "XMLGET",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "YEAR* / DAY* / WEEK* / MONTH / QUARTER",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ZEROIFNULL",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        },
+        {
+            "name": "ZIPF",
+            "description": null,
+            "syntax": null,
+            "arguments": null
+        }
+    ]
+}

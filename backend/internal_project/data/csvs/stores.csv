@@ -1,0 +1,55 @@
+store_nbr,city,state,type,cluster
+1,Quito,Pichincha,D,13
+2,Quito,Pichincha,D,13
+3,Quito,Pichincha,D,8
+4,Quito,Pichincha,D,9
+5,Santo Domingo,Santo Domingo de los Tsachilas,D,4
+6,Quito,Pichincha,D,13
+7,Quito,Pichincha,D,8
+8,Quito,Pichincha,D,8
+9,Quito,Pichincha,B,6
+10,Quito,Pichincha,C,15
+11,Cayambe,Pichincha,B,6
+12,Latacunga,Cotopaxi,C,15
+13,Latacunga,Cotopaxi,C,15
+14,Riobamba,Chimborazo,C,7
+15,Ibarra,Imbabura,C,15
+16,Santo Domingo,Santo Domingo de los Tsachilas,C,3
+17,Quito,Pichincha,C,12
+18,Quito,Pichincha,B,16
+19,Guaranda,Bolivar,C,15
+20,Quito,Pichincha,B,6
+21,Santo Domingo,Santo Domingo de los Tsachilas,B,6
+22,Puyo,Pastaza,C,7
+23,Ambato,Tungurahua,D,9
+24,Guayaquil,Guayas,D,1
+25,Salinas,Santa Elena,D,1
+26,Guayaquil,Guayas,D,10
+27,Daule,Guayas,D,1
+28,Guayaquil,Guayas,E,10
+29,Guayaquil,Guayas,E,10
+30,Guayaquil,Guayas,C,3
+31,Babahoyo,Los Rios,B,10
+32,Guayaquil,Guayas,C,3
+33,Quevedo,Los Rios,C,3
+34,Guayaquil,Guayas,B,6
+35,Playas,Guayas,C,3
+36,Libertad,Guayas,E,10
+37,Cuenca,Azuay,D,2
+38,Loja,Loja,D,4
+39,Cuenca,Azuay,B,6
+40,Machala,El Oro,C,3
+41,Machala,El Oro,D,4
+42,Cuenca,Azuay,D,2
+43,Esmeraldas,Esmeraldas,E,10
+44,Quito,Pichincha,A,5
+45,Quito,Pichincha,A,11
+46,Quito,Pichincha,A,14
+47,Quito,Pichincha,A,14
+48,Quito,Pichincha,A,14
+49,Quito,Pichincha,A,11
+50,Ambato,Tungurahua,A,14
+51,Guayaquil,Guayas,A,17
+52,Manta,Manabi,A,11
+53,Manta,Manabi,D,13
+54,El Carmen,Manabi,C,3
