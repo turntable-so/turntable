@@ -1,0 +1,206 @@
+# Define env variables
+x-postgres-credentials: &postgres-credentials
+  POSTGRES_DB: ${POSTGRES_DB:-mydb}
+  POSTGRES_USER: ${POSTGRES_USER:-myuser}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mypassword}
+  POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+  POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+
+x-storage-credentials: &storage-credentials
+  AWS_S3_ACCESS_KEY_ID: ${AWS_S3_ACCESS_KEY_ID:-minio_admin}
+  AWS_S3_SECRET_ACCESS_KEY: ${AWS_S3_SECRET_ACCESS_KEY:-minio_password}
+  AWS_STORAGE_BUCKET_NAME: ${AWS_STORAGE_BUCKET_NAME:-artifacts}
+  AWS_S3_ENDPOINT_URL: ${AWS_S3_ENDPOINT_URL:-http://minio:9000}
+
+  # minio replicas
+  MINIO_ROOT_USER: ${AWS_S3_ACCESS_KEY_ID:-minio_admin}
+  MINIO_ROOT_PASSWORD: ${AWS_S3_SECRET_ACCESS_KEY:-minio_password}
+  MINIO_BUCKET_NAME: ${AWS_STORAGE_BUCKET_NAME:-artifacts}
+  MINIO_ENDPOINT: ${AWS_S3_ENDPOINT_URL:-http://minio:9000}
+  MINIO_BROWSER_REDIRECT_URL: http://localhost:9001
+
+x-hatchet-credentials: &hatchet-credentials
+  DATABASE_POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+  DATABASE_POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+  DATABASE_POSTGRES_USERNAME: ${POSTGRES_USER:-myuser}
+  DATABASE_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mypassword}
+  DATABASE_POSTGRES_DB_NAME: hatchet
+  DATABASE_POSTGRES_SSL_MODE: disable
+  DATABASE_URL: postgresql://${POSTGRES_USER:-myuser}:${POSTGRES_PASSWORD:-mypassword}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/hatchet?sslmode=disable
+  RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-user}
+  RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-password}
+  SERVER_TASKQUEUE_RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER:-user}:${RABBITMQ_DEFAULT_PASS:-password}@localhost:5672/
+  SERVER_AUTH_COOKIE_DOMAIN: localhost
+  SERVER_AUTH_COOKIE_INSECURE: "t"
+  SERVER_GRPC_BIND_ADDRESS: "0.0.0.0"
+  SERVER_GRPC_INSECURE: "t"
+  SERVER_GRPC_BROADCAST_ADDRESS: "hatchet-lite:7077"
+  SERVER_GRPC_PORT: "7077"
+  SERVER_URL: http://localhost:8888
+  SERVER_AUTH_SET_EMAIL_VERIFIED: "t"
+  SERVER_LOGGER_LEVEL: warn
+  SERVER_LOGGER_FORMAT: console
+  DATABASE_LOGGER_LEVEL: warn
+  DATABASE_LOGGER_FORMAT: console
+  HATCHET_ENV_PATH: /.hatchetconfig/.hatchetenv
+  HATCHET_CLIENT_NAMESPACE: "docker"
+  HATCHET_CLIENT_TLS_STRATEGY: none
+
+x-ai-credentials: &ai-credentials
+  OPENAI_API_KEY: ${OPENAI_API_KEY}
+
+x-dev-credentials: &dev-credentials
+  DEV: "false"
+  ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+
+x-common-backend: &common-backend
+  build:
+    context: backend
+    dockerfile: Dockerfile
+    args:
+      - ENV=prod
+  environment:
+    <<:
+      [
+        *postgres-credentials,
+        *storage-credentials,
+        *hatchet-credentials,
+        *ai-credentials,
+        *dev-credentials,
+      ]
+  depends_on:
+    postgres:
+      condition: service_healthy
+  volumes:
+    - ./backend:/code
+    - .hatchetconfig:/.hatchetconfig
+
+# Define services
+services:
+  api:
+    <<: *common-backend
+    ports:
+      - "8000:8000"
+    entrypoint: ["/code/entrypoint.sh"]
+    command:
+      [
+        "uvicorn",
+        "api.asgi:application",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--reload",
+      ]
+  web:
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    command: ["pnpm", "prod"]
+    ports:
+      - "3000:3000"
+    environment:
+      DEV: "true"
+    volumes:
+      - ./frontend:/code
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      <<: [*postgres-credentials]
+    ports:
+      - "65432:65432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    image: minio/minio
+    command: server --address 0.0.0.0:9000 /data --console-address ":9001"
+    environment:
+      <<: [*storage-credentials]
+    ports:
+      - "9001:9001"
+      - "127.0.0.1:9000:9000" # Expose port 9000
+    volumes:
+      - minio_data:/data
+
+  createbuckets:
+    image: minio/mc
+    depends_on:
+      - minio
+    environment:
+      <<: [*storage-credentials]
+    entrypoint: >
+      /bin/sh -c "
+      until (/usr/bin/mc config host add myminio $${MINIO_ENDPOINT} $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD}) do echo '...waiting...' && sleep 1; done;
+      /usr/bin/mc mb --ignore-existing myminio/public-assets;
+      /usr/bin/mc mb --ignore-existing myminio/$${MINIO_BUCKET_NAME};
+      /usr/bin/mc anonymous set public myminio/public-assets;
+      exit 0;
+      "
+    restart: "no"
+
+  hatchet-lite:
+    image: ghcr.io/hatchet-dev/hatchet/hatchet-lite:latest
+    ports:
+      - "8888:8888"
+      - "7077:7077"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      api:
+        condition: service_started
+    environment:
+      <<: [*postgres-credentials, *hatchet-credentials]
+      DEV: "true"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://hatchet-lite:8733/ready"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - "hatchet_lite_rabbitmq_data:/var/lib/rabbitmq"
+      - ".hatchetconfig:/config"
+
+  setup-hatchet:
+    image: ghcr.io/hatchet-dev/hatchet/hatchet-lite:latest
+    command: /bin/sh -c 'printf "HATCHET_CLIENT_TOKEN=" > /config/.hatchetenv && /hatchet-admin token create --config /config --tenant-id 707d0855-80ab-4e1f-a156-f1c4546cbf52 >> /config/.hatchetenv'
+    depends_on:
+      hatchet-lite:
+        condition: service_healthy
+    environment:
+      <<: [*postgres-credentials, *hatchet-credentials]
+    volumes:
+      - "hatchet_lite_rabbitmq_data:/var/lib/rabbitmq"
+      - ".hatchetconfig:/config"
+    restart: "no"
+
+  run-worker:
+    <<: *common-backend
+    command: ["python", "workflows/main.py"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      createbuckets:
+        condition: service_started
+      hatchet-lite:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  minio_data:
+  hatchet_lite_rabbitmq_data:
+  hatchet_lite_config:
+  hatchet_credentials_handoff:
+  postgres_test_db_data:
+  frontend_data:
+
+networks:
+  default:
+    name: app_network
+    driver: bridge

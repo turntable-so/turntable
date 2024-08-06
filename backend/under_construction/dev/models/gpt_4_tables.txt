@@ -1,0 +1,441 @@
+
+# question_id: 15
+# db_id: california_schools
+# question: Which active district has the highest average score in Reading?
+# evidence: 
+# SQL: SELECT T1.District FROM schools AS T1 INNER JOIN satscores AS T2 ON T1.CDSCode = T2.cds WHERE T1.StatusType = 'Active' ORDER BY T2.AvgScrRead DESC LIMIT 1
+# difficulty: simple
+# Table 1: Aggregate SAT scores by district and filter for the highest average score in Reading for active districts
+table1 = {
+    "columns": ["dname", "Avg(AvgScrRead)"],
+    "operations": [("join", "Satscores on Satscores.cds = Schools.CDSCode"), 
+                   ("filter", "Schools.StatusType = 'Active'"), 
+                   ("groupBy", "Satscores.dname"), 
+                   ("sort", "Avg(AvgScrRead) DESC"), 
+                   ("limit", 1)]
+}
+
+# Table 2: Directly linking the SAT Reading scores to the district status and aggregate to find the maximum average reading score
+table2 = {
+    "columns": ["District", "Avg(AvgScrRead)"],
+    "operations": [("join", "Satscores on Satscores.cds = Schools.CDSCode"), 
+                   ("filter", "StatusType = 'Active'"), 
+                   ("groupBy", "District"), 
+                   ("sort", "Avg(AvgScrRead) DESC"), 
+                   ("limit", 1)]
+}
+
+# Table 3: Using the district name to identify the active district with the highest mean reading score on the SAT
+table3 = {
+    "columns": ["dname", "Max(AvgScrRead)"],
+    "operations": [("join", "Satscores on Satscores.cds = Schools.CDSCode"), 
+                   ("filter", "Schools.StatusType = 'Active'"), 
+                   ("groupBy", "dname"), 
+                   ("sort", "AvgScrRead DESC"), 
+                   ("limit", 1)]
+}
+
+
+
+# question_id: 16
+# db_id: california_schools
+# question: How many schools in merged Alameda have number of test takers less than 100?
+# evidence: 
+# SQL: SELECT COUNT(T1.CDSCode) FROM schools AS T1 INNER JOIN satscores AS T2 ON T1.CDSCode = T2.cds WHERE T1.StatusType = 'Merged' AND T2.NumTstTakr < 100 AND T1.County = 'Alameda'
+# difficulty: simple
+# Table 1: Joining SAT scores and Schools tables to filter by merged Alameda schools with NumTstTakr < 100
+table1 = {
+    "columns": ["Count(School)"],
+    "operations": [
+        {"operation": "join", "table": "Satscores", "on": "CDSCode"},
+        {"operation": "filter", "condition": "StatusType = 'Merged'"},
+        {"operation": "filter", "condition": "County = 'Alameda'"},
+        {"operation": "filter", "condition": "NumTstTakr < 100"}
+    ]
+}
+
+# Table 2: Filtering Schools table first for merged Alameda schools and then joining with Satscores
+table2 = {
+    "columns": ["Count(School)"],
+    "operations": [
+        {"operation": "filter", "condition": "StatusType = 'Merged'"},
+        {"operation": "filter", "condition": "County = 'Alameda'"},
+        {"operation": "join", "table": "Satscores", "on": "CDSCode"},
+        {"operation": "filter", "condition": "NumTstTakr < 100"}
+    ]
+}
+
+# Table 3: Directly querying Satscores table with necessary conditions assuming direct access to StatusType and County data
+table3 = {
+    "columns": ["Count(sname)"],
+    "operations": [
+        {"operation": "filter", "condition": "StatusType = 'Merged'"},
+        {"operation": "filter", "condition": "County = 'Alameda'"},
+        {"operation": "filter", "condition": "NumTstTakr < 100"}
+    ]
+}
+
+
+
+# question_id: 17
+# db_id: california_schools
+# question: What is the charter number of the school that the average score in Writing is 499?
+# evidence: 
+# SQL: SELECT T1.CharterNum FROM schools AS T1 INNER JOIN satscores AS T2 ON T1.CDSCode = T2.cds WHERE T2.AvgScrWrite = 499
+# difficulty: simple
+table_1 = {
+    "columns": ["CDSCode", "AvgScrWrite"],
+    "source": "Satscores"
+}
+
+table_2 = {
+    "columns": ["CDSCode", "CharterNum"],
+    "source": "Schools"
+}
+
+table_3 = {
+    "columns": ["CharterNum"],
+    "transformations": [
+        {"type": "join", "tables": ["table_1", "table_2"], "on": "CDSCode"},
+        {"type": "filter", "condition": "AvgScrWrite == 499"}
+    ]
+}
+
+
+
+# question_id: 18
+# db_id: california_schools
+# question: How many schools in Contra Costa (directly funded) have number of test takers not more than 250?
+# evidence: 
+# SQL: SELECT COUNT(T1.CDSCode) FROM frpm AS T1 INNER JOIN satscores AS T2 ON T1.CDSCode = T2.cds WHERE T1.`Charter Funding Type` = 'Directly funded' AND T1.`County Name` = 'Contra Costa' AND T2.NumTstTakr <= 250
+# difficulty: simple
+table1:
++-------------------------+
+|    Count(School_Name)   |
++-------------------------+
+
+table2:
++------------------------+
+|    Count(School)       |
++------------------------+
+
+table3:
++----------------------------+
+|    Count(Distinct(School)) |
++----------------------------+
+
+
+
+# question_id: 19
+# db_id: california_schools
+# question: What is the phone number of the school that has the highest average score in Math?
+# evidence: 
+# SQL: SELECT T1.Phone FROM schools AS T1 INNER JOIN satscores AS T2 ON T1.CDSCode = T2.cds ORDER BY T2.AvgScrMath DESC LIMIT 1
+# difficulty: simple
+table1:
++------------+-------------+
+|  CDSCode   | AvgScrMath  |
++------------+-------------+
+| 1234567890 |     600     |
++------------+-------------+
+
+table2:
++------------+-----------+
+|  CDSCode   |   Phone   |
++------------+-----------+
+| 1234567890 | 555-1234  |
++------------+-----------+
+
+table3:
++-----------+
+|   Phone   |
++-----------+
+| 555-1234  |
++-----------+
+
+
+
+# question_id: 20
+# db_id: california_schools
+# question: How many schools in Amador which the Low Grade is 9 and the High Grade is 12?
+# evidence: 
+# SQL: SELECT COUNT(T1.`School Name`) FROM frpm AS T1 INNER JOIN schools AS T2 ON T1.CDSCode = T2.CDSCode WHERE T2.County = 'Amador' AND T1.`Low Grade` = 9 AND T1.`High Grade` = 12
+# difficulty: simple
+table1:
++----------------+
+| Count(CDSCode) |
++----------------+
+|       N        |
++----------------+
+
+table2:
++----------------+
+| Count(School)  |
++----------------+
+|       N        |
++----------------+
+
+table3:
++----------------+
+| Count(School)  |
++----------------+
+|       N        |
++----------------+
+
+
+
+# question_id: 21
+# db_id: california_schools
+# question: In Los Angeles how many schools have more than 500 free meals but less than 700 free or reduced price meals for K-12?
+# evidence: 
+# SQL: SELECT COUNT(CDSCode) FROM frpm WHERE `County Name` = 'Los Angeles' AND `Free Meal Count (K-12)` > 500 AND `Free Meal Count (K-12)` < 700
+# difficulty: simple
+table1:
++----------------+
+| Count(School)  |
++----------------+
+|       N        |
++----------------+
+
+table2:
++----------------+
+| Count(CDSCode) |
++----------------+
+|       N        |
++----------------+
+
+table3:
++------------------+
+| Count(School_Name) |
++------------------+
+|         N          |
++------------------+
+
+
+
+# question_id: 22
+# db_id: california_schools
+# question: Which school in Contra Costa has the highest number of test takers?
+# evidence: 
+# SQL: SELECT sname FROM satscores WHERE cname = 'Contra Costa' AND sname IS NOT NULL ORDER BY NumTstTakr DESC LIMIT 1
+# difficulty: simple
+table1:
++---------------------------------+------------+
+|            School               | NumTstTakr |
++---------------------------------+------------+
+| <School with highest test takers> |    Max    |
++---------------------------------+------------+
+
+table2:
++-----------+------------+
+|  sname    | NumTstTakr |
++-----------+------------+
+| School A  |    500     |
++-----------+------------+
+
+table3:
++--------------------------+------------+
+|        School            | NumTstTakr |
++--------------------------+------------+
+| <School with highest test takers> |    Max    |
++--------------------------+------------+
+
+
+
+# question_id: 23
+# db_id: california_schools
+# question: List the names of schools with more than 30 difference in enrollements between K-12 and ages 5-17? Please also give the full street adress of the schools.
+# evidence: Diffrence in enrollement = `Enrollment (K-12)` - `Enrollment (Ages 5-17)`
+# SQL: SELECT T1.School, T1.StreetAbr FROM schools AS T1 INNER JOIN frpm AS T2 ON T1.CDSCode = T2.CDSCode WHERE T2.`Enrollment (K-12)` - T2.`Enrollment (Ages 5-17)` > 30
+# difficulty: moderate
+table1:
++------------+------------+
+| School     | Street     |
++------------+------------+
+| SchoolName | MailStreet |
++------------+------------+
+
+table2:
++------------+------------+
+| School     | Street     |
++------------+------------+
+| SchoolName | Street     |
++------------+------------+
+
+table3:
++------------+------------+
+| School_Name| Street     |
++------------+------------+
+| School_Name| MailStreet |
++------------+------------+
+
+
+
+# question_id: 24
+# db_id: california_schools
+# question: Give the names of the schools with the percent eligible for free meals in K-12 is more than 0.1 and test takers whose test score is greater than or equal to 1500?
+# evidence: 
+# SQL: SELECT T2.`School Name` FROM satscores AS T1 INNER JOIN frpm AS T2 ON T1.cds = T2.CDSCode WHERE CAST(T2.`Free Meal Count (K-12)` AS REAL) / T2.`Enrollment (K-12)` > 0.1 AND T1.NumGE1500 > 0
+# difficulty: moderate
+# Table 1: Filter FRPM to get schools with percent eligible for free meals in K-12 more than 0.1
+table1 = Frpm.select("CDSCode", "Percent_____Eligible_Free__K_12_").filter("Percent_____Eligible_Free__K_12_ > 0.1")
+
+# Table 2: Filter SAT scores to get schools with more than 0 test takers scoring greater than or equal to 1500
+table2 = Satscores.select("cds", "NumGE1500").filter("NumGE1500 > 0")
+
+# Table 3: Join Table 1 and Table 2 on their common CDSCode then select the school name
+final_table = table1.join(table2, on="CDSCode=cds").select("sname")
+
+
+
+# question_id: 25
+# db_id: california_schools
+# question: Name schools in Riverside which the average of average math score for SAT is grater than 400, what is the funding type of these schools?
+# evidence: Average of average math = sum(average math scores) / count(schools).
+# SQL: SELECT T1.sname, T2.`Charter Funding Type` FROM satscores AS T1 INNER JOIN frpm AS T2 ON T1.cds = T2.CDSCode WHERE T2.`District Name` LIKE 'Riverside%' GROUP BY T1.sname, T2.`Charter Funding Type` HAVING CAST(SUM(T1.AvgScrMath) AS REAL) / COUNT(T1.cds) > 400
+# difficulty: moderate```plaintext
+Table 1:
++--------------+-----------------+
+|    School    | FundingType     |
++--------------+-----------------+
+
+Table 2:
++--------------+-----------------+
+|    sname     | FundingType     |
++--------------+-----------------+
+
+Table 3:
++--------------+-----------------+
+|    School    | Charter_Funding_Type |
++--------------+-----------------+
+```
+
+
+# question_id: 26
+# db_id: california_schools
+# question: State the names and full communication address of high schools in Monterey which has more than 800 free or reduced price meals for ages 15-17?
+# evidence: Full communication address should include Zip, Street, City, State
+# SQL: SELECT T1.`School Name`, T2.Zip, T2.Street, T2.City, T2.State FROM frpm AS T1 INNER JOIN schools AS T2 ON T1.CDSCode = T2.CDSCode WHERE T2.County = 'Monterey' AND T1.`Free Meal Count (Ages 5-17)` > 800 AND T1.`School Type` = 'High Schools (Public)'
+# difficulty: moderate
+# Table 1: Filter FRPM for specific criteria
++--------------+------------+--------------------------+
+|  School_Name |  CDSCode   | FRPM_Count__Ages_5_17_   |
++--------------+------------+--------------------------+
+| School1      |  1234567   |          850             |
+| School2      |  2345678   |          900             |
++--------------+------------+--------------------------+
+
+# Table 2: Join Table 1 with Schools on CDSCode to filter High Schools in Monterey
++--------------+------------+--------------------------+----------+------------------+------------+----------+
+|  School_Name |  CDSCode   | FRPM_Count__Ages_5_17_   |   City   |      Street      |    Zip     |  State   |
++--------------+------------+--------------------------+----------+------------------+------------+----------+
+| School1      |  1234567   |          850             | Monterey | 123 School Lane  |  90000     |  CA      |
+| School2      |  2345678   |          900             | Monterey | 456 Academy Rd   |  90001     |  CA      |
++--------------+------------+--------------------------+----------+------------------+------------+----------+
+
+# Table 3: Filter based on EILCode or SOC for High Schools and number of meals
++--------------+------------+--------------------------+----------+------------------+------------+----------+
+|  School_Name |  CDSCode   | FRPM_Count__Ages_5_17_   |   City   |      Street      |    Zip     |  State   |
++--------------+------------+--------------------------+----------+------------------+------------+----------+
+| School1      |  1234567   |          850             | Monterey | 123 School Lane  |  90000     |  CA      |
+| School2      |  2345678   |          900             | Monterey | 456 Academy Rd   |  90001     |  CA      |
++--------------+------------+--------------------------+----------+------------------+------------+----------+
+
+
+
+# question_id: 27
+# db_id: california_schools
+# question: What is the average score in writing for the schools that were opened after 1991 or closed before 2000? List the school names along with the score. Also, list the communication number of the schools if there is any.
+# evidence: Communication number refers to phone number.
+# SQL: SELECT T2.School, T1.AvgScrWrite, T2.Phone, strftime('%Y', T2.OpenDate), strftime('%Y', T2.ClosedDate) FROM schools AS T2 LEFT JOIN satscores AS T1 ON T2.CDSCode = T1.cds WHERE strftime('%Y', T2.OpenDate) > '1991' AND strftime('%Y', T2.ClosedDate) < '2000'
+# difficulty: moderate
+table1:
++---------------+--------------+-----------+
+|    School     | AvgScrWrite  |   Phone   |
++---------------+--------------+-----------+
+| School Name 1 | Avg Score 1  | Phone 1   |
+| School Name 2 | Avg Score 2  | Phone 2   |
+|     ...       |     ...      |   ...     |
++---------------+--------------+-----------+
+
+table2:
++---------------+--------------+
+|    School     | AvgScrWrite  |
++---------------+--------------+
+| School Name 1 | Avg Score 1  |
+| School Name 2 | Avg Score 2  |
+|     ...       |     ...      |
++---------------+--------------+
+
+table3:
++---------------+-----------+
+|    School     |   Phone   |
++---------------+-----------+
+| School Name 1 | Phone 1   |
+| School Name 2 | Phone 2   |
+|     ...       |   ...     |
++---------------+-----------+
+
+
+
+# question_id: 28
+# db_id: california_schools
+# question: Consider the average difference between K-12 enrollment and 15-17 enrollment of schools that are locally funded, list the names and DOC type of schools which has a difference above this average.
+# evidence: Difference between K-12 enrollment and 15-17 enrollment can be computed by `Enrollment (K-12)` - `Enrollment (Ages 5-17)`
+# SQL: SELECT T2.School, T2.DOC FROM frpm AS T1 INNER JOIN schools AS T2 ON T1.CDSCode = T2.CDSCode WHERE T2.FundingType = 'Locally funded' AND (T1.`Enrollment (K-12)` - T1.`Enrollment (Ages 5-17)`) > (SELECT AVG(T3.`Enrollment (K-12)` - T3.`Enrollment (Ages 5-17)`) FROM frpm AS T3 INNER JOIN schools AS T4 ON T3.CDSCode = T4.CDSCode WHERE T4.FundingType = 'Locally funded')
+# difficulty: challenging
+# Table 1: Locally funded schools with calculated difference between K-12 and 5-17 enrollments
++-------------+---------------+------------+------------------------------+
+| School_Name | DOCType       | Enrollment_K12 | Enrollment_5_17 | Difference |
++-------------+---------------+------------+------------------------------+
+| School A    | DOCType Value | Value        | Value           | Value      |
+| School B    | DOCType Value | Value        | Value           | Value      |
+| ...         | ...           | ...          | ...             | ...        |
++-------------+---------------+------------+------------------------------+
+
+# Table 2: Average difference calculation table for locally funded schools
++-----------------------+
+| AvgDifference         |
++-----------------------+
+| Value                 |
++-----------------------+
+
+# Table 3: Schools with difference above average
++-------------+---------------+
+| School_Name | DOCType       |
++-------------+---------------+
+| School X    | DOCType Value |
+| School Y    | DOCType Value |
+| ...         | ...           |
++-------------+---------------+
+
+
+
+# question_id: 29
+# db_id: california_schools
+# question: When did the first-through-twelfth-grade school with the largest enrollment open?
+# evidence: K-12 means First-through-twelfth-grade
+# SQL: SELECT T2.OpenDate FROM frpm AS T1 INNER JOIN schools AS T2 ON T1.CDSCode = T2.CDSCode ORDER BY T1.`Enrollment (K-12)` DESC LIMIT 1
+# difficulty: simple
+# Table 1: Selecting Schools with K-12 grade span and ordering by enrollment in descending order to find the one with the largest enrollment
++----------------+--------------+-----------+
+|    CDSCode     |  OpenDate    |  GSserved |
++----------------+--------------+-----------+
+|                |              |  K-12     |
++----------------+--------------+-----------+
+
+# Table 2: Selecting Schools where GSserved or GSoffered includes "K-12", ordering by Enrollment__K_12_ from FRPM table in descending order, and getting OpenDate from Schools table
++----------------+--------------+
+|    CDSCode     |  OpenDate    |
++----------------+--------------+
+|                |              |
++----------------+--------------+
+
+# Table 3: Joining Schools and Frpm tables on CDSCode, filtering where GSserved = 'K-12' or GSoffered includes 'K-12', and getting the school with the highest Enrollment__K_12_'s OpenDate
++----------------+--------------+
+|    CDSCode     |  OpenDate    |
++----------------+--------------+
+|                |              |
++----------------+--------------+
+
+

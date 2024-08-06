@@ -1,0 +1,2251 @@
+{
+    "name": "bigquery",
+    "keywords": [
+        "ALL",
+        "AND",
+        "ANY",
+        "ARRAY",
+        "AS",
+        "ASC",
+        "ASSERT_ROWS_MODIFIED",
+        "AT",
+        "BETWEEN",
+        "BY",
+        "CASE",
+        "CAST",
+        "COLLATE",
+        "CONTAINS",
+        "CREATE",
+        "CROSS",
+        "CUBE",
+        "CURRENT",
+        "DEFAULT",
+        "DEFINE",
+        "DESC",
+        "DISTINCT",
+        "ELSE",
+        "END",
+        "ENUM",
+        "ESCAPE",
+        "EXCEPT",
+        "EXCLUDE",
+        "EXISTS",
+        "EXTRACT",
+        "FALSE",
+        "FETCH",
+        "FOLLOWING",
+        "FOR",
+        "FROM",
+        "FULL",
+        "GROUP",
+        "GROUPING",
+        "GROUPS",
+        "HASH",
+        "HAVING",
+        "IF",
+        "IGNORE",
+        "IN",
+        "INNER",
+        "INTERSECT",
+        "INTERVAL",
+        "INTO",
+        "IS",
+        "JOIN",
+        "LATERAL",
+        "LEFT",
+        "LIKE",
+        "LIMIT",
+        "LOOKUP",
+        "MERGE",
+        "NATURAL",
+        "NEW",
+        "NO",
+        "NOT",
+        "NULL",
+        "NULLS",
+        "OF",
+        "ON",
+        "OR",
+        "ORDER",
+        "OUTER",
+        "OVER",
+        "PARTITION",
+        "PRECEDING",
+        "PROTO",
+        "QUALIFY",
+        "RANGE",
+        "RECURSIVE",
+        "RESPECT",
+        "RIGHT",
+        "ROLLUP",
+        "ROWS",
+        "SELECT",
+        "SET",
+        "SOME",
+        "STRUCT",
+        "TABLESAMPLE",
+        "THEN",
+        "TO",
+        "TREAT",
+        "TRUE",
+        "UNBOUNDED",
+        "UNION",
+        "UNNEST",
+        "USING",
+        "WHEN",
+        "WHERE",
+        "WINDOW",
+        "WITH",
+        "WITHIN"
+    ],
+    "functions": [
+        {
+            "name": "AEAD.DECRYPT_BYTES",
+            "description": "Uses the matching key from keyset to decrypt ciphertext and verifies the\nintegrity of the data using additional_data. Returns an error if decryption or\nverification fails.\nkeyset is a serialized BYTES value returned by one of the\nKEYS functions or a STRUCT returned by\nKEYS.KEYSET_CHAIN. keyset must contain the key that was used to\nencrypt ciphertext, and the key must be in an 'ENABLED' state, or else the\nfunction returns an error. AEAD.DECRYPT_BYTES identifies the matching key\nin keyset by finding the key with the key ID that matches the one encrypted in\nciphertext.\nciphertext is a BYTES value that is the result of\na call to AEAD.ENCRYPT where the input plaintext was of type\nBYTES.\nIf ciphertext includes an initialization vector (IV),\nit should be the first bytes of ciphertext. If ciphertext includes an\nauthentication tag, it should be the last bytes of ciphertext. If the\nIV and authentic tag are one (SIV), it should be the first bytes of\nciphertext. The IV and authentication tag commonly require 16 bytes, but may\nvary in size.\nadditional_data is a STRING or BYTES value that binds the ciphertext to\nits context. This forces the ciphertext to be decrypted in the same context in\nwhich it was encrypted. This function casts any\nSTRING value to BYTES.\nThis must be the same as the additional_data provided to AEAD.ENCRYPT to\nencrypt ciphertext, ignoring its type, or else the function returns an error.",
+            "syntax": "AEAD.DECRYPT_BYTES(keyset, ciphertext, additional_data)",
+            "arguments": null
+        },
+        {
+            "name": "AEAD.DECRYPT_STRING",
+            "description": "Like AEAD.DECRYPT_BYTES, but where additional_data is\nof type STRING.",
+            "syntax": "AEAD.DECRYPT_STRING(keyset, ciphertext, additional_data)",
+            "arguments": null
+        },
+        {
+            "name": "AEAD.ENCRYPT",
+            "description": "Encrypts plaintext using the primary cryptographic key in keyset. The\nalgorithm of the primary key must be AEAD_AES_GCM_256. Binds the ciphertext to\nthe context defined by additional_data. Returns NULL if any input is NULL.\nkeyset is a serialized BYTES value returned by one of the\nKEYS functions or a STRUCT returned by\nKEYS.KEYSET_CHAIN.\nplaintext is the STRING or\nBYTES value to be encrypted.\nadditional_data is a STRING or BYTES value that binds the ciphertext to\nits context. This forces the ciphertext to be decrypted in the same context in\nwhich it was encrypted. plaintext and additional_data must be of the same\ntype. AEAD.ENCRYPT(keyset, string1, string2) is equivalent to\nAEAD.ENCRYPT(keyset, CAST(string1 AS BYTES), CAST(string2 AS BYTES)).\nThe output is ciphertext BYTES. The ciphertext contains a\nTink-specific prefix indicating the key used to perform the encryption.",
+            "syntax": "AEAD.ENCRYPT(keyset, plaintext, additional_data)",
+            "arguments": null
+        },
+        {
+            "name": "DETERMINISTIC_DECRYPT_BYTES",
+            "description": "Uses the matching key from keyset to decrypt ciphertext and verifies the\nintegrity of the data using additional_data. Returns an error if decryption\nfails.\nkeyset is a serialized BYTES value or a STRUCT\nvalue returned by one of the KEYS functions. keyset must contain\nthe key that was used to encrypt ciphertext, the key must be in an 'ENABLED'\nstate, and the key must be of type DETERMINISTIC_AEAD_AES_SIV_CMAC_256, or\nelse the function returns an error. DETERMINISTIC_DECRYPT_BYTES identifies the\nmatching key in keyset by finding the key with the key ID that matches the one\nencrypted in ciphertext.\nciphertext is a BYTES value that is the result of a call to\nDETERMINISTIC_ENCRYPT where the input plaintext was of type BYTES.\nThe ciphertext must follow Tink's wire format. The first\nbyte of ciphertext should contain a Tink key version followed by a 4 byte key\nhint. If ciphertext includes an initialization vector (IV), it should be the\nnext bytes of ciphertext. If ciphertext includes an authentication tag, it\nshould be the last bytes of ciphertext. If the IV and authentic tag are one\n(SIV), it should be the first bytes of ciphertext. The IV and authentication\ntag commonly require 16 bytes, but may vary in size.\nadditional_data is a STRING or BYTES value that binds the ciphertext to\nits context. This forces the ciphertext to be decrypted in the same context in\nwhich it was encrypted. This function casts any STRING value to BYTES. This\nmust be the same as the additional_data provided to DETERMINISTIC_ENCRYPT to\nencrypt ciphertext, ignoring its type, or else the function returns an error.",
+            "syntax": "DETERMINISTIC_DECRYPT_BYTES(keyset, ciphertext, additional_data)",
+            "arguments": null
+        },
+        {
+            "name": "DETERMINISTIC_DECRYPT_STRING",
+            "description": "Like DETERMINISTIC_DECRYPT_BYTES, but where\nplaintext is of type STRING.",
+            "syntax": "DETERMINISTIC_DECRYPT_STRING(keyset, ciphertext, additional_data)",
+            "arguments": null
+        },
+        {
+            "name": "DETERMINISTIC_ENCRYPT",
+            "description": "Encrypts plaintext using the primary cryptographic key in keyset using\ndeterministic AEAD. The algorithm of the primary key must\nbe DETERMINISTIC_AEAD_AES_SIV_CMAC_256. Binds the ciphertext to the context\ndefined by additional_data. Returns NULL if any input is NULL.\nkeyset is a serialized BYTES value or a STRUCT\nvalue returned by one of the KEYS functions.\nplaintext is the STRING or BYTES value to be encrypted.\nadditional_data is a STRING or BYTES value that binds the ciphertext to\nits context. This forces the ciphertext to be decrypted in the same context in\nwhich it was encrypted. plaintext and additional_data must be of the same\ntype. DETERMINISTIC_ENCRYPT(keyset, string1, string2) is equivalent to\nDETERMINISTIC_ENCRYPT(keyset, CAST(string1 AS BYTES), CAST(string2 AS BYTES)).\nThe output is ciphertext BYTES. The ciphertext contains a\nTink-specific prefix indicating the key used to perform the encryption.\nGiven an identical keyset and plaintext, this function returns the same\nciphertext each time it is invoked (including across queries).",
+            "syntax": "DETERMINISTIC_ENCRYPT(keyset, plaintext, additional_data)",
+            "arguments": null
+        },
+        {
+            "name": "KEYS.ADD_KEY_FROM_RAW_BYTES",
+            "description": "Returns a serialized keyset as BYTES with the\naddition of a key to keyset based on key_type and raw_key_bytes.\nThe primary cryptographic key remains the same as in keyset. The expected\nlength of raw_key_bytes depends on the value of key_type. The following are\nsupported key_types:",
+            "syntax": "KEYS.ADD_KEY_FROM_RAW_BYTES(keyset, key_type, raw_key_bytes)",
+            "arguments": null
+        },
+        {
+            "name": "KEYS.KEYSET_CHAIN",
+            "description": "Can be used in place of the keyset argument to the AEAD\nand deterministic\nencryption functions to pass a Tink keyset that is encrypted\nwith a Cloud KMS key. This function lets you use\nother AEAD functions without including plaintext keys in a query.\nThis function takes the following arguments:\nkms_resource_name: A STRING literal that contains the resource path to\nthe Cloud KMS key that's used to decrypt first_level_keyset.\nThis key must reside in the same Cloud region where this function is executed.\nA Cloud KMS key looks like this:\nfirst_level_keyset: A BYTES literal that represents a keyset\nor wrapped keyset.",
+            "syntax": "KEYS.KEYSET_CHAIN(kms_resource_name, first_level_keyset)",
+            "arguments": null
+        },
+        {
+            "name": "KEYS.KEYSET_FROM_JSON",
+            "description": "Returns the input json_keyset STRING as\nserialized BYTES, which is a valid input for other\nKEYS and AEAD functions. The JSON STRING must\nbe compatible with the definition of the\ngoogle.crypto.tink.Keyset\nprotocol buffer message: the JSON keyset should be a JSON object containing\nobjects and name-value pairs corresponding to those in the \"keyset\" message in\nthe google.crypto.tink.Keyset definition. You can convert the output serialized\nBYTES representation back to a JSON\nSTRING using KEYS.KEYSET_TO_JSON.",
+            "syntax": "KEYS.KEYSET_FROM_JSON(json_keyset)",
+            "arguments": null
+        },
+        {
+            "name": "KEYS.KEYSET_LENGTH",
+            "description": "Returns the number of keys in the provided keyset.",
+            "syntax": "KEYS.KEYSET_LENGTH(keyset)",
+            "arguments": null
+        },
+        {
+            "name": "KEYS.KEYSET_TO_JSON",
+            "description": "Returns a JSON STRING representation of the input\nkeyset. The returned JSON STRING is compatible\nwith the definition of the\ngoogle.crypto.tink.Keyset\nprotocol buffer message. You can convert the JSON\nSTRING representation back to\nBYTES using KEYS.KEYSET_FROM_JSON.",
+            "syntax": "KEYS.KEYSET_TO_JSON(keyset)",
+            "arguments": null
+        },
+        {
+            "name": "KEYS.NEW_KEYSET",
+            "description": "Returns a serialized keyset containing a new key based on key_type. The\nreturned keyset is a serialized BYTES\nrepresentation of\ngoogle.crypto.tink.Keyset\nthat contains a primary cryptographic key and no additional keys. You can use\nthe keyset with the AEAD.ENCRYPT, AEAD.DECRYPT_BYTES, and\nAEAD.DECRYPT_STRING functions for encryption and decryption, as well as with\nthe KEYS group of key- and keyset-related functions.\nkey_type is a STRING literal representation of the type of key to create.\nkey_type cannot be NULL. key_type can be:",
+            "syntax": "KEYS.NEW_KEYSET(key_type)",
+            "arguments": null
+        },
+        {
+            "name": "KEYS.NEW_WRAPPED_KEYSET",
+            "description": "Creates a new keyset and encrypts it with a\nCloud KMS key.\nReturns the wrapped keyset as a BYTES\nrepresentation of google.crypto.tink.Keyset\nthat contains a primary cryptographic key and no additional keys.\nThis function takes the following arguments:\nkms_resource_name: A STRING literal representation of the\nCloud KMS key.  kms_resource_name cannot be NULL. The\nCloud KMS key must reside in the same Cloud region where this\nfunction is executed. A Cloud KMS key looks like this:\nkey_type: A STRING literal representation of the keyset type.\nkey_type cannot be NULL but can be one of the following values:\nAEAD_AES_GCM_256: Creates a 256-bit key with the pseudo-random number\ngenerator provided by boringSSL. The key uses AES-GCM for\nencryption and decryption operations.\nDETERMINISTIC_AEAD_AES_SIV_CMAC_256:\nCreates a 512-bit AES-SIV-CMAC key, which contains a 256-bit AES-CTR key\nand 256-bit AES-CMAC key. The AES-SIV-CMAC key is created with the\npseudo-random number generator provided by boringSSL. The key\nuses AES-SIV for encryption and decryption operations.",
+            "syntax": "KEYS.NEW_WRAPPED_KEYSET(kms_resource_name, key_type)",
+            "arguments": null
+        },
+        {
+            "name": "KEYS.REWRAP_KEYSET",
+            "description": "Re-encrypts a wrapped keyset with a new\nCloud KMS key. Returns the wrapped keyset as a\nBYTES representation of google.crypto.tink.Keyset\nthat contains a primary cryptographic key and no additional keys.\nWhen this function is used, a wrapped keyset is decrypted by\nsource_kms_resource_name and then re-encrypted by target_kms_resource_name.\nDuring this process, the decrypted keyset is never visible to customers.\nThis function takes the following arguments:\nsource_kms_resource_name: A STRING literal representation of the\nCloud KMS key you want to replace. This key must reside in the same\nCloud region where this function is executed. A Cloud KMS key looks\nlike this:\ntarget_kms_resource_name: A STRING literal representation of the\nnew Cloud KMS key that you want to use.\nwrapped_keyset: A BYTES literal representation of the\nkeyset that you want to re-encrypt.",
+            "syntax": "KEYS.REWRAP_KEYSET(source_kms_resource_name, target_kms_resource_name, wrapped_keyset)",
+            "arguments": null
+        },
+        {
+            "name": "KEYS.ROTATE_KEYSET",
+            "description": "Adds a new key to keyset based on key_type. This new key becomes the primary\ncryptographic key of the new keyset. Returns the new keyset serialized as\nBYTES.\nThe old primary cryptographic key from the input keyset remains an additional\nkey in the returned keyset.\nThe new key_type must match the key type of existing keys in the keyset.",
+            "syntax": "KEYS.ROTATE_KEYSET(keyset, key_type)",
+            "arguments": null
+        },
+        {
+            "name": "KEYS.ROTATE_WRAPPED_KEYSET",
+            "description": "Takes an existing wrapped keyset and returns a rotated and\nrewrapped keyset. The returned wrapped keyset is a BYTES\nrepresentation of google.crypto.tink.Keyset.\nWhen this function is used, the wrapped keyset is decrypted,\nthe new key is added, and then the keyset is re-encrypted. The primary\ncryptographic key from the input wrapped_keyset remains as an\nadditional key in the returned keyset. During this rotation process,\nthe decrypted keyset is never visible to customers.\nThis function takes the following arguments:\nkms_resource_name: A STRING literal representation of the\nCloud KMS key that was used to wrap the\nwrapped keyset. The Cloud KMS key must reside in the same Cloud\nregion where this function is executed. A Cloud KMS key looks like\nthis:\nwrapped_keyset: A BYTES literal representation of the\nexisting keyset that you want to work with.\nkey_type: A STRING literal representation of the keyset type. This must\nmatch the key type of existing keys in wrapped_keyset.",
+            "syntax": "KEYS.ROTATE_WRAPPED_KEYSET(kms_resource_name, wrapped_keyset, key_type)",
+            "arguments": null
+        },
+        {
+            "name": "ANY_VALUE",
+            "description": "Returns expression for some row chosen from the group. Which row is chosen is\nnondeterministic, not random. Returns NULL when the input produces no\nrows. Returns NULL when expression\nor expression2 is\nNULL for all rows in the group.\nANY_VALUE behaves as if IGNORE NULLS is specified;\nrows for which expression is NULL are not considered and won't be\nselected.\nIf the HAVING clause is included in the ANY_VALUE function, the\nOVER clause can't be used with this function.\nTo learn more about the optional aggregate clauses that you can pass\ninto this function, see\nAggregate function calls.\nTo learn more about the OVER clause and how to use it, see\nWindow function calls.",
+            "syntax": "ANY_VALUE(\u00a0 expression\u00a0 [ HAVING { MAX | MIN } expression2 ])[ OVER over_clause ]over_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]\u00a0 [ ORDER BY expression [ { ASC | DESC } \u00a0] [, ...] ]\u00a0 [ window_frame_clause ]",
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_AGG",
+            "description": "Returns an ARRAY of expression values.\nTo learn more about the optional aggregate clauses that you can pass\ninto this function, see\nAggregate function calls.\nIf this function is used with the OVER clause, it's part of a\nwindow function call. In a window function call,\naggregate function clauses can't be used.\nTo learn more about the OVER clause and how to use it, see\nWindow function calls.\nAn error is raised if an array in the final query result contains a NULL\nelement.",
+            "syntax": "ARRAY_AGG(\u00a0 [ DISTINCT ]\u00a0 expression\u00a0 [ { IGNORE | RESPECT } NULLS ]\u00a0 [ ORDER BY key [ { ASC | DESC } ] [, ... ] ]\u00a0 [ LIMIT n ])[ OVER over_clause ]over_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]\u00a0 [ ORDER BY expression [ { ASC | DESC } \u00a0] [, ...] ]\u00a0 [ window_frame_clause ]",
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_CONCAT_AGG",
+            "description": "Concatenates elements from expression of type ARRAY, returning a single\narray as a result.\nThis function ignores NULL input arrays, but respects the NULL elements in\nnon-NULL input arrays. An\nerror is raised, however, if an array in the final query result contains a\nNULL element. Returns NULL if there are zero input rows or\nexpression evaluates to NULL for all rows.\nTo learn more about the optional aggregate clauses that you can pass\ninto this function, see\nAggregate function calls.",
+            "syntax": "ARRAY_CONCAT_AGG(\u00a0 expression\u00a0 [ ORDER BY key [ { ASC | DESC } ] [, ... ] ]\u00a0 [ LIMIT n ])",
+            "arguments": null
+        },
+        {
+            "name": "AVG",
+            "description": "Returns the average of non-NULL values in an aggregated group.\nTo learn more about the optional aggregate clauses that you can pass\ninto this function, see\nAggregate function calls.\nThis function can be used with the\nAGGREGATION_THRESHOLD clause.\nIf this function is used with the OVER clause, it's part of a\nwindow function call. In a window function call,\naggregate function clauses can't be used.\nTo learn more about the OVER clause and how to use it, see\nWindow function calls.\nAVG can be used with differential privacy. For more information, see\nDifferentially private aggregate functions.\nCaveats:",
+            "syntax": "AVG(\u00a0 [ DISTINCT ]\u00a0 expression)[ OVER over_clause ]over_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]\u00a0 [ ORDER BY expression [ { ASC | DESC } \u00a0] [, ...] ]\u00a0 [ window_frame_clause ]",
+            "arguments": null
+        },
+        {
+            "name": "BIT_AND",
+            "description": "Performs a bitwise AND operation on expression and returns the result.\nTo learn more about the optional aggregate clauses that you can pass\ninto this function, see\nAggregate function calls.",
+            "syntax": "BIT_AND(\u00a0 expression)",
+            "arguments": null
+        },
+        {
+            "name": "BIT_OR",
+            "description": "Performs a bitwise OR operation on expression and returns the result.\nTo learn more about the optional aggregate clauses that you can pass\ninto this function, see\nAggregate function calls.",
+            "syntax": "BIT_OR(\u00a0 expression)",
+            "arguments": null
+        },
+        {
+            "name": "BIT_XOR",
+            "description": "Performs a bitwise XOR operation on expression and returns the result.\nTo learn more about the optional aggregate clauses that you can pass\ninto this function, see\nAggregate function calls.",
+            "syntax": "BIT_XOR(\u00a0 [ DISTINCT ]\u00a0 expression)",
+            "arguments": null
+        },
+        {
+            "name": "COUNT",
+            "description": "To learn more about the optional aggregate clauses that you can pass\ninto this function, see\nAggregate function calls.\nThis function can be used with the\nAGGREGATION_THRESHOLD clause.\nTo learn more about the OVER clause and how to use it, see\nWindow function calls.\nThis function with DISTINCT supports specifying collation.\nCOUNT can be used with differential privacy. For more information, see\nDifferentially private aggregate functions.",
+            "syntax": "COUNT(*)[OVER over_clause]",
+            "arguments": null
+        },
+        {
+            "name": "COUNTIF",
+            "description": "Returns the count of TRUE values for expression. Returns 0 if there are\nzero input rows, or if expression evaluates to FALSE or NULL for all rows.\nSince expression must be a BOOL, the form COUNTIF(DISTINCT ...) is\ngenerally not useful: there is only one distinct value of TRUE. So\nCOUNTIF(DISTINCT ...) will return 1 if expression evaluates to TRUE for\none or more input rows, or 0 otherwise.\nUsually when someone wants to combine COUNTIF and DISTINCT, they\nwant to count the number of distinct values of an expression for which a certain\ncondition is satisfied. One recipe to achieve this is the following:\nNote that this uses COUNT, not COUNTIF; the IF part has been moved inside.\nTo learn more, see the examples for COUNT.\nTo learn more about the optional aggregate clauses that you can pass\ninto this function, see\nAggregate function calls.\nThis function can be used with the\nAGGREGATION_THRESHOLD clause.\nTo learn more about the OVER clause and how to use it, see\nWindow function calls.",
+            "syntax": "COUNTIF(\u00a0 [ DISTINCT ]\u00a0 expression)[ OVER over_clause ]over_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]\u00a0 [ ORDER BY expression [ { ASC | DESC } \u00a0] [, ...] ]\u00a0 [ window_frame_clause ]",
+            "arguments": null
+        },
+        {
+            "name": "GROUPING",
+            "description": "If a groupable item in the GROUP BY clause is aggregated\n(and thus not grouped), this function returns 1. Otherwise,\nthis function returns 0.\nDefinitions:\nDetails:\nThe GROUPING function is helpful if you need to determine which rows are\nproduced by which grouping sets. A grouping set is a group of columns by which\nrows can be grouped together. So, if you need to filter rows by\na few specific grouping sets, you can use the GROUPING function to identify\nwhich grouping sets grouped which rows by creating a matrix of the results.\nIn addition, you can use the GROUPING function to determine the type of\nNULL produced by the GROUP BY clause. In some cases, the GROUP BY clause\nproduces a NULL placeholder. This placeholder represents all groupable items\nthat are aggregated (not grouped) in the current grouping set. This is different\nfrom a standard NULL, which can also be produced by a query.\nFor more information, see the following examples.",
+            "syntax": "GROUPING(groupable_value)",
+            "arguments": null
+        },
+        {
+            "name": "LOGICAL_AND",
+            "description": "Returns the logical AND of all non-NULL expressions. Returns NULL if there\nare zero input rows or expression evaluates to NULL for all rows.\nTo learn more about the optional aggregate clauses that you can pass\ninto this function, see\nAggregate function calls.\nThis function can be used with the\nAGGREGATION_THRESHOLD clause.",
+            "syntax": "LOGICAL_AND(\u00a0 expression)",
+            "arguments": null
+        },
+        {
+            "name": "LOGICAL_OR",
+            "description": "Returns the logical OR of all non-NULL expressions. Returns NULL if there\nare zero input rows or expression evaluates to NULL for all rows.\nTo learn more about the optional aggregate clauses that you can pass\ninto this function, see\nAggregate function calls.\nThis function can be used with the\nAGGREGATION_THRESHOLD clause.",
+            "syntax": "LOGICAL_OR(\u00a0 expression)",
+            "arguments": null
+        },
+        {
+            "name": "MAX",
+            "description": "Returns the maximum non-NULL value in an aggregated group.\nCaveats:\nTo learn more about the optional aggregate clauses that you can pass\ninto this function, see\nAggregate function calls.\nTo learn more about the OVER clause and how to use it, see\nWindow function calls.\nThis function supports specifying collation.",
+            "syntax": "MAX(\u00a0 expression)[ OVER over_clause ]over_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]\u00a0 [ ORDER BY expression [ { ASC | DESC } \u00a0] [, ...] ]\u00a0 [ window_frame_clause ]",
+            "arguments": null
+        },
+        {
+            "name": "MAX_BY",
+            "description": "Synonym for ANY_VALUE(x HAVING MAX y).",
+            "syntax": "MAX_BY(\u00a0 x, y)",
+            "arguments": null
+        },
+        {
+            "name": "MIN",
+            "description": "Returns the minimum non-NULL value in an aggregated group.\nCaveats:\nTo learn more about the optional aggregate clauses that you can pass\ninto this function, see\nAggregate function calls.\nTo learn more about the OVER clause and how to use it, see\nWindow function calls.\nThis function supports specifying collation.",
+            "syntax": "MIN(\u00a0 expression)[ OVER over_clause ]over_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]\u00a0 [ ORDER BY expression [ { ASC | DESC } \u00a0] [, ...] ]\u00a0 [ window_frame_clause ]",
+            "arguments": null
+        },
+        {
+            "name": "MIN_BY",
+            "description": "Synonym for ANY_VALUE(x HAVING MIN y).",
+            "syntax": "MIN_BY(\u00a0 x, y)",
+            "arguments": null
+        },
+        {
+            "name": "STRING_AGG",
+            "description": "Returns a value (either STRING or BYTES) obtained by concatenating\nnon-NULL values. Returns NULL if there are zero input rows or expression\nevaluates to NULL for all rows.\nIf a delimiter is specified, concatenated values are separated by that\ndelimiter; otherwise, a comma is used as a delimiter.\nTo learn more about the optional aggregate clauses that you can pass\ninto this function, see\nAggregate function calls.\nIf this function is used with the OVER clause, it's part of a\nwindow function call. In a window function call,\naggregate function clauses can't be used.\nTo learn more about the OVER clause and how to use it, see\nWindow function calls.",
+            "syntax": "STRING_AGG(\u00a0 [ DISTINCT ]\u00a0 expression [, delimiter]\u00a0 [ ORDER BY key [ { ASC | DESC } ] [, ... ] ]\u00a0 [ LIMIT n ])[ OVER over_clause ]over_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]\u00a0 [ ORDER BY expression [ { ASC | DESC } \u00a0] [, ...] ]\u00a0 [ window_frame_clause ]",
+            "arguments": null
+        },
+        {
+            "name": "SUM",
+            "description": "Returns the sum of non-NULL values in an aggregated group.\nTo learn more about the optional aggregate clauses that you can pass\ninto this function, see\nAggregate function calls.\nThis function can be used with the\nAGGREGATION_THRESHOLD clause.\nTo learn more about the OVER clause and how to use it, see\nWindow function calls.\nSUM can be used with differential privacy. For more information, see\nDifferentially private aggregate functions.\nCaveats:",
+            "syntax": "SUM(\u00a0 [ DISTINCT ]\u00a0 expression)[ OVER over_clause ]over_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]\u00a0 [ ORDER BY expression [ { ASC | DESC } \u00a0] [, ...] ]\u00a0 [ window_frame_clause ]",
+            "arguments": null
+        },
+        {
+            "name": "APPROX_COUNT_DISTINCT",
+            "description": "Returns the approximate result for COUNT(DISTINCT expression). The value\nreturned is a statistical estimate, not necessarily the actual value.\nThis function is less accurate than COUNT(DISTINCT expression), but performs\nbetter on huge input.",
+            "syntax": "APPROX_COUNT_DISTINCT(\u00a0 expression)",
+            "arguments": null
+        },
+        {
+            "name": "APPROX_QUANTILES",
+            "description": "Returns the approximate boundaries for a group of expression values, where\nnumber represents the number of quantiles to create. This function returns an\narray of number + 1 elements, sorted in ascending order, where the\nfirst element is the approximate minimum and the last element is the approximate\nmaximum.\nReturns NULL if there are zero input rows or expression evaluates to\nNULL for all rows.\nTo learn more about the optional aggregate clauses that you can pass\ninto this function, see\nAggregate function calls.",
+            "syntax": "APPROX_QUANTILES(\u00a0 [ DISTINCT ]\u00a0 expression, number\u00a0 [ { IGNORE | RESPECT } NULLS ])",
+            "arguments": null
+        },
+        {
+            "name": "APPROX_TOP_COUNT",
+            "description": "Returns the approximate top elements of expression as an array of STRUCTs.\nThe number parameter specifies the number of elements returned.\nEach STRUCT contains two fields. The first field (named value) contains an\ninput value. The second field (named count) contains an INT64 specifying the\nnumber of times the value was returned.\nReturns NULL if there are zero input rows.\nTo learn more about the optional aggregate clauses that you can pass\ninto this function, see\nAggregate function calls.",
+            "syntax": "APPROX_TOP_COUNT(\u00a0 expression, number)",
+            "arguments": null
+        },
+        {
+            "name": "APPROX_TOP_SUM",
+            "description": "Returns the approximate top elements of expression, based on the sum of an\nassigned weight. The number parameter specifies the number of elements\nreturned.\nIf the weight input is negative or NaN, this function returns an error.\nThe elements are returned as an array of STRUCTs.\nEach STRUCT contains two fields: value and sum.\nThe value field contains the value of the input expression. The sum field is\nthe same type as weight, and is the approximate sum of the input weight\nassociated with the value field.\nReturns NULL if there are zero input rows.\nTo learn more about the optional aggregate clauses that you can pass\ninto this function, see\nAggregate function calls.",
+            "syntax": "APPROX_TOP_SUM(\u00a0 expression, weight, number)",
+            "arguments": null
+        },
+        {
+            "name": "ARRAY",
+            "description": "The ARRAY function returns an ARRAY with one element for each row in a\nsubquery.\nIf subquery produces a\nSQL table,\nthe table must have exactly one column. Each element in the output ARRAY is\nthe value of the single column of a row in the table.\nIf subquery produces a\nvalue table,\nthen each element in the output ARRAY is the entire corresponding row of the\nvalue table.",
+            "syntax": "ARRAY(subquery)",
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_CONCAT",
+            "description": "Concatenates one or more arrays with the same element type into a single array.",
+            "syntax": "ARRAY_CONCAT(array_expression[, ...])",
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_LENGTH",
+            "description": "Returns the size of the array. Returns 0 for an empty array. Returns NULL if\nthe array_expression is NULL.",
+            "syntax": "ARRAY_LENGTH(array_expression)",
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_REVERSE",
+            "description": "Returns the input ARRAY with elements in reverse order.",
+            "syntax": "ARRAY_REVERSE(value)",
+            "arguments": null
+        },
+        {
+            "name": "ARRAY_TO_STRING",
+            "description": "Returns a concatenation of the elements in array_expression\nas a STRING. The value for array_expression\ncan either be an array of STRING or\nBYTES data types.\nIf the null_text parameter is used, the function replaces any NULL values in\nthe array with the value of null_text.\nIf the null_text parameter is not used, the function omits the NULL value\nand its preceding delimiter.",
+            "syntax": "ARRAY_TO_STRING(array_expression, delimiter[, null_text])",
+            "arguments": null
+        },
+        {
+            "name": "GENERATE_ARRAY",
+            "description": "Returns an array of values. The start_expression and end_expression\nparameters determine the inclusive start and end of the array.\nThe GENERATE_ARRAY function accepts the following data types as inputs:\nThe step_expression parameter determines the increment used to\ngenerate array values. The default value for this parameter is 1.\nThis function returns an error if step_expression is set to 0, or if any\ninput is NaN.\nIf any argument is NULL, the function will return a NULL array.",
+            "syntax": "GENERATE_ARRAY(start_expression, end_expression[, step_expression])",
+            "arguments": null
+        },
+        {
+            "name": "GENERATE_DATE_ARRAY",
+            "description": "Returns an array of dates. The start_date and end_date\nparameters determine the inclusive start and end of the array.\nThe GENERATE_DATE_ARRAY function accepts the following data types as inputs:\nThe INT64_expr parameter determines the increment used to generate dates. The\ndefault value for this parameter is 1 day.\nThis function returns an error if INT64_expr is set to 0.",
+            "syntax": "GENERATE_DATE_ARRAY(start_date, end_date[, INTERVAL INT64_expr date_part])",
+            "arguments": null
+        },
+        {
+            "name": "GENERATE_TIMESTAMP_ARRAY",
+            "description": "Returns an ARRAY of TIMESTAMPS separated by a given interval. The\nstart_timestamp and end_timestamp parameters determine the inclusive\nlower and upper bounds of the ARRAY.\nThe GENERATE_TIMESTAMP_ARRAY function accepts the following data types as\ninputs:\nThe step_expression parameter determines the increment used to generate\ntimestamps.",
+            "syntax": "GENERATE_TIMESTAMP_ARRAY(start_timestamp, end_timestamp,\u00a0 \u00a0 \u00a0 \u00a0 \u00a0 \u00a0 \u00a0 \u00a0 \u00a0 \u00a0 \u00a0 \u00a0 \u00a0INTERVAL step_expression date_part)",
+            "arguments": null
+        },
+        {
+            "name": "BIT_COUNT",
+            "description": "The input, expression, must be an\ninteger or BYTES.\nReturns the number of bits that are set in the input expression.\nFor signed integers, this is the number of bits in two's complement form.",
+            "syntax": "BIT_COUNT(expression)",
+            "arguments": null
+        },
+        {
+            "name": "APPENDS",
+            "description": "This function returns a transformed object table with the original columns plus\none or more additional columns, depending on the transform_types values\nspecified.\nThis function only supports\nobject tables\nas inputs. Subqueries or any other types of tables are not supported.\nobject_table_name is the name of the object table to be transformed, in\nthe format dataset_name.object_table_name.\ntransform_types_array is an array of STRING literals. Currently, the only\nsupported transform_types_array value is SIGNED_URL. Specifying SIGNED_URL\ncreates read-only signed URLs for the objects in the identified object table,\nwhich are returned in a signed_url column. Generated signed URLs are\nvalid for 6 hours.",
+            "syntax": "EXTERNAL_OBJECT_TRANSFORM(TABLE object_table_name, transform_types_array)",
+            "arguments": null
+        },
+        {
+            "name": "EXTERNAL_OBJECT_TRANSFORM",
+            "description": "This function returns a transformed object table with the original columns plus\none or more additional columns, depending on the transform_types values\nspecified.\nThis function only supports\nobject tables\nas inputs. Subqueries or any other types of tables are not supported.\nobject_table_name is the name of the object table to be transformed, in\nthe format dataset_name.object_table_name.\ntransform_types_array is an array of STRING literals. Currently, the only\nsupported transform_types_array value is SIGNED_URL. Specifying SIGNED_URL\ncreates read-only signed URLs for the objects in the identified object table,\nwhich are returned in a signed_url column. Generated signed URLs are\nvalid for 6 hours.",
+            "syntax": "EXTERNAL_OBJECT_TRANSFORM(TABLE object_table_name, transform_types_array)",
+            "arguments": null
+        },
+        {
+            "name": "CAST",
+            "description": "Cast syntax is used in a query to indicate that the result type of an\nexpression should be converted to some other type.\nWhen using CAST, a query can fail if GoogleSQL is unable to perform\nthe cast. If you want to protect your queries from these types of errors, you\ncan use SAFE_CAST.\nCasts between supported types that do not successfully map from the original\nvalue to the target domain produce runtime errors. For example, casting\nBYTES to STRING where the byte sequence is not valid UTF-8 results in a\nruntime error.\nSome casts can include a format clause, which provides\ninstructions for how to conduct the\ncast. For example, you could\ninstruct a cast to convert a sequence of bytes to a BASE64-encoded string\ninstead of a UTF-8-encoded string.\nThe structure of the format clause is unique to each type of cast and more\ninformation is available in the section for that cast.",
+            "syntax": "CAST(expression AS typename [format_clause])",
+            "arguments": null
+        },
+        {
+            "name": "PARSE_BIGNUMERIC",
+            "description": "Converts a STRING to a BIGNUMERIC value.\nThe numeric literal contained in the string must not exceed the\nmaximum precision or range of the BIGNUMERIC type, or an\nerror occurs. If the number of digits after the decimal point exceeds 38, then\nthe resulting BIGNUMERIC value rounds\nhalf away from zero to have 38 digits after the\ndecimal point.\nThis function is similar to using the CAST AS BIGNUMERIC\nfunction except that the PARSE_BIGNUMERIC function only accepts string inputs\nand allows the following in the string:\nRules for valid input strings:",
+            "syntax": "PARSE_BIGNUMERIC(string_expression)",
+            "arguments": null
+        },
+        {
+            "name": "PARSE_NUMERIC",
+            "description": "Converts a STRING to a NUMERIC value.\nThe numeric literal contained in the string must not exceed the\nmaximum precision or range of the NUMERIC type, or an error\noccurs. If the number of digits after the decimal point exceeds nine, then the\nresulting NUMERIC value rounds\nhalf away from zero to have nine digits after the\ndecimal point.\nThis function is similar to using the CAST AS NUMERIC function\nexcept that the PARSE_NUMERIC function only accepts string inputs and allows\nthe following in the string:\nRules for valid input strings:",
+            "syntax": "PARSE_NUMERIC(string_expression)",
+            "arguments": null
+        },
+        {
+            "name": "SAFE_CAST",
+            "description": "When using CAST, a query can fail if GoogleSQL is unable to perform\nthe cast. For example, the following query generates an error:\nIf you want to protect your queries from these types of errors, you can use\nSAFE_CAST. SAFE_CAST replaces runtime errors with NULLs.  However, during\nstatic analysis, impossible casts between two non-castable types still produce\nan error because the query is invalid.\nSome casts can include a format clause, which provides\ninstructions for how to conduct the\ncast. For example, you could\ninstruct a cast to convert a sequence of bytes to a BASE64-encoded string\ninstead of a UTF-8-encoded string.\nThe structure of the format clause is unique to each type of cast and more\ninformation is available in the section for that cast.\nIf you are casting from bytes to strings, you can also use the\nfunction, SAFE_CONVERT_BYTES_TO_STRING. Any invalid UTF-8 characters\nare replaced with the unicode replacement character, U+FFFD.\nYou can learn more about these conversion functions elsewhere in the\ndocumentation:\nExcept as otherwise noted, the content of this page is licensed under the Creative Commons Attribution 4.0 License, and code samples are licensed under the Apache 2.0 License. For details, see the Google Developers Site Policies. Java is a registered trademark of Oracle and/or its affiliates.",
+            "syntax": "SAFE_CAST(expression AS typename [format_clause])",
+            "arguments": null
+        },
+        {
+            "name": "CURRENT_DATE",
+            "description": "Returns the current date as a DATE object. Parentheses are optional when\ncalled with no arguments.\nThis function supports the following arguments:\nThe current date is recorded at the start of the query\nstatement which contains this function, not when this specific function is\nevaluated.",
+            "syntax": "CURRENT_DATE()",
+            "arguments": null
+        },
+        {
+            "name": "DATE",
+            "description": "Constructs or extracts a date.\nThis function supports the following arguments:",
+            "syntax": "DATE(year, month, day)",
+            "arguments": null
+        },
+        {
+            "name": "DATE_ADD",
+            "description": "Adds a specified time interval to a DATE.\nDATE_ADD supports the following date_part values:\nSpecial handling is required for MONTH, QUARTER, and YEAR parts when\nthe date is at (or near) the last day of the month. If the resulting\nmonth has fewer days than the original date's day, then the resulting\ndate is the last date of that month.",
+            "syntax": "DATE_ADD(date_expression, INTERVAL int64_expression date_part)",
+            "arguments": null
+        },
+        {
+            "name": "DATE_DIFF",
+            "description": "Gets the number of unit boundaries between two DATE values (end_date -\nstart_date) at a particular time granularity.",
+            "syntax": "DATE_DIFF(end_date, start_date, granularity)",
+            "arguments": null
+        },
+        {
+            "name": "DATE_FROM_UNIX_DATE",
+            "description": "Interprets int64_expression as the number of days since 1970-01-01.",
+            "syntax": "DATE_FROM_UNIX_DATE(int64_expression)",
+            "arguments": null
+        },
+        {
+            "name": "DATE_SUB",
+            "description": "Subtracts a specified time interval from a DATE.\nDATE_SUB supports the following date_part values:\nSpecial handling is required for MONTH, QUARTER, and YEAR parts when\nthe date is at (or near) the last day of the month. If the resulting\nmonth has fewer days than the original date's day, then the resulting\ndate is the last date of that month.",
+            "syntax": "DATE_SUB(date_expression, INTERVAL int64_expression date_part)",
+            "arguments": null
+        },
+        {
+            "name": "DATE_TRUNC",
+            "description": "Truncates a DATE value to the granularity of date_part. The DATE value\nis always rounded to the beginning of date_part, which can be one of the\nfollowing:",
+            "syntax": "DATE_TRUNC(date_expression, date_part)",
+            "arguments": null
+        },
+        {
+            "name": "EXTRACT",
+            "description": "Returns the value corresponding to the specified date part. The part must\nbe one of:",
+            "syntax": "EXTRACT(part FROM date_expression)",
+            "arguments": null
+        },
+        {
+            "name": "FORMAT_DATE",
+            "description": "Formats the date_expr according to the specified format_string.\nSee Supported Format Elements For DATE\nfor a list of format elements that this function supports.",
+            "syntax": "FORMAT_DATE(format_string, date_expr)",
+            "arguments": null
+        },
+        {
+            "name": "LAST_DAY",
+            "description": "Returns the last day from a date expression. This is commonly used to return\nthe last day of the month.\nYou can optionally specify the date part for which the last day is returned.\nIf this parameter is not used, the default value is MONTH.\nLAST_DAY supports the following values for date_part:",
+            "syntax": "LAST_DAY(date_expression[, date_part])",
+            "arguments": null
+        },
+        {
+            "name": "PARSE_DATE",
+            "description": "Converts a string representation of date to a\nDATE object.\nformat_string contains the format elements\nthat define how date_string is formatted. Each element in\ndate_string must have a corresponding element in format_string. The\nlocation of each element in format_string must match the location of\neach element in date_string.",
+            "syntax": "PARSE_DATE(format_string, date_string)",
+            "arguments": null
+        },
+        {
+            "name": "UNIX_DATE",
+            "description": "Returns the number of days since 1970-01-01.",
+            "syntax": "UNIX_DATE(date_expression)",
+            "arguments": null
+        },
+        {
+            "name": "CURRENT_DATETIME",
+            "description": "Returns the current time as a DATETIME object. Parentheses are optional when\ncalled with no arguments.\nThis function supports an optional time_zone parameter.\nSee Time zone definitions for\ninformation on how to specify a time zone.\nThe current date and time is recorded at the start of the query\nstatement which contains this function, not when this specific function is\nevaluated.",
+            "syntax": "CURRENT_DATETIME([time_zone])",
+            "arguments": null
+        },
+        {
+            "name": "DATETIME",
+            "description": "",
+            "syntax": "1. DATETIME(year, month, day, hour, minute, second)2. DATETIME(date_expression[, time_expression])3. DATETIME(timestamp_expression [, time_zone])",
+            "arguments": null
+        },
+        {
+            "name": "DATETIME_ADD",
+            "description": "Adds int64_expression units of part to the DATETIME object.\nDATETIME_ADD supports the following values for part:\nSpecial handling is required for MONTH, QUARTER, and YEAR parts when the\ndate is at (or near) the last day of the month. If the resulting month has fewer\ndays than the original DATETIME's day, then the result day is the last day of\nthe new month.",
+            "syntax": "DATETIME_ADD(datetime_expression, INTERVAL int64_expression part)",
+            "arguments": null
+        },
+        {
+            "name": "DATETIME_DIFF",
+            "description": "Gets the number of unit boundaries between two DATETIME values\n(end_datetime - start_datetime) at a particular time granularity.",
+            "syntax": "DATETIME_DIFF(end_datetime, start_datetime, granularity)",
+            "arguments": null
+        },
+        {
+            "name": "DATETIME_SUB",
+            "description": "Subtracts int64_expression units of part from the DATETIME.\nDATETIME_SUB supports the following values for part:\nSpecial handling is required for MONTH, QUARTER, and YEAR parts when the\ndate is at (or near) the last day of the month. If the resulting month has fewer\ndays than the original DATETIME's day, then the result day is the last day of\nthe new month.",
+            "syntax": "DATETIME_SUB(datetime_expression, INTERVAL int64_expression part)",
+            "arguments": null
+        },
+        {
+            "name": "DATETIME_TRUNC",
+            "description": "Truncates a DATETIME value to the granularity of date_time_part.\nThe DATETIME value is always rounded to the beginning of date_time_part,\nwhich can be one of the following:",
+            "syntax": "DATETIME_TRUNC(datetime_expression, date_time_part)",
+            "arguments": null
+        },
+        {
+            "name": "EXTRACT",
+            "description": "Returns a value that corresponds to the\nspecified part from a supplied datetime_expression.\nAllowed part values are:\nReturned values truncate lower order time periods. For example, when extracting\nseconds, EXTRACT truncates the millisecond and microsecond values.",
+            "syntax": "EXTRACT(part FROM datetime_expression)",
+            "arguments": null
+        },
+        {
+            "name": "FORMAT_DATETIME",
+            "description": "Formats a DATETIME object according to the specified format_string. See\nSupported Format Elements For DATETIME\nfor a list of format elements that this function supports.",
+            "syntax": "FORMAT_DATETIME(format_string, datetime_expression)",
+            "arguments": null
+        },
+        {
+            "name": "LAST_DAY",
+            "description": "Returns the last day from a datetime expression that contains the date.\nThis is commonly used to return the last day of the month.\nYou can optionally specify the date part for which the last day is returned.\nIf this parameter is not used, the default value is MONTH.\nLAST_DAY supports the following values for date_part:",
+            "syntax": "LAST_DAY(datetime_expression[, date_part])",
+            "arguments": null
+        },
+        {
+            "name": "PARSE_DATETIME",
+            "description": "Converts a string representation of a datetime to a\nDATETIME object.\nformat_string contains the format elements\nthat define how datetime_string is formatted. Each element in\ndatetime_string must have a corresponding element in format_string. The\nlocation of each element in format_string must match the location of\neach element in datetime_string.\nThe format string fully supports most format elements, except for\n%P.",
+            "syntax": "PARSE_DATETIME(format_string, datetime_string)",
+            "arguments": null
+        },
+        {
+            "name": "ERROR",
+            "description": "Returns an error.",
+            "syntax": "ERROR(error_message)",
+            "arguments": null
+        },
+        {
+            "name": "AVG (DIFFERENTIAL_PRIVACY)",
+            "description": "Returns the average of non-NULL, non-NaN values in the expression.\nThis function first computes the average per privacy unit column, and then\ncomputes the final result by averaging these averages.\nThis function must be used with the DIFFERENTIAL_PRIVACY clause\nand can support the following arguments:",
+            "syntax": "WITH DIFFERENTIAL_PRIVACY ...\u00a0 AVG(\u00a0 \u00a0 expression,\u00a0 \u00a0 [contribution_bounds_per_group => (lower_bound, upper_bound)]\u00a0 )",
+            "arguments": null
+        },
+        {
+            "name": "COUNT (DIFFERENTIAL_PRIVACY)",
+            "description": "Returns the number of rows in the\ndifferentially private FROM clause. The final result\nis an aggregation across a privacy unit column.\nThis function must be used with the DIFFERENTIAL_PRIVACY clause\nand can support the following argument:",
+            "syntax": "WITH DIFFERENTIAL_PRIVACY ...\u00a0 COUNT(\u00a0 \u00a0 *,\u00a0 \u00a0 [contribution_bounds_per_group => (lower_bound, upper_bound)]\u00a0 )",
+            "arguments": null
+        },
+        {
+            "name": "PERCENTILE_CONT (DIFFERENTIAL_PRIVACY)",
+            "description": "Takes an expression and computes a percentile for it. The final result is an\naggregation across privacy unit columns.\nThis function must be used with the DIFFERENTIAL_PRIVACY clause\nand can support these arguments:\nNUMERIC and BIGNUMERIC arguments are not allowed.\n If you need them, cast them as the\nFLOAT64 data type first.",
+            "syntax": "WITH DIFFERENTIAL_PRIVACY ...\u00a0 PERCENTILE_CONT(\u00a0 \u00a0 expression,\u00a0 \u00a0 percentile,\u00a0 \u00a0 contribution_bounds_per_row => (lower_bound, upper_bound)\u00a0 )",
+            "arguments": null
+        },
+        {
+            "name": "SUM (DIFFERENTIAL_PRIVACY)",
+            "description": "Returns the sum of non-NULL, non-NaN values in the expression. The final\nresult is an aggregation across privacy unit columns.\nThis function must be used with the DIFFERENTIAL_PRIVACY clause\nand can support these arguments:",
+            "syntax": "WITH DIFFERENTIAL_PRIVACY ...\u00a0 SUM(\u00a0 \u00a0 expression,\u00a0 \u00a0 [contribution_bounds_per_group => (lower_bound, upper_bound)]\u00a0 )",
+            "arguments": null
+        },
+        {
+            "name": "EXTERNAL_QUERY",
+            "description": "Executes a query on an external database and returns the results as a\ntemporary table. The external database data type is\nconverted to a GoogleSQL data type in the temporary\nresult table with these data type mappings.\nconnection_id: The ID of the connection resource.\nThe connection resource contains settings for the connection between the\nexternal database and BigQuery.\nIf you do not have a default project configured, prepend the project ID to\nthe connection ID in following format:\nReplace the following:\nFor example, projects/example-project/locations/us/connections/sql-bq. For",
+            "syntax": "EXTERNAL_QUERY('connection_id', '''external_database_query'''[, 'options'])",
+            "arguments": null
+        },
+        {
+            "name": "DLP_DETERMINISTIC_ENCRYPT",
+            "description": "This function derives a data encryption key from key and context, and then\nencrypts plaintext. You can use surrogate to prepend the\nencryption result. To use DLP functions, you need a\nnew cryptographic key and then use that key to get a wrapped key.",
+            "syntax": "DLP_DETERMINISTIC_ENCRYPT(key, plaintext, surrogate)",
+            "arguments": null
+        },
+        {
+            "name": "DLP_DETERMINISTIC_DECRYPT",
+            "description": "This function decrypts ciphertext using an encryption key derived from key\nand context. You can use surrogate to prepend the decryption\nresult. To use DLP functions, you need a\nnew cryptographic key and then use that key to get a wrapped key.",
+            "syntax": "DLP_DETERMINISTIC_DECRYPT(key, ciphertext, surrogate)",
+            "arguments": null
+        },
+        {
+            "name": "DLP_KEY_CHAIN",
+            "description": "You can use this function instead of the key argument for\nDLP deterministic encryption functions. This function lets\nyou use the AES-SIV encryption functions\nwithout including plaintext keys in a query. To use DLP functions, you need a\nnew cryptographic key and then use that key to get a wrapped key.",
+            "syntax": "DLP_KEY_CHAIN(kms_resource_name, wrapped_key)",
+            "arguments": null
+        },
+        {
+            "name": "S2_CELLIDFROMPOINT",
+            "description": "Returns the S2 cell ID covering a point GEOGRAPHY.\nThis is advanced functionality for interoperability with systems utilizing the\nS2 Geometry Library.",
+            "syntax": "S2_CELLIDFROMPOINT(point_geography[, level => cell_level])",
+            "arguments": null
+        },
+        {
+            "name": "S2_COVERINGCELLIDS",
+            "description": "Returns an array of S2 cell IDs that cover the input\nGEOGRAPHY. The function returns at most max_cells cells. The optional\narguments min_level and max_level specify minimum and maximum levels for\nreturned S2 cells. The array size is limited by the optional max_cells\nargument. The optional buffer argument specifies a buffering factor in\nmeters; the region being covered is expanded from the extent of the\ninput geography by this amount.\nThis is advanced functionality for interoperability with systems utilizing the\nS2 Geometry Library.",
+            "syntax": "S2_COVERINGCELLIDS(\u00a0 \u00a0 geography\u00a0 \u00a0 [, min_level => cell_level]\u00a0 \u00a0 [, max_level => cell_level]\u00a0 \u00a0 [, max_cells => max_cells]\u00a0 \u00a0 [, buffer => buffer])",
+            "arguments": null
+        },
+        {
+            "name": "ST_ANGLE",
+            "description": "Takes three point GEOGRAPHY values, which represent two intersecting lines.\nReturns the angle between these lines. Point 2 and point 1 represent the first\nline and point 2 and point 3 represent the second line. The angle between\nthese lines is in radians, in the range [0, 2pi). The angle is measured\nclockwise from the first line to the second line.\nST_ANGLE has the following edge cases:",
+            "syntax": "ST_ANGLE(point_geography_1, point_geography_2, point_geography_3)",
+            "arguments": null
+        },
+        {
+            "name": "ST_AREA",
+            "description": "Returns the area in square meters covered by the polygons in the input\nGEOGRAPHY.\nIf geography_expression is a point or a line, returns zero. If\ngeography_expression is a collection, returns the area of the polygons in the\ncollection; if the collection does not contain polygons, returns zero.\nThe optional use_spheroid parameter determines how this function measures\ndistance. If use_spheroid is FALSE, the function measures distance on the\nsurface of a perfect sphere.\nThe use_spheroid parameter currently only supports\nthe value FALSE. The default value of use_spheroid is FALSE.",
+            "syntax": "ST_AREA(geography_expression[, use_spheroid])",
+            "arguments": null
+        },
+        {
+            "name": "ST_ASBINARY",
+            "description": "Returns the WKB representation of an input\nGEOGRAPHY.\nSee ST_GEOGFROMWKB to construct a\nGEOGRAPHY from WKB.",
+            "syntax": "ST_ASBINARY(geography_expression)",
+            "arguments": null
+        },
+        {
+            "name": "ST_ASGEOJSON",
+            "description": "Returns the RFC 7946 compliant GeoJSON\nrepresentation of the input GEOGRAPHY.\nA GoogleSQL GEOGRAPHY has spherical\ngeodesic edges, whereas a GeoJSON Geometry object explicitly has planar edges.\nTo convert between these two types of edges, GoogleSQL adds additional\npoints to the line where necessary so that the resulting sequence of edges\nremains within 10 meters of the original edge.\nSee ST_GEOGFROMGEOJSON to construct a\nGEOGRAPHY from GeoJSON.",
+            "syntax": "ST_ASGEOJSON(geography_expression)",
+            "arguments": null
+        },
+        {
+            "name": "ST_ASTEXT",
+            "description": "Returns the WKT representation of an input\nGEOGRAPHY.\nSee ST_GEOGFROMTEXT to construct a\nGEOGRAPHY from WKT.",
+            "syntax": "ST_ASTEXT(geography_expression)",
+            "arguments": null
+        },
+        {
+            "name": "ST_AZIMUTH",
+            "description": "Takes two point GEOGRAPHY values, and returns the azimuth of the line segment\nformed by points 1 and 2. The azimuth is the angle in radians measured between\nthe line from point 1 facing true North to the line segment from point 1 to\npoint 2.\nThe positive angle is measured clockwise on the surface of a sphere. For\nexample, the azimuth for a line segment:\nST_AZIMUTH has the following edge cases:",
+            "syntax": "ST_AZIMUTH(point_geography_1, point_geography_2)",
+            "arguments": null
+        },
+        {
+            "name": "ST_BOUNDARY",
+            "description": "Returns a single GEOGRAPHY that contains the union\nof the boundaries of each component in the given input\nGEOGRAPHY.\nThe boundary of each component of a GEOGRAPHY is\ndefined as follows:",
+            "syntax": "ST_BOUNDARY(geography_expression)",
+            "arguments": null
+        },
+        {
+            "name": "ST_BOUNDINGBOX",
+            "description": "Returns a STRUCT that represents the bounding box for the specified geography.\nThe bounding box is the minimal rectangle that encloses the geography. The edges\nof the rectangle follow constant lines of longitude and latitude.\nCaveats:",
+            "syntax": "ST_BOUNDINGBOX(geography_expression)",
+            "arguments": null
+        },
+        {
+            "name": "ST_BUFFER",
+            "description": "Returns a GEOGRAPHY that represents the buffer around the input GEOGRAPHY.\nThis function is similar to ST_BUFFERWITHTOLERANCE,\nbut you specify the number of segments instead of providing tolerance to\ndetermine how much the resulting geography can deviate from the ideal\nbuffer radius.",
+            "syntax": "ST_BUFFER(\u00a0 \u00a0 geography,\u00a0 \u00a0 buffer_radius\u00a0 \u00a0 [, num_seg_quarter_circle => num_segments]\u00a0 \u00a0 [, use_spheroid => boolean_expression]\u00a0 \u00a0 [, endcap => endcap_style]\u00a0 \u00a0 [, side => line_side])",
+            "arguments": null
+        },
+        {
+            "name": "ST_BUFFERWITHTOLERANCE",
+            "description": "Returns the centroid of the input GEOGRAPHY as a single point GEOGRAPHY.\nThe centroid of a GEOGRAPHY is the weighted average of the centroids of the\nhighest-dimensional components in the GEOGRAPHY. The centroid for components\nin each dimension is defined as follows:\nIf the input GEOGRAPHY is empty, an empty GEOGRAPHY is returned.",
+            "syntax": "ST_BUFFERWITHTOLERANCE(\u00a0 \u00a0 geography,\u00a0 \u00a0 buffer_radius,\u00a0 \u00a0 tolerance_meters => tolerance\u00a0 \u00a0 [, use_spheroid => boolean_expression]\u00a0 \u00a0 [, endcap => endcap_style]\u00a0 \u00a0 [, side => line_side])",
+            "arguments": null
+        },
+        {
+            "name": "ST_CENTROID",
+            "description": "Returns the centroid of the input GEOGRAPHY as a single point GEOGRAPHY.\nThe centroid of a GEOGRAPHY is the weighted average of the centroids of the\nhighest-dimensional components in the GEOGRAPHY. The centroid for components\nin each dimension is defined as follows:\nIf the input GEOGRAPHY is empty, an empty GEOGRAPHY is returned.",
+            "syntax": "ST_CENTROID(geography_expression)",
+            "arguments": null
+        },
+        {
+            "name": "ST_CENTROID_AGG",
+            "description": "Computes the centroid of the set of input GEOGRAPHYs as a single point\nGEOGRAPHY.\nThe centroid over the set of input GEOGRAPHYs is the weighted average of the\ncentroid of each individual GEOGRAPHY. Only the GEOGRAPHYs with the highest\ndimension present in the input contribute to the centroid of the entire set.\nFor example, if the input contains both GEOGRAPHYs  with lines and\nGEOGRAPHYs with only points, ST_CENTROID_AGG returns the weighted average\nof the GEOGRAPHYs with lines, since those have maximal dimension. In this\nexample, ST_CENTROID_AGG ignores GEOGRAPHYs with only points when\ncalculating the aggregate centroid.\nST_CENTROID_AGG ignores NULL input GEOGRAPHY values.\nSee ST_CENTROID for the non-aggregate version of\nST_CENTROID_AGG and the definition of centroid for an individual GEOGRAPHY\nvalue.",
+            "syntax": "ST_CENTROID_AGG(geography)",
+            "arguments": null
+        },
+        {
+            "name": "ST_CLOSESTPOINT",
+            "description": "Returns a GEOGRAPHY containing a point on\ngeography_1 with the smallest possible distance to geography_2. This implies\nthat the distance between the point returned by ST_CLOSESTPOINT and\ngeography_2 is less than or equal to the distance between any other point on\ngeography_1 and geography_2.\nIf either of the input GEOGRAPHYs is empty, ST_CLOSESTPOINT returns NULL.\nThe optional use_spheroid parameter determines how this function measures\ndistance. If use_spheroid is FALSE, the function measures distance on the\nsurface of a perfect sphere.\nThe use_spheroid parameter currently only supports\nthe value FALSE. The default value of use_spheroid is FALSE.",
+            "syntax": "ST_CLOSESTPOINT(geography_1, geography_2[, use_spheroid])",
+            "arguments": null
+        },
+        {
+            "name": "ST_CLUSTERDBSCAN",
+            "description": "Returns TRUE if no point of geography_2 is outside geography_1, and\nthe interiors intersect; returns FALSE otherwise.\nNOTE: A GEOGRAPHY does not contain its own\nboundary. Compare with ST_COVERS.",
+            "syntax": "ST_CLUSTERDBSCAN(geography_column, epsilon, minimum_geographies)OVER over_clauseover_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]\u00a0 [ ORDER BY expression [ { ASC | DESC } \u00a0] [, ...] ]",
+            "arguments": null
+        },
+        {
+            "name": "ST_CONTAINS",
+            "description": "Returns TRUE if no point of geography_2 is outside geography_1, and\nthe interiors intersect; returns FALSE otherwise.\nNOTE: A GEOGRAPHY does not contain its own\nboundary. Compare with ST_COVERS.",
+            "syntax": "ST_CONTAINS(geography_1, geography_2)",
+            "arguments": null
+        },
+        {
+            "name": "ST_CONVEXHULL",
+            "description": "Returns the convex hull for the input GEOGRAPHY. The convex hull is the\nsmallest convex GEOGRAPHY that covers the input. A GEOGRAPHY is convex if\nfor every pair of points in the GEOGRAPHY, the geodesic edge connecting the\npoints are also contained in the same GEOGRAPHY.\nIn most cases, the convex hull consists of a single polygon. Notable edge cases\ninclude the following:",
+            "syntax": "ST_CONVEXHULL(geography_expression)",
+            "arguments": null
+        },
+        {
+            "name": "ST_COVEREDBY",
+            "description": "Returns FALSE if geography_1 or geography_2 is empty. Returns TRUE if no\npoints of geography_1 lie in the exterior of geography_2.\nGiven two GEOGRAPHYs a and b,\nST_COVEREDBY(a, b) returns the same result as\nST_COVERS(b, a). Note the opposite order of arguments.",
+            "syntax": "ST_COVEREDBY(geography_1, geography_2)",
+            "arguments": null
+        },
+        {
+            "name": "ST_COVERS",
+            "description": "Returns FALSE if geography_1 or geography_2 is empty.\nReturns TRUE if no points of geography_2 lie in the exterior of\ngeography_1.",
+            "syntax": "ST_COVERS(geography_1, geography_2)",
+            "arguments": null
+        },
+        {
+            "name": "ST_DIFFERENCE",
+            "description": "Returns a GEOGRAPHY that represents the point set\ndifference of geography_1 and geography_2. Therefore, the result consists of\nthe part of geography_1 that does not intersect with geography_2.\nIf geometry_1 is completely contained in geometry_2, then ST_DIFFERENCE\nreturns an empty GEOGRAPHY.",
+            "syntax": "ST_DIFFERENCE(geography_1, geography_2)",
+            "arguments": null
+        },
+        {
+            "name": "ST_DIMENSION",
+            "description": "Returns the dimension of the highest-dimensional element in the input\nGEOGRAPHY.\nThe dimension of each possible element is as follows:\nIf the input GEOGRAPHY is empty, ST_DIMENSION\nreturns -1.",
+            "syntax": "ST_DIMENSION(geography_expression)",
+            "arguments": null
+        },
+        {
+            "name": "ST_DISJOINT",
+            "description": "Returns TRUE if the intersection of geography_1 and geography_2 is empty,\nthat is, no point in geography_1 also appears in geography_2.\nST_DISJOINT is the logical negation of ST_INTERSECTS.",
+            "syntax": "ST_DISJOINT(geography_1, geography_2)",
+            "arguments": null
+        },
+        {
+            "name": "ST_DISTANCE",
+            "description": "Returns the shortest distance in meters between two non-empty\nGEOGRAPHYs.\nIf either of the input GEOGRAPHYs is empty,\nST_DISTANCE returns NULL.\nThe optional use_spheroid parameter determines how this function measures\ndistance. If use_spheroid is FALSE, the function measures distance on the\nsurface of a perfect sphere. If use_spheroid is TRUE, the function measures\ndistance on the surface of the WGS84 spheroid. The default value\nof use_spheroid is FALSE.",
+            "syntax": "ST_DISTANCE(geography_1, geography_2[, use_spheroid])",
+            "arguments": null
+        },
+        {
+            "name": "ST_DUMP",
+            "description": "Returns an ARRAY of simple\nGEOGRAPHYs where each element is a component of\nthe input GEOGRAPHY. A simple\nGEOGRAPHY consists of a single point, linestring,\nor polygon. If the input GEOGRAPHY is simple, the\nresult is a single element. When the input\nGEOGRAPHY is a collection, ST_DUMP returns an\nARRAY with one simple\nGEOGRAPHY for each component in the collection.\nIf dimension is provided, the function only returns\nGEOGRAPHYs of the corresponding dimension. A\ndimension of -1 is equivalent to omitting dimension.",
+            "syntax": "ST_DUMP(geography[, dimension])",
+            "arguments": null
+        },
+        {
+            "name": "ST_DWITHIN",
+            "description": "Returns TRUE if the distance between at least one point in geography_1 and\none point in geography_2 is less than or equal to the distance given by the\ndistance argument; otherwise, returns FALSE. If either input\nGEOGRAPHY is empty, ST_DWithin returns FALSE. The\ngiven distance is in meters on the surface of the Earth.\nThe optional use_spheroid parameter determines how this function measures\ndistance. If use_spheroid is FALSE, the function measures distance on the\nsurface of a perfect sphere.\nThe use_spheroid parameter currently only supports\nthe value FALSE. The default value of use_spheroid is FALSE.",
+            "syntax": "ST_DWITHIN(geography_1, geography_2, distance[, use_spheroid])",
+            "arguments": null
+        },
+        {
+            "name": "ST_ENDPOINT",
+            "description": "Returns the last point of a linestring geography as a point geography. Returns\nan error if the input is not a linestring or if the input is empty. Use the\nSAFE prefix to obtain NULL for invalid input instead of an error.",
+            "syntax": "ST_ENDPOINT(linestring_geography)",
+            "arguments": null
+        },
+        {
+            "name": "ST_EQUALS",
+            "description": "Returns TRUE if geography_1 and geography_2 represent the same\nGEOGRAPHY value. More precisely, this means that\none of the following conditions holds:\n+   ST_COVERS(geography_1, geography_2) = TRUE and ST_COVERS(geography_2,\n    geography_1) = TRUE\n+   Both geography_1 and geography_2 are empty.\nTherefore, two GEOGRAPHYs may be equal even if the\nordering of points or vertices differ, as long as they still represent the same\ngeometric structure.",
+            "syntax": "ST_EQUALS(geography_1, geography_2)",
+            "arguments": null
+        },
+        {
+            "name": "ST_EXTENT",
+            "description": "Returns a STRUCT that represents the bounding box for the set of input\nGEOGRAPHY values. The bounding box is the minimal rectangle that encloses the\ngeography. The edges of the rectangle follow constant lines of longitude and\nlatitude.\nCaveats:",
+            "syntax": "ST_EXTENT(geography_expression)",
+            "arguments": null
+        },
+        {
+            "name": "ST_EXTERIORRING",
+            "description": "Returns a linestring geography that corresponds to the outermost ring of a\npolygon geography.\nUse the SAFE prefix to return NULL for invalid input instead of an error.",
+            "syntax": "ST_EXTERIORRING(polygon_geography)",
+            "arguments": null
+        },
+        {
+            "name": "ST_GEOGFROM",
+            "description": "Converts an expression for a STRING or BYTES value into a\nGEOGRAPHY value.\nIf expression represents a STRING value, it must be a valid\nGEOGRAPHY representation in one of the following formats:\nIf expression represents a BYTES value, it must be a valid GEOGRAPHY\nbinary expression in WKB format. To learn more about this format and the\nrequirements to use it, see ST_GEOGFROMWKB.\nIf expression is NULL, the output is NULL.",
+            "syntax": "ST_GEOGFROM(expression)",
+            "arguments": null
+        },
+        {
+            "name": "ST_GEOGFROMGEOJSON",
+            "description": "Returns a GEOGRAPHY value that corresponds to the\ninput GeoJSON representation.\nST_GEOGFROMGEOJSON accepts input that is RFC 7946\ncompliant.\nIf the parameter make_valid is set to TRUE, the function attempts to repair\npolygons that don't conform to Open Geospatial Consortium semantics.\nThis parameter uses named argument syntax, and should be specified using\nmake_valid => argument_value syntax.\nA GoogleSQL GEOGRAPHY has spherical\ngeodesic edges, whereas a GeoJSON Geometry object explicitly has planar edges.\nTo convert between these two types of edges, GoogleSQL adds additional\npoints to the line where necessary so that the resulting sequence of edges\nremains within 10 meters of the original edge.\nSee ST_ASGEOJSON to format a\nGEOGRAPHY as GeoJSON.",
+            "syntax": "ST_GEOGFROMGEOJSON(geojson_string [, make_valid => constant_expression])",
+            "arguments": null
+        },
+        {
+            "name": "ST_GEOGFROMTEXT",
+            "description": "Converts a STRING WKT geometry value into a GEOGRAPHY\nvalue.\nTo format GEOGRAPHY value as WKT, use ST_ASTEXT.",
+            "syntax": "ST_GEOGFROMTEXT(\u00a0 wkt_string\u00a0 [ , oriented => value ]\u00a0 [ , planar => value ]\u00a0 [ , make_valid => value ])",
+            "arguments": null
+        },
+        {
+            "name": "ST_GEOGFROMWKB",
+            "description": "Converts an expression from a hexadecimal-text STRING or BYTES\nvalue into a GEOGRAPHY value. The expression must be in\nWKB format.\nTo format GEOGRAPHY as WKB, use ST_ASBINARY.",
+            "syntax": "ST_GEOGFROMWKB(\u00a0 wkb_bytes_expression\u00a0 [ , oriented => value ]\u00a0 [ , planar => value ]\u00a0 [ , make_valid => value ])",
+            "arguments": null
+        },
+        {
+            "name": "ST_GEOGPOINT",
+            "description": "Creates a GEOGRAPHY with a single point. ST_GEOGPOINT creates a point from\nthe specified FLOAT64 longitude (in degrees,\nnegative west of the Prime Meridian, positive east) and latitude (in degrees,\npositive north of the Equator, negative south) parameters and returns that point\nin a GEOGRAPHY value.\nNOTE: Some systems present latitude first; take care with argument order.",
+            "syntax": "ST_GEOGPOINT(longitude, latitude)",
+            "arguments": null
+        },
+        {
+            "name": "ST_GEOGPOINTFROMGEOHASH",
+            "description": "Returns a GEOGRAPHY value that corresponds to a\npoint in the middle of a bounding box defined in the GeoHash.",
+            "syntax": "ST_GEOGPOINTFROMGEOHASH(geohash)",
+            "arguments": null
+        },
+        {
+            "name": "ST_GEOHASH",
+            "description": "Takes a single-point GEOGRAPHY and returns a GeoHash\nrepresentation of that GEOGRAPHY object.",
+            "syntax": "ST_GEOHASH(geography_expression[, maxchars])",
+            "arguments": null
+        },
+        {
+            "name": "ST_GEOMETRYTYPE",
+            "description": "Returns the Open Geospatial Consortium (OGC) geometry type that\ndescribes the input GEOGRAPHY. The OGC geometry type matches the\ntypes that are used in WKT and GeoJSON formats and\nprinted for ST_ASTEXT and ST_ASGEOJSON.\nST_GEOMETRYTYPE returns the OGC geometry type with the \"ST_\" prefix.\nST_GEOMETRYTYPE returns the following given the type on the input:",
+            "syntax": "ST_GEOMETRYTYPE(geography_expression)",
+            "arguments": null
+        },
+        {
+            "name": "ST_HAUSDORFFDISTANCE",
+            "description": "Gets the discrete Hausdorff distance, which is the greatest of all\nthe distances from a discrete point in one geography to the closest\ndiscrete point in another geography.",
+            "syntax": "ST_HAUSDORFFDISTANCE(geography_1, geography_2)",
+            "arguments": null
+        },
+        {
+            "name": "ST_INTERIORRINGS",
+            "description": "Returns an array of linestring geographies that corresponds to the interior\nrings of a polygon geography. Each interior ring is the border of a hole within\nthe input polygon.\nUse the SAFE prefix to return NULL for invalid input instead of an error.",
+            "syntax": "ST_INTERIORRINGS(polygon_geography)",
+            "arguments": null
+        },
+        {
+            "name": "ST_INTERSECTION",
+            "description": "Returns a GEOGRAPHY that represents the point set\nintersection of the two input GEOGRAPHYs. Thus,\nevery point in the intersection appears in both geography_1 and geography_2.\nIf the two input GEOGRAPHYs are disjoint, that is,\nthere are no points that appear in both input geometry_1 and geometry_2,\nthen an empty GEOGRAPHY is returned.\nSee ST_INTERSECTS, ST_DISJOINT for related\npredicate functions.",
+            "syntax": "ST_INTERSECTION(geography_1, geography_2)",
+            "arguments": null
+        },
+        {
+            "name": "ST_INTERSECTS",
+            "description": "Returns TRUE if the point set intersection of geography_1 and geography_2\nis non-empty. Thus, this function returns TRUE if there is at least one point\nthat appears in both input GEOGRAPHYs.\nIf ST_INTERSECTS returns TRUE, it implies that ST_DISJOINT\nreturns FALSE.",
+            "syntax": "ST_INTERSECTS(geography_1, geography_2)",
+            "arguments": null
+        },
+        {
+            "name": "ST_INTERSECTSBOX",
+            "description": "Returns TRUE if geography intersects the rectangle between [lng1, lng2]\nand [lat1, lat2]. The edges of the rectangle follow constant lines of\nlongitude and latitude. lng1 and lng2 specify the westmost and eastmost\nconstant longitude lines that bound the rectangle, and lat1 and lat2 specify\nthe minimum and maximum constant latitude lines that bound the rectangle.\nSpecify all longitude and latitude arguments in degrees.",
+            "syntax": "ST_INTERSECTSBOX(geography, lng1, lat1, lng2, lat2)",
+            "arguments": null
+        },
+        {
+            "name": "ST_ISCLOSED",
+            "description": "Returns TRUE for a non-empty Geography, where each element in the Geography\nhas an empty boundary. The boundary for each element can be defined with\nST_BOUNDARY.\nAn empty GEOGRAPHY is not closed.",
+            "syntax": "ST_ISCLOSED(geography_expression)",
+            "arguments": null
+        },
+        {
+            "name": "ST_ISCOLLECTION",
+            "description": "Returns TRUE if the total number of points, linestrings, and polygons is\ngreater than one.\nAn empty GEOGRAPHY is not a collection.",
+            "syntax": "ST_ISCOLLECTION(geography_expression)",
+            "arguments": null
+        },
+        {
+            "name": "ST_ISEMPTY",
+            "description": "Returns TRUE if the given GEOGRAPHY is empty; that is, the GEOGRAPHY does\nnot contain any points, lines, or polygons.\nNOTE: An empty GEOGRAPHY is not associated with a particular geometry shape.\nFor example, the results of expressions ST_GEOGFROMTEXT('POINT EMPTY') and\nST_GEOGFROMTEXT('GEOMETRYCOLLECTION EMPTY') are identical.",
+            "syntax": "ST_ISEMPTY(geography_expression)",
+            "arguments": null
+        },
+        {
+            "name": "ST_ISRING",
+            "description": "Returns TRUE if the input GEOGRAPHY is a linestring and if the\nlinestring is both ST_ISCLOSED and\nsimple. A linestring is considered simple if it does not pass through the\nsame point twice (with the exception of the start and endpoint, which may\noverlap to form a ring).\nAn empty GEOGRAPHY is not a ring.",
+            "syntax": "ST_ISRING(geography_expression)",
+            "arguments": null
+        },
+        {
+            "name": "ST_LENGTH",
+            "description": "Returns the total length in meters of the lines in the input\nGEOGRAPHY.\nIf geography_expression is a point or a polygon, returns zero. If\ngeography_expression is a collection, returns the length of the lines in the\ncollection; if the collection does not contain lines, returns zero.\nThe optional use_spheroid parameter determines how this function measures\ndistance. If use_spheroid is FALSE, the function measures distance on the\nsurface of a perfect sphere.\nThe use_spheroid parameter currently only supports\nthe value FALSE. The default value of use_spheroid is FALSE.",
+            "syntax": "ST_LENGTH(geography_expression[, use_spheroid])",
+            "arguments": null
+        },
+        {
+            "name": "ST_LINEINTERPOLATEPOINT",
+            "description": "Gets a point at a specific fraction in a linestring GEOGRAPHY\nvalue.",
+            "syntax": "ST_LINEINTERPOLATEPOINT(linestring_geography, fraction)",
+            "arguments": null
+        },
+        {
+            "name": "ST_LINELOCATEPOINT",
+            "description": "Gets a section of a linestring between the start point and a selected point (a\npoint on the linestring closest to the point_geography argument). Returns the\npercentage that this section represents in the linestring.\nDetails:\nNULL and error handling:",
+            "syntax": "ST_LINELOCATEPOINT(linestring_geography, point_geography)",
+            "arguments": null
+        },
+        {
+            "name": "ST_LINESUBSTRING",
+            "description": "Gets a segment of a linestring at a specific starting and ending fraction.",
+            "syntax": "ST_LINESUBSTRING(linestring_geography, start_fraction, end_fraction);",
+            "arguments": null
+        },
+        {
+            "name": "ST_MAKELINE",
+            "description": "Creates a GEOGRAPHY with a single linestring by\nconcatenating the point or line vertices of each of the input\nGEOGRAPHYs in the order they are given.\nST_MAKELINE comes in two variants. For the first variant, input must be two\nGEOGRAPHYs. For the second, input must be an ARRAY of type GEOGRAPHY. In\neither variant, each input GEOGRAPHY must consist of one of the following\nvalues:\nFor the first variant of ST_MAKELINE, if either input GEOGRAPHY is NULL,\nST_MAKELINE returns NULL. For the second variant, if input ARRAY or any\nelement in the input ARRAY is NULL, ST_MAKELINE returns NULL.",
+            "syntax": "ST_MAKELINE(geography_1, geography_2)",
+            "arguments": null
+        },
+        {
+            "name": "ST_MAKEPOLYGON",
+            "description": "Creates a GEOGRAPHY containing a single polygon\nfrom linestring inputs, where each input linestring is used to construct a\npolygon ring.\nST_MAKEPOLYGON comes in two variants. For the first variant, the input\nlinestring is provided by a single GEOGRAPHY containing exactly one\nlinestring. For the second variant, the input consists of a single GEOGRAPHY\nand an array of GEOGRAPHYs, each containing exactly one linestring.\nThe first GEOGRAPHY in either variant is used to construct the polygon shell.\nAdditional GEOGRAPHYs provided in the input ARRAY specify a polygon hole.\nFor every input GEOGRAPHY containing exactly one linestring, the following\nmust be true:\nFor the first variant of ST_MAKEPOLYGON, if either input GEOGRAPHY is\nNULL, ST_MAKEPOLYGON returns NULL. For the second variant, if\ninput ARRAY or any element in the ARRAY is NULL, ST_MAKEPOLYGON returns\nNULL.\nNOTE: ST_MAKEPOLYGON accepts an empty GEOGRAPHY as input. ST_MAKEPOLYGON\ninterprets an empty GEOGRAPHY as having an empty linestring, which will\ncreate a full loop: that is, a polygon that covers the entire Earth.",
+            "syntax": "ST_MAKEPOLYGON(polygon_shell[, array_of_polygon_holes])",
+            "arguments": null
+        },
+        {
+            "name": "ST_MAKEPOLYGONORIENTED",
+            "description": "Like ST_MAKEPOLYGON, but the vertex ordering of each input linestring\ndetermines the orientation of each polygon ring. The orientation of a polygon\nring defines the interior of the polygon as follows: if someone walks along the\nboundary of the polygon in the order of the input vertices, the interior of the\npolygon is on the left. This applies for each polygon ring provided.\nThis variant of the polygon constructor is more flexible since\nST_MAKEPOLYGONORIENTED can construct a polygon such that the interior is on\neither side of the polygon ring. However, proper orientation of polygon rings is\ncritical in order to construct the desired polygon.\nIf the input ARRAY or any element in the ARRAY is NULL,\nST_MAKEPOLYGONORIENTED returns NULL.\nNOTE: The input argument for ST_MAKEPOLYGONORIENTED may contain an empty\nGEOGRAPHY. ST_MAKEPOLYGONORIENTED interprets an empty GEOGRAPHY as having\nan empty linestring, which will create a full loop: that is, a polygon that\ncovers the entire Earth.",
+            "syntax": "ST_MAKEPOLYGONORIENTED(array_of_geography)",
+            "arguments": null
+        },
+        {
+            "name": "ST_MAXDISTANCE",
+            "description": "",
+            "syntax": "ST_MAXDISTANCE(geography_1, geography_2[, use_spheroid])",
+            "arguments": null
+        },
+        {
+            "name": "ST_NPOINTS",
+            "description": "",
+            "syntax": "ST_NPOINTS(geography_expression)",
+            "arguments": null
+        },
+        {
+            "name": "ST_NUMGEOMETRIES",
+            "description": "Returns the number of geometries in the input GEOGRAPHY. For a single point,\nlinestring, or polygon, ST_NUMGEOMETRIES returns 1. For any collection of\ngeometries, ST_NUMGEOMETRIES returns the number of geometries making up the\ncollection. ST_NUMGEOMETRIES returns 0 if the input is the empty\nGEOGRAPHY.",
+            "syntax": "ST_NUMGEOMETRIES(geography_expression)",
+            "arguments": null
+        },
+        {
+            "name": "ST_NUMPOINTS",
+            "description": "Returns the number of vertices in the input\nGEOGRAPHY. This includes the number of points, the\nnumber of linestring vertices, and the number of polygon vertices.\nNOTE: The first and last vertex of a polygon ring are counted as distinct\nvertices.",
+            "syntax": "ST_NUMPOINTS(geography_expression)",
+            "arguments": null
+        },
+        {
+            "name": "ST_PERIMETER",
+            "description": "Returns the length in meters of the boundary of the polygons in the input\nGEOGRAPHY.\nIf geography_expression is a point or a line, returns zero. If\ngeography_expression is a collection, returns the perimeter of the polygons\nin the collection; if the collection does not contain polygons, returns zero.\nThe optional use_spheroid parameter determines how this function measures\ndistance. If use_spheroid is FALSE, the function measures distance on the\nsurface of a perfect sphere.\nThe use_spheroid parameter currently only supports\nthe value FALSE. The default value of use_spheroid is FALSE.",
+            "syntax": "ST_PERIMETER(geography_expression[, use_spheroid])",
+            "arguments": null
+        },
+        {
+            "name": "ST_POINTN",
+            "description": "Returns the Nth point of a linestring geography as a point geography, where N is\nthe index. The index is 1-based. Negative values are counted backwards from the\nend of the linestring, so that -1 is the last point. Returns an error if the\ninput is not a linestring, if the input is empty, or if there is no vertex at\nthe given index. Use the SAFE prefix to obtain NULL for invalid input\ninstead of an error.",
+            "syntax": "ST_POINTN(linestring_geography, index)",
+            "arguments": null
+        },
+        {
+            "name": "ST_SIMPLIFY",
+            "description": "Returns a simplified version of geography, the given input\nGEOGRAPHY. The input GEOGRAPHY is simplified by replacing nearly straight\nchains of short edges with a single long edge. The input geography will not\nchange by more than the tolerance specified by tolerance_meters. Thus,\nsimplified edges are guaranteed to pass within tolerance_meters of the\noriginal positions of all vertices that were removed from that edge. The given\ntolerance_meters is in meters on the surface of the Earth.\nNote that ST_SIMPLIFY preserves topological relationships, which means that\nno new crossing edges will be created and the output will be valid. For a large\nenough tolerance, adjacent shapes may collapse into a single object, or a shape\ncould be simplified to a shape with a smaller dimension.",
+            "syntax": "ST_SIMPLIFY(geography, tolerance_meters)",
+            "arguments": null
+        },
+        {
+            "name": "ST_SNAPTOGRID",
+            "description": "Returns the input GEOGRAPHY, where each vertex has\nbeen snapped to a longitude/latitude grid. The grid size is determined by the\ngrid_size parameter which is given in degrees.",
+            "syntax": "ST_SNAPTOGRID(geography_expression, grid_size)",
+            "arguments": null
+        },
+        {
+            "name": "ST_STARTPOINT",
+            "description": "Returns the first point of a linestring geography as a point geography. Returns\nan error if the input is not a linestring or if the input is empty. Use the\nSAFE prefix to obtain NULL for invalid input instead of an error.",
+            "syntax": "ST_STARTPOINT(linestring_geography)",
+            "arguments": null
+        },
+        {
+            "name": "ST_TOUCHES",
+            "description": "Returns TRUE provided the following two conditions are satisfied:",
+            "syntax": "ST_TOUCHES(geography_1, geography_2)",
+            "arguments": null
+        },
+        {
+            "name": "ST_UNION",
+            "description": "Returns a GEOGRAPHY that represents the point set\nunion of all input GEOGRAPHYs.\nST_UNION comes in two variants. For the first variant, input must be two\nGEOGRAPHYs. For the second, the input is an\nARRAY of type GEOGRAPHY.\nFor the first variant of ST_UNION, if an input\nGEOGRAPHY is NULL, ST_UNION returns NULL.\nFor the second variant, if the input ARRAY value\nis NULL, ST_UNION returns NULL.\nFor a non-NULL input ARRAY, the union is computed\nand NULL elements are ignored so that they do not affect the output.\nSee ST_UNION_AGG for the aggregate version of ST_UNION.",
+            "syntax": "ST_UNION(geography_1, geography_2)",
+            "arguments": null
+        },
+        {
+            "name": "ST_UNION_AGG",
+            "description": "Returns a GEOGRAPHY that represents the point set\nunion of all input GEOGRAPHYs.\nST_UNION_AGG ignores NULL input GEOGRAPHY values.\nSee ST_UNION for the non-aggregate version of ST_UNION_AGG.",
+            "syntax": "ST_UNION_AGG(geography)",
+            "arguments": null
+        },
+        {
+            "name": "ST_WITHIN",
+            "description": "Returns TRUE if no point of geography_1 is outside of geography_2 and\nthe interiors of geography_1 and geography_2 intersect.\nGiven two geographies a and b, ST_WITHIN(a, b) returns the same result\nas ST_CONTAINS(b, a). Note the opposite order of arguments.",
+            "syntax": "ST_WITHIN(geography_1, geography_2)",
+            "arguments": null
+        },
+        {
+            "name": "ST_X",
+            "description": "Returns the longitude in degrees of the single-point input\nGEOGRAPHY.\nFor any input GEOGRAPHY that is not a single point,\nincluding an empty GEOGRAPHY, ST_X returns an\nerror. Use the SAFE. prefix to obtain NULL.",
+            "syntax": "ST_X(point_geography_expression)",
+            "arguments": null
+        },
+        {
+            "name": "ST_Y",
+            "description": "Returns the latitude in degrees of the single-point input\nGEOGRAPHY.\nFor any input GEOGRAPHY that is not a single point,\nincluding an empty GEOGRAPHY, ST_Y returns an\nerror. Use the SAFE. prefix to return NULL instead.",
+            "syntax": "ST_Y(point_geography_expression)",
+            "arguments": null
+        },
+        {
+            "name": "FARM_FINGERPRINT",
+            "description": "Computes the fingerprint of the STRING or BYTES input using the\nFingerprint64 function from the\nopen-source FarmHash library. The output\nof this function for a particular input will never change.",
+            "syntax": "FARM_FINGERPRINT(value)",
+            "arguments": null
+        },
+        {
+            "name": "MD5",
+            "description": "Computes the hash of the input using the\nMD5 algorithm. The input can either be\nSTRING or BYTES. The string version treats the input as an array of bytes.",
+            "syntax": "MD5(input)",
+            "arguments": null
+        },
+        {
+            "name": "SHA1",
+            "description": "Computes the hash of the input using the\nSHA-1 algorithm. The input can either be\nSTRING or BYTES. The string version treats the input as an array of bytes.",
+            "syntax": "SHA1(input)",
+            "arguments": null
+        },
+        {
+            "name": "SHA256",
+            "description": "Computes the hash of the input using the\nSHA-256 algorithm. The input can either be\nSTRING or BYTES. The string version treats the input as an array of bytes.\nThis function returns 32 bytes.",
+            "syntax": "SHA256(input)",
+            "arguments": null
+        },
+        {
+            "name": "SHA512",
+            "description": "Computes the hash of the input using the\nSHA-512 algorithm. The input can either be\nSTRING or BYTES. The string version treats the input as an array of bytes.\nThis function returns 64 bytes.",
+            "syntax": "SHA512(input)",
+            "arguments": null
+        },
+        {
+            "name": "HLL_COUNT.EXTRACT",
+            "description": "A scalar function that extracts a cardinality estimate of a single\nHLL++ sketch.\nIf sketch is NULL, this function returns a cardinality estimate of 0.",
+            "syntax": "HLL_COUNT.EXTRACT(sketch)",
+            "arguments": null
+        },
+        {
+            "name": "HLL_COUNT.INIT",
+            "description": "An aggregate function that takes one or more input values and aggregates them\ninto a HLL++ sketch. Each sketch\nis represented using the BYTES data type. You can then merge sketches using\nHLL_COUNT.MERGE or HLL_COUNT.MERGE_PARTIAL. If no merging is needed,\nyou can extract the final count of distinct values from the sketch using\nHLL_COUNT.EXTRACT.\nThis function supports an optional parameter, precision. This parameter\ndefines the accuracy of the estimate at the cost of additional memory required\nto process the sketches or store them on disk. The range for this value is\n10 to 24. The default value is 15. For more information about precision,\nsee Precision for sketches.\nIf the input is NULL, this function returns NULL.\nFor more information, see HyperLogLog in Practice: Algorithmic Engineering of\na State of The Art Cardinality Estimation Algorithm.",
+            "syntax": "HLL_COUNT.INIT(input [, precision])",
+            "arguments": null
+        },
+        {
+            "name": "HLL_COUNT.MERGE",
+            "description": "An aggregate function that returns the cardinality of several\nHLL++ sketches by computing their union.\nEach sketch must be initialized on the same type. Attempts to merge sketches\nfor different types results in an error. For example, you cannot merge a sketch\ninitialized from INT64 data with one initialized from STRING data.\nIf the merged sketches were initialized with different precisions, the precision\nwill be downgraded to the lowest precision involved in the merge.\nThis function ignores NULL values when merging sketches. If the merge happens\nover zero rows or only over NULL values, the function returns 0.",
+            "syntax": "HLL_COUNT.MERGE(sketch)",
+            "arguments": null
+        },
+        {
+            "name": "HLL_COUNT.MERGE_PARTIAL",
+            "description": "An aggregate function that takes one or more\nHLL++ sketch\ninputs and merges them into a new sketch.\nEach sketch must be initialized on the same type. Attempts to merge sketches\nfor different types results in an error. For example, you cannot merge a sketch\ninitialized from INT64 data with one initialized from STRING data.\nIf the merged sketches were initialized with different precisions, the precision\nwill be downgraded to the lowest precision involved in the merge. For example,\nif MERGE_PARTIAL encounters sketches of precision 14 and 15, the returned new\nsketch will have precision 14.\nThis function returns NULL if there is no input or all inputs are NULL.",
+            "syntax": "HLL_COUNT.MERGE_PARTIAL(sketch)",
+            "arguments": null
+        },
+        {
+            "name": "EXTRACT",
+            "description": "Returns the value corresponding to the specified date part. The part must be\none of YEAR, MONTH, DAY, HOUR, MINUTE, SECOND, MILLISECOND or\nMICROSECOND.",
+            "syntax": "EXTRACT(part FROM interval_expression)",
+            "arguments": null
+        },
+        {
+            "name": "JUSTIFY_DAYS",
+            "description": "Normalizes the day part of the interval to the range from -29 to 29 by\nincrementing/decrementing the month or year part of the interval.",
+            "syntax": "JUSTIFY_DAYS(interval_expression)",
+            "arguments": null
+        },
+        {
+            "name": "JUSTIFY_HOURS",
+            "description": "Normalizes the time part of the interval to the range from -23:59:59.999999 to\n23:59:59.999999 by incrementing/decrementing the day part of the interval.",
+            "syntax": "JUSTIFY_HOURS(interval_expression)",
+            "arguments": null
+        },
+        {
+            "name": "JUSTIFY_INTERVAL",
+            "description": "Normalizes the days and time parts of the interval.",
+            "syntax": "JUSTIFY_INTERVAL(interval_expression)",
+            "arguments": null
+        },
+        {
+            "name": "MAKE_INTERVAL",
+            "description": "Constructs an INTERVAL object using INT64 values\nrepresenting the year, month, day, hour, minute, and second. All arguments are\noptional, 0 by default, and can be named arguments.",
+            "syntax": "MAKE_INTERVAL([year][, month][, day][, hour][, minute][, second])",
+            "arguments": null
+        },
+        {
+            "name": "BOOL",
+            "description": "Converts a JSON boolean to a SQL BOOL value.\nArguments:\njson_expr: JSON. For example:\nIf the JSON value is not a boolean, an error is produced. If the expression\nis SQL NULL, the function returns SQL NULL.",
+            "syntax": "BOOL(json_expr)",
+            "arguments": null
+        },
+        {
+            "name": "FLOAT64",
+            "description": "Converts a JSON number to a SQL FLOAT64 value.\nArguments:\njson_expr: JSON. For example:\nIf the JSON value is not a number, an error is produced. If the expression\nis a SQL NULL, the function returns SQL NULL.\nwide_number_mode: Optional mandatory-named argument,\nwhich defines what happens with a number that cannot be\nrepresented as a FLOAT64 without loss of\nprecision. This argument accepts one of the two case-sensitive values:",
+            "syntax": "FLOAT64(json_expr[, wide_number_mode=>{ 'exact' | 'round' }])",
+            "arguments": null
+        },
+        {
+            "name": "INT64",
+            "description": "Converts a JSON number to a SQL INT64 value.\nArguments:\njson_expr: JSON. For example:\nIf the JSON value is not a number, or the JSON number is not in the SQL\nINT64 domain, an error is produced. If the expression is SQL NULL, the\nfunction returns SQL NULL.",
+            "syntax": "INT64(json_expr)",
+            "arguments": null
+        },
+        {
+            "name": "JSON_ARRAY",
+            "description": "Creates a JSON array from zero or more SQL values.\nArguments:",
+            "syntax": "JSON_ARRAY([value][, ...])",
+            "arguments": null
+        },
+        {
+            "name": "JSON_ARRAY_APPEND",
+            "description": "Extracts a JSON value and converts it to a\nSQL JSON-formatted STRING or JSON value.\nThis function uses single quotes and brackets to escape invalid\nJSONPath characters in JSON keys. For example: ['a.b'].\nArguments:\njson_string_expr: A JSON-formatted string. For example:\nExtracts a SQL NULL when a JSON-formatted string null is encountered.\nFor example:\njson_expr: JSON. For example:\nExtracts a JSON null when a JSON null is encountered.\njson_path: The JSONPath. This identifies the data that\nyou want to obtain from the input.\nThere are differences between the JSON-formatted string and JSON input types.\nFor details, see Differences between the JSON and JSON-formatted STRING types.",
+            "syntax": "JSON_ARRAY_APPEND(\u00a0 json_expr,\u00a0 json_path_value_pair[, ...]\u00a0 [, append_each_element=>{ TRUE | FALSE }])json_path_value_pair:\u00a0 json_path, value",
+            "arguments": null
+        },
+        {
+            "name": "JSON_ARRAY_INSERT",
+            "description": "Extracts a JSON value and converts it to a\nSQL JSON-formatted STRING or JSON value.\nThis function uses single quotes and brackets to escape invalid\nJSONPath characters in JSON keys. For example: ['a.b'].\nArguments:\njson_string_expr: A JSON-formatted string. For example:\nExtracts a SQL NULL when a JSON-formatted string null is encountered.\nFor example:\njson_expr: JSON. For example:\nExtracts a JSON null when a JSON null is encountered.\njson_path: The JSONPath. This identifies the data that\nyou want to obtain from the input.\nThere are differences between the JSON-formatted string and JSON input types.\nFor details, see Differences between the JSON and JSON-formatted STRING types.",
+            "syntax": "JSON_ARRAY_INSERT(\u00a0 json_expr,\u00a0 json_path_value_pair[, ...]\u00a0 [, insert_each_element=>{ TRUE | FALSE }])json_path_value_pair:\u00a0 json_path, value",
+            "arguments": null
+        },
+        {
+            "name": "JSON_EXTRACT",
+            "description": "Extracts a JSON value and converts it to a\nSQL JSON-formatted STRING or JSON value.\nThis function uses single quotes and brackets to escape invalid\nJSONPath characters in JSON keys. For example: ['a.b'].\nArguments:\njson_string_expr: A JSON-formatted string. For example:\nExtracts a SQL NULL when a JSON-formatted string null is encountered.\nFor example:\njson_expr: JSON. For example:\nExtracts a JSON null when a JSON null is encountered.\njson_path: The JSONPath. This identifies the data that\nyou want to obtain from the input.\nThere are differences between the JSON-formatted string and JSON input types.\nFor details, see Differences between the JSON and JSON-formatted STRING types.",
+            "syntax": "JSON_EXTRACT(json_string_expr, json_path)",
+            "arguments": null
+        },
+        {
+            "name": "JSON_EXTRACT_ARRAY",
+            "description": "Extracts a JSON array and converts it to\na SQL ARRAY<JSON-formatted STRING> or\nARRAY<JSON> value.\nThis function uses single quotes and brackets to escape invalid\nJSONPath characters in JSON keys. For example: ['a.b'].\nArguments:\njson_string_expr: A JSON-formatted string. For example:\njson_expr: JSON. For example:\njson_path: The JSONPath. This identifies the data that\nyou want to obtain from the input. If this optional parameter is not\nprovided, then the JSONPath $ symbol is applied, which means that all of\nthe data is analyzed.\nThere are differences between the JSON-formatted string and JSON input types.\nFor details, see Differences between the JSON and JSON-formatted STRING types.",
+            "syntax": "JSON_EXTRACT_ARRAY(json_string_expr[, json_path])",
+            "arguments": null
+        },
+        {
+            "name": "JSON_EXTRACT_SCALAR",
+            "description": "Extracts a JSON scalar value and converts it to a SQL STRING value.\nIn addition, this function:\nArguments:\njson_string_expr: A JSON-formatted string. For example:\njson_expr: JSON. For example:\njson_path: The JSONPath. This identifies the data that\nyou want to obtain from the input. If this optional parameter is not\nprovided, then the JSONPath $ symbol is applied, which means that all of\nthe data is analyzed.\nIf json_path returns a JSON null or a non-scalar value (in other words,\nif json_path refers to an object or an array), then a SQL NULL is\nreturned.\nThere are differences between the JSON-formatted string and JSON input types.\nFor details, see Differences between the JSON and JSON-formatted STRING types.",
+            "syntax": "JSON_EXTRACT_SCALAR(json_string_expr[, json_path])",
+            "arguments": null
+        },
+        {
+            "name": "JSON_EXTRACT_STRING_ARRAY",
+            "description": "Extracts a JSON array of scalar values and converts it to a SQL ARRAY<STRING>\nvalue. In addition, this function:\nArguments:\njson_string_expr: A JSON-formatted string. For example:\njson_expr: JSON. For example:\njson_path: The JSONPath. This identifies the data that\nyou want to obtain from the input. If this optional parameter is not\nprovided, then the JSONPath $ symbol is applied, which means that all of\nthe data is analyzed.\nThere are differences between the JSON-formatted string and JSON input types.\nFor details, see Differences between the JSON and JSON-formatted STRING types.\nCaveats:",
+            "syntax": "JSON_EXTRACT_STRING_ARRAY(json_string_expr[, json_path])",
+            "arguments": null
+        },
+        {
+            "name": "JSON_OBJECT",
+            "description": "Creates a JSON object, using key-value pairs.\nArguments:\nDetails:",
+            "syntax": "JSON_OBJECT([json_key, json_value][, ...])",
+            "arguments": null
+        },
+        {
+            "name": "JSON_QUERY",
+            "description": "Extracts a JSON value and converts it to a SQL\nJSON-formatted STRING or\nJSON value.\nThis function uses double quotes to escape invalid\nJSONPath characters in JSON keys. For example: \"a.b\".\nArguments:\njson_string_expr: A JSON-formatted string. For example:\nExtracts a SQL NULL when a JSON-formatted string null is encountered.\nFor example:\njson_expr: JSON. For example:\nExtracts a JSON null when a JSON null is encountered.\njson_path: The JSONPath. This identifies the data that\nyou want to obtain from the input.\nThere are differences between the JSON-formatted string and JSON input types.\nFor details, see Differences between the JSON and JSON-formatted STRING types.",
+            "syntax": "JSON_QUERY(json_string_expr, json_path)",
+            "arguments": null
+        },
+        {
+            "name": "JSON_QUERY_ARRAY",
+            "description": "Extracts a JSON array and converts it to\na SQL ARRAY<JSON-formatted STRING> or\nARRAY<JSON> value.\nIn addition, this function uses double quotes to escape invalid\nJSONPath characters in JSON keys. For example: \"a.b\".\nArguments:\njson_string_expr: A JSON-formatted string. For example:\njson_expr: JSON. For example:\njson_path: The JSONPath. This identifies the data that\nyou want to obtain from the input. If this optional parameter is not\nprovided, then the JSONPath $ symbol is applied, which means that all of\nthe data is analyzed.\nThere are differences between the JSON-formatted string and JSON input types.\nFor details, see Differences between the JSON and JSON-formatted STRING types.",
+            "syntax": "JSON_QUERY_ARRAY(json_string_expr[, json_path])",
+            "arguments": null
+        },
+        {
+            "name": "JSON_REMOVE",
+            "description": "Gets the JSON type of the outermost JSON value and converts the name of\nthis type to a SQL STRING value. The names of these JSON types can be\nreturned: object, array, string, number, boolean, null\nArguments:\njson_expr: JSON. For example:\nIf this expression is SQL NULL, the function returns SQL NULL. If the\nextracted JSON value is not a valid JSON type, an error is produced.",
+            "syntax": "JSON_REMOVE(json_expr, json_path[, ...])",
+            "arguments": null
+        },
+        {
+            "name": "JSON_SET",
+            "description": "Gets the JSON type of the outermost JSON value and converts the name of\nthis type to a SQL STRING value. The names of these JSON types can be\nreturned: object, array, string, number, boolean, null\nArguments:\njson_expr: JSON. For example:\nIf this expression is SQL NULL, the function returns SQL NULL. If the\nextracted JSON value is not a valid JSON type, an error is produced.",
+            "syntax": "JSON_SET(\u00a0 json_expr,\u00a0 json_path_value_pair[, ...]\u00a0 [, create_if_missing=> { TRUE | FALSE }])json_path_value_pair:\u00a0 json_path, value",
+            "arguments": null
+        },
+        {
+            "name": "JSON_STRIP_NULLS",
+            "description": "Gets the JSON type of the outermost JSON value and converts the name of\nthis type to a SQL STRING value. The names of these JSON types can be\nreturned: object, array, string, number, boolean, null\nArguments:\njson_expr: JSON. For example:\nIf this expression is SQL NULL, the function returns SQL NULL. If the\nextracted JSON value is not a valid JSON type, an error is produced.",
+            "syntax": "JSON_STRIP_NULLS(\u00a0 json_expr\u00a0 [, json_path]\u00a0 [, include_arrays => { TRUE | FALSE }]\u00a0 [, remove_empty => { TRUE | FALSE }])",
+            "arguments": null
+        },
+        {
+            "name": "JSON_TYPE",
+            "description": "Gets the JSON type of the outermost JSON value and converts the name of\nthis type to a SQL STRING value. The names of these JSON types can be\nreturned: object, array, string, number, boolean, null\nArguments:\njson_expr: JSON. For example:\nIf this expression is SQL NULL, the function returns SQL NULL. If the\nextracted JSON value is not a valid JSON type, an error is produced.",
+            "syntax": "JSON_TYPE(json_expr)",
+            "arguments": null
+        },
+        {
+            "name": "JSON_VALUE",
+            "description": "Extracts a JSON scalar value and converts it to a SQL STRING value.\nIn addition, this function:\nArguments:\njson_string_expr: A JSON-formatted string. For example:\njson_expr: JSON. For example:\njson_path: The JSONPath. This identifies the data that\nyou want to obtain from the input. If this optional parameter is not\nprovided, then the JSONPath $ symbol is applied, which means that all of\nthe data is analyzed.\nIf json_path returns a JSON null or a non-scalar value (in other words,\nif json_path refers to an object or an array), then a SQL NULL is\nreturned.\nThere are differences between the JSON-formatted string and JSON input types.\nFor details, see Differences between the JSON and JSON-formatted STRING types.",
+            "syntax": "JSON_VALUE(json_string_expr[, json_path])",
+            "arguments": null
+        },
+        {
+            "name": "JSON_VALUE_ARRAY",
+            "description": "Extracts a JSON array of scalar values and converts it to a SQL\nARRAY<STRING> value.\nIn addition, this function:\nArguments:\njson_string_expr: A JSON-formatted string. For example:\njson_expr: JSON. For example:\njson_path: The JSONPath. This identifies the data that\nyou want to obtain from the input. If this optional parameter is not\nprovided, then the JSONPath $ symbol is applied, which means that all of\nthe data is analyzed.\nThere are differences between the JSON-formatted string and JSON input types.\nFor details, see Differences between the JSON and JSON-formatted STRING types.\nCaveats:",
+            "syntax": "JSON_VALUE_ARRAY(json_string_expr[, json_path])",
+            "arguments": null
+        },
+        {
+            "name": "LAX_BOOL",
+            "description": "Attempts to convert a JSON value to a SQL BOOL value.\nArguments:\njson_expr: JSON. For example:\nDetails:",
+            "syntax": "LAX_BOOL(json_expr)",
+            "arguments": null
+        },
+        {
+            "name": "LAX_FLOAT64",
+            "description": "Attempts to convert a JSON value to a\nSQL FLOAT64 value.\nArguments:\njson_expr: JSON. For example:\nDetails:",
+            "syntax": "LAX_FLOAT64(json_expr)",
+            "arguments": null
+        },
+        {
+            "name": "LAX_INT64",
+            "description": "Attempts to convert a JSON value to a SQL INT64 value.\nArguments:\njson_expr: JSON. For example:\nDetails:",
+            "syntax": "LAX_INT64(json_expr)",
+            "arguments": null
+        },
+        {
+            "name": "LAX_STRING",
+            "description": "Attempts to convert a JSON value to a SQL STRING value.\nArguments:\njson_expr: JSON. For example:\nDetails:",
+            "syntax": "LAX_STRING(json_expr)",
+            "arguments": null
+        },
+        {
+            "name": "PARSE_JSON",
+            "description": "Converts a JSON-formatted STRING value to a JSON value.\nArguments:\njson_string_expr: A JSON-formatted string. For example:\nwide_number_mode: Optional mandatory-named argument that determines how to\nhandle numbers that cannot be stored in a JSON value without the loss of\nprecision. If used, wide_number_mode must include one of these values:\nIf a number appears in a JSON object or array, the wide_number_mode\nargument is applied to the number in the object or array.\nNumbers from the following domains can be stored in JSON without loss of\nprecision:",
+            "syntax": "PARSE_JSON(json_string_expr[, wide_number_mode=>{ 'exact' | 'round' }])",
+            "arguments": null
+        },
+        {
+            "name": "STRING",
+            "description": "Converts a JSON string to a SQL STRING value.\nArguments:\njson_expr: JSON. For example:\nIf the JSON value is not a string, an error is produced. If the expression\nis SQL NULL, the function returns SQL NULL.",
+            "syntax": "STRING(json_expr)",
+            "arguments": null
+        },
+        {
+            "name": "TO_JSON",
+            "description": "Converts a SQL value to a JSON value.\nArguments:\nstringify_wide_numbers: Optional mandatory-named argument that is either\nTRUE or FALSE (default).\nThe following numerical data types are affected by the\nstringify_wide_numbers argument:\nINT64\nNUMERIC\nBIGNUMERIC\nIf one of these numerical data types appears in a container data type\nsuch as an ARRAY or STRUCT, the stringify_wide_numbers argument is\napplied to the numerical data types in the container data type.",
+            "syntax": "TO_JSON(sql_value[, stringify_wide_numbers=>{ TRUE | FALSE }])",
+            "arguments": null
+        },
+        {
+            "name": "TO_JSON_STRING",
+            "description": "Converts a SQL value to a JSON-formatted STRING value.\nArguments:",
+            "syntax": "TO_JSON_STRING(value[, pretty_print])",
+            "arguments": null
+        },
+        {
+            "name": "ABS",
+            "description": "Computes absolute value. Returns an error if the argument is an integer and the\noutput value cannot be represented as the same type; this happens only for the\nlargest negative input value, which has no positive representation.",
+            "syntax": "ABS(X)",
+            "arguments": null
+        },
+        {
+            "name": "ACOS",
+            "description": "",
+            "syntax": "ACOS(X)",
+            "arguments": null
+        },
+        {
+            "name": "ACOSH",
+            "description": "",
+            "syntax": "ACOSH(X)",
+            "arguments": null
+        },
+        {
+            "name": "ASIN",
+            "description": "",
+            "syntax": "ASIN(X)",
+            "arguments": null
+        },
+        {
+            "name": "ASINH",
+            "description": "",
+            "syntax": "ASINH(X)",
+            "arguments": null
+        },
+        {
+            "name": "ATAN",
+            "description": "",
+            "syntax": "ATAN(X)",
+            "arguments": null
+        },
+        {
+            "name": "ATAN2",
+            "description": "",
+            "syntax": "ATAN2(X, Y)",
+            "arguments": null
+        },
+        {
+            "name": "ATANH",
+            "description": "",
+            "syntax": "ATANH(X)",
+            "arguments": null
+        },
+        {
+            "name": "CBRT",
+            "description": "Computes the cube root of X. X can be any data type\nthat coerces to FLOAT64.\nSupports the SAFE. prefix.",
+            "syntax": "CBRT(X)",
+            "arguments": null
+        },
+        {
+            "name": "CEIL",
+            "description": "Returns the smallest integral value that is not less than X.",
+            "syntax": "CEIL(X)",
+            "arguments": null
+        },
+        {
+            "name": "CEILING",
+            "description": "",
+            "syntax": "CEILING(X)",
+            "arguments": null
+        },
+        {
+            "name": "COS",
+            "description": "",
+            "syntax": "COS(X)",
+            "arguments": null
+        },
+        {
+            "name": "COSH",
+            "description": "",
+            "syntax": "COSH(X)",
+            "arguments": null
+        },
+        {
+            "name": "COSINE_DISTANCE",
+            "description": "Computes the cosine distance between two vectors.",
+            "syntax": "COSINE_DISTANCE(vector1, vector2)",
+            "arguments": null
+        },
+        {
+            "name": "COT",
+            "description": "Computes the cotangent for the angle of X, where X is specified in radians.\nX can be any data type\nthat coerces to FLOAT64.\nSupports the SAFE. prefix.",
+            "syntax": "COT(X)",
+            "arguments": null
+        },
+        {
+            "name": "COTH",
+            "description": "Computes the hyperbolic cotangent for the angle of X, where X is specified\nin radians. X can be any data type\nthat coerces to FLOAT64.\nSupports the SAFE. prefix.",
+            "syntax": "COTH(X)",
+            "arguments": null
+        },
+        {
+            "name": "CSC",
+            "description": "Computes the cosecant of the input angle, which is in radians.\nX can be any data type\nthat coerces to FLOAT64.\nSupports the SAFE. prefix.",
+            "syntax": "CSC(X)",
+            "arguments": null
+        },
+        {
+            "name": "CSCH",
+            "description": "Computes the hyperbolic cosecant of the input angle, which is in radians.\nX can be any data type\nthat coerces to FLOAT64.\nSupports the SAFE. prefix.",
+            "syntax": "CSCH(X)",
+            "arguments": null
+        },
+        {
+            "name": "DIV",
+            "description": "Returns the result of integer division of X by Y. Division by zero returns\nan error. Division by -1 may overflow.",
+            "syntax": "DIV(X, Y)",
+            "arguments": null
+        },
+        {
+            "name": "EXP",
+            "description": "Computes e to the power of X, also called the natural exponential function. If\nthe result underflows, this function returns a zero. Generates an error if the\nresult overflows.",
+            "syntax": "EXP(X)",
+            "arguments": null
+        },
+        {
+            "name": "EUCLIDEAN_DISTANCE",
+            "description": "Computes the Euclidean distance between two vectors.",
+            "syntax": "EUCLIDEAN_DISTANCE(vector1, vector2)",
+            "arguments": null
+        },
+        {
+            "name": "FLOOR",
+            "description": "Returns the largest integral value that is not greater than X.",
+            "syntax": "FLOOR(X)",
+            "arguments": null
+        },
+        {
+            "name": "GREATEST",
+            "description": "Returns the greatest value among X1,...,XN. If any argument is NULL, returns\nNULL. Otherwise, in the case of floating-point arguments, if any argument is\nNaN, returns NaN. In all other cases, returns the value among X1,...,XN\nthat has the greatest value according to the ordering used by the ORDER BY\nclause. The arguments X1, ..., XN must be coercible to a common supertype, and\nthe supertype must support ordering.\nThis function supports specifying collation.",
+            "syntax": "GREATEST(X1,...,XN)",
+            "arguments": null
+        },
+        {
+            "name": "IEEE_DIVIDE",
+            "description": "",
+            "syntax": "IEEE_DIVIDE(X, Y)",
+            "arguments": null
+        },
+        {
+            "name": "IS_INF",
+            "description": "",
+            "syntax": "IS_INF(X)",
+            "arguments": null
+        },
+        {
+            "name": "IS_NAN",
+            "description": "",
+            "syntax": "IS_NAN(X)",
+            "arguments": null
+        },
+        {
+            "name": "LEAST",
+            "description": "Returns the least value among X1,...,XN. If any argument is NULL, returns\nNULL. Otherwise, in the case of floating-point arguments, if any argument is\nNaN, returns NaN. In all other cases, returns the value among X1,...,XN\nthat has the least value according to the ordering used by the ORDER BY\nclause. The arguments X1, ..., XN must be coercible to a common supertype, and\nthe supertype must support ordering.\nThis function supports specifying collation.",
+            "syntax": "LEAST(X1,...,XN)",
+            "arguments": null
+        },
+        {
+            "name": "LN",
+            "description": "Computes the natural logarithm of X. Generates an error if X is less than or\nequal to zero.",
+            "syntax": "LN(X)",
+            "arguments": null
+        },
+        {
+            "name": "LOG",
+            "description": "If only X is present, LOG is a synonym of LN. If Y is also present,\nLOG computes the logarithm of X to base Y.",
+            "syntax": "LOG(X [, Y])",
+            "arguments": null
+        },
+        {
+            "name": "LOG10",
+            "description": "Similar to LOG, but computes logarithm to base 10.",
+            "syntax": "LOG10(X)",
+            "arguments": null
+        },
+        {
+            "name": "MOD",
+            "description": "Modulo function: returns the remainder of the division of X by Y. Returned\nvalue has the same sign as X. An error is generated if Y is 0.",
+            "syntax": "MOD(X, Y)",
+            "arguments": null
+        },
+        {
+            "name": "POW",
+            "description": "Returns the value of X raised to the power of Y. If the result underflows and is\nnot representable, then the function returns a  value of zero.",
+            "syntax": "POW(X, Y)",
+            "arguments": null
+        },
+        {
+            "name": "POWER",
+            "description": "",
+            "syntax": "POWER(X, Y)",
+            "arguments": null
+        },
+        {
+            "name": "RAND",
+            "description": "",
+            "syntax": "RAND()",
+            "arguments": null
+        },
+        {
+            "name": "RANGE_BUCKET",
+            "description": "RANGE_BUCKET scans through a sorted array and returns the 0-based position\nof the point's upper bound. This can be useful if you need to group your data to\nbuild partitions, histograms, business-defined rules, and more.\nRANGE_BUCKET follows these rules:\nIf the point exists in the array, returns the index of the next larger value.\nIf the point does not exist in the array, but it falls between two values,\nreturns the index of the larger value.\nIf the point is smaller than the first value in the array, returns 0.\nIf the point is greater than or equal to the last value in the array,\nreturns the length of the array.\nIf the array is empty, returns 0.\nIf the point is NULL or NaN, returns NULL.\nThe data type for the point and array must be compatible.\nExecution failure occurs when:\nThe array has a NaN or NULL value in it.\nThe array is not sorted in ascending order.",
+            "syntax": "RANGE_BUCKET(point, boundaries_array)",
+            "arguments": null
+        },
+        {
+            "name": "ROUND",
+            "description": "If only X is present, rounds X to the nearest integer. If N is present,\nrounds X to N decimal places after the decimal point. If N is negative,\nrounds off digits to the left of the decimal point. Rounds halfway cases\naway from zero. Generates an error if overflow occurs.\nIf X is a NUMERIC or BIGNUMERIC type, then you can\nexplicitly set rounding_mode\nto one of the following:\nIf you set the rounding_mode and X is not a NUMERIC or BIGNUMERIC type,\nthen the function generates an error.",
+            "syntax": "ROUND(X [, N [, rounding_mode]])",
+            "arguments": null
+        },
+        {
+            "name": "SAFE_ADD",
+            "description": "Equivalent to the addition operator (+), but returns\nNULL if overflow occurs.",
+            "syntax": "SAFE_ADD(X, Y)",
+            "arguments": null
+        },
+        {
+            "name": "SAFE_DIVIDE",
+            "description": "Equivalent to the division operator (X / Y), but returns\nNULL if an error occurs, such as a division by zero error.",
+            "syntax": "SAFE_DIVIDE(X, Y)",
+            "arguments": null
+        },
+        {
+            "name": "SAFE_MULTIPLY",
+            "description": "Equivalent to the multiplication operator (*), but returns\nNULL if overflow occurs.",
+            "syntax": "SAFE_MULTIPLY(X, Y)",
+            "arguments": null
+        },
+        {
+            "name": "SAFE_NEGATE",
+            "description": "Equivalent to the unary minus operator (-), but returns\nNULL if overflow occurs.",
+            "syntax": "SAFE_NEGATE(X)",
+            "arguments": null
+        },
+        {
+            "name": "SAFE_SUBTRACT",
+            "description": "Returns the result of Y subtracted from X.\nEquivalent to the subtraction operator (-), but returns\nNULL if overflow occurs.",
+            "syntax": "SAFE_SUBTRACT(X, Y)",
+            "arguments": null
+        },
+        {
+            "name": "SEC",
+            "description": "Computes the secant for the angle of X, where X is specified in radians.\nX can be any data type\nthat coerces to FLOAT64.",
+            "syntax": "SEC(X)",
+            "arguments": null
+        },
+        {
+            "name": "SECH",
+            "description": "Computes the hyperbolic secant for the angle of X, where X is specified\nin radians. X can be any data type\nthat coerces to FLOAT64.\nNever produces an error.",
+            "syntax": "SECH(X)",
+            "arguments": null
+        },
+        {
+            "name": "SIGN",
+            "description": "Returns -1, 0, or +1 for negative, zero and positive arguments\nrespectively. For floating point arguments, this function does not distinguish\nbetween positive and negative zero.",
+            "syntax": "SIGN(X)",
+            "arguments": null
+        },
+        {
+            "name": "SIN",
+            "description": "",
+            "syntax": "SIN(X)",
+            "arguments": null
+        },
+        {
+            "name": "SINH",
+            "description": "",
+            "syntax": "SINH(X)",
+            "arguments": null
+        },
+        {
+            "name": "SQRT",
+            "description": "Computes the square root of X. Generates an error if X is less than 0.",
+            "syntax": "SQRT(X)",
+            "arguments": null
+        },
+        {
+            "name": "TAN",
+            "description": "",
+            "syntax": "TAN(X)",
+            "arguments": null
+        },
+        {
+            "name": "TANH",
+            "description": "",
+            "syntax": "TANH(X)",
+            "arguments": null
+        },
+        {
+            "name": "TRUNC",
+            "description": "If only X is present, TRUNC rounds X to the nearest integer whose absolute\nvalue is not greater than the absolute value of X. If N is also present, TRUNC\nbehaves like ROUND(X, N), but always rounds towards zero and never overflows.",
+            "syntax": "TRUNC(X [, N])",
+            "arguments": null
+        },
+        {
+            "name": "FIRST_VALUE",
+            "description": "Returns the value of the value_expression for the first row in the current\nwindow frame.\nThis function includes NULL values in the calculation unless IGNORE NULLS is\npresent. If IGNORE NULLS is present, the function excludes NULL values from\nthe calculation.\nTo learn more about the OVER clause and how to use it, see\nWindow function calls.",
+            "syntax": "FIRST_VALUE (value_expression [{RESPECT | IGNORE} NULLS])OVER over_clauseover_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]\u00a0 ORDER BY expression [ { ASC | DESC } \u00a0] [, ...]\u00a0 [ window_frame_clause ]",
+            "arguments": null
+        },
+        {
+            "name": "LAG",
+            "description": "Returns the value of the value_expression on a preceding row. Changing the\noffset value changes which preceding row is returned; the default value is\n1, indicating the previous row in the window frame. An error occurs if\noffset is NULL or a negative value.\nThe optional default_expression is used if there isn't a row in the window\nframe at the specified offset. This expression must be a constant expression and\nits type must be implicitly coercible to the type of value_expression. If left\nunspecified, default_expression defaults to NULL.\nTo learn more about the OVER clause and how to use it, see\nWindow function calls.",
+            "syntax": "LAG (value_expression[, offset [, default_expression]])OVER over_clauseover_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]\u00a0 ORDER BY expression [ { ASC | DESC } \u00a0] [, ...]",
+            "arguments": null
+        },
+        {
+            "name": "LAST_VALUE",
+            "description": "Returns the value of the value_expression for the last row in the current\nwindow frame.\nThis function includes NULL values in the calculation unless IGNORE NULLS is\npresent. If IGNORE NULLS is present, the function excludes NULL values from\nthe calculation.\nTo learn more about the OVER clause and how to use it, see\nWindow function calls.",
+            "syntax": "LAST_VALUE (value_expression [{RESPECT | IGNORE} NULLS])OVER over_clauseover_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]\u00a0 ORDER BY expression [ { ASC | DESC } \u00a0] [, ...]\u00a0 [ window_frame_clause ]",
+            "arguments": null
+        },
+        {
+            "name": "LEAD",
+            "description": "Returns the value of the value_expression on a subsequent row. Changing the\noffset value changes which subsequent row is returned; the default value is\n1, indicating the next row in the window frame. An error occurs if offset is\nNULL or a negative value.\nThe optional default_expression is used if there isn't a row in the window\nframe at the specified offset. This expression must be a constant expression and\nits type must be implicitly coercible to the type of value_expression. If left\nunspecified, default_expression defaults to NULL.\nTo learn more about the OVER clause and how to use it, see\nWindow function calls.",
+            "syntax": "LEAD (value_expression[, offset [, default_expression]])OVER over_clauseover_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]\u00a0 ORDER BY expression [ { ASC | DESC } \u00a0] [, ...]",
+            "arguments": null
+        },
+        {
+            "name": "NTH_VALUE",
+            "description": "Returns the value of value_expression at the Nth row of the current window\nframe, where Nth is defined by constant_integer_expression. Returns NULL if\nthere is no such row.\nThis function includes NULL values in the calculation unless IGNORE NULLS is\npresent. If IGNORE NULLS is present, the function excludes NULL values from\nthe calculation.\nTo learn more about the OVER clause and how to use it, see\nWindow function calls.",
+            "syntax": "NTH_VALUE (value_expression, constant_integer_expression [{RESPECT | IGNORE} NULLS])OVER over_clauseover_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]\u00a0 ORDER BY expression [ { ASC | DESC } \u00a0] [, ...]\u00a0 [ window_frame_clause ]",
+            "arguments": null
+        },
+        {
+            "name": "PERCENTILE_CONT",
+            "description": "Computes the specified percentile value for the value_expression, with linear\ninterpolation.\nThis function ignores NULL\nvalues if\nRESPECT NULLS is absent.  If RESPECT NULLS is present:\nTo learn more about the OVER clause and how to use it, see\nWindow function calls.\nPERCENTILE_CONT can be used with differential privacy. To learn more, see\nDifferentially private aggregate functions.",
+            "syntax": "PERCENTILE_CONT (value_expression, percentile [{RESPECT | IGNORE} NULLS])OVER over_clauseover_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]",
+            "arguments": null
+        },
+        {
+            "name": "PERCENTILE_DISC",
+            "description": "Computes the specified percentile value for a discrete value_expression. The\nreturned value is the first sorted value of value_expression with cumulative\ndistribution greater than or equal to the given percentile value.\nThis function ignores NULL\nvalues unless\nRESPECT NULLS is present.\nTo learn more about the OVER clause and how to use it, see\nWindow function calls.",
+            "syntax": "PERCENTILE_DISC (value_expression, percentile [{RESPECT | IGNORE} NULLS])OVER over_clauseover_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]",
+            "arguments": null
+        },
+        {
+            "name": "NET.HOST",
+            "description": "Takes a URL as a STRING value and returns the host. For best results, URL\nvalues should comply with the format as defined by\nRFC 3986. If the URL value does not comply\nwith RFC 3986 formatting, this function makes a best effort to parse the input\nand return a relevant result. If the function cannot parse the input, it",
+            "syntax": "NET.HOST(url)",
+            "arguments": null
+        },
+        {
+            "name": "NET.IP_FROM_STRING",
+            "description": "Converts an IPv4 or IPv6 address from text (STRING) format to binary (BYTES)\nformat in network byte order.\nThis function supports the following formats for addr_str:\nThis function does not support CIDR notation, such as 10.1.2.3/32.\nIf this function receives a NULL input, it returns NULL. If the input is\nconsidered invalid, an OUT_OF_RANGE error occurs.",
+            "syntax": "NET.IP_FROM_STRING(addr_str)",
+            "arguments": null
+        },
+        {
+            "name": "NET.IP_NET_MASK",
+            "description": "Returns a network mask: a byte sequence with length equal to num_output_bytes,\nwhere the first prefix_length bits are set to 1 and the other bits are set to\n0. num_output_bytes and prefix_length are INT64.\nThis function throws an error if num_output_bytes is not 4 (for IPv4) or 16\n(for IPv6). It also throws an error if prefix_length is negative or greater\nthan 8 * num_output_bytes.",
+            "syntax": "NET.IP_NET_MASK(num_output_bytes, prefix_length)",
+            "arguments": null
+        },
+        {
+            "name": "NET.IP_TO_STRING",
+            "description": "Converts an IPv4 address from integer format to binary (BYTES) format in network\nbyte order. In the integer input, the least significant bit of the IP address is\nstored in the least significant bit of the integer, regardless of host or client\narchitecture. For example, 1 means 0.0.0.1, and 0x1FF means 0.0.1.255.\nThis function checks that either all the most significant 32 bits are 0, or all\nthe most significant 33 bits are 1 (sign-extended from a 32-bit integer).\nIn other words, the input should be in the range [-0x80000000, 0xFFFFFFFF];\notherwise, this function throws an error.\nThis function does not support IPv6.",
+            "syntax": "NET.IP_TO_STRING(addr_bin)",
+            "arguments": null
+        },
+        {
+            "name": "NET.IP_TRUNC",
+            "description": "Converts an IPv4 address from integer format to binary (BYTES) format in network\nbyte order. In the integer input, the least significant bit of the IP address is\nstored in the least significant bit of the integer, regardless of host or client\narchitecture. For example, 1 means 0.0.0.1, and 0x1FF means 0.0.1.255.\nThis function checks that either all the most significant 32 bits are 0, or all\nthe most significant 33 bits are 1 (sign-extended from a 32-bit integer).\nIn other words, the input should be in the range [-0x80000000, 0xFFFFFFFF];\notherwise, this function throws an error.\nThis function does not support IPv6.",
+            "syntax": "NET.IP_TRUNC(addr_bin, prefix_length)",
+            "arguments": null
+        },
+        {
+            "name": "NET.IPV4_FROM_INT64",
+            "description": "Converts an IPv4 address from integer format to binary (BYTES) format in network\nbyte order. In the integer input, the least significant bit of the IP address is\nstored in the least significant bit of the integer, regardless of host or client\narchitecture. For example, 1 means 0.0.0.1, and 0x1FF means 0.0.1.255.\nThis function checks that either all the most significant 32 bits are 0, or all\nthe most significant 33 bits are 1 (sign-extended from a 32-bit integer).\nIn other words, the input should be in the range [-0x80000000, 0xFFFFFFFF];\notherwise, this function throws an error.\nThis function does not support IPv6.",
+            "syntax": "NET.IPV4_FROM_INT64(integer_value)",
+            "arguments": null
+        },
+        {
+            "name": "NET.IPV4_TO_INT64",
+            "description": "Converts an IPv4 address from binary (BYTES) format in network byte order to\ninteger format. In the integer output, the least significant bit of the IP\naddress is stored in the least significant bit of the integer, regardless of\nhost or client architecture. For example, 1 means 0.0.0.1, and 0x1FF means\n0.0.1.255. The output is in the range [0, 0xFFFFFFFF].\nIf the input length is not 4, this function throws an error.\nThis function does not support IPv6.",
+            "syntax": "NET.IPV4_TO_INT64(addr_bin)",
+            "arguments": null
+        },
+        {
+            "name": "NET.PUBLIC_SUFFIX",
+            "description": "Takes a URL as a STRING value and returns the public suffix (such as com,\norg, or net). A public suffix is an ICANN domain registered at\npublicsuffix.org. For best results, URL values\nshould comply with the format as defined by\nRFC 3986. If the URL value does not comply\nwith RFC 3986 formatting, this function makes a best effort to parse the input\nand return a relevant result.\nThis function returns NULL if any of the following is true:\nBefore looking up the public suffix, this function temporarily normalizes the\nhost by converting uppercase English letters to lowercase and encoding all\nnon-ASCII characters with Punycode.\nThe function then returns the public suffix as part of the original host instead",
+            "syntax": "NET.PUBLIC_SUFFIX(url)",
+            "arguments": null
+        },
+        {
+            "name": "NET.REG_DOMAIN",
+            "description": "Takes a URL as a string and returns the registered or registrable domain (the\npublic suffix plus one preceding label), as a\nstring. For best results, URL values should comply with the format as defined by\nRFC 3986. If the URL value does not comply\nwith RFC 3986 formatting, this function makes a best effort to parse the input\nand return a relevant result.\nThis function returns NULL if any of the following is true:\nBefore looking up the public suffix, this function temporarily normalizes the\nhost by converting uppercase English letters to lowercase and encoding all\nnon-ASCII characters with Punycode. The function then\nreturns the registered or registerable domain as part of the original host",
+            "syntax": "NET.REG_DOMAIN(url)",
+            "arguments": null
+        },
+        {
+            "name": "NET.SAFE_IP_FROM_STRING",
+            "description": "Similar to NET.IP_FROM_STRING, but returns NULL\ninstead of throwing an error if the input is invalid.",
+            "syntax": "NET.SAFE_IP_FROM_STRING(addr_str)",
+            "arguments": null
+        },
+        {
+            "name": "CUME_DIST",
+            "description": "Return the relative rank of a row defined as NP/NR. NP is defined to be the\nnumber of rows that either precede or are peers with the current row. NR is the\nnumber of rows in the partition.\nTo learn more about the OVER clause and how to use it, see\nWindow function calls.",
+            "syntax": "CUME_DIST()OVER over_clauseover_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]\u00a0 ORDER BY expression [ { ASC | DESC } \u00a0] [, ...]",
+            "arguments": null
+        },
+        {
+            "name": "DENSE_RANK",
+            "description": "Returns the ordinal (1-based) rank of each row within the window partition.\nAll peer rows receive the same rank value, and the subsequent rank value is\nincremented by one.\nTo learn more about the OVER clause and how to use it, see\nWindow function calls.",
+            "syntax": "DENSE_RANK()OVER over_clauseover_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]\u00a0 ORDER BY expression [ { ASC | DESC } \u00a0] [, ...]",
+            "arguments": null
+        },
+        {
+            "name": "NTILE",
+            "description": "This function divides the rows into constant_integer_expression\nbuckets based on row ordering and returns the 1-based bucket number that is\nassigned to each row. The number of rows in the buckets can differ by at most 1.\nThe remainder values (the remainder of number of rows divided by buckets) are\ndistributed one for each bucket, starting with bucket 1. If\nconstant_integer_expression evaluates to NULL, 0 or negative, an\nerror is provided.\nTo learn more about the OVER clause and how to use it, see\nWindow function calls.",
+            "syntax": "NTILE(constant_integer_expression)OVER over_clauseover_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]\u00a0 ORDER BY expression [ { ASC | DESC } \u00a0] [, ...]",
+            "arguments": null
+        },
+        {
+            "name": "PERCENT_RANK",
+            "description": "Return the percentile rank of a row defined as (RK-1)/(NR-1), where RK is\nthe RANK of the row and NR is the number of rows in the partition.\nReturns 0 if NR=1.\nTo learn more about the OVER clause and how to use it, see\nWindow function calls.",
+            "syntax": "PERCENT_RANK()OVER over_clauseover_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]\u00a0 ORDER BY expression [ { ASC | DESC } \u00a0] [, ...]",
+            "arguments": null
+        },
+        {
+            "name": "RANK",
+            "description": "Returns the ordinal (1-based) rank of each row within the ordered partition.\nAll peer rows receive the same rank value. The next row or set of peer rows\nreceives a rank value which increments by the number of peers with the previous\nrank value, instead of DENSE_RANK, which always increments by 1.\nTo learn more about the OVER clause and how to use it, see\nWindow function calls.",
+            "syntax": "RANK()OVER over_clauseover_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]\u00a0 ORDER BY expression [ { ASC | DESC } \u00a0] [, ...]",
+            "arguments": null
+        },
+        {
+            "name": "ROW_NUMBER",
+            "description": "Does not require the ORDER BY clause. Returns the sequential\nrow ordinal (1-based) of each row for each ordered partition. If the\nORDER BY clause is unspecified then the result is\nnon-deterministic.\nTo learn more about the OVER clause and how to use it, see\nWindow function calls.",
+            "syntax": "ROW_NUMBER()OVER over_clauseover_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]\u00a0 [ ORDER BY expression [ { ASC | DESC } \u00a0] [, ...] ]",
+            "arguments": null
+        },
+        {
+            "name": "SEARCH",
+            "description": "The SEARCH function checks to see whether a BigQuery table or other\nsearch data contains a set of search terms (tokens). It returns TRUE if all\nsearch terms appear in the data, based on the rules for search_query\nand text analysis described in the text analyzer. Otherwise,\nthis function returns FALSE.",
+            "syntax": "SEARCH(\u00a0 data_to_search, search_query\u00a0 [, json_scope=>{ 'JSON_VALUES' | 'JSON_KEYS' | 'JSON_KEYS_AND_VALUES' }]\u00a0 [, analyzer=>{ 'LOG_ANALYZER' | 'NO_OP_ANALYZER' | 'PATTERN_ANALYZER'}]\u00a0 [, analyzer_options=>analyzer_options_values])",
+            "arguments": null
+        },
+        {
+            "name": "VECTOR_SEARCH",
+            "description": "The VECTOR_SEARCH function lets you search embeddings to find semantically\nsimilar entities.\nEmbeddings are high-dimensional numerical vectors that represent a given entity,\nlike a piece of text or an audio file. Machine learning (ML) models use\nembeddings to encode semantics about such entities to make it easier to\nreason about and compare them. For example, a common operation in clustering,\nclassification, and recommendation models is to measure the distance between\nvectors in an embedding space to\nfind items that are most semantically similar.",
+            "syntax": "VECTOR_SEARCH(\u00a0 {TABLE base_table | base_table_query_statement},\u00a0 column_to_search,\u00a0 TABLE query_table\u00a0 [, query_column_to_search => query_column_to_search_value]\u00a0 [, top_k => top_k_value ]\u00a0 [, distance_type => distance_type_value ]\u00a0 [, options => options_value ])",
+            "arguments": null
+        },
+        {
+            "name": "SESSION_USER",
+            "description": "For first-party users, returns the email address of the user that is running the\nquery.\nFor third-party users, returns the\nprincipal identifier\nof the user that is running the query.\nFor more information about identities, see\nPrincipals.",
+            "syntax": "SESSION_USER()",
+            "arguments": null
+        },
+        {
+            "name": "CORR",
+            "description": "Returns the Pearson coefficient\nof correlation of a set of number pairs. For each number pair, the first number\nis the dependent variable and the second number is the independent variable.\nThe return result is between -1 and 1. A result of 0 indicates no\ncorrelation.\nAll numeric types are supported. If the\ninput is NUMERIC or BIGNUMERIC then the internal aggregation is\nstable with the final output converted to a FLOAT64.\nOtherwise the input is converted to a FLOAT64\nbefore aggregation, resulting in a potentially unstable result.\nThis function ignores any input pairs that contain one or more NULL values. If\nthere are fewer than two input pairs without NULL values, this function\nreturns NULL.\nNaN is produced if:\nTo learn more about the optional aggregate clauses that you can pass\ninto this function, see\nAggregate function calls.\nTo learn more about the OVER clause and how to use it, see\nWindow function calls.",
+            "syntax": "CORR(\u00a0 X1, X2)[ OVER over_clause ]over_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]\u00a0 [ ORDER BY expression [ { ASC | DESC } \u00a0] [, ...] ]\u00a0 [ window_frame_clause ]",
+            "arguments": null
+        },
+        {
+            "name": "COVAR_POP",
+            "description": "Returns the population covariance of\na set of number pairs. The first number is the dependent variable; the second\nnumber is the independent variable. The return result is between -Inf and\n+Inf.\nAll numeric types are supported. If the\ninput is NUMERIC or BIGNUMERIC then the internal aggregation is\nstable with the final output converted to a FLOAT64.\nOtherwise the input is converted to a FLOAT64\nbefore aggregation, resulting in a potentially unstable result.\nThis function ignores any input pairs that contain one or more NULL values. If\nthere is no input pair without NULL values, this function returns NULL.\nIf there is exactly one input pair without NULL values, this function returns\n0.\nNaN is produced if:\nTo learn more about the optional aggregate clauses that you can pass\ninto this function, see\nAggregate function calls.\nThis function can be used with the\nAGGREGATION_THRESHOLD clause.\nTo learn more about the OVER clause and how to use it, see\nWindow function calls.",
+            "syntax": "COVAR_POP(\u00a0 X1, X2)[ OVER over_clause ]over_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]\u00a0 [ ORDER BY expression [ { ASC | DESC } \u00a0] [, ...] ]\u00a0 [ window_frame_clause ]",
+            "arguments": null
+        },
+        {
+            "name": "COVAR_SAMP",
+            "description": "Returns the sample covariance of a\nset of number pairs. The first number is the dependent variable; the second\nnumber is the independent variable. The return result is between -Inf and\n+Inf.\nAll numeric types are supported. If the\ninput is NUMERIC or BIGNUMERIC then the internal aggregation is\nstable with the final output converted to a FLOAT64.\nOtherwise the input is converted to a FLOAT64\nbefore aggregation, resulting in a potentially unstable result.\nThis function ignores any input pairs that contain one or more NULL values. If\nthere are fewer than two input pairs without NULL values, this function\nreturns NULL.\nNaN is produced if:\nTo learn more about the optional aggregate clauses that you can pass\ninto this function, see\nAggregate function calls.\nThis function can be used with the\nAGGREGATION_THRESHOLD clause.\nTo learn more about the OVER clause and how to use it, see\nWindow function calls.",
+            "syntax": "COVAR_SAMP(\u00a0 X1, X2)[ OVER over_clause ]over_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]\u00a0 [ ORDER BY expression [ { ASC | DESC } \u00a0] [, ...] ]\u00a0 [ window_frame_clause ]",
+            "arguments": null
+        },
+        {
+            "name": "STDDEV",
+            "description": "",
+            "syntax": "STDDEV(\u00a0 [ DISTINCT ]\u00a0 expression)[ OVER over_clause ]over_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]\u00a0 [ ORDER BY expression [ { ASC | DESC } \u00a0] [, ...] ]\u00a0 [ window_frame_clause ]",
+            "arguments": null
+        },
+        {
+            "name": "STDDEV_POP",
+            "description": "Returns the population (biased) standard deviation of the values. The return\nresult is between 0 and +Inf.\nAll numeric types are supported. If the\ninput is NUMERIC or BIGNUMERIC then the internal aggregation is\nstable with the final output converted to a FLOAT64.\nOtherwise the input is converted to a FLOAT64\nbefore aggregation, resulting in a potentially unstable result.\nThis function ignores any NULL inputs. If all inputs are ignored, this\nfunction returns NULL. If this function receives a single non-NULL input,\nit returns 0.\nNaN is produced if:\nTo learn more about the optional aggregate clauses that you can pass\ninto this function, see\nAggregate function calls.\nThis function can be used with the\nAGGREGATION_THRESHOLD clause.\nIf this function is used with the OVER clause, it's part of a\nwindow function call. In a window function call,\naggregate function clauses can't be used.\nTo learn more about the OVER clause and how to use it, see\nWindow function calls.",
+            "syntax": "STDDEV_POP(\u00a0 [ DISTINCT ]\u00a0 expression)[ OVER over_clause ]over_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]\u00a0 [ ORDER BY expression [ { ASC | DESC } \u00a0] [, ...] ]\u00a0 [ window_frame_clause ]",
+            "arguments": null
+        },
+        {
+            "name": "STDDEV_SAMP",
+            "description": "Returns the sample (unbiased) standard deviation of the values. The return\nresult is between 0 and +Inf.\nAll numeric types are supported. If the\ninput is NUMERIC or BIGNUMERIC then the internal aggregation is\nstable with the final output converted to a FLOAT64.\nOtherwise the input is converted to a FLOAT64\nbefore aggregation, resulting in a potentially unstable result.\nThis function ignores any NULL inputs. If there are fewer than two non-NULL\ninputs, this function returns NULL.\nNaN is produced if:\nTo learn more about the optional aggregate clauses that you can pass\ninto this function, see\nAggregate function calls.\nThis function can be used with the\nAGGREGATION_THRESHOLD clause.\nIf this function is used with the OVER clause, it's part of a\nwindow function call. In a window function call,\naggregate function clauses can't be used.\nTo learn more about the OVER clause and how to use it, see\nWindow function calls.",
+            "syntax": "STDDEV_SAMP(\u00a0 [ DISTINCT ]\u00a0 expression)[ OVER over_clause ]over_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]\u00a0 [ ORDER BY expression [ { ASC | DESC } \u00a0] [, ...] ]\u00a0 [ window_frame_clause ]",
+            "arguments": null
+        },
+        {
+            "name": "VAR_POP",
+            "description": "Returns the population (biased) variance of the values. The return result is\nbetween 0 and +Inf.\nAll numeric types are supported. If the\ninput is NUMERIC or BIGNUMERIC then the internal aggregation is\nstable with the final output converted to a FLOAT64.\nOtherwise the input is converted to a FLOAT64\nbefore aggregation, resulting in a potentially unstable result.\nThis function ignores any NULL inputs. If all inputs are ignored, this\nfunction returns NULL. If this function receives a single non-NULL input,\nit returns 0.\nNaN is produced if:\nIf this function is used with the OVER clause, it's part of a\nwindow function call. In a window function call,\naggregate function clauses can't be used.\nTo learn more about the OVER clause and how to use it, see\nWindow function calls.",
+            "syntax": "VAR_POP(\u00a0 [ DISTINCT ]\u00a0 expression)[ OVER over_clause ]over_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]\u00a0 [ ORDER BY expression [ { ASC | DESC } \u00a0] [, ...] ]\u00a0 [ window_frame_clause ]",
+            "arguments": null
+        },
+        {
+            "name": "VAR_SAMP",
+            "description": "Returns the sample (unbiased) variance of the values. The return result is\nbetween 0 and +Inf.\nAll numeric types are supported. If the\ninput is NUMERIC or BIGNUMERIC then the internal aggregation is\nstable with the final output converted to a FLOAT64.\nOtherwise the input is converted to a FLOAT64\nbefore aggregation, resulting in a potentially unstable result.\nThis function ignores any NULL inputs. If there are fewer than two non-NULL\ninputs, this function returns NULL.\nNaN is produced if:\nTo learn more about the optional aggregate clauses that you can pass\ninto this function, see\nAggregate function calls.\nThis function can be used with the\nAGGREGATION_THRESHOLD clause.\nIf this function is used with the OVER clause, it's part of a\nwindow function call. In a window function call,\naggregate function clauses can't be used.\nTo learn more about the OVER clause and how to use it, see\nWindow function calls.",
+            "syntax": "VAR_SAMP(\u00a0 [ DISTINCT ]\u00a0 expression)[ OVER over_clause ]over_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]\u00a0 [ ORDER BY expression [ { ASC | DESC } \u00a0] [, ...] ]\u00a0 [ window_frame_clause ]",
+            "arguments": null
+        },
+        {
+            "name": "VARIANCE",
+            "description": "An alias of VAR_SAMP.\nExcept as otherwise noted, the content of this page is licensed under the Creative Commons Attribution 4.0 License, and code samples are licensed under the Apache 2.0 License. For details, see the Google Developers Site Policies. Java is a registered trademark of Oracle and/or its affiliates.",
+            "syntax": "VARIANCE(\u00a0 [ DISTINCT ]\u00a0 expression)[ OVER over_clause ]over_clause:\u00a0 { named_window | ( [ window_specification ] ) }window_specification:\u00a0 [ named_window ]\u00a0 [ PARTITION BY partition_expression [, ...] ]\u00a0 [ ORDER BY expression [ { ASC | DESC } \u00a0] [, ...] ]\u00a0 [ window_frame_clause ]",
+            "arguments": null
+        },
+        {
+            "name": "ASCII",
+            "description": "Returns the ASCII code for the first character or byte in value. Returns\n0 if value is empty or the ASCII code is 0 for the first character\nor byte.",
+            "syntax": "ASCII(value)",
+            "arguments": null
+        },
+        {
+            "name": "BYTE_LENGTH",
+            "description": "Gets the number of BYTES in a STRING or BYTES value,\nregardless of whether the value is a STRING or BYTES type.",
+            "syntax": "BYTE_LENGTH(value)",
+            "arguments": null
+        },
+        {
+            "name": "CHAR_LENGTH",
+            "description": "Gets the number of characters in a STRING value.",
+            "syntax": "CHAR_LENGTH(value)",
+            "arguments": null
+        },
+        {
+            "name": "CHARACTER_LENGTH",
+            "description": "Synonym for CHAR_LENGTH.",
+            "syntax": "CHARACTER_LENGTH(value)",
+            "arguments": null
+        },
+        {
+            "name": "CHR",
+            "description": "Takes a Unicode code point and returns\nthe character that matches the code point. Each valid code point should fall\nwithin the range of [0, 0xD7FF] and [0xE000, 0x10FFFF]. Returns an empty string\nif the code point is 0. If an invalid Unicode code point is specified, an\nerror is returned.\nTo work with an array of Unicode code points, see\nCODE_POINTS_TO_STRING",
+            "syntax": "CHR(value)",
+            "arguments": null
+        },
+        {
+            "name": "CODE_POINTS_TO_BYTES",
+            "description": "Takes an array of extended ASCII\ncode points\nas ARRAY<INT64> and returns BYTES.\nTo convert from BYTES to an array of code points, see\nTO_CODE_POINTS.",
+            "syntax": "CODE_POINTS_TO_BYTES(ascii_code_points)",
+            "arguments": null
+        },
+        {
+            "name": "CODE_POINTS_TO_STRING",
+            "description": "Takes an array of Unicode code points\nas ARRAY<INT64> and returns a STRING.\nTo convert from a string to an array of code points, see\nTO_CODE_POINTS.",
+            "syntax": "CODE_POINTS_TO_STRING(unicode_code_points)",
+            "arguments": null
+        },
+        {
+            "name": "COLLATE",
+            "description": "Concatenates one or more values into a single result. All values must be\nBYTES or data types that can be cast to STRING.",
+            "syntax": "COLLATE(value, collate_specification)",
+            "arguments": null
+        },
+        {
+            "name": "CONCAT",
+            "description": "Concatenates one or more values into a single result. All values must be\nBYTES or data types that can be cast to STRING.",
+            "syntax": "CONCAT(value1[, ...])",
+            "arguments": null
+        },
+        {
+            "name": "CONTAINS_SUBSTR",
+            "description": "Performs a normalized, case-insensitive search to see if a value exists as a\nsubstring in an expression. Returns TRUE if the value exists, otherwise\nreturns FALSE.\nBefore values are compared, they are normalized and case folded with NFKC\nnormalization. Wildcard searches are not\nsupported.",
+            "syntax": "CONTAINS_SUBSTR(expression, search_value_literal[, json_scope=>json_scope_value])json_scope_value:\u00a0 { 'JSON_VALUES' | 'JSON_KEYS' | 'JSON_KEYS_AND_VALUES' }",
+            "arguments": null
+        },
+        {
+            "name": "EDIT_DISTANCE",
+            "description": "Computes the Levenshtein distance between two STRING or\nBYTES values.",
+            "syntax": "EDIT_DISTANCE(value1, value2, [max_distance => max_distance_value])",
+            "arguments": null
+        },
+        {
+            "name": "ENDS_WITH",
+            "description": "Takes two STRING or BYTES values. Returns TRUE if suffix\nis a suffix of value.\nThis function supports specifying collation.",
+            "syntax": "ENDS_WITH(value, suffix)",
+            "arguments": null
+        },
+        {
+            "name": "FORMAT",
+            "description": "FORMAT formats a data type expression as a string.",
+            "syntax": "FORMAT(format_string_expression, data_type_expression[, ...])",
+            "arguments": null
+        },
+        {
+            "name": "FROM_BASE32",
+            "description": "Converts the base32-encoded input string_expr into BYTES format. To convert\nBYTES to a base32-encoded STRING, use TO_BASE32.",
+            "syntax": "FROM_BASE32(string_expr)",
+            "arguments": null
+        },
+        {
+            "name": "FROM_BASE64",
+            "description": "Converts the base64-encoded input string_expr into\nBYTES format. To convert\nBYTES to a base64-encoded STRING,\nuse [TO_BASE64][string-link-to-base64].\nThere are several base64 encodings in common use that vary in exactly which\nalphabet of 65 ASCII characters are used to encode the 64 digits and padding.\nSee RFC 4648 for details. This\nfunction expects the alphabet [A-Za-z0-9+/=].",
+            "syntax": "FROM_BASE64(string_expr)",
+            "arguments": null
+        },
+        {
+            "name": "FROM_HEX",
+            "description": "Converts a hexadecimal-encoded STRING into BYTES format. Returns an error\nif the input STRING contains characters outside the range\n(0..9, A..F, a..f). The lettercase of the characters does not matter. If the\ninput STRING has an odd number of characters, the function acts as if the\ninput has an additional leading 0. To convert BYTES to a hexadecimal-encoded\nSTRING, use TO_HEX.",
+            "syntax": "FROM_HEX(string)",
+            "arguments": null
+        },
+        {
+            "name": "INITCAP",
+            "description": "Takes a STRING and returns it with the first character in each word in\nuppercase and all other characters in lowercase. Non-alphabetic characters\nremain the same.\ndelimiters is an optional string argument that is used to override the default\nset of characters used to separate words. If delimiters is not specified, it\ndefaults to the following characters: \n<whitespace> [ ] ( ) { } / | \\ < > ! ? @ \" ^ # $ & ~ _ , . : ; * % + -\nIf value or delimiters is NULL, the function returns NULL.",
+            "syntax": "INITCAP(value[, delimiters])",
+            "arguments": null
+        },
+        {
+            "name": "INSTR",
+            "description": "Returns the lowest 1-based position of subvalue in value.\nvalue and subvalue must be the same type, either\nSTRING or BYTES.\nIf position is specified, the search starts at this position in\nvalue, otherwise it starts at 1, which is the beginning of\nvalue. If position is negative, the function searches backwards\nfrom the end of value, with -1 indicating the last character.\nposition is of type INT64 and cannot be 0.\nIf occurrence is specified, the search returns the position of a specific\ninstance of subvalue in value. If not specified, occurrence\ndefaults to 1 and returns the position of the first occurrence.\nFor occurrence > 1, the function includes overlapping occurrences.\noccurrence is of type INT64 and must be positive.\nThis function supports specifying collation.\nReturns 0 if:\nReturns NULL if:\nReturns an error if:",
+            "syntax": "INSTR(value, subvalue[, position[, occurrence]])",
+            "arguments": null
+        },
+        {
+            "name": "LEFT",
+            "description": "Returns a STRING or BYTES value that consists of the specified\nnumber of leftmost characters or bytes from value. The length is an\nINT64 that specifies the length of the returned\nvalue. If value is of type BYTES, length is the number of leftmost bytes\nto return. If value is STRING, length is the number of leftmost characters\nto return.\nIf length is 0, an empty STRING or BYTES value will be\nreturned. If length is negative, an error will be returned. If length\nexceeds the number of characters or bytes from value, the original value\nwill be returned.",
+            "syntax": "LEFT(value, length)",
+            "arguments": null
+        },
+        {
+            "name": "LENGTH",
+            "description": "Returns the length of the STRING or BYTES value. The returned\nvalue is in characters for STRING arguments and in bytes for the BYTES\nargument.",
+            "syntax": "LENGTH(value)",
+            "arguments": null
+        },
+        {
+            "name": "LOWER",
+            "description": "For STRING arguments, returns the original string with all alphabetic\ncharacters in lowercase. Mapping between lowercase and uppercase is done\naccording to the\nUnicode Character Database\nwithout taking into account language-specific mappings.\nFor BYTES arguments, the argument is treated as ASCII text, with all bytes\ngreater than 127 left intact.",
+            "syntax": "LOWER(value)",
+            "arguments": null
+        },
+        {
+            "name": "LPAD",
+            "description": "Returns a STRING or BYTES value that consists of original_value prepended\nwith pattern. The return_length is an INT64 that\nspecifies the length of the returned value. If original_value is of type\nBYTES, return_length is the number of bytes. If original_value is\nof type STRING, return_length is the number of characters.\nThe default value of pattern is a blank space.\nBoth original_value and pattern must be the same data type.\nIf return_length is less than or equal to the original_value length, this\nfunction returns the original_value value, truncated to the value of\nreturn_length. For example, LPAD('hello world', 7); returns 'hello w'.\nIf original_value, return_length, or pattern is NULL, this function\nreturns NULL.\nThis function returns an error if:",
+            "syntax": "LPAD(original_value, return_length[, pattern])",
+            "arguments": null
+        },
+        {
+            "name": "LTRIM",
+            "description": "Identical to TRIM, but only removes leading characters.",
+            "syntax": "LTRIM(value1[, value2])",
+            "arguments": null
+        },
+        {
+            "name": "NORMALIZE",
+            "description": "Takes a string value and returns it as a normalized string. If you do not\nprovide a normalization mode, NFC is used.\nNormalization is used to ensure that\ntwo strings are equivalent. Normalization is often used in situations in which\ntwo strings render the same on the screen but have different Unicode code\npoints.\nNORMALIZE supports four optional normalization modes:",
+            "syntax": "NORMALIZE(value[, normalization_mode])",
+            "arguments": null
+        },
+        {
+            "name": "NORMALIZE_AND_CASEFOLD",
+            "description": "Takes a string value and returns it as a normalized string. If you do not\nprovide a normalization mode, NFC is used.\nNormalization is used to ensure that\ntwo strings are equivalent. Normalization is often used in situations in which\ntwo strings render the same on the screen but have different Unicode code\npoints.\nCase folding is used for the caseless\ncomparison of strings. If you need to compare strings and case should not be\nconsidered, use NORMALIZE_AND_CASEFOLD, otherwise use\nNORMALIZE.\nNORMALIZE_AND_CASEFOLD supports four optional normalization modes:",
+            "syntax": "NORMALIZE_AND_CASEFOLD(value[, normalization_mode])",
+            "arguments": null
+        },
+        {
+            "name": "OCTET_LENGTH",
+            "description": "Returns TRUE if value is a partial match for the regular expression,\nregexp.\nIf the regexp argument is invalid, the function returns an error.\nYou can search for a full match by using ^ (beginning of text) and $ (end of\ntext). Due to regular expression operator precedence, it is good practice to use",
+            "syntax": "OCTET_LENGTH(value)",
+            "arguments": null
+        },
+        {
+            "name": "REGEXP_CONTAINS",
+            "description": "Returns TRUE if value is a partial match for the regular expression,\nregexp.\nIf the regexp argument is invalid, the function returns an error.\nYou can search for a full match by using ^ (beginning of text) and $ (end of\ntext). Due to regular expression operator precedence, it is good practice to use",
+            "syntax": "REGEXP_CONTAINS(value, regexp)",
+            "arguments": null
+        },
+        {
+            "name": "REGEXP_EXTRACT",
+            "description": "Returns the substring in value that matches the\nre2 regular expression, regexp.\nReturns NULL if there is no match.\nIf the regular expression contains a capturing group ((...)), and there is a\nmatch for that capturing group, that match is returned. If there\nare multiple matches for a capturing group, the first match is returned.\nIf position is specified, the search starts at this\nposition in value, otherwise it starts at the beginning of value. The\nposition must be a positive integer and cannot be 0. If position is greater\nthan the length of value, NULL is returned.\nIf occurrence is specified, the search returns a specific occurrence of the\nregexp in value, otherwise returns the first match. If occurrence is\ngreater than the number of matches found, NULL is returned. For\noccurrence > 1, the function searches for additional occurrences beginning\nwith the character following the previous occurrence.\nReturns an error if:",
+            "syntax": "REGEXP_EXTRACT(value, regexp[, position[, occurrence]])",
+            "arguments": null
+        },
+        {
+            "name": "REGEXP_EXTRACT_ALL",
+            "description": "Returns an array of all substrings of value that match the\nre2 regular expression, regexp. Returns an empty array\nif there is no match.\nIf the regular expression contains a capturing group ((...)), and there is a\nmatch for that capturing group, that match is added to the results.\nThe REGEXP_EXTRACT_ALL function only returns non-overlapping matches. For\nexample, using this function to extract ana from banana returns only one\nsubstring, not two.\nReturns an error if:",
+            "syntax": "REGEXP_EXTRACT_ALL(value, regexp)",
+            "arguments": null
+        },
+        {
+            "name": "REGEXP_INSTR",
+            "description": "Returns the lowest 1-based position of a regular expression, regexp, in\nsource_value. source_value and regexp must be the same type, either\nSTRING or BYTES.\nIf position is specified, the search starts at this position in\nsource_value, otherwise it starts at 1, which is the beginning of\nsource_value. position is of type INT64 and must be positive.\nIf occurrence is specified, the search returns the position of a specific\ninstance of regexp in source_value. If not specified, occurrence defaults\nto 1 and returns the position of the first occurrence.  For occurrence > 1,\nthe function searches for the next, non-overlapping occurrence.\noccurrence is of type INT64 and must be positive.\nYou can optionally use occurrence_position to specify where a position\nin relation to an occurrence starts. Your choices are:\nReturns 0 if:\nReturns NULL if:\nReturns an error if:",
+            "syntax": "REGEXP_INSTR(source_value, regexp [, position[, occurrence, [occurrence_position]]])",
+            "arguments": null
+        },
+        {
+            "name": "REGEXP_REPLACE",
+            "description": "Returns a STRING where all substrings of value that\nmatch regular expression regexp are replaced with replacement.\nYou can use backslashed-escaped digits (\\1 to \\9) within the replacement\nargument to insert text matching the corresponding parenthesized group in the\nregexp pattern. Use \\0 to refer to the entire matching text.\nTo add a backslash in your regular expression, you must first escape it. For\nexample, SELECT REGEXP_REPLACE('abc', 'b(.)', 'X\\\\1'); returns aXc. You can\nalso use raw strings to remove one layer of\nescaping, for example SELECT REGEXP_REPLACE('abc', 'b(.)', r'X\\1');.\nThe REGEXP_REPLACE function only replaces non-overlapping matches. For\nexample, replacing ana within banana results in only one replacement, not\ntwo.\nIf the regexp argument is not a valid regular expression, this function",
+            "syntax": "REGEXP_REPLACE(value, regexp, replacement)",
+            "arguments": null
+        },
+        {
+            "name": "REGEXP_SUBSTR",
+            "description": "Synonym for REGEXP_EXTRACT.",
+            "syntax": "REGEXP_SUBSTR(value, regexp[, position[, occurrence]])",
+            "arguments": null
+        },
+        {
+            "name": "REPEAT",
+            "description": "Returns a STRING or BYTES value that consists of original_value, repeated.\nThe repetitions parameter specifies the number of times to repeat\noriginal_value. Returns NULL if either original_value or repetitions\nare NULL.\nThis function returns an error if the repetitions value is negative.",
+            "syntax": "REPEAT(original_value, repetitions)",
+            "arguments": null
+        },
+        {
+            "name": "REPLACE",
+            "description": "Replaces all occurrences of from_pattern with to_pattern in\noriginal_value. If from_pattern is empty, no replacement is made.\nThis function supports specifying collation.",
+            "syntax": "REPLACE(original_value, from_pattern, to_pattern)",
+            "arguments": null
+        },
+        {
+            "name": "REVERSE",
+            "description": "Returns the reverse of the input STRING or BYTES.",
+            "syntax": "REVERSE(value)",
+            "arguments": null
+        },
+        {
+            "name": "RIGHT",
+            "description": "Returns a STRING or BYTES value that consists of the specified\nnumber of rightmost characters or bytes from value. The length is an\nINT64 that specifies the length of the returned\nvalue. If value is BYTES, length is the number of rightmost bytes to\nreturn. If value is STRING, length is the number of rightmost characters\nto return.\nIf length is 0, an empty STRING or BYTES value will be\nreturned. If length is negative, an error will be returned. If length\nexceeds the number of characters or bytes from value, the original value\nwill be returned.",
+            "syntax": "RIGHT(value, length)",
+            "arguments": null
+        },
+        {
+            "name": "RPAD",
+            "description": "Returns a STRING or BYTES value that consists of original_value appended\nwith pattern. The return_length parameter is an\nINT64 that specifies the length of the\nreturned value. If original_value is BYTES,\nreturn_length is the number of bytes. If original_value is STRING,\nreturn_length is the number of characters.\nThe default value of pattern is a blank space.\nBoth original_value and pattern must be the same data type.\nIf return_length is less than or equal to the original_value length, this\nfunction returns the original_value value, truncated to the value of\nreturn_length. For example, RPAD('hello world', 7); returns 'hello w'.\nIf original_value, return_length, or pattern is NULL, this function\nreturns NULL.\nThis function returns an error if:",
+            "syntax": "RPAD(original_value, return_length[, pattern])",
+            "arguments": null
+        },
+        {
+            "name": "RTRIM",
+            "description": "Identical to TRIM, but only removes trailing characters.",
+            "syntax": "RTRIM(value1[, value2])",
+            "arguments": null
+        },
+        {
+            "name": "SAFE_CONVERT_BYTES_TO_STRING",
+            "description": "Converts a sequence of BYTES to a STRING. Any invalid UTF-8 characters are\nreplaced with the Unicode replacement character, U+FFFD.",
+            "syntax": "SAFE_CONVERT_BYTES_TO_STRING(value)",
+            "arguments": null
+        },
+        {
+            "name": "SOUNDEX",
+            "description": "Returns a STRING that represents the\nSoundex code for value.\nSOUNDEX produces a phonetic representation of a string. It indexes words by\nsound, as pronounced in English. It is typically used to help determine whether\ntwo strings, such as the family names Levine and Lavine, or the words to\nand too, have similar English-language pronunciation.\nThe result of the SOUNDEX consists of a letter followed by 3 digits. Non-latin\ncharacters are ignored. If the remaining string is empty after removing\nnon-Latin characters, an empty STRING is returned.",
+            "syntax": "SOUNDEX(value)",
+            "arguments": null
+        },
+        {
+            "name": "SPLIT",
+            "description": "Splits value using the delimiter argument.\nFor STRING, the default delimiter is the comma ,.\nFor BYTES, you must specify a delimiter.\nSplitting on an empty delimiter produces an array of UTF-8 characters for\nSTRING values, and an array of BYTES for BYTES values.\nSplitting an empty STRING returns an\nARRAY with a single empty\nSTRING.\nThis function supports specifying collation.",
+            "syntax": "SPLIT(value[, delimiter])",
+            "arguments": null
+        },
+        {
+            "name": "STARTS_WITH",
+            "description": "Takes two STRING or BYTES values. Returns TRUE if prefix is a\nprefix of value.\nThis function supports specifying collation.",
+            "syntax": "STARTS_WITH(value, prefix)",
+            "arguments": null
+        },
+        {
+            "name": "STRPOS",
+            "description": "Takes two STRING or BYTES values. Returns the 1-based position of the first\noccurrence of subvalue inside value. Returns 0 if subvalue is not found.\nThis function supports specifying collation.",
+            "syntax": "STRPOS(value, subvalue)",
+            "arguments": null
+        },
+        {
+            "name": "SUBSTR",
+            "description": "Gets a portion (substring) of the supplied STRING or BYTES value.\nThe position argument is an integer specifying the starting position of the\nsubstring.\nThe length argument specifies the maximum number of characters or bytes to\nreturn.",
+            "syntax": "SUBSTR(value, position[, length])",
+            "arguments": null
+        },
+        {
+            "name": "SUBSTRING",
+            "description": "Converts a sequence of BYTES into a base32-encoded STRING. To convert a\nbase32-encoded STRING into BYTES, use FROM_BASE32.",
+            "syntax": "SUBSTRING(value, position[, length])",
+            "arguments": null
+        },
+        {
+            "name": "TO_BASE32",
+            "description": "Converts a sequence of BYTES into a base32-encoded STRING. To convert a\nbase32-encoded STRING into BYTES, use FROM_BASE32.",
+            "syntax": "TO_BASE32(bytes_expr)",
+            "arguments": null
+        },
+        {
+            "name": "TO_BASE64",
+            "description": "Converts a sequence of BYTES into a base64-encoded STRING. To convert a\nbase64-encoded STRING into BYTES, use FROM_BASE64.\nThere are several base64 encodings in common use that vary in exactly which\nalphabet of 65 ASCII characters are used to encode the 64 digits and padding.\nSee RFC 4648 for details. This\nfunction adds padding and uses the alphabet [A-Za-z0-9+/=].",
+            "syntax": "TO_BASE64(bytes_expr)",
+            "arguments": null
+        },
+        {
+            "name": "TO_CODE_POINTS",
+            "description": "Takes a STRING or BYTES value and returns an array of INT64 values that\nrepresent code points or extended ASCII character values.\nTo convert from an array of code points to a STRING or BYTES, see\nCODE_POINTS_TO_STRING or\nCODE_POINTS_TO_BYTES.",
+            "syntax": "TO_CODE_POINTS(value)",
+            "arguments": null
+        },
+        {
+            "name": "TO_HEX",
+            "description": "Converts a sequence of BYTES into a hexadecimal STRING. Converts each byte\nin the STRING as two hexadecimal characters in the range\n(0..9, a..f). To convert a hexadecimal-encoded\nSTRING to BYTES, use FROM_HEX.",
+            "syntax": "TO_HEX(bytes)",
+            "arguments": null
+        },
+        {
+            "name": "TRANSLATE",
+            "description": "In expression, replaces each character in source_characters with the\ncorresponding character in target_characters. All inputs must be the same\ntype, either STRING or BYTES.",
+            "syntax": "TRANSLATE(expression, source_characters, target_characters)",
+            "arguments": null
+        },
+        {
+            "name": "TRIM",
+            "description": "Takes a STRING or BYTES value to trim.\nIf the value to trim is a STRING, removes from this value all leading and\ntrailing Unicode code points in set_of_characters_to_remove.\nThe set of code points is optional. If it is not specified, all\nwhitespace characters are removed from the beginning and end of the\nvalue to trim.\nIf the value to trim is BYTES, removes from this value all leading and\ntrailing bytes in set_of_characters_to_remove. The set of bytes is required.",
+            "syntax": "TRIM(value_to_trim[, set_of_characters_to_remove])",
+            "arguments": null
+        },
+        {
+            "name": "UNICODE",
+            "description": "Returns the Unicode code point for the first character in\nvalue. Returns 0 if value is empty, or if the resulting Unicode code\npoint is 0.",
+            "syntax": "UNICODE(value)",
+            "arguments": null
+        },
+        {
+            "name": "UPPER",
+            "description": "For STRING arguments, returns the original string with all alphabetic\ncharacters in uppercase. Mapping between uppercase and lowercase is done\naccording to the\nUnicode Character Database\nwithout taking into account language-specific mappings.\nFor BYTES arguments, the argument is treated as ASCII text, with all bytes\ngreater than 127 left intact.",
+            "syntax": "UPPER(value)",
+            "arguments": null
+        },
+        {
+            "name": "CURRENT_TIME",
+            "description": "Returns the current time as a TIME object. Parentheses are optional when\ncalled with no arguments.\nThis function supports an optional time_zone parameter.\nSee Time zone definitions for information\non how to specify a time zone.\nThe current time is recorded at the start of the query\nstatement which contains this function, not when this specific function is\nevaluated.",
+            "syntax": "CURRENT_TIME([time_zone])",
+            "arguments": null
+        },
+        {
+            "name": "EXTRACT",
+            "description": "Returns a value that corresponds to the specified part from\na supplied time_expression.\nAllowed part values are:\nReturned values truncate lower order time periods. For example, when extracting\nseconds, EXTRACT truncates the millisecond and microsecond values.",
+            "syntax": "EXTRACT(part FROM time_expression)",
+            "arguments": null
+        },
+        {
+            "name": "FORMAT_TIME",
+            "description": "Converts a string representation of time to a\nTIME object.\nformat_string contains the format elements\nthat define how time_string is formatted. Each element in\ntime_string must have a corresponding element in format_string. The\nlocation of each element in format_string must match the location of\neach element in time_string.\nThe format string fully supports most format elements except for %P.",
+            "syntax": "FORMAT_TIME(format_string, time_object)",
+            "arguments": null
+        },
+        {
+            "name": "PARSE_TIME",
+            "description": "Converts a string representation of time to a\nTIME object.\nformat_string contains the format elements\nthat define how time_string is formatted. Each element in\ntime_string must have a corresponding element in format_string. The\nlocation of each element in format_string must match the location of\neach element in time_string.\nThe format string fully supports most format elements except for %P.",
+            "syntax": "PARSE_TIME(format_string, time_string)",
+            "arguments": null
+        },
+        {
+            "name": "TIME",
+            "description": "",
+            "syntax": "1. TIME(hour, minute, second)2. TIME(timestamp, [time_zone])3. TIME(datetime)",
+            "arguments": null
+        },
+        {
+            "name": "TIME_ADD",
+            "description": "Adds int64_expression units of part to the TIME object.\nTIME_ADD supports the following values for part:\nThis function automatically adjusts when values fall outside of the 00:00:00 to\n24:00:00 boundary. For example, if you add an hour to 23:30:00, the returned\nvalue is 00:30:00.",
+            "syntax": "TIME_ADD(time_expression, INTERVAL int64_expression part)",
+            "arguments": null
+        },
+        {
+            "name": "TIME_DIFF",
+            "description": "Gets the number of unit boundaries between two TIME values (end_time -\nstart_time) at a particular time granularity.",
+            "syntax": "TIME_DIFF(start_time, end_time, granularity)",
+            "arguments": null
+        },
+        {
+            "name": "TIME_SUB",
+            "description": "Subtracts int64_expression units of part from the TIME object.\nTIME_SUB supports the following values for part:\nThis function automatically adjusts when values fall outside of the 00:00:00 to\n24:00:00 boundary. For example, if you subtract an hour from 00:30:00, the\nreturned value is 23:30:00.",
+            "syntax": "TIME_SUB(time_expression, INTERVAL int64_expression part)",
+            "arguments": null
+        },
+        {
+            "name": "TIME_TRUNC",
+            "description": "Truncates a TIME value to the granularity of time_part. The TIME value\nis always rounded to the beginning of time_part, which can be one of the\nfollowing:",
+            "syntax": "TIME_TRUNC(time_expression, time_part)",
+            "arguments": null
+        },
+        {
+            "name": "CURRENT_TIMESTAMP",
+            "description": "Returns the current date and time as a timestamp object. The timestamp is\ncontinuous, non-ambiguous, has exactly 60 seconds per minute and does not repeat\nvalues over the leap second. Parentheses are optional.\nThis function handles leap seconds by smearing them across a window of 20 hours\naround the inserted leap second.\nThe current date and time is recorded at the start of the query\nstatement which contains this function, not when this specific function is\nevaluated.",
+            "syntax": "CURRENT_TIMESTAMP()",
+            "arguments": null
+        },
+        {
+            "name": "EXTRACT",
+            "description": "Returns a value that corresponds to the specified part from\na supplied timestamp_expression. This function supports an optional\ntime_zone parameter. See\nTime zone definitions for information\non how to specify a time zone.\nAllowed part values are:\nReturned values truncate lower order time periods. For example, when extracting\nseconds, EXTRACT truncates the millisecond and microsecond values.",
+            "syntax": "EXTRACT(part FROM timestamp_expression [AT TIME ZONE time_zone])",
+            "arguments": null
+        },
+        {
+            "name": "FORMAT_TIMESTAMP",
+            "description": "Formats a timestamp according to the specified format_string.\nSee Format elements for date and time parts\nfor a list of format elements that this function supports.",
+            "syntax": "FORMAT_TIMESTAMP(format_string, timestamp[, time_zone])",
+            "arguments": null
+        },
+        {
+            "name": "PARSE_TIMESTAMP",
+            "description": "Converts a string representation of a timestamp to a\nTIMESTAMP object.\nformat_string contains the format elements\nthat define how timestamp_string is formatted. Each element in\ntimestamp_string must have a corresponding element in format_string. The\nlocation of each element in format_string must match the location of\neach element in timestamp_string.\nThe format string fully supports most format elements, except for\n%P.",
+            "syntax": "PARSE_TIMESTAMP(format_string, timestamp_string[, time_zone])",
+            "arguments": null
+        },
+        {
+            "name": "STRING",
+            "description": "Converts a timestamp to a string. Supports an optional\nparameter to specify a time zone. See\nTime zone definitions for information\non how to specify a time zone.",
+            "syntax": "STRING(timestamp_expression[, time_zone])",
+            "arguments": null
+        },
+        {
+            "name": "TIMESTAMP",
+            "description": "This function supports an optional\nparameter to specify a time zone. If\nno time zone is specified, the default time zone, UTC,\nis used.",
+            "syntax": "TIMESTAMP(string_expression[, time_zone])TIMESTAMP(date_expression[, time_zone])TIMESTAMP(datetime_expression[, time_zone])",
+            "arguments": null
+        },
+        {
+            "name": "TIMESTAMP_ADD",
+            "description": "Adds int64_expression units of date_part to the timestamp, independent of\nany time zone.\nTIMESTAMP_ADD supports the following values for date_part:",
+            "syntax": "TIMESTAMP_ADD(timestamp_expression, INTERVAL int64_expression date_part)",
+            "arguments": null
+        },
+        {
+            "name": "TIMESTAMP_DIFF",
+            "description": "Gets the number of unit boundaries between two TIMESTAMP values\n(end_timestamp - start_timestamp) at a particular time granularity.",
+            "syntax": "TIMESTAMP_DIFF(end_timestamp, start_timestamp, granularity)",
+            "arguments": null
+        },
+        {
+            "name": "TIMESTAMP_MICROS",
+            "description": "Interprets int64_expression as the number of microseconds since 1970-01-01\n00:00:00 UTC and returns a timestamp.",
+            "syntax": "TIMESTAMP_MICROS(int64_expression)",
+            "arguments": null
+        },
+        {
+            "name": "TIMESTAMP_MILLIS",
+            "description": "Interprets int64_expression as the number of milliseconds since 1970-01-01\n00:00:00 UTC and returns a timestamp.",
+            "syntax": "TIMESTAMP_MILLIS(int64_expression)",
+            "arguments": null
+        },
+        {
+            "name": "TIMESTAMP_SECONDS",
+            "description": "Interprets int64_expression as the number of seconds since 1970-01-01 00:00:00\nUTC and returns a timestamp.",
+            "syntax": "TIMESTAMP_SECONDS(int64_expression)",
+            "arguments": null
+        },
+        {
+            "name": "TIMESTAMP_SUB",
+            "description": "Subtracts int64_expression units of date_part from the timestamp,\nindependent of any time zone.\nTIMESTAMP_SUB supports the following values for date_part:",
+            "syntax": "TIMESTAMP_SUB(timestamp_expression, INTERVAL int64_expression date_part)",
+            "arguments": null
+        },
+        {
+            "name": "TIMESTAMP_TRUNC",
+            "description": "Truncates a timestamp to the granularity of date_time_part.\nThe timestamp is always rounded to the beginning of date_time_part,\nwhich can be one of the following:\nTIMESTAMP_TRUNC function supports an optional time_zone parameter. This\nparameter applies to the following date_time_part:\nUse this parameter if you want to use a time zone other than the\ndefault time zone, UTC, as part of the\ntruncate operation.\nWhen truncating a timestamp to MINUTE\norHOUR parts, TIMESTAMP_TRUNC determines the civil time of the\ntimestamp in the specified (or default) time zone\nand subtracts the minutes and seconds (when truncating to HOUR) or the seconds\n(when truncating to MINUTE) from that timestamp.\nWhile this provides intuitive results in most cases, the result is\nnon-intuitive near daylight savings transitions that are not hour-aligned.",
+            "syntax": "TIMESTAMP_TRUNC(timestamp_expression, date_time_part[, time_zone])",
+            "arguments": null
+        },
+        {
+            "name": "UNIX_MICROS",
+            "description": "Returns the number of microseconds since 1970-01-01 00:00:00 UTC.",
+            "syntax": "UNIX_MICROS(timestamp_expression)",
+            "arguments": null
+        },
+        {
+            "name": "UNIX_MILLIS",
+            "description": "Returns the number of milliseconds since 1970-01-01 00:00:00 UTC. Truncates\nhigher levels of precision by rounding down to the beginning of the millisecond.",
+            "syntax": "UNIX_MILLIS(timestamp_expression)",
+            "arguments": null
+        },
+        {
+            "name": "UNIX_SECONDS",
+            "description": "Returns the number of seconds since 1970-01-01 00:00:00 UTC. Truncates higher\nlevels of precision by rounding down to the beginning of the second.",
+            "syntax": "UNIX_SECONDS(timestamp_expression)",
+            "arguments": null
+        },
+        {
+            "name": "GENERATE_UUID",
+            "description": "Returns a random universally unique identifier (UUID) as a STRING.\nThe returned STRING consists of 32 hexadecimal\ndigits in five groups separated by hyphens in the form 8-4-4-4-12. The\nhexadecimal digits represent 122 random bits and 6 fixed bits, in compliance\nwith RFC 4122 section 4.4.\nThe returned STRING is lowercase.",
+            "syntax": "GENERATE_UUID()",
+            "arguments": null
+        }
+    ]
+}
