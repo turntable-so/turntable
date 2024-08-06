@@ -57,7 +57,7 @@
 
 
 ## 🔔 Stay up to date
-Lago launched its v0.1 on June 2nd, 2022. Lots of new features are coming, and are generally released on a bi-weekly basis. Watch updates of this repository to be notified of future updates.
+Turntable launched its v0.1 on August 2024. Lots of new features are coming, and are generally released on a bi-weekly basis. Watch updates of this repository to be notified of future updates.
 
 [Check out our public roadmap](https://turntable-so.canny.io/)
 
@@ -83,21 +83,8 @@ With that context, we wanted to explicitly call out some of the projects we love
 - [SQLGlot](https://github.com/tobymao/sqlglot): sql/lineage parser
 - [TipTap](https://github.com/ueberdosis/tiptap): Text editor
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 ## 🔖 License
-Distributed under the AGPLv3 License. Read more [here](https://www.getlago.com/blog/open-source-licensing-and-why-lago-chose-agplv3).
+Turntable is distributed under the AGPLv3 License.
 
 ## 💻 Deploy locally
 
@@ -107,7 +94,7 @@ Distributed under the AGPLv3 License. Read more [here](https://www.getlago.com/b
 3. Make sure Git is installed on your machine.
 
 ### Run the app
-To start using Lago
+To start using Turntable
 
 1. Clone the repository
 
@@ -115,7 +102,7 @@ To start using Lago
 # Get the code
 git clone https://github.com/turntable-so/turntable.git
 
-# Go to Lago folder
+# Go to Turntable folder
 cd turntable
 ```
 
@@ -138,23 +125,22 @@ docker compose up --env-file .env
 You can now open your browser and go to http://localhost:3000 to connect to the application.
 
 ### Analytics and tracking for the self-hosted version
-Please note that Turntable, by default, tracks basic actions performed on your self-hosted instance, but you can easily opt out as part of the onboarding flow. If you do not disable tracking, you may receive specific communications or product updates. No matter whatTurntable will not collect store or have access to any sensitive data.
+Please note that Turntable, by default, tracks basic actions performed on your self-hosted instance, but you can easily opt out as part of the onboarding flow. If you do not disable tracking, you may receive specific communications or product updates. No matter what, Turntable will not collect store or have access to any sensitive data.
 
-If you would like to know more about Lago's analytics or remove the entire tracking, please refer to [this page](https://doc.getlago.com/guide/self-hosted/tracking-analytics) for comprehensive information.
+For more information, please see our [privacy policy](www.turntable.so/privacy).
 
 ## ☁️ Use our cloud-based product
 [Email us](mailto:founders@turntable.so) or visit [our website](www.turntable.so) to get started with our cloud product. Their our two vairants: a fully-hosted offering, and hybrid one, which includes a customer-deployed agent.
 
-## 🚀 Getting the most out of Lago
+## 🚀 Getting the most out of Turntable
 - See the [documentation](https://doc.turntable.so) to learn more about all the features;
 - Join our [Slack community](https://join.slack.com/t/turntable-community/shared_invite/zt-25p0olvhz-Z~c5QWq1jv2YFHQ46mMFDA) if you need help, or want to chat, we’re here to help;
-- Contribute on GitHub: read our [guidelines](https://github.com/turntable-so/turntable/blob/main/CONTRIBUTING.md);
 - Follow us on [Twitter](https://twitter.com/Turntable) or [LinkedIn](https://www.linkedin.com/company/turntabledata) for the latest news;
 - You can email us as well: [team@turnable.so](mailto:team@turntable.so).
 
 ## 📝 Contributing
 
-You can follow the instructions below to set up ourm development environment on your machine. This is intended for people interested in contributing to Turntable. If you just want to try Turntable on your local system, we recommend that you take a look at Lago's public documentation.
+You can follow the instructions below to set up ourm development environment on your machine. This is intended for people interested in contributing to Turntable. If you just want to try Turntable on your local system, we recommend that you the instructions above to run a prod instance.
 
 For now, we are not accepting pull requests from the community, but We are working on a process to make this possible in the future. For now, file an bug reports and feature requests as a [GitHub issue](https://github.com/turntable-so/turntable/issues), [Canny submission](https://turntable-so.canny.io/) or [Slack post](https://join.slack.com/t/turntable-community/shared_invite/zt-25p0olvhz-Z~c5QWq1jv2YFHQ46mMFDA).
 
