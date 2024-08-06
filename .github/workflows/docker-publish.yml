@@ -1,0 +1,49 @@
+name: Build and Publish Docker Image
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout cåode
+      uses: actions/checkout@v2
+
+    - name: Setup rye
+      uses: eifinger/setup-rye@v3
+      with:
+        working-directory: backend
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build package
+      run: rye build
+      working-directory: backend
+    
+    - name: Determine version
+      run: |
+        VERSION=$(awk -F' = ' '/^version/ {gsub(/"/, "", $2); print $2}' pyproject.toml)
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+      working-directory: backend
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: backend
+        file: backend/Dockerfile
+        push: true
+        tags: |
+          ghcr.io/${{ github.repository_owner }}/notebook-backend:${{ env.VERSION }}
+          ghcr.io/${{ github.repository_owner }}/notebook-backend:latest
