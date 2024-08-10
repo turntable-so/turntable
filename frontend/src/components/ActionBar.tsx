@@ -3,15 +3,23 @@ import { useAppContext } from "@/contexts/AppContext";
 import useResizeObserver from "use-resize-observer";
 import { Button } from "@/components/ui/button";
 import { Loader2, SlidersHorizontal } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Fragment, memo, useEffect, useMemo, useRef, useState } from "react";
 import { FixedSizeList as List } from "react-window";
+import { getNotebooks } from "../app/actions/actions";
+import Link from 'next/link'
+
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "./ui/resizable";
-
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs"
 import ModelPreviewer from "./ModelPreviewer";
 import { Popover, PopoverTrigger } from "./ui/popover";
 import { PopoverContent } from "@radix-ui/react-popover";
@@ -142,12 +150,14 @@ export default function ActionBar({
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isFilterPopoverOpen, setIsFilterPopoverOpen] = useState(false);
   const [treeData, setTreeData] = useState<any>([]);
+  const [notebooks, setNotebooks] = useState<any>([]);
   type Item = Record<"value" | "label", string>;
   const [selectedTagFilters, setSelectedTagFilters] = useState<Item[]>([]);
   const [selectedTypeFilters, setSelectedTypeFilters] = useState<Item[]>([]);
   const [lowHeight, setLowheight] = useState<number>(0);
-
+  const pathName = usePathname();
   const router = useRouter();
+  const isNotebook = pathName.includes('/notebooks/');
 
   const filteredAssets = useMemo(() => {
     if (!assets) return {};
@@ -175,6 +185,14 @@ export default function ActionBar({
     }, {} as Record<string, (typeof assets)[keyof typeof assets]>);
   }, [assets, searchQuery, selectedTagFilters]);
 
+  useEffect(() => {
+    const fetchAndSetNotebooks = async () => {
+      const data = await getNotebooks();
+      setNotebooks(data);
+    }
+    fetchAndSetNotebooks();
+  }, [])
+  
   useEffect(() => {
     if (searchRef.current) {
       searchRef.current.focus();
@@ -304,7 +322,10 @@ export default function ActionBar({
 
     setTreeData(treeData);
   }, [filteredAssets, resources]);
-
+  const isCurrentNotebook = (pathName, id) => {
+    return pathName.includes(id);
+  }
+  
   return (
     <div className="text-muted-foreground w-full mt-1 h-screen flex flex-col">
       <div className="sticky top-0 p-2 pt-4">
@@ -387,7 +408,20 @@ export default function ActionBar({
         className={`flex-grow border-t mt-0 ${isFilterPopoverOpen ? "z-[-1]" : ""
           }`}
       >
-        {!assetPreview ? (
+        <Tabs defaultValue="assets">
+          <TabsList className="grid w-full grid-cols-2" style={!isNotebook ? {
+              opacity: 0,
+              pointerEvents: "none",
+              height: 0
+            } : {}}>
+            <TabsTrigger value="assets" style={!isNotebook ? {
+              opacity: 0,
+              pointerEvents: "none"
+            } : {}}>Assets</TabsTrigger>
+            {isNotebook && <TabsTrigger value="pages">Pages</TabsTrigger>}
+          </TabsList>
+          <TabsContent value="assets">
+          {!assetPreview ? (
           <div className="flex flex-col h-full max-h-screen z-0">
             {false ? (
               <div className="flex items-center justify-center h-full">
@@ -472,6 +506,32 @@ export default function ActionBar({
             </ResizablePanel>
           </ResizablePanelGroup>
         )}
+          </TabsContent>
+          <TabsContent value="pages">
+              {
+                (notebooks || []).map((notebook:any) => (
+                  <div className='w-full'
+                  key={notebook.title}>
+                  <Button
+
+                      variant={'ghost'}
+                      size="icon"
+                      className={`w-full ${isCurrentNotebook(pathName, notebook.id) ? 'opacity-100' : 'opacity-50'} ${isCurrentNotebook(pathName, notebook.id) ? 'bg-' : 'bg-transparent'} `}
+                      aria-label={notebook.title}
+                  >
+                      <Link href={`/notebooks/${notebook.id}`} className="w-full">
+                          <div className={`${isCurrentNotebook(pathName, notebook.id) ? 'bg-[#ebebeb]' : 'hover:bg-[#ebebeb]'} px-4 p-2 w-full flex  space-x-2`}>
+                              <p className="font-normal text-[15px]">{notebook.title}</p>
+                          </div>
+                      </Link>
+                  </Button>
+              </div>
+                ))
+              }
+
+          </TabsContent>
+        </Tabs>
+        
       </div>
     </div>
   );
