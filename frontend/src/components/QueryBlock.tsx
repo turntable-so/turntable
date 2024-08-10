@@ -21,7 +21,9 @@ import {
   Expand,
   Filter,
   Loader2,
-  Play
+  Play,
+  Table,
+  EllipsisVertical,
 } from "lucide-react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { Fragment, SyntheticEvent, useEffect, useRef, useState } from "react";
@@ -60,6 +62,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAppContext } from "../contexts/AppContext";
 
 import { ViewType } from "./notebook/sql-node";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 
 const getColumnType = (pandasType: string) => {
   if (pandasType.toLowerCase().includes("date")) {
@@ -217,6 +220,7 @@ type QueryBlockProps = {
     };
   };
   updateAttributes: (attrs: any) => void;
+  deleteNode: any,
 };
 
 export default function QueryBlock(props: QueryBlockProps) {
@@ -547,9 +551,17 @@ export default function QueryBlock(props: QueryBlockProps) {
     return customSyntaxAutocomplete(state, pos);
   };
 
+  const deleteBlock = () => {
+    console.log(props)
+    props.node.attrs.blockId && props.deleteNode() 
+  }
+
   const setDefaultDataChart = async (rowData: any, colDefs) => {
     if (!notebookCharts[props.node.attrs.blockId]) {
-      if (props.node.attrs.chartSettings && Object.keys(props.node.attrs.chartSettings).length > 0) {
+      if (
+        props.node.attrs.chartSettings &&
+        Object.keys(props.node.attrs.chartSettings).length > 0
+      ) {
         setNotebookCharts((prev) => ({
           ...prev,
           [props.node.attrs.blockId]: props.node.attrs.chartSettings,
@@ -965,6 +977,25 @@ export default function QueryBlock(props: QueryBlockProps) {
                 )}
                 Run
               </Button>
+              <Popover>
+                <PopoverTrigger>
+                  <Button variant="outline" onClick={() => {}}>
+                    <EllipsisVertical className="w-4 h-4 text-green-500" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  align="start"
+                  className="w-fit text-muted-foreground"
+                >
+                  <Button
+                    onClick={deleteBlock}
+                    variant="ghost"
+                    className="flex items-center"
+                  >
+                    Delete
+                  </Button>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
           <Card className="rounded-md bg-muted/50">
