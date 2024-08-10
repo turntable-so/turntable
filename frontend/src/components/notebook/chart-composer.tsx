@@ -1,177 +1,239 @@
 import { useRef, useState, useEffect } from "react";
-import { Button } from "../ui/button";
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
-import { ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { ChartConfig, ChartContainer } from "@/components/ui/chart"
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  XAxis,
+  LineChart,
+  Line,
+  YAxis,
+} from "recharts";
+import { ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { ChartConfig, ChartContainer } from "@/components/ui/chart";
 import { AgGridReact } from "ag-grid-react";
-import { FancyMultiSelect } from "@/components/ui/multi-select"
-
-
-const chartData = [
-    { month: "January", desktop: 186, mobile: 80 },
-    { month: "February", desktop: 305, mobile: 200 },
-    { month: "March", desktop: 237, mobile: 120 },
-    { month: "April", desktop: 73, mobile: 190 },
-    { month: "May", desktop: 209, mobile: 130 },
-    { month: "June", desktop: 214, mobile: 140 },
-]
+import { FancyMultiSelect } from "@/components/ui/multi-select";
+import { ChartComponent } from "@/components/QueryBlock";
 
 const chartConfig = {
-    desktop: {
-        label: "Desktop",
-        color: "#2563eb",
-    },
-    mobile: {
-        label: "Mobile",
-        color: "#60a5fa",
-    },
-} satisfies ChartConfig
+  desktop: {
+    label: "Desktop",
+    color: "#2563eb",
+  },
+  mobile: {
+    label: "Mobile",
+    color: "#60a5fa",
+  },
+} satisfies ChartConfig;
 
-import * as React from "react"
+import * as React from "react";
 
 import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectLabel,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useAppContext } from "@/contexts/AppContext";
 
-
-export default function ChartComposer({ data }: {
-    data: {
-        colDefs: any[]
-        rowData: any[]
-    }
+export default function ChartComposer({
+  data,
+}: {
+  data: {
+    colDefs: any[];
+    rowData: any[];
+  };
 }) {
+  const gridRef = useRef<AgGridReact>(null);
 
-    const gridRef = useRef<AgGridReact>(null);
+  const { notebookCharts, setNotebookCharts, activeNode } = useAppContext();
 
-    type Direction = 'ASCENDING' | 'DESCENDING'
-    type ChartType = 'BAR'
+  const [currentOptions, setCurrentOptions] = useState(
+    notebookCharts[activeNode]
+  );
 
-    const [chartType, setChartType] = useState<ChartType>('BAR')
-    const [xAxis, setXAxis] = useState<string | null>(null)
-    const [yAxisSeriesList, setYAxisSeriesList] = useState<string[]>([])
-    const [sortIndex, setSortIndex] = useState<string | null>(null)
-    const [sortDirection, setSortDirection] = useState<Direction>('ASCENDING')
+  useEffect(() => {
+    setCurrentOptions(notebookCharts[activeNode]);
+  }, [notebookCharts, activeNode]);
 
+  useEffect(() => {
+    if (currentOptions?.xAxis && currentOptions?.isXAxisNumeric) {
+      const minXAxisValue = Math.min(
+        ...data.rowData.map((row) => row[currentOptions?.xAxis])
+      );
+      setNotebookCharts({
+        ...notebookCharts,
+        [activeNode]: {
+          ...notebookCharts[activeNode],
+          xAxisRange: [minXAxisValue, minXAxisValue + 30],
+        },
+      });
+    }
+  }, [
+    data.rowData,
+    currentOptions?.xAxis,
+    currentOptions?.isXAxisNumeric,
+    activeNode,
+  ]);
 
-    useEffect(() => {
-        if (data.colDefs) {
-            setXAxis(data.colDefs[0].field)
-            setYAxisSeriesList(
-                [...data.colDefs.slice(1).map((colDef) => colDef.field)]
-            )
-        }
-    }, [data.colDefs])
+  useEffect(() => {
+    if (currentOptions?.xAxis) {
+      setNotebookCharts({
+        ...notebookCharts,
+        [activeNode]: {
+          ...notebookCharts[activeNode],
+          isXAxisNumeric: data.rowData.every(
+            (row) => typeof row[currentOptions?.xAxis] === "number"
+          ),
+        },
+      });
+    }
+  }, [data, currentOptions?.xAxis]);
 
-    return (
-        <div>
-            <div className='flex w-full h-full justify-between'>
-                <div className='flex-grow-1 w-4/5  flex-col items-between'>
-                    <div className='flex flex-col w-full h-2/3 flex-grow-1'>
-                        <ChartContainer config={chartConfig} className="min-h-[400px] w-full">
-                            <BarChart accessibilityLayer data={data.rowData}>
-                                <CartesianGrid vertical={false} />
-                                <XAxis
-                                    dataKey={xAxis as string}
-                                    tickLine={false}
-                                    tickMargin={5}
-                                    axisLine={false}
-                                />
-                                <ChartTooltip content={<ChartTooltipContent />} />
-                                <Bar dataKey="num" fill="var(--color-desktop)" radius={4} />
-                            </BarChart>
-                        </ChartContainer>
-                    </div>
+  const handleRangeChange = (event) => {
+    const { name, value } = event.target;
+    setNotebookCharts({
+      ...notebookCharts,
+      [activeNode]: {
+        ...notebookCharts[activeNode],
+        xAxisRange:
+          name === "min"
+            ? [value, currentOptions?.xAxisRange[1]]
+            : [currentOptions?.xAxisRange[0], value],
+      },
+    });
+  };
 
-                    <div className="flex flex-col w-full h-full mb-8">
-                        <AgGridReact
-                            className="ag-theme-custom"
-                            ref={gridRef}
-                            suppressRowHoverHighlight={true}
-                            columnHoverHighlight={true}
-                            rowData={data.rowData}
-                            pagination={true}
-                            // @ts-ignore
-                            columnDefs={data.colDefs}
-                        />
-                    </div>
-                </div>
-                <div className='w-1/5 p-2 space-y-4'>
-                    <div className=''>
-                        <div className='text-lg py-2'>Type</div>
-                        {/* @ts-ignore */}
-                        <Select defaultValue={chartType} onValueChange={(val) => setChartType(val)}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select an X Axis column" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="BAR">Bar Chart</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div>
-                        <div className='text-lg py-2 font-semibold'>X Axis</div>
-                        <div>
-                            <div>X Axis Column</div>
-                            <Select defaultValue={xAxis as string} onValueChange={(val) => setXAxis(val)}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select an X Axis column" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {data.colDefs.map((colDef) => (
-                                        <SelectItem key={colDef.field} value={colDef.field}>{colDef.headerName}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
-                    <div>
-                        <div className='text-lg py-2 font-semibold'>Y Axis</div>
-                        <FancyMultiSelect
-                            items={yAxisSeriesList.map((item: string) => ({
-                                label: item,
-                                value: item,
-                            }))}
-                            selected={yAxisSeriesList as any}
-                            setSelected={() => undefined}
-                            label="Select Y Axis columns"
-                        />
-                    </div>
-                    <div>
-                        <div>
-                            <div className='text-lg py-2 font-semibold'>Sort</div>
-                        </div>
-                        <div>
-                            <div className='text-md text-muted-foreground py-2'>Sort Index</div>
-                            <Select defaultValue={chartType} onValueChange={(val) => setChartType(val as any)}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a chart type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="BAR">Bar</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div>
-                            <div className='text-md text-muted-foreground py-2'>Sort Direction</div>
-                            <Select>
-                                <SelectTrigger className="">
-                                    <SelectValue placeholder="Select a chart type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="bar">Bar</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
+  const chartColors = ["#2563eb", "#60a5fa"];
+  return (
+    <div>
+      <div className="flex w-full h-full justify-between">
+        <div className="flex-grow-1 w-4/5  flex-col items-between">
+          <div className="flex flex-col w-full h-2/3 flex-grow-1">
+            <ChartComponent
+              chartType={currentOptions?.chartType}
+              xAxis={currentOptions?.xAxis}
+              yAxisSeriesList={currentOptions?.yAxisSeriesList}
+              data={data.rowData}
+              isXAxisNumeric={currentOptions?.isXAxisNumeric}
+              xAxisRange={currentOptions?.xAxisRange}
+            />
+          </div>
 
-                </div>
-            </div>
+          <div className="flex flex-col w-full h-full mb-8">
+            <AgGridReact
+              className="ag-theme-custom"
+              ref={gridRef}
+              suppressRowHoverHighlight={true}
+              columnHoverHighlight={true}
+              rowData={data.rowData}
+              pagination={true}
+              // @ts-ignore
+              columnDefs={data.colDefs}
+            />
+          </div>
         </div>
-    )
+        <div className="w-1/5 p-2 space-y-4">
+          <div className="">
+            <div className="text-lg py-2">Type</div>
+            <Select
+              defaultValue={currentOptions?.chartType || "BAR"}
+              onValueChange={(val) => {
+                setNotebookCharts({
+                  ...notebookCharts,
+                  [activeNode]: {
+                    ...notebookCharts[activeNode],
+                    chartType: val,
+                  },
+                });
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select an X Axis column" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="HBAR">Horizontal Bar Chart</SelectItem>
+                <SelectItem value="BAR">Bar Chart</SelectItem>
+                <SelectItem value="LINE">Line Chart</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <div className="text-lg py-2 font-semibold">X Axis</div>
+            <div>
+              <div>X Axis Column</div>
+              <Select
+                defaultValue={currentOptions?.xAxis as string}
+                onValueChange={(val) => {
+                  setNotebookCharts({
+                    ...notebookCharts,
+                    [activeNode]: {
+                      ...notebookCharts[activeNode],
+                      xAxis: val,
+                    },
+                  });
+                }}
+                value={currentOptions?.xAxis}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select an X Axis column" />
+                </SelectTrigger>
+                <SelectContent>
+                  {data.colDefs.map((colDef) => (
+                    <SelectItem key={colDef.field} value={colDef.field}>
+                      {colDef.headerName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div>
+            <div className="text-lg py-2 font-semibold">Y Axis</div>
+            <FancyMultiSelect
+              items={currentOptions?.columnOptions.map((item: string) => ({
+                label: item,
+                value: item,
+              }))}
+              selected={currentOptions?.yAxisSeriesList}
+              setSelected={() => {}}
+              functionSelected={(newValue) => {
+                setNotebookCharts({
+                  ...notebookCharts,
+                  [activeNode]: {
+                    ...notebookCharts[activeNode],
+                    yAxisSeriesList: newValue,
+                  },
+                });
+              }}
+              label="Select Y Axis columns"
+            />
+          </div>
+          {currentOptions?.isXAxisNumeric && (
+            <div>
+              <div className="text-lg py-2 font-semibold">X Axis Range</div>
+              <div className="flex space-x-2">
+                <input
+                  type="number"
+                  name="min"
+                  value={currentOptions?.xAxisRange[0]}
+                  onChange={handleRangeChange}
+                  className="w-1/2 p-2 border rounded"
+                  placeholder="Min"
+                />
+                <input
+                  type="number"
+                  name="max"
+                  value={currentOptions?.xAxisRange[1]}
+                  onChange={handleRangeChange}
+                  className="w-1/2 p-2 border rounded"
+                  placeholder="Max"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }

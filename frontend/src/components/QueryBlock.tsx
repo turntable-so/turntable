@@ -4,15 +4,17 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
+  SelectGroup,
+  SelectLabel
 } from "@/components/ui/select";
 import { sql } from "@codemirror/lang-sql";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 import {
   ColDef
 } from "ag-grid-community";
-import { AgGridReact } from "ag-grid-react"; // React Data Grid Component
 import {
+  BarChartBig,
   ChevronsDownUp,
   Clock,
   Download,
@@ -21,8 +23,18 @@ import {
   Loader2,
   Play
 } from "lucide-react";
-import { Fragment, useEffect, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
+import { Fragment, SyntheticEvent, useEffect, useRef, useState } from "react";
+
+import { AgGridReact } from "ag-grid-react"; // React Data Grid Component
+import {
+  ColDef,
+  ColGroupDef,
+  GridApi,
+  GridOptions,
+  createGrid,
+} from "ag-grid-community";
+import "./ag-grid-custom-theme.css"; // Custom CSS Theme for Data Grid
 import {
   executeQuery,
   getWorkflow
@@ -34,8 +46,6 @@ import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 // import 'codemirror/keymap/sublime';
 // import 'codemirror/theme/quietlight.css';
-import { getQueryBlockResult } from "@/app/actions/query-actions";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CompletionContext, autocompletion } from "@codemirror/autocomplete";
 import { quietlight } from "@uiw/codemirror-theme-quietlight";
 import CodeMirror, {
@@ -44,10 +54,12 @@ import CodeMirror, {
   ReactCodeMirrorRef
 } from "@uiw/react-codemirror";
 import { useParams } from "next/navigation";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
+import { getQueryBlockResult } from "@/app/actions/query-actions";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAppContext } from "../contexts/AppContext";
-import { ViewType } from "./notebook/sql-node";
 
+import { ViewType } from "./notebook/sql-node";
 
 const getColumnType = (pandasType: string) => {
   if (pandasType.toLowerCase().includes("date")) {
@@ -59,12 +71,20 @@ const getColumnType = (pandasType: string) => {
   return pandasType;
 };
 
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  LineChart,
+  Line,
+} from "recharts";
 
 import { ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 
 import { ChartConfig, ChartContainer } from "@/components/ui/chart";
-
+import { FullScreenDialog } from "@/app/notebooks/[id]/page";
 const chartData = [
   { month: "January", desktop: 186, mobile: 80 },
   { month: "February", desktop: 305, mobile: 200 },
@@ -72,7 +92,7 @@ const chartData = [
   { month: "April", desktop: 73, mobile: 190 },
   { month: "May", desktop: 209, mobile: 130 },
   { month: "June", desktop: 214, mobile: 140 },
-]
+];
 
 const chartConfig = {
   desktop: {
@@ -83,28 +103,100 @@ const chartConfig = {
     label: "Mobile",
     color: "#60a5fa",
   },
-} satisfies ChartConfig
+} satisfies ChartConfig;
+const chartColors = ["#2563eb", "#60a5fa"];
 
-export function ChartComponent() {
+export function ChartComponent(props: any) {
+  const {
+    chartType,
+    xAxis,
+    yAxisSeriesList,
+    data,
+    isXAxisNumeric,
+    xAxisRange,
+  } = props;
+  const [filteredData, setFilteredData] = useState<any>([]);
+
+  const setData = () => {
+    if (isXAxisNumeric && data) {
+      const filteredData = data.filter(
+        (row) => row[xAxis] >= xAxisRange[0] && row[xAxis] <= xAxisRange[1]
+      );
+      setFilteredData(filteredData);
+    } else {
+      setFilteredData(filteredData);
+    }
+  };
+
+  useEffect(() => {
+    setData();
+  }, [xAxisRange, xAxis, data, isXAxisNumeric]);
+
+  useEffect(() => {
+    setData();
+  }, []);
+
   return (
     <ChartContainer config={chartConfig} className="min-h-[400px] w-full">
-      <BarChart accessibilityLayer data={chartData}>
-        <CartesianGrid vertical={false} />
-        <XAxis
-          dataKey="month"
-          tickLine={false}
-          tickMargin={10}
-          axisLine={false}
-          tickFormatter={(value) => value.slice(0, 3)}
-        />
-        <ChartTooltip content={<ChartTooltipContent />} />
-        <Bar dataKey="desktop" fill="var(--color-desktop)" radius={4} />
-        <Bar dataKey="mobile" fill="var(--color-mobile)" radius={4} />
-      </BarChart>
+      {chartType === "BAR" ? (
+        <BarChart accessibilityLayer data={filteredData}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis
+            dataKey={xAxis as string}
+            tickLine={false}
+            tickMargin={5}
+            axisLine={false}
+          />
+          <YAxis />
+          <ChartTooltip content={<ChartTooltipContent />} />
+          {(yAxisSeriesList || []).map((series: any, index: any) => (
+            <Bar
+              isAnimationActive={false}
+              key={series.value}
+              dataKey={series.value}
+              fill={chartColors[index % 2]}
+            />
+          ))}
+        </BarChart>
+      ) : chartType === "HBAR" ? (
+        <BarChart accessibilityLayer data={filteredData} layout="vertical">
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis type="number" />
+          <YAxis type="category" />
+          <ChartTooltip content={<ChartTooltipContent />} />
+          {(yAxisSeriesList || []).map((series: any, index: any) => (
+            <Bar
+              isAnimationActive={false}
+              key={series.value}
+              dataKey={series.value}
+              fill={chartColors[index % 2]}
+            />
+          ))}
+        </BarChart>
+      ) : (
+        <LineChart accessibilityLayer data={filteredData}>
+          <CartesianGrid vertical={false} />
+          <XAxis
+            dataKey={xAxis as string}
+            tickLine={false}
+            tickMargin={5}
+            axisLine={false}
+          />
+          <YAxis />
+          <ChartTooltip content={<ChartTooltipContent />} />
+          {(yAxisSeriesList || []).map((series: any, index: any) => (
+            <Line
+              isAnimationActive={false}
+              key={series.value}
+              dataKey={series.value}
+              fill={chartColors[index % 2]}
+            />
+          ))}
+        </LineChart>
+      )}
     </ChartContainer>
-  )
+  );
 }
-
 
 interface Suggestion {
   label: string;
@@ -112,7 +204,6 @@ interface Suggestion {
   detail: string;
   apply?: (view: EditorView, completion: any, from: number, to: number) => void;
 }
-
 
 type QueryBlockProps = {
   node: {
@@ -122,14 +213,22 @@ type QueryBlockProps = {
       title: string;
       sql: string;
       viewType: ViewType;
+      chartSettings: any;
     };
   };
   updateAttributes: (attrs: any) => void;
-}
+};
 
 export default function QueryBlock(props: QueryBlockProps) {
-  const { resources, isFullScreen, setIsFullScreen, setFullScreenData } = useAppContext();
-
+  const {
+    resources,
+    isFullScreen,
+    setIsFullScreen,
+    setFullScreenData,
+    notebookCharts,
+    setNotebookCharts,
+    setActiveNode,
+  } = useAppContext();
 
   const [records, setRecords] = useState([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -146,8 +245,7 @@ export default function QueryBlock(props: QueryBlockProps) {
 
   const gridRef = useRef<AgGridReact>(null);
   const timeIntervalRef = useRef<number | null>(null);
-  const { id: notebookId } = useParams()
-
+  const { id: notebookId } = useParams();
 
   const codeMirrorRef = useRef<ReactCodeMirrorRef | null>(null);
   let columnAutocomplete = useRef<any[] | null>(null);
@@ -449,10 +547,50 @@ export default function QueryBlock(props: QueryBlockProps) {
     return customSyntaxAutocomplete(state, pos);
   };
 
+  const setDefaultDataChart = async (rowData: any, colDefs) => {
+    if (!notebookCharts[props.node.attrs.blockId]) {
+      if (props.node.attrs.chartSettings && Object.keys(props.node.attrs.chartSettings).length > 0) {
+        setNotebookCharts((prev) => ({
+          ...prev,
+          [props.node.attrs.blockId]: props.node.attrs.chartSettings,
+        }));
+      } else {
+        const xAxis = colDefs[0].field;
+        const isXAxisNumeric = rowData.every(
+          (row) => typeof row[xAxis] === "number"
+        );
+        const data: any = {
+          chartType: "BAR",
+          xAxis: colDefs[0].field,
+          yAxisSeriesList: [
+            { label: colDefs[1].field, value: colDefs[1].field },
+            //...data.colDefs
+            //.slice(1)
+            //.map((colDef) => colDef.field)
+            //.map((item: string) => ({
+            // label: item,
+            // value: item,
+            // })),
+          ],
+          columnOptions: colDefs.map((colDef) => colDef.field),
+          isXAxisNumeric,
+        };
+        if (isXAxisNumeric) {
+          const minXAxisValue = Math.min(...rowData.map((row) => row[xAxis]));
+          data.xAxisRange = [minXAxisValue, minXAxisValue + 30];
+        }
+        setNotebookCharts((prev) => ({
+          ...prev,
+          [props.node.attrs.blockId]: data,
+        }));
+      }
+    }
+  };
+
   const getTablefromSignedUrl = async (signedUrl: string) => {
-    const response = await fetch(signedUrl)
+    const response = await fetch(signedUrl);
     if (response.ok) {
-      const table = await response.json()
+      const table = await response.json();
       const defs = Object.keys(table.column_types).map((key) => ({
         field: key,
         headerName: key,
@@ -467,45 +605,44 @@ export default function QueryBlock(props: QueryBlockProps) {
         },
         cellClass: "p-0",
       }));
-      console.log({ defs, types: table.column_types, })
+      console.log({ defs, types: table.column_types });
       setColDefs(defs);
-      setRowData(table.data)
+      setRowData(table.data);
+      setDefaultDataChart(table.data, defs);
     }
-    setIsLoading(false)
-  }
-
+    setIsLoading(false);
+  };
 
   useEffect(() => {
     const fetchWorkflowState = async (id: string) => {
-      console.log('fetchWorkflowState', id)
-      const data = await getWorkflow({ workflow_run_id: id })
-      console.log({ data })
-      if (data.execute_query.status === 'failed') {
-        setError(data.execute_query.error)
-        setIsLoading(false)
+      const data = await getWorkflow({ workflow_run_id: id });
+      if (data.execute_query.status === "failed") {
+        setError(data.execute_query.error);
+        setIsLoading(false);
       }
-      if (data.execute_query && data.execute_query.status === 'success') {
-        console.log(data.execute_query.signed_url)
-        getTablefromSignedUrl(data.execute_query.signed_url)
+      if (data.execute_query && data.execute_query.status === "success") {
+        console.log(data.execute_query.signed_url);
+        getTablefromSignedUrl(data.execute_query.signed_url);
       }
-    }
-    console.log('changed workflowId', workflowId)
+    };
     if (workflowId) {
-      fetchWorkflowState(workflowId)
+      fetchWorkflowState(workflowId);
     }
-  }, [workflowId])
+  }, [workflowId]);
 
   useEffect(() => {
     const fetchQueryBlockResult = async () => {
-      const block = await getQueryBlockResult({ blockId: props.node.attrs.blockId })
+      const block = await getQueryBlockResult({
+        blockId: props.node.attrs.blockId,
+      });
       if (block && block.results) {
-        getTablefromSignedUrl(block.results)
+        getTablefromSignedUrl(block.results);
       }
-    }
+    };
     if (props.node.attrs.blockId && !rowData) {
-      fetchQueryBlockResult()
+      fetchQueryBlockResult();
     }
-  }, [props.node.attrs.blockId])
+  }, [props.node.attrs.blockId]);
 
   async function runQuery(query: string) {
     setTime(0);
@@ -521,15 +658,13 @@ export default function QueryBlock(props: QueryBlockProps) {
         block_id: props.node.attrs.blockId,
         sql: query,
       });
-      console.log({ data })
+      console.log({ data });
     } catch (e: any) {
-      console.error({ e })
-      setError(e.toString())
+      console.error({ e });
+      setError(e.toString());
     }
 
     setWorkflowId(data.workflow_run);
-
-
   }
 
   useEffect(() => {
@@ -553,9 +688,17 @@ export default function QueryBlock(props: QueryBlockProps) {
     if (resources) {
       props.updateAttributes({
         resourceId: resources[0].id,
-      })
+      });
     }
   }, [resources]);
+
+  useEffect(() => {
+    if (props.node.attrs.blockId) {
+      props.updateAttributes({
+        chartSettings: notebookCharts[props.node.attrs.blockId],
+      });
+    }
+  }, [notebookCharts, props.node.attrs.blockId]);
 
   useEffect(() => {
     if (resourceType && resourceType.length > 0) {
@@ -572,8 +715,7 @@ export default function QueryBlock(props: QueryBlockProps) {
         blockId: `${uuidv4()}`,
       });
     }
-  }, [props.node.attrs.blockId])
-
+  }, [props.node.attrs.blockId]);
 
   const getSchema = async (resourceId: string) => {
     const answer = await getSchemaAutocomplete({ resourceId });
@@ -617,13 +759,13 @@ export default function QueryBlock(props: QueryBlockProps) {
     props.updateAttributes({
       sql: value,
     });
-  }
+  };
 
   const handleChangeTitle = (e: any) => {
     props.updateAttributes({
       title: e.target.value,
-    })
-  }
+    });
+  };
 
   const renderGrid = () => {
     return (
@@ -631,18 +773,22 @@ export default function QueryBlock(props: QueryBlockProps) {
         <div className="flex flex-col h-full flex-grow-1">
           <div className="rounded-lg">
             <div className="flex text-muted-foreground font-semibold  text-sm py-1 px-0 justify-between">
-              <div className='flex items-center gap-4'>
-
-                <Tabs defaultValue={props.node.attrs.viewType} onValueChange={(viewType: string) => {
-                  props.updateAttributes({
-                    viewType,
-                  })
-                }}>
+              <div className="flex items-center gap-4">
+                <Tabs
+                  defaultValue={props.node.attrs.viewType}
+                  onValueChange={(viewType: string) => {
+                    props.updateAttributes({
+                      viewType,
+                    });
+                  }}
+                >
                   <TabsList>
                     <TabsTrigger className="text-xs" value="table">
                       Results
                     </TabsTrigger>
-                    <TabsTrigger className="text-xs" value="chart">Chart</TabsTrigger>
+                    <TabsTrigger className="text-xs" value="chart">
+                      Chart
+                    </TabsTrigger>
                   </TabsList>
                 </Tabs>
                 <div className="flex items-center gap-1 text-xs">
@@ -667,11 +813,12 @@ export default function QueryBlock(props: QueryBlockProps) {
                   variant="ghost"
                   size="sm"
                   onClick={() => {
+                    setActiveNode(props.node.attrs.blockId);
                     setFullScreenData({
                       rowData,
                       colDefs,
-                    })
-                    setIsFullScreen(true)
+                    });
+                    setIsFullScreen(true);
                   }}
                   disabled={!rowData}
                 >
@@ -682,8 +829,8 @@ export default function QueryBlock(props: QueryBlockProps) {
                     </>
                   ) : (
                     <>
-                      <Expand className="w-4 h-4" />
-                      FullScreen
+                      <BarChartBig className="w-4 h-4" />
+                      Edit Chart
                     </>
                   )}
                 </Button>
@@ -700,8 +847,8 @@ export default function QueryBlock(props: QueryBlockProps) {
               </div>
             </div>
           </div>
-          {props.node.attrs.viewType === 'table' && (
-            rowData && rowData.length > 0 ? (
+          {props.node.attrs.viewType === "table" &&
+            (rowData && rowData.length > 0 ? (
               <div className="flex flex-col w-full h-full flex-grow-1">
                 <AgGridReact
                   className="ag-theme-custom"
@@ -745,26 +892,31 @@ export default function QueryBlock(props: QueryBlockProps) {
                                 </div>
                             )} */}
               </div>
-            )
-          )}
-          {props.node.attrs.viewType === 'chart' && (
-            <div className='h-[400px]'>
-              <ChartComponent />
+            ))}
+          {props.node.attrs.viewType === "chart" && (
+            <div className="h-[400px]">
+              {notebookCharts[props.node.attrs.blockId] && (
+                <ChartComponent
+                  chartType={notebookCharts[props.node.attrs.blockId].chartType}
+                  xAxis={notebookCharts[props.node.attrs.blockId].xAxis}
+                  yAxisSeriesList={
+                    notebookCharts[props.node.attrs.blockId].yAxisSeriesList
+                  }
+                  data={rowData}
+                  isXAxisNumeric={
+                    notebookCharts[props.node.attrs.blockId].isXAxisNumeric
+                  }
+                  xAxisRange={
+                    notebookCharts[props.node.attrs.blockId].xAxisRange
+                  }
+                />
+              )}
             </div>
           )}
         </div>
-      </div >
+      </div>
     );
   };
-
-  const onAceCmdEnter = (editor: any) => {
-    if (!isLoading) {
-      const text = editor.getValue();
-      runQuery(text);
-    }
-  };
-
-  console.log({ resources })
 
   return (
     <Fragment>
@@ -788,7 +940,9 @@ export default function QueryBlock(props: QueryBlockProps) {
                   </SelectTrigger>
                   <SelectContent>
                     {resources.map((resource) => (
-                      <SelectItem key={resource.id} value={resource.id}>{resource.name}</SelectItem>
+                      <SelectItem key={resource.id} value={resource.id}>
+                        {resource.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -849,9 +1003,7 @@ export default function QueryBlock(props: QueryBlockProps) {
             </div>
           )}
         </div>
-      )
-      }
-
-    </Fragment >
+      )}
+    </Fragment>
   );
 }
