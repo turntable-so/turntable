@@ -98,14 +98,15 @@ export const sqlNodeExtension = Node.create({
 
 
 
-const SqlNodeComponent = ({ node, updateAttributes }: {
+const SqlNodeComponent = ({ node, updateAttributes, deleteNode }: {
     node: Partial<ReactNodeViewRendererOptions>,
-    updateAttributes: any
+    updateAttributes: any,
+    deleteNode: any
 }) => {
     return (
         <NodeViewWrapper>
             <div data-sql-node=''>
-                <QueryBlock node={node as any} updateAttributes={updateAttributes} />
+                <QueryBlock node={node as any} updateAttributes={updateAttributes} deleteNode={deleteNode}/>
             </div>
         </NodeViewWrapper>
     )
