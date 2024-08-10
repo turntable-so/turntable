@@ -55,6 +55,9 @@ export const sqlNodeExtension = Node.create({
             records: {
                 default: []
             },
+            chartSettings: {
+                default: {},
+            }
         }
     },
 
