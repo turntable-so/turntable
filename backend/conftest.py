@@ -122,6 +122,16 @@ def local_metabase(db, workspace):
     return resource
 
 
+@pytest.fixture()
+def test_dbt_project(local_postgres):
+    dbt_core_resources = DBTCoreDetails.objects.filter(resource=local_postgres)
+    with dbt_core_resources[0].dbt_repo_context() as (
+        dbtproj,
+        dbt_path,
+    ):
+        return dbtproj
+
+
 def assert_ingest_output(resources):
     ## all tables have records
     assert Asset.objects.count() > 0
@@ -135,29 +145,24 @@ def assert_ingest_output(resources):
 
     ## at least one asset link across resources if multiple resources used
     if len(resources) > 1:
-        assert (
-            len(
-                [
-                    v.id
-                    for v in AssetLink.objects.all()
-                    if v.source.resource.id != v.target.resource.id
-                ]
-            )
-            > 0
-        )
+        links_across_resources = [
+            v.id
+            for v in AssetLink.objects.all()
+            if v.source.resource.id != v.target.resource.id
+        ]
+        assert len(links_across_resources) > 0
 
 
 @pytest.fixture()
 def prepopulated_dev_db(local_metabase, local_postgres):
-    # resources = [local_metabase, local_postgres]
     resources = [local_metabase, local_postgres]
     # add in dev dbs
     for resource in resources:
         with open(
-            f"fixtures/datahub_dbs/{resource.resourcedetails.subtype}.duckdb", "rb"
+            f"fixtures/datahub_dbs/{resource.details.subtype}.duckdb", "rb"
         ) as f2:
             resource.datahub_db.save(
-                f"{resource.resourcedetails.subtype}.duckdb", f2, save=True
+                f"{resource.details.subtype}.duckdb", f2, save=True
             )
 
         input = {
@@ -168,6 +173,8 @@ def prepopulated_dev_db(local_metabase, local_postgres):
 
     # ensure output
     assert_ingest_output(resources)
+
+    return resources
 
 
 @pytest.fixture

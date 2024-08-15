@@ -11,3 +11,4 @@ from .query_views import ExecuteQueryView
 from .notebook_views import NotebookViewSet
 from .workflow_views import WorkflowViews
 from .block_views import BlockViewSet
+from .resource_views import SyncResourceView

@@ -27,4 +27,5 @@ from .resources import (
     ResourceDetails,
     ResourceType,
     SnowflakeDetails,
+    WorkflowRun,
 )

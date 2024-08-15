@@ -32,7 +32,7 @@ class WorkspaceViewSet(viewsets.ModelViewSet):
             url = workspace.icon_file.url
             if url.startswith("http://minio:9000/"):
                 url = url.replace("http://minio:9000/", "http://localhost:9000/")
-            workspace.icon_url = url
+            workspace.icon_url = url.split("?")[0]
         workspace.save()
 
         print("workspace serializers", flush=True)
@@ -49,6 +49,7 @@ class WorkspaceViewSet(viewsets.ModelViewSet):
             url = workspace.icon_file.url
             if url.startswith("http://minio:9000/"):
                 url = url.replace("http://minio:9000/", "http://localhost:9000/")
+            url = url.split("?")[0]
             workspace.icon_url = url
 
         workspace.save()
