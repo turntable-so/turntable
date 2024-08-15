@@ -69,12 +69,10 @@ class ResourceObject(BaseModel):
         if self.resource.type == "DBT":
             self._connector = vc.DBTConnectorLite
             dialect: DBTDialect = DBTDialect._value2member_map_[
-                self.resource.resourcedetails.config.get("dialect")
+                self.resource.details.config.get("dialect")
             ]
-            self._profile_contents = (
-                self.resource.resourcedetails.get_dbt_profile_contents(
-                    self.resource.resourcedetais
-                )
+            self._profile_contents = self.resource.details.get_dbt_profile_contents(
+                self.resource.resourcedetais
             )
             if self.resource.tables is None:
                 self.resource.tables = ["*.*.*"]

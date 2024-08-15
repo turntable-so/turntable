@@ -19,6 +19,7 @@ import ibis.selectors as s
 from ibis import Schema, _
 from ibis import literal as lit
 from ibis.expr.types.pretty import to_rich
+from sqlglot import exp
 from sqlglot.optimizer import optimize
 from sqlglot.optimizer.eliminate_ctes import eliminate_ctes
 from sqlglot.optimizer.eliminate_joins import eliminate_joins
@@ -950,7 +951,12 @@ class VinylTable:
         )._show()
 
     def _to_sql_ast(
-        self, dialect=None, optimized=False, relative_to: dict[str, Any] = {}
+        self,
+        dialect=None,
+        optimized=False,
+        relative_to: dict[str, Any] = {},
+        node_name=None,
+        name_required=False,
     ):
         """
         Output the table as a SQL string. The dialect argument can be used to specify the SQL dialect to use.
@@ -959,6 +965,16 @@ class VinylTable:
 
         Relative_to should be a dictionary of named objects, where the objects can be either VinylTables or MetricStores.
         """
+        if node_name is None:
+            try:
+                node_name = self.get_adj_node_name(self)
+            except ValueError:
+                if name_required:
+                    raise ValueError(
+                        "Node name required for SQL output. Please provide a node name."
+                    )
+                node_name = _generate_random_ascii_string(10)
+
         # self = self._colname_helper()
         expr = self._execution_replace(limit=None)
         if dialect is None:
@@ -1010,12 +1026,13 @@ class VinylTable:
             backend._session_dataset = None
 
         sg_expr = backend._to_sqlglot(expr.unbind())
+        sg_tbl = exp.Table(this=exp.Identifier(this=node_name))
         if optimized:
             sg_expr = optimize(sg_expr, dialect=dialect, rules=_RULES)
 
         return (
             sg_expr,
-            expr.schema(),
+            {sg_tbl: expr.schema()},
             dialect,
         )
 
@@ -1032,7 +1049,9 @@ class VinylTable:
 
         If optimized is True, the SQL will be optimized using the SQLglot optimizer. If formatted is True, the SQL will be formatted for readability.
         """
-        sg_expr, _, _ = self._to_sql_ast(dialect, optimized, relative_to)
+        sg_expr, _, _ = self._to_sql_ast(
+            dialect, optimized, relative_to, name_required=False
+        )
         sql = sg_expr.sql(dialect=dialect, pretty=formatted)
 
         return sql
@@ -1736,6 +1755,18 @@ class VinylTable:
             destination=tuple(destination) if destination is not None else None,
             defer_to_destination=defer_to_destination,
         )  # create random alias to avoid conflict, not used in query, simplify to remove phantom cross join used for entity recognition
+
+    @classmethod
+    def get_adj_node_name(cls, n):
+        if isinstance(n, VinylTable):
+            # is source
+            return n.get_name()
+        elif hasattr(n, "_unique_name"):
+            return n._unique_name
+        elif hasattr(n, "_module"):
+            return f"{n._module}.{n.__name__}"
+        else:
+            raise ValueError(f"Node {n} not recognized")
 
 
 # Add pydantic validations. Need to do after function definition to make sure return class (VinylTable) is available to pydantic. Need to demote_args outside of the function to ensure validate works correctly

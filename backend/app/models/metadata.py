@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 
 from django.contrib.postgres.fields import ArrayField
-from django.db import models
+from django.db import connection, models
 from pgvector.django import VectorField
 
 from app.models.auth import Workspace
@@ -77,6 +77,9 @@ class Asset(models.Model):
         if self.resource:
             return self.resource.type
 
+    def get_resource_ids(self) -> set[str]:
+        return {self.resource.id}
+
     @classmethod
     def get_for_resource(cls, resource_id: str):
         return cls.objects.filter(resource_id=resource_id)
@@ -105,6 +108,9 @@ class Column(models.Model):
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
 
+    def get_resource_ids(self) -> set[str]:
+        return {self.asset.resource.id}
+
     @classmethod
     def get_for_resource(cls, resource_id: str):
         return cls.objects.prefetch_related("resource").filter(
@@ -123,46 +129,50 @@ class AssetLink(models.Model):
         PREDECESSOR_QUERY = """
 WITH RECURSIVE traversed AS (
     SELECT
-        id,
-        source_id AS node_id,
+        source_id,
+        target_id,
         1 AS depth
     FROM app_assetlink as a
     WHERE a.target_id = %(id)s and a.workspace_id = %(workspace_id)s
 
     UNION ALL
 
-    SELECT
-        a.id,
+    SELECT        
         a.source_id,
+        a.target_id,
         t.depth + 1
     FROM traversed as t
-    JOIN app_assetlink as a ON a.target_id = t.node_id
-    WHERE t.depth <= %(depth)s and a.workspace_id = %(workspace_id)s
+    JOIN app_assetlink as a ON a.target_id = t.source_id
+    WHERE t.depth <= %(predecessor_depth)s and a.workspace_id = %(workspace_id)s
   )
-  SELECT id
-  FROM traversed;
+SELECT
+    source_id,
+    target_id
+FROM traversed
 """
 
         SUCCESSOR_QUERY = """
 WITH RECURSIVE traversed AS (
     SELECT
-        id,
-        target_id AS node_id,
+        source_id,
+        target_id,
         1 AS depth
     FROM app_assetlink as a
-    WHERE a.source_id = %(id)s 
+    WHERE a.source_id = %(id)s and a.workspace_id = %(workspace_id)s
 
     UNION ALL
 
     SELECT
-        a.id,
-        a.target_id,
+        a.source_id AS from_id,
+        a.target_id AS to_id,
         t.depth + 1
     FROM traversed as t
-    JOIN app_assetlink as a ON a.source_id = t.node_id
-    where t.depth <= %(depth)s and a.workspace_id = %(workspace_id)s
+    JOIN app_assetlink as a ON a.source_id = t.target_id
+    where t.depth <= %(successor_depth)s and a.workspace_id = %(workspace_id)s
 )
-SELECT id
+SELECT
+    source_id,
+    target_id
 FROM traversed
 """
 
@@ -179,38 +189,72 @@ FROM traversed
     )
 
     @classmethod
-    def successors(cls, workspace_id: str, asset_id: str, depth: int = 5):
+    def successors(cls, workspace_id: str, asset_id: str, depth: int = 1):
         if depth == 0:
             return []
-        queryset = cls.objects.raw(
-            cls.LineageQuery.SUCCESSOR_QUERY,
-            {"id": asset_id, "workspace_id": workspace_id, "depth": depth - 1},
-        )
-        queryset_values = [
-            {"source_id": val.source_id, "target_id": val.target_id} for val in queryset
-        ]
-        assets = []
-        for val in queryset_values:
-            assets.append(val["source_id"])
-            assets.append(val["target_id"])
-        return list(set(assets) - set([asset_id]))
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                cls.LineageQuery.SUCCESSOR_QUERY,
+                {
+                    "id": asset_id,
+                    "workspace_id": workspace_id,
+                    "successor_depth": depth - 1,
+                },
+            )
+            rows = cursor.fetchall()
+        assets = set()
+        for row in rows:
+            assets.add(row[0])
+            assets.add(row[1])
+        return list(assets - set([asset_id]))
 
     @classmethod
-    def predecessors(cls, workspace_id: str, asset_id: str, depth: int = 5):
+    def predecessors(cls, workspace_id: str, asset_id: str, depth: int = 1):
         if depth == 0:
             return []
-        queryset = cls.objects.raw(
-            cls.LineageQuery.PREDECESSOR_QUERY,
-            {"id": asset_id, "workspace_id": workspace_id, "depth": depth - 1},
-        )
-        queryset_values = [
-            {"source_id": val.source_id, "target_id": val.target_id} for val in queryset
-        ]
-        assets = []
-        for val in queryset_values:
-            assets.append(val["source_id"])
-            assets.append(val["target_id"])
-        return list(set(assets) - set([asset_id]))
+        with connection.cursor() as cursor:
+            cursor.execute(
+                cls.LineageQuery.PREDECESSOR_QUERY,
+                {
+                    "id": asset_id,
+                    "workspace_id": workspace_id,
+                    "predecessor_depth": depth - 1,
+                },
+            )
+            assets = {item for row in cursor.fetchall() for item in row}
+        return list(assets - set([asset_id]))
+
+    @classmethod
+    def relatives(
+        cls,
+        workspace_id: str,
+        asset_id: str,
+        predecessor_depth: int = 1,
+        successor_depth: int = 1,
+    ):
+        if predecessor_depth == 0 and successor_depth == 0:
+            return []
+        elif predecessor_depth == 0:
+            return cls.successors(workspace_id, asset_id, successor_depth)
+        elif successor_depth == 0:
+            return cls.predecessors(workspace_id, asset_id, predecessor_depth)
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"({cls.LineageQuery.PREDECESSOR_QUERY}) UNION ({cls.LineageQuery.SUCCESSOR_QUERY})",
+                {
+                    "id": asset_id,
+                    "workspace_id": workspace_id,
+                    "predecessor_depth": predecessor_depth - 1,
+                    "successor_depth": successor_depth - 1,
+                },
+            )
+            assets = {item for row in cursor.fetchall() for item in row}
+        return list(assets - set([asset_id]))
+
+    def get_resource_ids(self) -> set[str]:
+        return set([self.source.resource.id, self.target.resource.id])
 
     @classmethod
     def get_for_resource(cls, resource_id: str):
@@ -241,7 +285,9 @@ class ColumnLink(models.Model):
     id = models.TextField(primary_key=True, editable=False)
 
     # fields
-    lineage_type = models.CharField(max_length=255, choices=LineageType.choices)
+    lineage_type = models.CharField(
+        max_length=255, choices=LineageType.choices, null=True
+    )
     connection_types = ArrayField(
         models.CharField(max_length=255), blank=True, null=True
     )

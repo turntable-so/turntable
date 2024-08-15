@@ -1,5 +1,5 @@
+import json
 import os
-import re
 import tempfile
 import uuid
 from contextlib import contextmanager
@@ -7,6 +7,7 @@ from typing import Any
 
 import yaml
 from django.contrib.postgres.fields import ArrayField
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.db import models
 from polymorphic.models import PolymorphicModel
@@ -19,12 +20,17 @@ from vinyl.lib.connect import (
     BigQueryConnector,
     DatabaseFileConnector,
     PostgresConnector,
-    _DatabaseConnector,
 )
 from vinyl.lib.dbt import DBTProject
 from vinyl.lib.dbt_methods import DBTDialect, DBTVersion
 from vinyl.lib.utils.files import save_orjson
 from vinyl.lib.utils.process import run_and_capture_subprocess
+
+
+class WorkflowStatus(models.TextChoices):
+    RUNNING = "RUNNING", "Running"
+    FAILED = "FAILED", "Failed"
+    SUCCESS = "SUCCESS", "Success"
 
 
 # Helper classes
@@ -82,7 +88,6 @@ def repo_path(obj):
         yield obj.config["project_path"]
 
 
-# core models
 class Resource(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
@@ -100,17 +105,39 @@ class Resource(models.Model):
             models.Index(fields=["workspace_id"]),
         ]
 
+    def _get_latest_sync_run(self):
+        try:
+            workflow_run = self.workflow_runs.order_by("-created_at").first()
+            return workflow_run
+        except ObjectDoesNotExist:
+            return None
+
+    @property
+    def status(self):
+        run = self._get_latest_sync_run()
+        return run.status if run else None
+
+    @property
+    def last_synced(self):
+        run = self._get_latest_sync_run()
+        return run.updated_at if run else None
+
+    @property
+    def subtype(self):
+        return self.details.subtype
+
 
 class ResourceDetails(PolymorphicModel):
     name = models.CharField(max_length=255, blank=False)
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
-    resource = models.OneToOneField(Resource, on_delete=models.CASCADE, null=True)
+    resource = models.OneToOneField(
+        Resource, on_delete=models.CASCADE, null=True, related_name="details"
+    )
     subtype = models.CharField(
         max_length=255, choices=ResourceSubtype.choices, blank=False
     )
     config = models.JSONField()
     encrypted = EncryptedJSONField()
-    datahub_db = models.FileField(upload_to="datahub_dbs/", null=True)
 
     class Meta:
         indexes = [
@@ -234,6 +261,10 @@ class ResourceDetails(PolymorphicModel):
     def get_datahub_config(self, db_path) -> dict[str, Any]:
         pass
 
+    def add_detail(self, detail):
+        detail.resource = self.resource
+        detail.save()
+
     @contextmanager
     def datahub_yaml_path(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -268,7 +299,10 @@ class LookerDetails(ResourceDetails):
     client_id = models.CharField(max_length=255, blank=False)
     client_secret = models.CharField(max_length=255, blank=False)
     github_repo_id = models.IntegerField(null=True)
-    project_path = models.CharField(max_length=255)
+    project_path = models.CharField(max_length=255, null=True)
+    github_installation = models.ForeignKey(
+        GithubInstallation, null=True, on_delete=models.CASCADE
+    )
 
     @property
     def venv_path(self):
@@ -321,14 +355,20 @@ class LookerDetails(ResourceDetails):
             with open(config_path, "w") as f:
                 yaml.dump(config, f)
 
-            # add in lookml configs, may need to use github
-            with repo_path(self) as project_path:
-                config_path_lookml = os.path.join(temp_dir, "lookml.yml")
-                config_lookml = self.get_datahub_config_lookml(db_path, project_path)
-                with open(config_path_lookml, "w") as f:
-                    yaml.dump(config_lookml, f)
+            if self.project_path is None:
+                yield [config_path], db_path
 
-                yield [config_path, config_path_lookml], db_path
+            else:
+                # add in lookml configs, may need to use github
+                with repo_path(self) as project_path:
+                    config_path_lookml = os.path.join(temp_dir, "lookml.yml")
+                    config_lookml = self.get_datahub_config_lookml(
+                        db_path, project_path
+                    )
+                    with open(config_path_lookml, "w") as f:
+                        yaml.dump(config_lookml, f)
+
+                    yield [config_path, config_path_lookml], db_path
 
     def save(self, *args, **kwargs):
         self.subtype = ResourceSubtype.LOOKER
@@ -338,6 +378,8 @@ class LookerDetails(ResourceDetails):
         self.encrypted["client_id"] = self.client_id
         self.encrypted["client_secret"] = self.client_secret
         self.encrypted["github_repo_id"] = self.github_repo_id
+        if self.github_installation:
+            self.encrypted["github_installation_id"] = self.github_installation.id
         super().save(*args, **kwargs)
 
 
@@ -395,6 +437,7 @@ class DBTCoreDetails(DBTResource):
     project_path = models.CharField(max_length=255, blank=False)
     database = models.CharField(max_length=255, blank=False)
     schema = models.CharField(max_length=255, blank=False)
+    other_schemas = ArrayField(models.CharField(max_length=255), null=True)
     threads = models.IntegerField(null=True, default=1)
     version = models.CharField(
         choices=[(v, v.value) for v in DBTVersion], max_length=255, blank=False
@@ -412,20 +455,21 @@ class DBTCoreDetails(DBTResource):
             self.encrypted["github_installation_id"] = self.github_installation.id
         self.encrypted["database"] = self.database
         self.encrypted["schema"] = self.schema
+        self.encrypted["other_schemas"] = self.other_schemas
         super().save(*args, **kwargs)
 
     @contextmanager
     def dbt_repo_context(self):
         env_vars = self.encrypted.get("env_vars", {})
-        dialect_str = self.resource.resourcedetails.subtype
+        dialect_str = self.resource.details.subtype
         with repo_path(self) as project_path:
             with open(os.path.join(project_path, "dbt_project.yml"), "r") as f:
                 contents = yaml.load(f, Loader=yaml.FullLoader)
             profile_name = contents["profile"]
             with tempfile.TemporaryDirectory() as dbt_profiles_dir:
                 with open(os.path.join(dbt_profiles_dir, "profiles.yml"), "w") as f:
-                    profile_contents = (
-                        self.resource.resourcedetails.get_dbt_profile_contents(self)
+                    profile_contents = self.resource.details.get_dbt_profile_contents(
+                        self
                     )
                     adj_profile_contents = {profile_name: profile_contents}
                     yaml.dump(adj_profile_contents, f)
@@ -443,7 +487,14 @@ class DBTCoreDetails(DBTResource):
 
     def upload_artifacts(self):
         with self.dbt_repo_context() as (dbtproj, project_path):
-            stdout, stderr, success = dbtproj.dbt_docs_generate(compile=True)
+            stdout, stderr, success = dbtproj.dbt_compile(
+                models_only=True, update_manifest=True
+            )
+            if not success:
+                raise Exception(
+                    f"Error compiling dbt code. Stderr: {stderr}. Stdout: {stdout}"
+                )
+            stdout, stderr, success = dbtproj.dbt_docs_generate()
             if not success:
                 raise Exception(
                     f"Error generating docs. Stderr: {stderr}. Stdout: {stdout}"
@@ -469,7 +520,7 @@ class DBTCoreDetails(DBTResource):
                         "config": {
                             "manifest_path": manifest_path,
                             "catalog_path": catalog_path,
-                            "target_platform": self.resource.resourcedetails.subtype,
+                            "target_platform": self.resource.details.subtype,
                             "write_semantics": "override",
                         },
                     },
@@ -503,6 +554,7 @@ class DBDetails(ResourceDetails):
     schema_exclude = ArrayField(models.CharField(max_length=255), null=True)
     table_include = ArrayField(models.CharField(max_length=255), null=True)
     table_exclude = ArrayField(models.CharField(max_length=255), null=True)
+    use_only_dbt_schemas = models.BooleanField(default=False)
 
     @property
     def requires_start_date(self):
@@ -512,20 +564,8 @@ class DBDetails(ResourceDetails):
     def allows_db_exclusions(self):
         return False
 
-    @property
-    def test_query(self):
-        return "SELECT 1"
-
-    def get_connector(self) -> _DatabaseConnector:
-        return
-
-    def test_db_connection(self):
-        connector = self.get_connector()
-        connection = connector._connect()
-        return connection.raw_sql(self.test_query)
-
     def get_dbt_profile_contents(self, dbt_core_resource: DBTCoreDetails):
-        return
+        pass
 
     @contextmanager
     def dbt_datahub_yml_paths(self, dbtresources: list[DBTResource], db_path):
@@ -551,9 +591,12 @@ class DBDetails(ResourceDetails):
                     "deny", self.config["database_exclude"]
                 )
 
-        if self.config["schema_include"] is not None:
+        if (
+            self.config["schema_include"] is not None
+            or self.config["use_only_dbt_schemas"]
+        ):
             config_subset.setdefault("schema_pattern", {}).setdefault(
-                "allow", self.config["schema_include"]
+                "allow", self.config["schema_include"] or []
             )
         if self.config["schema_exclude"] is not None:
             config_subset.setdefault("schema_pattern", {}).setdefault(
@@ -578,6 +621,16 @@ class DBDetails(ResourceDetails):
             with self.dbt_datahub_yml_paths(dbt_resources, db_path) as dbt_yaml_paths:
                 config = self.get_datahub_config(db_path)
                 self.add_patterns_to_datahub_config(config)
+                schema_pattern = config["source"]["config"].get("schema_pattern", {})
+                allow_list = schema_pattern.get("allow")
+                # add dbt schemas to allow list if not pulling from all schemas
+                if allow_list is not None:
+                    for dbt in dbt_resources:
+                        schema_pattern["allow"].append(dbt.encrypted["schema"])
+                        if dbt.encrypted["other_schemas"] is not None:
+                            schema_pattern["allow"].extend(
+                                dbt.encrypted["other_schemas"]
+                            )
                 with open(config_path, "w") as f:
                     yaml.dump(config, f)
                 yield [config_path, *dbt_yaml_paths], db_path
@@ -596,6 +649,7 @@ class DBDetails(ResourceDetails):
         self.config["schema_exclude"] = self.schema_exclude
         self.config["table_include"] = self.table_include
         self.config["table_exclude"] = self.table_exclude
+        self.config["use_only_dbt_schemas"] = self.use_only_dbt_schemas
         super().save(*args, **kwargs)
 
 
@@ -634,7 +688,7 @@ class PostgresDetails(DBDetails):
             port=self.encrypted["port"],
             user=self.encrypted["username"],
             password=self.encrypted["password"],
-            tables=[f"{self.encrypted["database"]}.*.*"],
+            tables=[f'{self.encrypted["database"]}.*.*'],
         )
 
     def get_datahub_config(self, db_path) -> dict[str, Any]:
@@ -657,9 +711,9 @@ class PostgresDetails(DBDetails):
                 f"DBT database {dbt_core_resource.encrypted['database']} does not match Postgres database {self.encrypted['database']}"
             )
         return {
-            "target": "dev",
+            "target": "prod",
             "outputs": {
-                "dev": {
+                "prod": {
                     "type": "postgres",
                     "host": self.encrypted["host"],
                     "port": self.encrypted["port"],
@@ -696,7 +750,7 @@ class BigqueryDetails(DBDetails):
         )
 
     def get_datahub_config(self, db_path):
-        adj_service_account = self.encrypted["service_account"].copy()
+        adj_service_account = json.loads(self.encrypted["service_account"])
         adj_service_account.pop("universe_domain", None)
         return {
             "source": {
@@ -704,6 +758,13 @@ class BigqueryDetails(DBDetails):
                 "config": {
                     "start_time": f"-{self.config['lookback_days']}d",
                     "credential": adj_service_account,
+                    "project_ids": [adj_service_account["project_id"]],
+                    "include_table_lineage": False,
+                    "include_table_location_lineage": False,
+                    "include_view_lineage": False,
+                    "include_view_column_lineage": False,
+                    "include_table_snapshots": False,
+                    "include_usage_statistics": False,
                 },
             },
             "sink": get_sync_config(db_path),
@@ -711,14 +772,15 @@ class BigqueryDetails(DBDetails):
 
     def get_dbt_profile_contents(self, dbt_core_resource: DBTCoreDetails):
         return {
-            "target": "dev",
+            "target": "prod",
             "outputs": {
-                "dev": {
+                "prod": {
                     "type": "bigquery",
                     "method": "service-account-json",
                     "project": dbt_core_resource.encrypted["database"],
                     "schema": dbt_core_resource.encrypted["schema"],
                     "keyfile_json": self.encrypted["service_account"],
+                    "threads": dbt_core_resource.config["threads"],
                 }
             },
         }
@@ -798,3 +860,14 @@ class DataFileDetails(ResourceDetails):
         init_dicts(self)
         self.config["path"] = self.path
         super().save(*args, **kwargs)
+
+
+class WorkflowRun(models.Model):
+    id = models.UUIDField(primary_key=True)
+    status = models.TextField(choices=WorkflowStatus.choices, null=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+    resource = models.ForeignKey(
+        "Resource", on_delete=models.CASCADE, null=True, related_name="workflow_runs"
+    )
