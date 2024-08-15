@@ -893,7 +893,7 @@ class DataHubDBParser:
     def combine_and_upload(cls, parsers: list[DataHubDBParser], resource: Resource):
         combined = cls.combine(parsers, resource)
         all_resource_dict = {
-            resource.resourcedetails.subtype: resource
+            resource.details.subtype: resource
             for resource in resource.workspace.resource_set.all()
         }
         indirect_assets = []
