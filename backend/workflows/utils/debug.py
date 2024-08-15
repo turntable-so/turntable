@@ -1,4 +1,5 @@
 import inspect
+import uuid
 
 import networkx as nx
 from hatchet_sdk import Context
@@ -7,10 +8,11 @@ from mpire import WorkerPool
 
 class ContextDebugger:
     def __init__(self, data):
+        data.setdefault("workflow_run_id", uuid.uuid4())
         self.data = data
 
     def workflow_run_id(self):
-        return self.data.get("workflow_run_id", "")
+        return self.data.get("workflow_run_id")
 
     def workflow_input(self):
         return self.data.get("input", {})

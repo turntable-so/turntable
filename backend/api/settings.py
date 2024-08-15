@@ -14,7 +14,6 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
-
 import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -52,6 +51,7 @@ INSTALLED_APPS = [
     "polymorphic",
     "adrf",
     "rest_framework_simplejwt.token_blacklist",
+    "channels",
     "app",
 ]
 
@@ -100,7 +100,7 @@ ASGI_APPLICATION = "api.asgi.application"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 
-if os.getenv("DEV") == "true":
+if os.getenv("DEV") == "true" and not os.getenv("STAGING") == "true":
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -118,6 +118,7 @@ else:
     DATABASES = {
         "default": dj_database_url.config(
             conn_max_age=600,
+            conn_health_checks=True,
         ),
     }
 
@@ -203,7 +204,7 @@ DJOSER = {
     "SERIALIZERS": {},
     "LOGIN_FIELD": "email",
     "SERIALIZERS": {
-        "user_create": "api.serializers.UserCreateSerializer",
+        "user_create": "api.serializers.CustomUserCreateSerializer",
         "token_create": "djoser.serializers.TokenCreateSerializer",
         "user": "api.serializers.UserSerializer",
         "current_user": "api.serializers.UserSerializer",
@@ -246,28 +247,46 @@ AWS_S3_ACCESS_KEY_ID = os.getenv("AWS_S3_ACCESS_KEY_ID")
 AWS_S3_SECRET_ACCESS_KEY = os.getenv("AWS_S3_SECRET_ACCESS_KEY")
 AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
 AWS_S3_ENDPOINT_URL = os.getenv("AWS_S3_ENDPOINT_URL")
-AWS_S3_PUBLIC_URL = "http://localhost:9000"
-AWS_S3_SIGNATURE_VERSION = "s3v4"
 
 AWS_DEFAULT_ACL = None
 AWS_QUERYSTRING_AUTH = True
 AWS_QUERYSTRING_EXPIRE = 60
 
-PUBLIC_MEDIA_LOCATION = "public-assets"
-ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")
-
-if acl := os.getenv("AWS_DEFAULT_ACL"):
-    AWS_DEFAULT_ACL = None if acl == "None" else acl
-if querystring_auth := os.getenv("AWS_QUERYSTRING_AUTH"):
-    AWS_QUERYSTRING_AUTH = True if querystring_auth == "true" else False
-if overwrite := os.getenv("AWS_S3_FILE_OVERWRITE"):
-    AWS_S3_FILE_OVERWRITE = True if overwrite == "true" else False
 if region := os.getenv("AWS_S3_REGION_NAME"):
     AWS_S3_REGION_NAME = region
+
+if os.getenv("DEV") == "true" and not os.getenv("STAGING") == "true":
+    AWS_S3_PUBLIC_URL = (
+        os.getenv("AWS_S3_PUBLIC_URL")
+        if os.getenv("AWS_S3_PUBLIC_URL")
+        else "http://localhost:9000"
+    )
+    AWS_S3_SIGNATURE_VERSION = "s3v4"
+
+    AWS_DEFAULT_ACL = None
+    AWS_QUERYSTRING_AUTH = True
+    AWS_QUERYSTRING_EXPIRE = 60
+
+    PUBLIC_MEDIA_LOCATION = "public-assets"
+    ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")
+
+    if acl := os.getenv("AWS_DEFAULT_ACL"):
+        AWS_DEFAULT_ACL = None if acl == "None" else acl
+    if querystring_auth := os.getenv("AWS_QUERYSTRING_AUTH"):
+        AWS_QUERYSTRING_AUTH = True if querystring_auth == "true" else False
+    if overwrite := os.getenv("AWS_S3_FILE_OVERWRITE"):
+        AWS_S3_FILE_OVERWRITE = True if overwrite == "true" else False
+
 
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
         "LOCATION": "unique-turntable-cache",
+    }
+}
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
     }
 }

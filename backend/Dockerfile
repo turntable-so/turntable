@@ -18,6 +18,7 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     libffi-dev \
     libpq-dev \
+    postgresql \
     gcc \
     git \
     && rm -rf /var/lib/apt/lists/*
@@ -41,4 +42,3 @@ COPY . .
 
 # Perform database migrations
 RUN chmod +x /code/entrypoint.sh
-ENTRYPOINT ["/code/entrypoint.sh"]

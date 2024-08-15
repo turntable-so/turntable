@@ -1,61 +1,180 @@
-from django.db.models import Prefetch
+from asgiref.sync import sync_to_async
+from django.db import transaction
+from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
-from app.core.serialization import ResourceObject
-from app.models import Repository, Resource
-from app.utils.queryset import (
-    first_with_queryset,
-    get_with_queryset,
+from api.serializers import (
+    BigQueryDetailsSerializer,
+    PostgresDetailsSerializer,
+    ResourceSerializer,
 )
+from app.models import Resource, Workspace
+from app.models.resources import BigqueryDetails, PostgresDetails, ResourceSubtype
+
+
+class CreateResourceSerializer(serializers.Serializer):
+    resource = ResourceSerializer()
+    subtype = serializers.ChoiceField(choices=ResourceSubtype.choices)
+    config = serializers.DictField()
+
+
+class ResourceDetailsSerializer(serializers.Serializer):
+    resource = ResourceSerializer()
+    details = serializers.DictField()
 
 
 class ResourceService:
-    def __init__(self, tenant_id: str):
-        self.tenant_id = tenant_id
+    def __init__(self, workspace: Workspace):
+        self.workspace = workspace
 
-    def get_resources(
-        self,
-    ):
-        resources = Resource.objects.prefetch_related("repository_set").filter(
-            tenant_id=self.tenant_id
-        )
-        return resources
+    def list(self):
+        resources = Resource.objects.all().filter(workspace=self.workspace)
+        serializer = ResourceSerializer(resources, many=True)
+        return serializer.data
+        # the code should go below here
 
-    def get_resource_by_repository(self, repository_id: str):
-        repository = Prefetch(
-            "repository_set",
-            queryset=Repository.objects.filter(
-                id=repository_id, tenant_id=self.tenant_id
-            ),
-        )
-        resource = Resource.objects.prefetch_related("profile", repository).filter(
-            repository__id=repository_id, tenant_id=self.tenant_id
-        )
-        return first_with_queryset(resource)
+    def create_resource(self, data: dict) -> Resource:
+        payload = CreateResourceSerializer(data=data)
+        payload.is_valid(raise_exception=True)
+        subtype = payload.data.get("subtype")
+        resource = payload.data.get("resource")
+        config = payload.data.get("config")
 
-    def get_resource_by_id(
-        self, resource_id: str, repository_info: bool = False
-    ) -> Resource:
-        if repository_info:
-            # Step 1: Create a subquery to find the earliest repository ID for each resource
-            repository_id = (
-                Repository.objects.filter(
-                    tenant_id=self.tenant_id,
-                    status="IMPORTED",
-                ).latest("created_at")
-            ).id
-            repository = Prefetch(
-                "repository_set",
-                queryset=Repository.objects.filter(id=repository_id),
+        resource_data = ResourceSerializer(data=resource)
+        resource_data.is_valid(raise_exception=True)
+
+        if subtype == ResourceSubtype.BIGQUERY:
+            detail_serializer = BigQueryDetailsSerializer(
+                data={
+                    "subtype": subtype,
+                    **config,
+                }
             )
-            resource = Resource.objects.prefetch_related("profile", repository)
+            detail_serializer.is_valid(raise_exception=True)
+            with transaction.atomic():
+                resource = Resource.objects.create(
+                    **resource_data.validated_data, workspace=self.workspace
+                )
+                resource.save()
+                detail = BigqueryDetails(
+                    lookback_days=1,
+                    resource=resource,
+                    **detail_serializer.validated_data,
+                )
+                detail.save()
+            return resource
+        elif subtype == ResourceSubtype.POSTGRES:
+            detail_serializer = PostgresDetailsSerializer(
+                data={
+                    "subtype": subtype,
+                    **config,
+                }
+            )
+            detail_serializer.is_valid(raise_exception=True)
+            with transaction.atomic():
+                resource = Resource.objects.create(
+                    **resource_data.validated_data, workspace=self.workspace
+                )
+                resource.save()
+                detail = PostgresDetails(
+                    lookback_days=1,
+                    resource=resource,
+                    **detail_serializer.validated_data,
+                )
+                detail.save()
+            return resource
+
         else:
-            resource = Resource.objects.prefetch_related("profile")
+            raise ValueError(f"subtype {subtype} not supported by resource service")
 
-        return get_with_queryset(resource, id=resource_id, tenant_id=self.tenant_id)
+    def get(self, resource_id: int) -> ResourceDetailsSerializer:
+        resource = Resource.objects.get(id=resource_id, workspace=self.workspace)
+        if resource is None:
+            raise ValidationError("Resource not found.")
 
-    def get_connector(self, resource_id: str):
-        self.get_resource_by_id(resource_id, repository_info=False)
+        if resource.details:
+            if resource.details.subtype == ResourceSubtype.BIGQUERY:
+                return ResourceDetailsSerializer(
+                    {
+                        "resource": ResourceSerializer(resource).data,
+                        "details": BigQueryDetailsSerializer(resource.details).data,
+                    }
+                ).data
+            elif resource.details.subtype == ResourceSubtype.POSTGRES:
+                return ResourceDetailsSerializer(
+                    {
+                        "resource": ResourceSerializer(resource).data,
+                        "details": PostgresDetailsSerializer(resource.details).data,
+                    }
+                ).data
+        else:
+            return ResourceSerializer(resource).data
 
-        # Create a ResourceObject instance from the resource object
-        connector = ResourceObject(resource=resource)._get_connector()
-        return connector
+        return ValidationError(f"Resource {resource.details.subtype} not suppported")
+
+    def partial_update(self, resource_id: str, data: dict) -> Resource:
+        resource = Resource.objects.get(id=resource_id, workspace=self.workspace)
+        if resource is None:
+            raise ValidationError("Resource not found.")
+
+        with transaction.atomic():
+            if data.get("resource") is not None:
+                payload = ResourceSerializer(
+                    resource, data=data.get("resource"), partial=True
+                )
+                payload.is_valid(raise_exception=True)
+                resource = payload.save()  # This calls the update method
+
+            if data.get("subtype") is not None:
+                raise ValidationError(
+                    "Can't change the subtype of a resource. It must be removed."
+                )
+
+            if data.get("config") is not None:
+                if resource.details.subtype == ResourceSubtype.BIGQUERY:
+                    config_data = data.get("config")
+                    detail_serializer = BigQueryDetailsSerializer(
+                        resource.details, data=config_data, partial=True
+                    )
+                    detail_serializer.is_valid(raise_exception=True)
+                    detail_serializer.save()
+                elif resource.details.subtype == ResourceSubtype.POSTGRES:
+                    config_data = data.get("config")
+                    detail_serializer = PostgresDetailsSerializer(
+                        resource.details, data=config_data, partial=True
+                    )
+                    detail_serializer.is_valid(raise_exception=True)
+                    detail_serializer.save()
+                else:
+                    raise ValidationError(
+                        f"Config update not supported for subtype {resource.details.subtype}"
+                    )
+
+        return resource
+
+    def delete_resource(self, resource_id: int):
+        resource = Resource.objects.get(id=resource_id, workspace=self.workspace)
+        if resource is None:
+            raise ValidationError("Resource not found.")
+
+        resource.delete()
+        return
+
+    async def sync_resource(self, resource_id: int):
+        from workflows.hatchet import hatchet
+
+        resource = await Resource.objects.aget(id=resource_id, workspace=self.workspace)
+        if resource is None:
+            raise ValidationError("Resource not found.")
+
+        workflow_run = hatchet.client.admin.run_workflow(
+            "MetadataSyncWorkflow",
+            {
+                "workspace_id": self.workspace.id,
+                "resource_id": resource_id,
+            },
+        )
+
+        return {
+            "workflow_run_id": workflow_run.workflow_run_id,
+        }

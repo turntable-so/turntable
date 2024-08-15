@@ -7,11 +7,10 @@ from app.services.lineage_service import LineageService
 
 
 class LineageViewSet(viewsets.ModelViewSet):
-    def retrieve(self, request, urn=None):
+    def retrieve(self, request, pk=None):
         workspace = request.user.current_workspace()
         lineage_service = LineageService(workspace_id=workspace.id)
-        asset_id = urn
-        print("asset_id", asset_id, flush=True)
+        asset_id = pk
         predecessor_depth = int(request.query_params.get("predecessor_depth"))
         successor_depth = int(request.query_params.get("successor_depth"))
         lineage_type = request.query_params.get("lineage_type")

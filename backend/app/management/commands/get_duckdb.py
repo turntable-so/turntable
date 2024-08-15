@@ -15,7 +15,6 @@ class Command(BaseCommand):
         ws = Workspace.objects.get(name="Turntable")
         resource = Resource.objects.get(name="duckdb")
         assets = AssetService(ws.id).get_assets_for_resource(resource.id)
-        breakpoint()
 
     # def handle(self, *args, **kwargs):
     #     sql = "select business_id from business limit 10;"

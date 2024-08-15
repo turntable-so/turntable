@@ -15,9 +15,11 @@ from app.models import (
     Notebook,
     Resource,
     ResourceDetails,
+    BigqueryDetails,
     User,
     Workspace,
     WorkspaceGroup,
+    PostgresDetails,
 )
 
 Invitation = get_invitation_model()
@@ -133,6 +135,7 @@ class WorkspaceDetailSerializer(serializers.ModelSerializer):
 
 
 class ResourceSerializer(serializers.HyperlinkedModelSerializer):
+
     class Meta:
         model = Resource
         fields = [
@@ -140,7 +143,19 @@ class ResourceSerializer(serializers.HyperlinkedModelSerializer):
             "name",
             "updated_at",
             "type",
+            "subtype",
+            "last_synced",
+            "status",
         ]
+
+    def get_last_synced(self, obj):
+        return obj.last_synced
+
+    def get_status(self, obj):
+        return obj.status
+
+    def get_subtype(self, obj):
+        return obj.subtype
 
 
 class ColumnSerializer(serializers.ModelSerializer):
@@ -267,9 +282,8 @@ class ResourceDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResourceDetails
         fields = [
-            "name",
-            "type",
-            "creator",
+            "subtype",
+            "config",
         ]
 
 
@@ -277,6 +291,18 @@ class LookerDetailsSerializer(ResourceDetailsSerializer):
     class Meta:
         model = LookerDetails
         fields = ["base_url", "client_id", "client_secret", "resource"]
+
+
+class BigQueryDetailsSerializer(ResourceDetailsSerializer):
+    class Meta:
+        model = BigqueryDetails
+        fields = ["service_account", "schema_include"]
+
+
+class PostgresDetailsSerializer(ResourceDetailsSerializer):
+    class Meta:
+        model = PostgresDetails
+        fields = ["host", "username", "password", "database", "port"]
 
 
 class BlockSerializer(serializers.ModelSerializer):

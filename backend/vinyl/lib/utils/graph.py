@@ -323,6 +323,13 @@ class DAG:
             if self.g.in_degree(i) == 0
         ]
 
+    def get_leaves(self):
+        return [
+            self.node_dict.inv[i]
+            for i in self.g.node_indexes()
+            if self.g.out_degree(i) == 0
+        ]
+
     def get_ancestors(self, nodes: list[Any]):
         indexes = [self.node_dict[n] for n in nodes]
         out = []
