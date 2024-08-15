@@ -285,6 +285,10 @@ class AssetError(models.Model):
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
 
+    @classmethod
+    def get_for_resource(cls, resource_id: str):
+        return cls.objects.filter(asset__resource_id=resource_id)
+
     class Meta:
         indexes = [
             models.Index(fields=["workspace_id"]),

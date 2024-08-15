@@ -37,14 +37,10 @@ class Command(BaseCommand):
         workspace.add_admin(user)
         workspace.save()
         github_installation = GithubInstallation.objects.create(
-            id="50270427",
-            workspace=workspace,
-            user_id="user_2NoWPDjOzdHcK0g9Qvp4b6ETYFQ",
+            id="50270427", workspace=workspace, user=user
         )
         github_installation2 = GithubInstallation.objects.create(
-            id="51092020",
-            workspace=workspace,
-            user_id="user_2NoWPDjOzdHcK0g9Qvp4b6ETYFQ",
+            id="51092020", workspace=workspace, user=user
         )
         bigquery_resource = Resource.objects.create(
             type=ResourceType.DB,
