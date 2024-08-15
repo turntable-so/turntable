@@ -12,8 +12,10 @@ class VinylErrorType(str, Enum):
     DATABASE_ERROR = "DatabaseError"
     OPTIMIZE_ERROR = "OptimizeError"
     PARSE_ERROR = "ParseError"
+    CYCLE_ERROR = "CycleError"
     NO_CONTENTS_ERROR = "NoContentsError"
     MISCELLANEOUS_ERROR = "MiscellaneousError"
+    NO_LINEAGE_ERROR = "NoLineageError"
 
 
 class VinylError:

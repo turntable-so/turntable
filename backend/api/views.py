@@ -67,7 +67,7 @@ class OAuthView(APIView):
     def post(self, request):
         token = request.data.get('token')
         provider = request.data.get('provider')
-
+        invitation_code = request.data.get('invitation_code')
         if not token or not provider:
             return Response({'detail': 'Token and provider are required.'}, status=status.HTTP_400_BAD_REQUEST)
         if provider == 'google':
@@ -78,10 +78,20 @@ class OAuthView(APIView):
 
                 email = id_info['email']
                 user, created = User.objects.get_or_create(email=email)
-
                 if created:
                     user.set_unusable_password()
                     user.save()
+                    if invitation_code:
+                        try:
+                            invitation = Invitation.objects.get(key=invitation_code)
+                            if invitation.email == email:
+                                invitation.accepted = True
+                                original_user = invitation.inviter
+                                workspace = original_user.current_workspace()
+                                workspace.add_member(user.id)
+                                invitation.save()
+                        except Exception as e:
+                            print(e)
 
                 refresh = RefreshToken.for_user(user)
                 return Response({

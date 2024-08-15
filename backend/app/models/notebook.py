@@ -5,7 +5,7 @@ from django.contrib.postgres.fields import ArrayField
 
 from app.models.auth import User, Workspace
 from app.models.resources import Resource
-
+from app.services.storage_backends import CustomS3Boto3Storage
 
 class Notebook(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -36,7 +36,7 @@ class Block(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True, null=True)
     config = models.JSONField(null=True)
-    results = models.FileField(upload_to="results/", null=True)
+    results = models.FileField(upload_to="results/", null=True, storage=CustomS3Boto3Storage())
     notebook = models.ForeignKey(
         Notebook, on_delete=models.CASCADE, null=True, related_name="blocks"
     )

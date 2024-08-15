@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import os
 import traceback
 from typing import Any, Callable, Literal
@@ -14,13 +15,13 @@ from datahub.metadata.com.linkedin.pegasus2avro.assertion import (
     DatasetAssertionScope,
 )
 from datahub.metadata.urns import ChartUrn, DashboardUrn, DatasetUrn, SchemaFieldUrn
+from datahub.utilities.urns.error import InvalidUrnError
 from django.forms.models import model_to_dict
 from sqlglot import Expression, exp
 from sqlglot.errors import ParseError
 
 from app.models import Asset, Resource, ResourceType
 from app.utils.database import delete_and_upsert
-from scripts.debug.pyinstrument import pyprofile
 from vinyl.lib.errors import VinylError, VinylErrorType
 from vinyl.lib.schema import VinylSchema
 from vinyl.lib.sqlast import SQLAstNode
@@ -204,12 +205,13 @@ class DatasetInfoParser(DataHubDBParserBase):
                 v.name = self.get_name(info_list)
                 v.description = self.get_description(info_list)
                 v.type = self.get_type(info_list)
-                v.db_location = urn.name.split(".")
                 v.unique_name = self.get_unique_name(info_list) or urn.name
-                v.materialization, incremental = self.get_materialization(info_list)
-                if incremental is not None:
-                    config["incremental"] = incremental
-                v.sql = self.get_sql(info_list)
+                if self.is_db:
+                    v.db_location = urn.name.split(".")
+                    v.materialization, incremental = self.get_materialization(info_list)
+                    if incremental is not None:
+                        config["incremental"] = incremental
+                    v.sql = self.get_sql(info_list)
 
     def get_info(self, id):
         urn = DatasetUrn.from_string(id)
@@ -378,6 +380,9 @@ class SchemaParser(DataHubDBParserBase):
         for info in dbt_info:
             if "fields" in info:
                 for field in info["fields"]:
+                    ## ignore subfields
+                    if "." in field["fieldPath"]:
+                        continue
                     col_urn_str = SchemaFieldUrn(urn, field["fieldPath"]).urn()
                     self.column_dict[col_urn_str] = Column(
                         id=col_urn_str,
@@ -391,6 +396,9 @@ class SchemaParser(DataHubDBParserBase):
         for info in db_info:
             if "fields" in info:
                 for field in info["fields"]:
+                    ## ignore subfields
+                    if "." in field["fieldPath"]:
+                        continue
                     col_urn_str = SchemaFieldUrn(urn, field["fieldPath"]).urn()
                     if col_urn_str in self.column_dict:
                         # only update type, which should default to postgres type
@@ -499,7 +507,7 @@ class DataHubDBParser:
         self.path = path
         self.resource_id = resource.id
         self.workspace_id = resource.workspace.id
-        self.dialect = resource.resourcedetails.subtype
+        self.dialect = resource.details.subtype
         self.is_db = resource.type == ResourceType.DB
 
         # initialize outputs
@@ -566,21 +574,21 @@ class DataHubDBParser:
             helper_dict = get_duplicate_nodes_helper(
                 self.column_graph.nodes, lambda x: x in self.column_dict
             )
-
         if len(graph.nodes) == 0:
             return
 
-        for vals in helper_dict.values():
+        helper_dict = {v[0]: v for v in helper_dict.values()}
+        for node in nx.topological_sort(graph.copy()):
+            vals = helper_dict.get(node)
+            if vals is None:
+                continue
             u, *vs = vals
-            if u not in self.asset_graph:
-                return
-
             for v in vs:
-                if v not in self.asset_graph:
+                if v not in graph:
                     continue
 
                 nx.contracted_nodes(
-                    self.asset_graph,
+                    graph,
                     u,
                     v,
                     self_loops=False,
@@ -588,44 +596,12 @@ class DataHubDBParser:
                 )
 
     def adjust_asset_graphs_and_dicts(self):
+        for id in self.asset_dict:
+            if id not in self.asset_graph:
+                self.asset_graph.add_node(id)
+
         if self.is_db:
             self.graph_contraction_helper("asset")
-
-        else:
-            # remove excluded nodes from the graph
-            for node in self.asset_graph.copy().nodes:
-                # allow other datasets to remain included in the graph so they can be linked
-                if node not in self.asset_dict and not node.startswith(
-                    "urn:li:dataset:"
-                ):
-                    nx_remove_node_and_reconnect(self.asset_graph, node)
-
-        #     # add any nodes that are in the graph but not in the dicts
-        #     for node in self.asset_graph.nodes:
-        #         if node not in self.asset_dict:
-        #             self.asset_dict[node] = Asset(
-        #                 id=node,
-        #                 workspace_id=self.workspace_id,
-        #                 resource_id=self.resource_id,
-        #             )
-
-        #     for node in self.column_graph.nodes:
-        #         if node not in self.column_dict:
-        #             underlying_asset_id = SchemaFieldUrn.from_string(node).parent
-        #             if underlying_asset_id not in self.asset_dict:
-        #                 self.asset_dict[underlying_asset_id] = Asset(
-        #                     id=underlying_asset_id,
-        #                     workspace_id=self.workspace_id,
-        #                     resource_id=self.resource_id,
-        #                 )
-        #             self.column_dict[node] = Column(
-        #                 id=node,
-        #                 asset_id=underlying_asset_id,
-        #                 workspace_id=self.workspace_id,
-        #             )
-        for id in self.column_dict:
-            if id not in self.column_graph:
-                self.column_graph.add_node(id)
 
     def _get_dbt_field_urn(self, id: str):
         parsed = SchemaFieldUrn.from_string(id)
@@ -694,30 +670,46 @@ class DataHubDBParser:
         }
 
     def get_sqlglot_table_helper(self, k: str):
-        catalog, schema, table = DatasetUrn.from_string(k).name.split(".")
+        catalog, schema, *table_list = DatasetUrn.from_string(k).name.split(".")
+        table = ".".join(table_list)
         return exp.Table(
             catalog=exp.Identifier(this=catalog),
             db=exp.Identifier(this=schema),
             this=exp.Identifier(this=table),
         )
 
-    def get_schema_helper(self, k: str, asset: Asset):
-        schema_tples = [
-            (col.name, str) for col in self.column_dict.values() if col.asset_id == k
-        ]
-        return VinylSchema(ibis.schema(schema_tples))
+    def get_asset_column_dict(self):
+        self.asset_column_dict = {}
+        for col in self.column_dict.values():
+            if "." in col.name:
+                print(col.asset.id, col.name)
+            self.asset_column_dict.setdefault(col.asset_id, []).append(col.name)
 
-    def get_ast_node(
-        self, k: str, asset: Asset, lineage_type: ColumnLink.LineageType
+    def get_schema_helper(self, k: str):
+        # asset_column_dict already created in prior step of cll workflow
+        schema_helper = [
+            (col_name, str) for col_name in self.asset_column_dict.get(k, [])
+        ]
+        # schema_tples = []
+        # for col in self.column_dict.values():
+        #     if col.asset_id == k:
+        #         schema_tples.append((col.name, str))
+        return VinylSchema(ibis.schema(schema_helper))
+
+    # @timeout(15)
+    def get_ast_nodes(
+        self, k: str, asset: Asset, lineage_types: list[ColumnLink.LineageType]
     ) -> SQLAstNode:
         node = SQLAstNode(
             id=k,
             dialect=self.dialect,
             use_datahub_nodes=True,
+            errors=[],
         )
         catalog = DatasetUrn.from_string(k).name.split(".")[0]
         try:
             node.ast = sqlglot.parse(asset.sql, dialect=self.dialect)[0]
+            node.original_ast = node.ast.copy()
         except ParseError as e:
             node.errors.append(
                 VinylError(
@@ -742,43 +734,89 @@ class DataHubDBParser:
         node.ast.transform(ensure_table_catalog)
 
         # add in schema info. But fake type info in because it's not necessary for lineage
-        node.schema = {
-            self.get_sqlglot_table_helper(k): self.get_schema_helper(k, asset)
-        }
+        node.schema = {self.get_sqlglot_table_helper(k): self.get_schema_helper(k)}
+
         if k in self.asset_graph.nodes:
+            node.deps = []
+            node.deps_schemas = {}
             for dep in self.asset_graph.predecessors(k):
                 if dep in self.asset_dict:
                     node.deps.append(dep)
                     node.deps_schemas[self.get_sqlglot_table_helper(dep)] = (
-                        self.get_schema_helper(dep, self.asset_dict[dep])
+                        self.get_schema_helper(dep)
                     )
         node.optimize()
-        node.get_lineage(lineage_filters=lineage_type.connection_types())
 
-        return node
+        nodes = []
+        for ltype in lineage_types:
+            node_it = copy.deepcopy(node)
+            node_it.get_lineage(lineage_filters=ltype.connection_types())
+            nodes.append(node_it)
 
-    @pyprofile(save_html=True)
+        return nodes
+
+    # @pyprofile(save_html=True)
     def get_db_cll(self):
-        out = nx.MultiDiGraph()
-        for ltype in ColumnLink.LineageType:
-            col_graph_it = nx.DiGraph()
-            for k, asset in self.asset_dict.items():
-                if not asset.sql:
-                    continue
+        self.get_asset_column_dict()
+        asset_dict_items = self.asset_dict.items()
+        # if os.getenv("DEV") == "true":
+        #     asset_dict_items = tqdm(
+        #         asset_dict_items,
+        #         desc="Getting lineage...",
+        #     )
+        graphs = []
+        for j, (k, asset) in enumerate(asset_dict_items):
+            if not asset.sql:
+                continue
 
-                node = self.get_ast_node(k, asset, ltype)
+            if os.getenv("DEV") == "true":
+                print(j, k)
+
+            ltypes = [ltype for ltype in ColumnLink.LineageType]
+
+            nodes = self.get_ast_nodes(k, asset, ltypes)
+            for i, node in enumerate(nodes):
                 if node.errors:
                     for error in node.errors:
                         error = AssetError(asset=asset, error=error.to_dict())
+                        if error not in self.asset_errors:
+                            print("error", error)
+                            self.asset_errors.append(error)
+                lineage = node.lineage.to_networkx()
+                nx.set_edge_attributes(
+                    lineage,
+                    {e: {"lineage_type": ltypes[i].value} for e in lineage.edges},
+                )
+                lineage = nx.MultiDiGraph(lineage)
+                graphs.append(lineage)
+
+                # make sure no silent lineage failures
+                if (
+                    len(lineage.edges) == 0
+                    and len(node.deps) > 0
+                    and len(node.errors) == 0
+                ):
+                    vinylerror = VinylError(
+                        node_id=k,
+                        type=VinylErrorType.NO_LINEAGE_ERROR,
+                        msg="No lineage found for asset despite node having dependencies and lack of explicit lineage errors",
+                        dialect=self.dialect,
+                        context=node.original_ast.sql(dialect=self.dialect),
+                    )
+                    error = AssetError(asset=asset, error=vinylerror.to_dict())
+                    if error not in self.asset_errors:
                         self.asset_errors.append(error)
-                lineage = self.get_ast_node(k, asset, ltype).lineage.to_networkx()
-                col_graph_it = nx.compose(col_graph_it, lineage)
-            nx.set_edge_attributes(
-                col_graph_it,
-                {e: {"lineage_type": ltype.value} for e in col_graph_it.edges},
-            )
-            out = nx.compose(out, nx.MultiDiGraph(col_graph_it))
-        self.column_graph = nx.compose(self.column_graph, out)
+                        print("uncaught error", error)
+        self.column_graph = nx.compose_all([self.column_graph, *graphs])
+
+        # remove malformed nodes from the graph
+        for node in self.column_graph.copy():
+            try:
+                SchemaFieldUrn.from_string(node)
+            except (InvalidUrnError, AssertionError):
+                nx_remove_node_and_reconnect(
+                    self.column_graph, node, preserve_ntype=True
+                )
 
     def parse(self):
         self.get_row_dict()
@@ -823,60 +861,75 @@ class DataHubDBParser:
         return combined.get_outputs()
 
     @classmethod
+    def _get_indirect_asset(
+        cls, id: str, all_resource_dict: dict[str, Resource], resource: Resource
+    ):
+        if "urn:li:dataset:" in id:
+            urn = DatasetUrn.from_string(id)
+            resource_name = urn.platform.split(":")[-1]
+            asset_name = urn.name
+            asset_type = Asset.AssetType.DATASET
+
+        elif "urn:li:chart:" in id:
+            urn = ChartUrn.from_string(id)
+            resource_name = urn.dashboard_tool
+            asset_name = urn.chart_id
+            asset_type = Asset.AssetType.CHART
+
+        elif "urn:li:dashboard:" in id:
+            urn = DashboardUrn.from_string(id)
+            resource_name = urn.dashboard_tool
+            asset_name = urn.dashboard_id
+            asset_type = Asset.AssetType.DASHBOARD
+
+        else:
+            raise ValueError(f"Unrecognized asset type for {id}")
+
+        ### if explicit resource doesn't exist (e.g. is dbt), use the resource that was passed in
+        resource_it = all_resource_dict.get(resource_name, resource)
+        return Asset(id=id, name=asset_name, type=asset_type, resource=resource_it)
+
+    @classmethod
     def combine_and_upload(cls, parsers: list[DataHubDBParser], resource: Resource):
         combined = cls.combine(parsers, resource)
-
-        delete_and_upsert(combined["assets"], resource)
-        delete_and_upsert(combined["columns"], resource)
-        delete_and_upsert(combined["asset_errors"], resource)
+        all_resource_dict = {
+            resource.resourcedetails.subtype: resource
+            for resource in resource.workspace.resource_set.all()
+        }
+        indirect_assets = []
+        indirect_columns = []
 
         ## ensure all assets in the graph exist in the db so you don't key a fk error
-        assets_to_add = set(
+        asset_ids_to_add = set(
             [v.source_id for v in combined["asset_links"]]
             + [v.target_id for v in combined["asset_links"]]
         ) - set([v.id for v in combined["assets"]])
-        Asset.objects.bulk_create(
-            [
-                Asset(id=id, type=Asset.AssetType.DATASET, resource=resource)
-                for id in assets_to_add
-            ],
-            ignore_conflicts=True,
-        )
-        delete_and_upsert(combined["asset_links"], resource)
+
+        for id in asset_ids_to_add:
+            asset = cls._get_indirect_asset(id, all_resource_dict, resource)
+            indirect_assets.append(asset)
 
         ## ensure all columns in the graph exist in the db so you don't key a fk error
         columns_to_add = set(
             [v.source_id for v in combined["column_links"]]
             + [v.target_id for v in combined["column_links"]]
         ) - set([v.id for v in combined["columns"]])
-        assets_for_columns_to_add = [
-            SchemaFieldUrn.from_string(id).parent for id in columns_to_add
-        ]
-        Asset.objects.bulk_create(
-            [
-                Asset(id=id, type=Asset.AssetType.DATASET, resource=resource)
-                for id in assets_for_columns_to_add
-            ],
-            ignore_conflicts=True,
-        )
+        for column_id in columns_to_add:
+            parsed = SchemaFieldUrn.from_string(column_id)
+            asset_id = parsed.parent
+            if asset_id not in combined["assets"] and asset_id not in indirect_assets:
+                asset = cls._get_indirect_asset(asset_id, all_resource_dict, resource)
+                indirect_assets.append(asset)
+            column = Column(
+                id=column_id,
+                asset_id=asset_id,
+                name=parsed.field_path,
+                nullable=True,
+            )
+            indirect_columns.append(column)
 
-        Column.objects.bulk_create(
-            [
-                Column(id=id, asset_id=assets_for_columns_to_add[i])
-                for i, id in enumerate(columns_to_add)
-            ],
-            ignore_conflicts=True,
-        )
+        delete_and_upsert(combined["assets"], resource, indirect_assets)
+        delete_and_upsert(combined["asset_errors"], resource)
+        delete_and_upsert(combined["asset_links"], resource)
+        delete_and_upsert(combined["columns"], resource, indirect_columns)
         delete_and_upsert(combined["column_links"], resource)
-
-
-if __name__ == "__main__":
-    import uuid
-
-    x = DataHubDBParser(
-        resource_id=uuid.uuid4(),
-        workspace_id=uuid.uuid4(),
-        dialect="postgres",
-        is_db=True,
-    ).parse()
-    breakpoint()

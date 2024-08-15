@@ -32,10 +32,12 @@ from app.views import (
     WorkflowViews,
     WorkspaceGroupViewSet,
     WorkspaceViewSet,
+    SyncResourceView,
     healthcheck,
 )
 
 from .views import CustomUserViewSet, LogoutView, OAuthView
+from app.consumers import WorkflowRunConsumer
 
 router = routers.DefaultRouter()
 router.register(r"workspaces", WorkspaceViewSet, basename="workspace")
@@ -56,6 +58,11 @@ urlpatterns = [
         "notebooks/<str:notebook_id>/blocks/<str:block_id>/query/",
         ExecuteQueryView.as_view(),
         name="execute_query",
+    ),
+    path(
+        "resources/<str:resource_id>/sync/",
+        SyncResourceView.as_view(),
+        name="sync_resource",
     ),
     path(
         "workflows/<str:workflow_run_id>/",
@@ -81,5 +88,6 @@ urlpatterns = [
         AssetViewSet.as_view({"get": "retrieve"}),
         name="asset-detail",
     ),
+    path("/ws/subscribe/<str:workspace_id>/", WorkflowRunConsumer.as_asgi()),
     path("", include(router.urls)),
 ]

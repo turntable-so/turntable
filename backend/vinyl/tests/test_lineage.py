@@ -21,5 +21,8 @@ def test_local_lineage():
     )
     sqlproj.optimize()
     sqlproj.get_lineage()
-    breakpoint()
-    assert sqlproj.stitch_lineage() != {}
+    stitched = sqlproj.stitch_lineage()
+
+    assert stitched != {}
+    assert stitched["table_lineage"]["links"] != []
+    assert stitched["column_lineage"]["links"] != []

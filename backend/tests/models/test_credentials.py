@@ -20,6 +20,7 @@ def test_resource_for_creds(db) -> Resource:
 def test_can_create_looker_creds(test_resource_for_creds):
     looker_creds = LookerDetails(
         name="test looker creds",
+        project_path=".",
         base_url="https://looker.com",
         client_id="client_id",
         client_secret="client",
@@ -61,6 +62,7 @@ def test_creds_are_decrypted_in_python(test_resource_for_creds):
         client_id="client_id",
         client_secret="client",
         resource=test_resource_for_creds,
+        project_path=None,
     )
     looker_creds.save()
 
@@ -75,13 +77,14 @@ def test_creds_are_encrypted_in_db(test_resource_for_creds):
         client_id="client_id",
         client_secret="client",
         resource=test_resource_for_creds,
+        project_path=None,
     )
     looker_creds.save()
     looker_creds.refresh_from_db()
 
     with connection.cursor() as cursor:
         cursor.execute(
-            "SELECT id, encrypted FROM app_resource_details WHERE id = %s",
+            "SELECT id, encrypted FROM app_resourcedetails WHERE id = %s",
             [looker_creds.id],
         )
         result = cursor.fetchall()[0]

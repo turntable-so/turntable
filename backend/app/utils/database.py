@@ -3,12 +3,21 @@ from django.db.models import Model
 from app.models import Resource
 
 
-def delete_and_upsert(instances: list[Model], resource: Resource):
+def delete_and_upsert(
+    instances: list[Model],
+    resource: Resource,
+    indirect_instances: list[Model] | None = None,
+):
+    if resource is None or resource.id is None:
+        raise ValueError(
+            "Resource must have an id to use the `delete_and_upsert` function"
+        )
     if len(instances) == 0:
         return
     model_types = set([type(i) for i in instances])
     if len(model_types) > 1:
         raise ValueError("All instances must be of the same model type")
+
     model_type = model_types.pop()
     primary_key_name = model_type._meta.pk.name
     other_field_names = [
@@ -41,3 +50,12 @@ def delete_and_upsert(instances: list[Model], resource: Resource):
         update_fields=other_field_names,
         unique_fields=[primary_key_name],
     )
+
+    # insert the indirect instances if they don't exist.
+    ## This functionality is necessary because links can exist across resources, and if the underyling nodes are not present, the link creation will raise a FK error.
+    ## That said, we don't want to add these temporary nodes if the true nodes already exist in the graph.
+    if indirect_instances is not None:
+        model_type.objects.bulk_create(
+            indirect_instances,
+            ignore_conflicts=True,
+        )

@@ -1,11 +1,11 @@
 # File: api/views/execute_query.py
 
-
+import asyncio
 import json
 
 from adrf.views import APIView
 from asgiref.sync import sync_to_async
-from django.http import JsonResponse
+from django.http import JsonResponse, StreamingHttpResponse
 from rest_framework import status
 from rest_framework.response import Response
 
@@ -21,15 +21,15 @@ class ExecuteQueryView(APIView):
         from workflows.hatchet import hatchet
 
         workspace = await self.get_current_workspace(request.user)
-        data = json.loads(request.body)
-        resource_id = data.get("resource_id")
+        data = json.loads(json.loads(request.body))
+        resource_id = data["resource_id"]
         if not resource_id:
             return Response(
                 {"message": "resource_id is required"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        query = data.get("sql")
+        query = data["sql"]
         if not query:
             return Response(
                 {"message": "query is required"},
@@ -68,8 +68,6 @@ class ExecuteQueryView(APIView):
         )
 
     async def get(self, request, workflow_run_id):
-        from workflows.hatchet import hatchet
-
         workflow_run = hatchet.client.admin.get_workflow_run(workflow_run_id)
         result = await workflow_run.result()
         return JsonResponse(result, status=status.HTTP_200_OK)

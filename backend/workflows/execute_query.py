@@ -1,16 +1,17 @@
-from dotenv import load_dotenv
 import os
+
 import ibis
 import orjson
 import pandas as pd
-from workflows.hatchet import hatchet
-from hatchet_sdk import Context
 from django.core.files.base import ContentFile
+from dotenv import load_dotenv
+from hatchet_sdk import Context
 
+from workflows.hatchet import hatchet
 
 load_dotenv()
 
-from app.models import Block, Resource
+from app.models import Block, Resource, ResourceDetails
 
 
 def df_to_json(df: pd.DataFrame) -> str:
@@ -49,10 +50,14 @@ class ExecuteQueryWorkflow:
             return {"error": "block_id is empty"}
 
         resource = Resource.objects.get(id=resource_id)
+        details = ResourceDetails.objects.get(resource=resource)
         block, created = Block.objects.get_or_create(id=block_id)
-        connect = ibis.duckdb.connect(resource.config["file_path"], read_only=True)
-        table = connect.sql(query)
-        df = table.execute()
+        try:
+            connect = ibis.duckdb.connect(details.path, read_only=True)
+            table = connect.sql(query)
+            df = table.execute()
+        except Exception as e:
+            return {"status": "failed", "error": str(e)}
         query_results = df_to_json(df)
 
         query_results_file = ContentFile(query_results)

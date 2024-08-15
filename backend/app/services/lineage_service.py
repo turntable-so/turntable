@@ -1,17 +1,14 @@
-from typing import Literal
-
 from django.core.cache import caches
-from django.db.models import QuerySet
+from django.db.models import Q, QuerySet
 from django.forms.models import model_to_dict
-from mpire import WorkerPool
 from pydantic import BaseModel, ConfigDict
+
+from app.models import Asset, AssetLink, Column, ColumnLink
+from app.utils.obj import convert_to_dict, make_values_serializable
 
 cache = caches["default"]
 
 _CACHE = {}
-
-from app.models import Asset, AssetLink, Column, ColumnLink
-from app.utils.obj import convert_to_dict, make_values_serializable
 
 
 class Lineage(BaseModel):
@@ -50,59 +47,38 @@ class LineageService:
     def get_lineage(
         self,
         asset_id: str,
-        predecessor_depth: int | None = None,
-        successor_depth: int | None = None,
+        predecessor_depth: int = 1,
+        successor_depth: int = 1,
         lineage_type: ColumnLink.LineageType = ColumnLink.LineageType.ALL,
     ) -> Lineage:
         # convert asset_id to string because networkx node link data does not support UUID
         workspace_id = str(self.workspace_id)
-        predecessor_args = {
+        relative_args = {
             "asset_id": asset_id,
             "workspace_id": workspace_id,
-            "depth": predecessor_depth,
+            "predecessor_depth": predecessor_depth,
+            "successor_depth": successor_depth,
         }
-        successor_args = {
-            "asset_id": asset_id,
-            "workspace_id": workspace_id,
-            "depth": successor_depth,
-        }
-
-        def execute_query(type: Literal["predecessors", "successors"]):
-            if type == "predecessors":
-                return AssetLink.predecessors(**predecessor_args)
-            return AssetLink.successors(**successor_args)
-
-        with WorkerPool(n_jobs=2, start_method="threading", use_dill=True) as pool:
-            predecessors, sucessors = pool.map(
-                lambda x: execute_query(x),
-                ["predecessors", "successors"],
-            )
-
-        assets_to_filter = list(set(predecessors + sucessors + [asset_id]))
-
-        def execute_query2(type: Literal["assets", "asset_links", "columns"]):
-            if type == "assets":
-                return Asset.objects.filter(
-                    id__in=assets_to_filter, workspace_id=self.workspace_id
-                )
-            if type == "asset_links":
-                return AssetLink.objects.filter(
-                    source_id__in=assets_to_filter, workspace_id=self.workspace_id
-                )
-            return Column.objects.filter(
-                asset_id__in=assets_to_filter, workspace_id=self.workspace_id
-            )
-
-        with WorkerPool(n_jobs=3, start_method="threading") as pool:
-            assets, asset_links, columns = pool.map(
-                execute_query2,
-                ["assets", "asset_links", "columns"],
-            )
-        column_links = ColumnLink.objects.filter(
-            source_id__in=columns.values_list("id", flat=True),
-            workspace_id=self.workspace_id,
-            # lineage_type=lineage_type,
+        relatives = set(AssetLink.relatives(**relative_args))
+        relatives.add(asset_id)
+        assets_to_filter = list(relatives)
+        assets = Asset.objects.filter(
+            id__in=assets_to_filter, workspace_id=self.workspace_id
         )
+        asset_links = AssetLink.objects.filter(
+            source_id__in=assets_to_filter,
+            target_id__in=assets_to_filter,
+            workspace_id=self.workspace_id,
+        )
+        columns = Column.objects.filter(
+            asset_id__in=assets_to_filter, workspace_id=self.workspace_id
+        )
+        columns_ids = columns.values_list("id", flat=True)
+        column_links = ColumnLink.objects.filter(
+            source_id__in=columns_ids,
+            target_id__in=columns_ids,
+            workspace_id=self.workspace_id,
+        ).filter(Q(lineage_type=lineage_type) | Q(lineage_type=None))
 
         return Lineage(
             asset_id=asset_id,

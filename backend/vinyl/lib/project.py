@@ -7,6 +7,7 @@ from typing import Any, Callable
 import ibis.expr.types as ir
 from mpire import WorkerPool
 from rich.table import Table
+from sqlglot import exp
 from sqlglot.errors import ParseError
 from tqdm import tqdm
 
@@ -14,7 +15,7 @@ from vinyl.lib.connect import SourceInfo, _ResourceConnector
 from vinyl.lib.definitions import Defs, _load_project_defs
 from vinyl.lib.errors import VinylError, VinylErrorType
 from vinyl.lib.metric import MetricStore
-from vinyl.lib.sqlast import SQLAstNode, SQLProject, get_adj_node_name
+from vinyl.lib.sqlast import SQLAstNode, SQLProject
 from vinyl.lib.table import VinylTable
 from vinyl.lib.utils.graph import DAG
 from vinyl.lib.utils.graphics import rich_print
@@ -144,7 +145,9 @@ class Project:
             nodes = self.db_graph.topological_sort()
         else:
             node_id_map = {
-                get_adj_node_name(n): n for n in self.graph.node_dict if n is not None
+                VinylTable.get_adj_node_name(n): n
+                for n in self.graph.node_dict
+                if n is not None
             }
             nodes_to_consider = [node_id_map[id] for id in ids]
             all_nodes_to_consider = self.db_graph.get_ancestors_and_descendants(
@@ -174,21 +177,21 @@ class Project:
             graph = shared_objects[0]
             sqlnode = SQLAstNode()
             try:
-                sqlnode.id = get_adj_node_name(node)
+                sqlnode.id = VinylTable.get_adj_node_name(node)
                 relative_to = {}
                 for y in graph.get_parents([node]):
                     if y is None:
                         continue
 
                     try:
-                        y_name = get_adj_node_name(y)
+                        y_name = VinylTable.get_adj_node_name(y)
                         active_y = y()
                         relative_to[y_name] = active_y
                     except Exception as e:
                         sqlnode.errors.append(
                             VinylError(
                                 node_id=sqlnode.id,
-                                source_id=get_adj_node_name(y),
+                                source_id=VinylTable.get_adj_node_name(y),
                                 msg=str(e),
                                 type=VinylErrorType.MISCELLANEOUS_ERROR,
                                 traceback=traceback.format_exc(),
@@ -197,10 +200,14 @@ class Project:
                         # don't fail here, fail later if there are no deps to be found. Swallowing the exception allows for partial lineage
                         continue
                 sqlnode.ast, sqlnode.schema, sqlnode.dialect = node()._to_sql_ast(
-                    relative_to=relative_to
+                    relative_to=relative_to,
+                    node_name=VinylTable.get_adj_node_name(node),
                 )
                 sqlnode.deps = [k for k in relative_to]
-                sqlnode.deps_schemas = {k: v.schema() for k, v in relative_to.items()}
+                sqlnode.deps_schemas = {
+                    exp.Table(this=exp.Identifier(this=k)): v.schema()
+                    for k, v in relative_to.items()
+                }
 
             except Exception as e:
                 sqlnode.errors.append(
@@ -232,7 +239,7 @@ class Project:
             sqlnodelist = [process_node([self.db_graph], node) for node in tqdm(nodes)]
 
         adj_db_graph = self.db_graph.copy().relabel(
-            lambda x: get_adj_node_name(x) if x is not None else x
+            lambda x: VinylTable.get_adj_node_name(x) if x is not None else x
         )
 
         return SQLProject(sqlnodelist, adj_db_graph)

@@ -18,7 +18,6 @@ from sqlglot.optimizer.canonicalize import canonicalize
 from sqlglot.optimizer.eliminate_ctes import eliminate_ctes
 from sqlglot.optimizer.eliminate_joins import eliminate_joins
 from sqlglot.optimizer.eliminate_subqueries import eliminate_subqueries
-from sqlglot.optimizer.merge_subqueries import merge_subqueries
 from sqlglot.optimizer.normalize import normalize
 from sqlglot.optimizer.optimize_joins import optimize_joins
 from sqlglot.optimizer.pushdown_predicates import pushdown_predicates
@@ -81,7 +80,6 @@ RULES = (
     pushdown_predicates,
     optimize_joins,
     eliminate_subqueries,
-    merge_subqueries,
     eliminate_joins,
     eliminate_ctes,
     quote_identifiers,
@@ -240,22 +238,6 @@ def union_helper(ast, name_override: str | None = None):
         return [(name, new_ast)]
 
 
-# def _table_rename_helper_ast(node: Expression) -> Expression:
-#     if isinstance(node, exp.Table) and node.db is not None and node.catalog is not None:
-#         return exp.Table(
-#             catalog=node.catalog,
-#             db=node.db,
-#             name=_STR_JOIN_HELPER.join([node.catalog, node.db, node.name]),
-#         )
-#     return node
-
-
-# def _table_rename_helper_str(node: Expression) -> str:
-#     if isinstance(node, str) and "." in node:
-#         return _STR_JOIN_HELPER.join(node.replace("`", "").replace('"', "").split("."))
-#     return node
-
-
 class SQLAstNode:
     append_key = "_" + _generate_random_ascii_string(10)
     join_str = "_____"
@@ -273,8 +255,8 @@ class SQLAstNode:
         use_datahub_nodes: bool = False,
     ):
         self.id: str = id
-        self.original_ast = ast.copy()
         self.ast = ast
+        self.original_ast = ast.copy()
         self.schema = schema
         self.deps = deps
         self.deps_schemas = deps_schemas
@@ -295,7 +277,7 @@ class SQLAstNode:
             new_name += ast.catalog + self.join_str
         if ast.db is not None:
             new_name += ast.db + self.join_str
-        new_name += ast.this.this + self.append_key
+        new_name += str(ast.this.this).replace(".", self.join_str) + self.append_key
 
         return exp.Table(
             catalog=None,
@@ -390,11 +372,10 @@ class SQLAstNode:
         self = self.qualify()
         if self.errors != []:
             return self
-
         try:
             self.ast = optimize(
                 self.ast,
-                schema=self.deps_schemas,
+                schema={k: v for k, v in self.deps_schemas.items() if v},
                 dialect=self.dialect,
                 rules=rules,
             )
@@ -402,9 +383,11 @@ class SQLAstNode:
             self.errors.append(
                 VinylError(
                     self.id,
-                    VinylErrorType.OPTIMIZE_ERROR
-                    if isinstance(e, OptimizeError)
-                    else VinylErrorType.MISCELLANEOUS_ERROR,
+                    (
+                        VinylErrorType.OPTIMIZE_ERROR
+                        if isinstance(e, OptimizeError)
+                        else VinylErrorType.MISCELLANEOUS_ERROR
+                    ),
                     str(e),
                     self.dialect,
                     self.original_ast.sql(pretty=True),
@@ -464,24 +447,24 @@ class SQLAstNode:
             if not lineage_filters or "filter" in lineage_filters:
                 for li in scope.find_all(exp.Where):
                     for lj in li.find_all(exp.Column):
-                        wheres += [str(lj)]
+                        wheres += [lj.sql(dialect=self.dialect, comments=False)]
 
                 for li in scope.find_all(exp.Having):
                     for lj in li.find_all(exp.Column):
-                        havings += [str(lj)]
+                        havings += [lj.sql(dialect=self.dialect, comments=False)]
 
                 for li in scope.find_all(exp.Qualify):
                     for lj in li.find_all(exp.Column):
-                        qualifies += [str(lj)]
+                        qualifies += [lj.sql(dialect=self.dialect, comments=False)]
             if not lineage_filters or "group_by" in lineage_filters:
                 for li in scope.find_all(exp.Group):
                     for lj in li.find_all(exp.Column):
-                        groupbys += [str(lj)]
+                        groupbys += [lj.sql(dialect=self.dialect, comments=False)]
             if not lineage_filters or "join_key" in lineage_filters:
                 for li in scope.find_all(exp.Join):
                     if li.args.get("on") is not None:
                         for lj in li.args.get("on").find_all(exp.Column):
-                            joins += [str(lj)]
+                            joins += [lj.sql(dialect=self.dialect, comments=False)]
 
             non_select = wheres + groupbys + havings + qualifies + joins
             non_select_type = (
@@ -572,12 +555,29 @@ class SQLAstNode:
         id_replace_dict = {
             x.lower() if str(self.dialect) != "snowflake" else x.upper(): x for x in ids
         }
+        # remove all nodes that are not from dependent tables, have blank column names, are wildcards, or are malformed tables. In this case, malformed means they contain periods but are also direct database references. Vinyl tables can contain periods but won't be from the db.
         nodes_to_remove = [
             x
             for x in self.lineage.node_dict
-            if x.rsplit(".", 1)[0] not in id_replace_dict
+            if (x.rsplit(".", 1)[0] not in id_replace_dict and self.append_key not in x)
+            or "." not in x
+            or x.rsplit(".", 1)[1].startswith("*")
+            or ("." in x.rsplit(".", 1)[0] and self.append_key in x)
         ]
-        self.lineage.remove_nodes_and_reconnect(nodes_to_remove)
+        try:
+            self.lineage.remove_nodes_and_reconnect(nodes_to_remove)
+        except Exception as e:
+            self.errors.append(
+                VinylError(
+                    self.id,
+                    VinylErrorType.CYCLE_ERROR,
+                    str(e),
+                    self.dialect,
+                    self.original_ast.sql(pretty=True),
+                )
+            )
+            self.lineage = DAG()
+            return self
 
         # get correct case again
         self.lineage = self.lineage.relabel(lambda x: self.post_qualify_relabel(x))
@@ -585,15 +585,17 @@ class SQLAstNode:
         # add nodes for all columns in table_graph, even if they have no connections or have errors:
         all_schemas = {**self.deps_schemas, **self.schema}
         for node, schema in all_schemas.items():
-            # convert all schemas to dicts, if they haven't already been
+            # convert all schemas to regular dicts, if they haven't already been
             if isinstance(schema, VinylSchema):
-                schema = list(schema.items())
-            for col in schema:
-                graph_name = f"{node.this.this}.{col}"
+                schema = dict(schema.items())
+            for colname in schema:
+                if colname is None or colname == "" or "." in colname:
+                    continue
+                graph_name = f"{node.this.this}.{colname}"
                 if self.use_datahub_nodes:
                     graph_name = self.post_qualify_relabel(graph_name)
                 if (
-                    graph_name not in self.lineage.node_dict and "." not in col
+                    graph_name not in self.lineage.node_dict
                 ):  # remove subcolumns for now
                     self.lineage.add_node(graph_name)
 
@@ -641,7 +643,7 @@ class SQLProject:
                         for name, coltype in node.schema.items()
                     }
                     for tablename, schema in node.deps_schemas.items():
-                        table_lineage.nodes[tablename]["schema"] = {
+                        table_lineage.nodes[tablename.this.this]["schema"] = {
                             name: type(coltype).__name__
                             for name, coltype in schema.items()
                         }
