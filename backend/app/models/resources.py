@@ -1,4 +1,5 @@
 import os
+import re
 import tempfile
 import uuid
 from contextlib import contextmanager
@@ -14,6 +15,12 @@ from app.models.auth import Workspace
 from app.models.git_connections import GithubInstallation
 from app.services.github_service import GithubService
 from app.utils.fields import EncryptedJSONField
+from vinyl.lib.connect import (
+    BigQueryConnector,
+    DatabaseFileConnector,
+    PostgresConnector,
+    _DatabaseConnector,
+)
 from vinyl.lib.dbt import DBTProject
 from vinyl.lib.dbt_methods import DBTDialect, DBTVersion
 from vinyl.lib.utils.files import save_orjson
@@ -122,6 +129,10 @@ class ResourceDetails(PolymorphicModel):
     def datahub_db_nickname(self) -> str:
         return self.datahub_extras[0] if self.datahub_extras else "datahub"
 
+    @property
+    def test_number_of_entries(self) -> int:
+        return 3
+
     def get_venv_python(self):
         # only works on unix
         return f"{os.path.abspath(self.venv_path)}/bin/python"
@@ -176,6 +187,49 @@ class ResourceDetails(PolymorphicModel):
                 self.resource.datahub_db.save(
                     os.path.basename(db_path), File(f), save=True
                 )
+
+    def test_datahub_connection(self):
+        self.create_venv_and_install_datahub()
+
+        # run ingest test
+        log_pattern = re.compile(
+            r"(?P<datetime>.+?)\s+(?P<level>\w+)\s+(?P<message>.+)"
+        )
+        errors = []
+        with self.datahub_yaml_path() as (config_paths, db_path):
+            for path in config_paths:
+                if os.path.basename(path) == "dbt.yml":
+                    # skip dbt config
+                    continue
+                with tempfile.NamedTemporaryFile(suffix=".log", mode="r+") as log_file:
+                    run_and_capture_subprocess(
+                        [
+                            self.get_venv_python(),
+                            "-m",
+                            "datahub",
+                            "--log-file",
+                            log_file.name,
+                            "ingest",
+                            "-c",
+                            path,
+                            "--preview",
+                            "--preview-workunits",
+                            str(self.test_number_of_entries),
+                        ]
+                    )
+                    log_contents = log_file.read()
+                for line in log_contents.splitlines():
+                    match = log_pattern.match(line)
+                    if match and match.group("level") == "ERROR":
+                        errors.append(
+                            {
+                                "connection_type": os.path.basename(path).split(".")[0],
+                                "error_message": match.group("message"),
+                            }
+                        )
+            if len(errors) > 0:
+                return {"success": False, "errors": errors}
+            return {"success": True}
 
     def get_datahub_config(self, db_path) -> dict[str, Any]:
         pass
@@ -458,8 +512,20 @@ class DBDetails(ResourceDetails):
     def allows_db_exclusions(self):
         return False
 
+    @property
+    def test_query(self):
+        return "SELECT 1"
+
+    def get_connector(self) -> _DatabaseConnector:
+        return
+
+    def test_db_connection(self):
+        connector = self.get_connector()
+        connection = connector._connect()
+        return connection.raw_sql(self.test_query)
+
     def get_dbt_profile_contents(self, dbt_core_resource: DBTCoreDetails):
-        pass
+        return
 
     @contextmanager
     def dbt_datahub_yml_paths(self, dbtresources: list[DBTResource], db_path):
@@ -562,6 +628,15 @@ class PostgresDetails(DBDetails):
     def datahub_extras(self):
         return ["postgres", "dbt"]
 
+    def get_connector(self):
+        return PostgresConnector(
+            host=self.encrypted["host"],
+            port=self.encrypted["port"],
+            user=self.encrypted["username"],
+            password=self.encrypted["password"],
+            tables=[f"{self.encrypted["database"]}.*.*"],
+        )
+
     def get_datahub_config(self, db_path) -> dict[str, Any]:
         return {
             "source": {
@@ -613,6 +688,12 @@ class BigqueryDetails(DBDetails):
     @property
     def datahub_extras(self):
         return ["bigquery", "dbt"]
+
+    def get_connector(self):
+        return BigQueryConnector(
+            service_account_info=self.encrypted["service_account"],
+            tables=[f"{self.encrypted['database']}.*.*"],
+        )
 
     def get_datahub_config(self, db_path):
         adj_service_account = self.encrypted["service_account"].copy()
@@ -675,6 +756,7 @@ class DuckDBDetails(DBDetails):
         self.config["path"] = self.path
         super().save(*args, **kwargs)
 
+    @property
     def venv_path(self):
         return ".duckdbvenv"
 
@@ -685,6 +767,9 @@ class DuckDBDetails(DBDetails):
     @property
     def datahub_db_nickname(self):
         return "duckdb"
+
+    def get_connector(self):
+        return DatabaseFileConnector(path=self.config["path"])
 
     def get_datahub_config(self, db_path) -> dict[str, Any]:
         return {

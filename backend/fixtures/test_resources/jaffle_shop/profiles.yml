@@ -1,0 +1,11 @@
+jaffle_shop:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: postgres_test_db
+      user: myuser
+      password: mypassword
+      port: 5432
+      dbname: mydb # or database instead of dbname
+      schema: dbt_sl_test
