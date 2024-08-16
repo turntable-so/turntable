@@ -235,9 +235,10 @@ services:
     working_dir: /code/fixtures/test_resources/jaffle_shop
     environment:
       <<: [*postgres-test-db-credentials]
-    restart: "no"
     depends_on:
       - postgres_test_db
+    restart: no
+
 
   metabase:
     image: metabase/metabase:latest
