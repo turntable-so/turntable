@@ -17,6 +17,14 @@ services:
       service: postgres_test_db
     volumes:
       - ./turntable-test-db/turntable-test-db/postgres_test_db_data:/var/lib/postgresql/data
+  populate_postgres_test_db:
+    extends:
+      file: docker-compose.dev.yml
+      service: populate_postgres_test_db
+  ensure_populate_test_db:
+    extends:
+      file: docker-compose.dev.yml
+      service: ensure_populate_test_db
   metabase:
     extends:
       file: docker-compose.dev.yml
