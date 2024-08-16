@@ -2,7 +2,7 @@ services:
   api:
     extends:
       file: docker-compose.dev.yml
-      service: run-worker
+      service: api
   postgres:
     extends:
       file: docker-compose.dev.yml
