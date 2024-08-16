@@ -15,15 +15,8 @@ services:
     extends:
       file: docker-compose.dev.yml
       service: postgres_test_db
-  populate_postgres_test_db:
-    extends:
-      file: docker-compose.dev.yml
-      service: populate_postgres_test_db
-  ensure_populate_test_db:
-    image: python:3.11
-    extends:
-      file: docker-compose.dev.yml
-      service: ensure_populate_test_db
+    volumes:
+      - ./backend/fixtures/test_resources/jaffle_shop/turntable-test-db:/var/lib/postgresql/data
   metabase:
     extends:
       file: docker-compose.dev.yml
@@ -33,7 +26,6 @@ services:
 volumes:
   postgres_data:
   minio_data:
-  postgres_test_db_data:
 
 
 networks:
