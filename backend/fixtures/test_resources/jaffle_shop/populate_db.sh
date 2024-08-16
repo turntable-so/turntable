@@ -3,7 +3,7 @@ set -e
 
 # install dbt
 pip install uv
-uv pip install dbt-postgres~=1.8.0 --system
+uv pip install dbt-postgres~=1.7.0 --system
 
 # prepare dbt
 dbt deps

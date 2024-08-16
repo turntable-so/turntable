@@ -431,6 +431,8 @@ class DBTCoreDetails(DBTResource):
                     )
                     adj_profile_contents = {profile_name: profile_contents}
                     yaml.dump(adj_profile_contents, f)
+                with open(os.path.join(dbt_profiles_dir, "profiles.yml"), "r") as f:
+                    print(f.read())
                 yield (
                     DBTProject(
                         project_path,
