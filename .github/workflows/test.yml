@@ -72,7 +72,7 @@ jobs:
           AWS_S3_SECRET_ACCESS_KEY: minio_password
           AWS_STORAGE_BUCKET_NAME: artifacts
           AWS_S3_ENDPOINT_URL: http://localhost:9000
-          POSTGRES_TEST_DB_HOST: localhost
+          POSTGRES_TEST_DB_HOST: 127.0.0.1
           POSTGRES_TEST_DB_PORT: 6543
           DEV: "true"
           TMPDIR: ${{ runner.temp }}
