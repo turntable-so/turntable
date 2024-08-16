@@ -239,10 +239,8 @@ services:
       - postgres_test_db
     restart: no
 
-
   metabase:
     image: metabase/metabase:latest
-    hostname: metabase
     volumes:
       - /dev/urandom:/dev/random:ro
       - ./backend/fixtures/test_resources/metabase:/metabase-data
