@@ -1,5 +1,4 @@
 #!/bin/sh
-set -e
 
 # install dbt
 pip install uv
@@ -20,3 +19,5 @@ else
     dbt seed
     dbt run
 fi
+
+exec "$@"

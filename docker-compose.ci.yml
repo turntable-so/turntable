@@ -19,6 +19,11 @@ services:
     extends:
       file: docker-compose.dev.yml
       service: populate_postgres_test_db
+  ensure_populate_test_db:
+    image: python:3.11
+    extends:
+      file: docker-compose.dev.yml
+      service: ensure_populate_test_db
   metabase:
     extends:
       file: docker-compose.dev.yml
