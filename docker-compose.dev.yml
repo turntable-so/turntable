@@ -99,6 +99,11 @@ services:
       - "6543:5432"
     volumes:
       - postgres_test_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -h postgres_test_db -p 5432
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   populate_postgres_test_db:
     build:
@@ -107,7 +112,8 @@ services:
     environment:
       <<: [*postgres-test-db-credentials]
     depends_on:
-      - postgres_test_db
+      postgres_test_db:
+        condition: service_healthy
     restart: no
 
   ensure_populate_test_db:
