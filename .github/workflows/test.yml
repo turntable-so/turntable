@@ -2,6 +2,10 @@ name: Run Tests
 
 on: [pull_request]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -51,6 +55,7 @@ jobs:
           up-flags: --build
           down-flags: -v
           services: |
+            api
             postgres 
             minio 
             createbuckets
@@ -66,11 +71,6 @@ jobs:
           rye config --set-bool behavior.use-uv=true
           rye sync --no-lock
         working-directory: backend
-      
-      - name: Run migrations
-        run: |
-          docker compose exec populate_postgres_test_db python manage.py migrate
-        working-directory:
       
       - name: Run tests
         run: |
