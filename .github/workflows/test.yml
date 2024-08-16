@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: turntable-so/turntable-test-db
-          path: backend/fixtures/test_resources/jaffle_shop
+          path: turntable-test-db
 
       - name: Setup rye
         uses: eifinger/setup-rye@v3
