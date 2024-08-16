@@ -43,33 +43,27 @@ jobs:
           up-flags: "--build"
           down-flags: -v
 
-      - name: Wait 30 seconds while postgres poulates
-        run: sleep 30
-
-      - name: Run tests
-        run:
-          docker compose -f docker-compose.ci.yml exec api pytest -x
-
-      # - name: Install dependencies
-      #   run: |
-      #     rye config --set-bool behavior.use-uv=true
-      #     rye sync --no-lock
-      #   working-directory: backend
+      - name: Install dependencies
+        run: |
+          rye config --set-bool behavior.use-uv=true
+          rye sync --no-lock
+        working-directory: backend
       
-      # - name: Run tests
-      #   run: |
-      #     rye run pytest -x
-      #   working-directory: backend
-      #   env:
-      #     POSTGRES_DB: mydb
-      #     POSTGRES_USER: myuser
-      #     POSTGRES_PASSWORD: mypassword
-      #     POSTGRES_HOST: localhost
-      #     POSTGRES_PORT: 5432
-      #     AWS_S3_ACCESS_KEY_ID: minio_admin
-      #     AWS_S3_SECRET_ACCESS_KEY: minio_password
-      #     AWS_STORAGE_BUCKET_NAME: artifacts
-      #     AWS_S3_ENDPOINT_URL: http://localhost:9000
-      #     POSTGRES_TEST_DB_HOST: localhost
-      #     POSTGRES_TEST_DB_PORT: 6543
-      #     DEV: "true"
+      - name: Run tests
+        run: |
+          rye run pytest -x
+        working-directory: backend
+        env:
+          POSTGRES_DB: mydb
+          POSTGRES_USER: myuser
+          POSTGRES_PASSWORD: mypassword
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          AWS_S3_ACCESS_KEY_ID: minio_admin
+          AWS_S3_SECRET_ACCESS_KEY: minio_password
+          AWS_STORAGE_BUCKET_NAME: artifacts
+          AWS_S3_ENDPOINT_URL: http://localhost:9000
+          POSTGRES_TEST_DB_HOST: localhost
+          POSTGRES_TEST_DB_PORT: 6543
+          DEV: "true"
+          TMPDIR: ${{ runner.temp }}
