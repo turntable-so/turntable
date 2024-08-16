@@ -110,6 +110,12 @@ services:
       - postgres_test_db
     restart: no
 
+  ensure_populate_test_db:
+    depends_on:
+      populate_postgres_test_db:
+        condition: service_completed_successfully
+    restart: no
+
   metabase:
     image: metabase/metabase:latest
     volumes:
@@ -120,7 +126,6 @@ services:
     environment:
       MB_DB_FILE: /metabase-data/metabase.db
       MB_JETTY_PORT: 4000 # prevents port conflict with other services
-
     healthcheck:
       test: curl --fail -I http://localhost:4000/api/health || exit 1
       interval: 15s
