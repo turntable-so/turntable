@@ -1,0 +1,40 @@
+services:
+  postgres:
+    extends:
+      file: docker-compose.dev.yml
+      service: postgres
+  minio:
+    extends:
+      file: docker-compose.dev.yml
+      service: minio
+  createbuckets:
+    extends:
+      file: docker-compose.dev.yml
+      service: createbuckets
+  postgres_test_db:
+    extends:
+      file: docker-compose.dev.yml
+      service: postgres_test_db
+  populate_postgres_test_db:
+    extends:
+      file: docker-compose.dev.yml
+      service: populate_postgres_test_db
+  metabase:
+    extends:
+      file: docker-compose.dev.yml
+      service: metabase
+  run-worker:
+    extends:
+      file: docker-compose.dev.yml
+      service: run-worker
+
+volumes:
+  postgres_data:
+  minio_data:
+  postgres_test_db:
+
+
+networks:
+  default:
+    name: app_network
+    driver: bridge
