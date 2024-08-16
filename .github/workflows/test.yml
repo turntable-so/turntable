@@ -70,7 +70,7 @@ jobs:
       - name: Run migrations
         run: |
           docker compose exec populate_postgres_test_db python manage.py migrate
-        working-directory: backend
+        working-directory:
       
       - name: Run tests
         run: |
