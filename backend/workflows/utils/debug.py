@@ -25,7 +25,6 @@ class ContextDebugger:
 
 
 def spawn_workflow(context, workflow, input: dict, key: str | None = None):
-    breakpoint()
     if isinstance(context, Context):
         return context.spawn_workflow(workflow.__name__, input, key).result()
     else:

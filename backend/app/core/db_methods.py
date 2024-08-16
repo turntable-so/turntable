@@ -45,7 +45,7 @@ def dbt_repo_context(
 
     try:
         if resource is not None and project_path is None:
-            project_path = resource.config.get("project_path", None)
+            project_path = getattr(resource, "project_path")
 
         # Downloading the zip contents from Supabase storage
         if zip_contents is None:
@@ -86,7 +86,7 @@ def dbt_repo_context(
                         raise ValueError("Must provide version or resource")
 
                 if resource is not None:
-                    env_vars = resource.config.get("env_vars", {})
+                    env_vars = getattr(resource, "env_vars", {})
                     with open(os.path.join(project_path, "dbt_project.yml"), "r") as f:
                         contents = yaml.load(f, Loader=yaml.FullLoader)
                     profile_name = contents["profile"]
@@ -109,9 +109,7 @@ def dbt_repo_context(
                                     dialect,
                                     version,
                                     dbt_profiles_dir=dbt_profiles_dir,
-                                    compile_exclusions=resource.config.get(
-                                        "exclusions", None
-                                    ),
+                                    compile_exclusions=getattr(resource, "exclusions"),
                                     env_vars=env_vars,
                                 ),
                                 temp_dir,
