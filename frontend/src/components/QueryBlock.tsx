@@ -1,4 +1,6 @@
 // @ts-nocheck
+'use client'
+
 import {
   Select,
   SelectContent,
@@ -13,6 +15,7 @@ import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 import {
   ColDef
 } from "ag-grid-community";
+
 import {
   BarChartBig,
   ChevronsDownUp,
@@ -23,6 +26,7 @@ import {
   Loader2,
   Play,
   Table,
+  CircleStop,
   EllipsisVertical,
 } from "lucide-react";
 import { useHotkeys } from "react-hotkeys-hook";
@@ -37,11 +41,21 @@ import {
   createGrid,
 } from "ag-grid-community";
 import "./ag-grid-custom-theme.css"; // Custom CSS Theme for Data Grid
+
+import {
+  getCTEAutocomplete,
+  getColumnAutocomplete,
+  getDBCatalogAutocomplete,
+  getSchemaAutocomplete,
+  getTableAutocomplete,
+  runQueryOnServer,
+} from "../app/actions/actions";
 import {
   executeQuery,
-  getWorkflow
-} from "../app/actions/actions";
-import "./ag-grid-custom-theme.css"; // Custom CSS Theme for Data Grid
+  getWorkflow,
+} from "../app/actions/client-actions"
+import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
+import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 import LoadingVinyl from "./loading-vinyl-spinner";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Button } from "./ui/button";
@@ -220,7 +234,7 @@ type QueryBlockProps = {
     };
   };
   updateAttributes: (attrs: any) => void;
-  deleteNode: any,
+  deleteNode: any;
 };
 
 export default function QueryBlock(props: QueryBlockProps) {
@@ -234,6 +248,19 @@ export default function QueryBlock(props: QueryBlockProps) {
     setActiveNode,
   } = useAppContext();
 
+  const codeMirrorRef = useRef<ReactCodeMirrorRef | null>(null);
+
+  function codeMirrorRefCallack(editor: ReactCodeMirrorRef) {
+    if (editor?.editor && editor?.state && editor?.view && !codeMirrorRef.current) {
+      setTimeout(() => {
+        editor?.view?.focus();
+      }, 500);
+      codeMirrorRef.current = editor; 
+    }
+  }
+
+  const abortControllerRef = useRef<AbortController | null>(null);
+  
   const [records, setRecords] = useState([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [workflowId, setWorkflowId] = useState<string | null>(null);
@@ -246,15 +273,15 @@ export default function QueryBlock(props: QueryBlockProps) {
   const [dbCatalog, setDBCatalog] = useState<any[] | null>(null);
   const [resourceType, setResourceType] = useState<string>("bigquery");
   const [syntaxObject, setSyntaxObject] = useState<any>({});
+  const [isRunning, setIsRunning] = useState<any>(false);
 
   const gridRef = useRef<AgGridReact>(null);
   const timeIntervalRef = useRef<number | null>(null);
   const { id: notebookId } = useParams();
 
-  const codeMirrorRef = useRef<ReactCodeMirrorRef | null>(null);
   let columnAutocomplete = useRef<any[] | null>(null);
   let tableAutocomplete = useRef<any[] | null>(null);
-
+  
   const exportCsv = () => {
     gridRef.current!.api.exportDataAsCsv();
   };
@@ -552,9 +579,9 @@ export default function QueryBlock(props: QueryBlockProps) {
   };
 
   const deleteBlock = () => {
-    console.log(props)
-    props.node.attrs.blockId && props.deleteNode() 
-  }
+    console.log(props);
+    props.node.attrs.blockId && props.deleteNode();
+  };
 
   const setDefaultDataChart = async (rowData: any, colDefs) => {
     if (!notebookCharts[props.node.attrs.blockId]) {
@@ -627,7 +654,7 @@ export default function QueryBlock(props: QueryBlockProps) {
 
   useEffect(() => {
     const fetchWorkflowState = async (id: string) => {
-      const data = await getWorkflow({ workflow_run_id: id });
+      const data = await getWorkflow({ workflow_run_id: id }, abortControllerRef.current?.signal);
       if (data.execute_query.status === "failed") {
         setError(data.execute_query.error);
         setIsLoading(false);
@@ -636,6 +663,9 @@ export default function QueryBlock(props: QueryBlockProps) {
         console.log(data.execute_query.signed_url);
         getTablefromSignedUrl(data.execute_query.signed_url);
       }
+      setIsLoading(false);
+      setIsRunning(false);
+      abortControllerRef.current = null;
     };
     if (workflowId) {
       fetchWorkflowState(workflowId);
@@ -656,12 +686,27 @@ export default function QueryBlock(props: QueryBlockProps) {
     }
   }, [props.node.attrs.blockId]);
 
+  async function stopQuery() {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort('User aborted');
+      setIsLoading(false);
+      setIsRunning(false);
+      setWorkflowId(null);
+      abortControllerRef.current = null;
+      setTime(0);
+    }
+  }
+
   async function runQuery(query: string) {
     setTime(0);
     setIsLoading(true);
     setError(null);
     setRowData(null);
     setColDefs(null);
+    setIsRunning(true);
+    const abortController =  new AbortController();
+    
+    abortControllerRef.current = abortController;
     let data: any;
     try {
       data = await executeQuery({
@@ -669,14 +714,13 @@ export default function QueryBlock(props: QueryBlockProps) {
         resource_id: props.node.attrs.resourceId,
         block_id: props.node.attrs.blockId,
         sql: query,
-      });
-      console.log({ data });
+      }, abortController.signal);
     } catch (e: any) {
-      console.error({ e });
-      setError(e.toString());
+      setError(e?.toString() || "");
     }
-
-    setWorkflowId(data.workflow_run);
+    if (data) {
+      setWorkflowId(data.workflow_run);
+    }
   }
 
   useEffect(() => {
@@ -965,18 +1009,28 @@ export default function QueryBlock(props: QueryBlockProps) {
                                 <ChevronDown className='w-5 h-5' />
                             </Button> */}
 
-              <Button
-                disabled={isLoading}
-                variant="outline"
-                onClick={() => runQuery(props.node.attrs.sql)}
-              >
-                {isLoading ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Play className="mr-2 w-4 h-4 text-green-500" />
-                )}
-                Run
-              </Button>
+              {!isRunning ? (
+                <Button
+                  disabled={isLoading}
+                  variant="outline"
+                  onClick={() => runQuery(props.node.attrs.sql)}
+                >
+                  {isLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Play className="mr-2 w-4 h-4 text-green-500" />
+                  )}
+                  Run
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={() => stopQuery()}
+                >
+                  <CircleStop className="mr-2 w-4 h-4 text-green-500" />
+                  Stop
+                </Button>
+              )}
               <Popover>
                 <PopoverTrigger>
                   <Button variant="outline" onClick={() => {}}>
@@ -1011,11 +1065,12 @@ export default function QueryBlock(props: QueryBlockProps) {
                     override: [customAutocomplete],
                   }),
                 ]}
-                ref={codeMirrorRef}
+                ref={codeMirrorRefCallack}
                 value={props.node.attrs.sql}
                 onChange={(value) => handleChangeSql(value)}
                 className="text-sm"
                 theme={quietlight}
+
                 // @ts-ignore
                 options={{
                   keyMap: "sublime",

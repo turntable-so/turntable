@@ -7,19 +7,14 @@ import { usePathname, useRouter } from "next/navigation";
 import { Fragment, memo, useEffect, useMemo, useRef, useState } from "react";
 import { FixedSizeList as List } from "react-window";
 import { getNotebooks } from "../app/actions/actions";
-import Link from 'next/link'
+import Link from "next/link";
 
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "./ui/resizable";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ModelPreviewer from "./ModelPreviewer";
 import { Popover, PopoverTrigger } from "./ui/popover";
 import { PopoverContent } from "@radix-ui/react-popover";
@@ -134,7 +129,7 @@ export default function ActionBar({
   const searchRef = useRef<HTMLInputElement>(null);
   const resizerRef = useRef<HTMLDivElement>(null);
   const { ref: treeRef, width, height } = useResizeObserver();
-
+  
   const {
     assets,
     clearAssetPreview,
@@ -157,7 +152,7 @@ export default function ActionBar({
   const [lowHeight, setLowheight] = useState<number>(0);
   const pathName = usePathname();
   const router = useRouter();
-  const isNotebook = pathName.includes('/notebooks/');
+  const isNotebook = pathName.includes("/notebooks/");
 
   const filteredAssets = useMemo(() => {
     if (!assets) return {};
@@ -170,10 +165,10 @@ export default function ActionBar({
       const filteredAssetsFromTags =
         selectedTagFilters.length > 0
           ? filteredAssetsFromQuery.filter((asset: Model) =>
-            selectedTagFilters.some(
-              (tag) => asset.tags && asset.tags.includes(tag.value)
+              selectedTagFilters.some(
+                (tag) => asset.tags && asset.tags.includes(tag.value)
+              )
             )
-          )
           : filteredAssetsFromQuery;
 
       acc[resourceId] = {
@@ -189,10 +184,10 @@ export default function ActionBar({
     const fetchAndSetNotebooks = async () => {
       const data = await getNotebooks();
       setNotebooks(data);
-    }
+    };
     fetchAndSetNotebooks();
-  }, [])
-  
+  }, []);
+
   useEffect(() => {
     if (searchRef.current) {
       searchRef.current.focus();
@@ -235,7 +230,12 @@ export default function ActionBar({
     });
   }
 
-  function createChildrenNodes(resource: any, groupedAssets: any, getAssetIcon: Function, groupBy: Function) {
+  function createChildrenNodes(
+    resource: any,
+    groupedAssets: any,
+    getAssetIcon: Function,
+    groupBy: Function
+  ) {
     return Object.keys(groupedAssets).flatMap((k) => {
       if (resource.name.toLowerCase() === "looker") {
         return handleLookerResources(
@@ -264,20 +264,19 @@ export default function ActionBar({
       name: `${assetType}s`, // Modified to show a grouped name if needed
       icon: getAssetIcon(assetType, resource.type),
       count: Object.keys(nameGrouped).length,
-      children: Object.keys(nameGrouped).sort((a, b) => a.localeCompare(b)).map((name) =>
-        nameGrouped[name].length > 1
-          ? createChildNode(
-            resource,
-            assetType,
-            nameGrouped[name],
-            getAssetIcon,
-            name
-          )
-          : createFinalNode(
-            nameGrouped[name][0],
-            getLeafIcon(assetType)
-          )
-      ),
+      children: Object.keys(nameGrouped)
+        .sort((a, b) => a.localeCompare(b))
+        .map((name) =>
+          nameGrouped[name].length > 1
+            ? createChildNode(
+                resource,
+                assetType,
+                nameGrouped[name],
+                getAssetIcon,
+                name
+              )
+            : createFinalNode(nameGrouped[name][0], getLeafIcon(assetType))
+        ),
     });
   }
 
@@ -293,9 +292,9 @@ export default function ActionBar({
       name: `${overrideName || assetType}s`, // Modified to show a grouped name if needed
       icon: getAssetIcon(assetType, resource.type),
       count: assets.length,
-      children: assets.sort((a, b) => a.name.localeCompare(b.name)).map((asset) =>
-        createFinalNode(asset, getLeafIcon(assetType))
-      ),
+      children: assets
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((asset) => createFinalNode(asset, getLeafIcon(assetType))),
     });
   }
 
@@ -324,8 +323,8 @@ export default function ActionBar({
   }, [filteredAssets, resources]);
   const isCurrentNotebook = (pathName, id) => {
     return pathName.includes(id);
-  }
-  
+  };
+
   return (
     <div className="text-muted-foreground w-full mt-1 h-screen flex flex-col">
       <div className="sticky top-0 p-2 pt-4">
@@ -405,133 +404,170 @@ export default function ActionBar({
         </div>
       </div>
       <div
-        className={`flex-grow border-t mt-0 ${isFilterPopoverOpen ? "z-[-1]" : ""
-          }`}
+        className={`flex-grow border-t mt-0 h-500 ${
+          isFilterPopoverOpen ? "z-[-1]" : ""
+        }`}
       >
         <Tabs defaultValue="assets">
-          <TabsList className="grid w-full grid-cols-2" style={!isNotebook ? {
-              opacity: 0,
-              pointerEvents: "none",
-              height: 0
-            } : {}}>
-            <TabsTrigger value="assets" style={!isNotebook ? {
-              opacity: 0,
-              pointerEvents: "none"
-            } : {}}>Assets</TabsTrigger>
+          <TabsList
+            className="grid w-full h-100 grid-cols-2"
+            style={
+              !isNotebook
+                ? {
+                    opacity: 0,
+                    pointerEvents: "none",
+                    height: 0,
+                  }
+                : {}
+            }
+          >
+            <TabsTrigger
+              value="assets"
+              style={
+                !isNotebook
+                  ? {
+                      opacity: 0,
+                      pointerEvents: "none",
+                    }
+                  : {}
+              }
+            >
+              Assets
+            </TabsTrigger>
             {isNotebook && <TabsTrigger value="pages">Pages</TabsTrigger>}
           </TabsList>
-          <TabsContent value="assets">
-          {!assetPreview ? (
-          <div className="flex flex-col h-full max-h-screen z-0">
-            {false ? (
-              <div className="flex items-center justify-center h-full">
-                <Loader2 className="mr-2 h-8 w-8 animate-spin opacity-50" />
+          <TabsContent value="assets" style={{ height: "100%" }}>
+            {!assetPreview ? (
+              <div className="flex flex-col h-full max-h-screen z-0">
+                {false ? (
+                  <div className="flex items-center justify-center h-full">
+                    <Loader2 className="mr-2 h-8 w-8 animate-spin opacity-50" />
+                  </div>
+                ) : (
+                  <Fragment>
+                    <div ref={treeRef} className="flex flex-col h-full">
+                      <Tree
+                        height={'100%'}
+                        width={width}
+                        data={treeData}
+                        initialSlelectedItemId="f12"
+                        onSelectChange={(item) => {
+                          if (item?.isSelectable) {
+                            if (context === "LINEAGE") {
+                              if (focusedAsset?.id !== item.id) {
+                                setIsLineageLoading(true);
+                                router.push(`/lineage/${item.id}`);
+                              }
+                            } else {
+                              fetchAssetPreview(item.id);
+                            }
+                          }
+                        }}
+                        folderIcon={Folder}
+                        itemIcon={Workflow}
+                      />
+                    </div>
+                  </Fragment>
+                )}
               </div>
             ) : (
-              <Fragment>
-                <div ref={treeRef} className="flex flex-col h-full">
-                  <Tree
-                    height={height}
-                    width={width}
-                    data={treeData}
-                    initialSlelectedItemId="f12"
-                    onSelectChange={(item) => {
-                      if (item?.isSelectable) {
-                        if (context === "LINEAGE") {
-                          if (focusedAsset?.id !== item.id) {
-                            setIsLineageLoading(true);
-                            router.push(`/lineage/${item.id}`);
-                          }
-                        } else {
-                          fetchAssetPreview(item.id);
-                        }
-                      }
-                    }}
-                    folderIcon={Folder}
-                    itemIcon={Workflow}
-                  />
-                </div>
-                <div className="h-[150x]" />
-              </Fragment>
-            )}
-          </div>
-        ) : (
-          <ResizablePanelGroup direction="vertical" className="z-0">
-            <ResizablePanel defaultSize={25}>
-              {areAssetsLoading ? (
-                <div className="flex items-center justify-center h-full">
-                  <Loader2 className="mr-2 h-8 w-8 animate-spin opacity-50" />
-                </div>
-              ) : (
-                <Fragment>
-                  <div ref={treeRef} className="flex flex-col h-full">
-                    <Tree
-                      height={height}
-                      width={width}
-                      data={treeData}
-                      initialSlelectedItemId="f12"
-                      onSelectChange={(item) => {
-                        if (item?.isSelectable) {
-                          if (context === "LINEAGE") {
-                            if (focusedAsset?.id !== item.id) {
-                              setIsLineageLoading(true);
-                              router.push(`/lineage/${item.id}`);
+              <ResizablePanelGroup
+                direction="vertical"
+                className="z-0"
+                style={{ height: "100%" }}
+              >
+                <ResizablePanel defaultSize={50}>
+                  {areAssetsLoading ? (
+                    <div className="flex items-center justify-center h-full">
+                      <Loader2 className="mr-2 h-8 w-8 animate-spin opacity-50" />
+                    </div>
+                  ) : (
+                    <Fragment>
+                      <div ref={treeRef} className="flex flex-col h-full">
+                        <Tree
+                          height={height}
+                          width={width}
+                          data={treeData}
+                          initialSlelectedItemId="f12"
+                          onSelectChange={(item) => {
+                            if (item?.isSelectable) {
+                              if (context === "LINEAGE") {
+                                if (focusedAsset?.id !== item.id) {
+                                  setIsLineageLoading(true);
+                                  router.push(`/lineage/${item.id}`);
+                                }
+                              } else {
+                                fetchAssetPreview(item.id);
+                              }
                             }
-                          } else {
-                            fetchAssetPreview(item.id);
-                          }
-                        }
-                      }}
-                      folderIcon={Folder}
-                      itemIcon={Workflow}
-                    />
-                  </div>
-                  <div className="h-[150x]" />
-                </Fragment>
-              )}
-            </ResizablePanel>
-            <ResizableHandle withHandle className="bg-gray-300" />
-            <ResizablePanel
-              defaultSize={75}
-              className="p-0"
-              onResize={(e: number | undefined, size: number | undefined) => {
-                setLowheight(((size as number) / 100.0) * window.innerHeight);
-              }}
-            >
-              <ModelPreviewer
-                context={context}
-                clearAsset={clearAssetPreview}
-                asset={assetPreview}
-              />
-            </ResizablePanel>
-          </ResizablePanelGroup>
-        )}
+                          }}
+                          folderIcon={Folder}
+                          itemIcon={Workflow}
+                        />
+                      </div>
+                      <div className="h-[150x]" />
+                    </Fragment>
+                  )}
+                </ResizablePanel>
+                <ResizableHandle withHandle className="bg-gray-300" />
+                <ResizablePanel
+                  defaultSize={50}
+                  className="p-0"
+                  onResize={(
+                    e: number | undefined,
+                    size: number | undefined
+                  ) => {
+                    setLowheight(
+                      ((size as number) / 100.0) * window.innerHeight
+                    );
+                  }}
+                >
+                  <ModelPreviewer
+                    context={context}
+                    clearAsset={clearAssetPreview}
+                    asset={assetPreview}
+                  />
+                </ResizablePanel>
+              </ResizablePanelGroup>
+            )}
           </TabsContent>
-          <TabsContent value="pages">
-              {
-                (notebooks || []).map((notebook:any) => (
-                  <div className='w-full'
-                  key={notebook.title}>
+          {isNotebook && (
+            <TabsContent value="pages">
+              {(notebooks || []).map((notebook: any) => (
+                <div className="w-full" key={notebook.title}>
                   <Button
-
-                      variant={'ghost'}
-                      size="icon"
-                      className={`w-full ${isCurrentNotebook(pathName, notebook.id) ? 'opacity-100' : 'opacity-50'} ${isCurrentNotebook(pathName, notebook.id) ? 'bg-' : 'bg-transparent'} `}
-                      aria-label={notebook.title}
+                    variant={"ghost"}
+                    size="icon"
+                    className={`w-full ${
+                      isCurrentNotebook(pathName, notebook.id)
+                        ? "opacity-100"
+                        : "opacity-50"
+                    } ${
+                      isCurrentNotebook(pathName, notebook.id)
+                        ? "bg-"
+                        : "bg-transparent"
+                    } `}
+                    aria-label={notebook.title}
                   >
-                      <Link href={`/notebooks/${notebook.id}`} className="w-full">
-                          <div className={`${isCurrentNotebook(pathName, notebook.id) ? 'bg-[#ebebeb]' : 'hover:bg-[#ebebeb]'} px-4 p-2 w-full flex  space-x-2`}>
-                              <p className="font-normal text-[15px]">{notebook.title}</p>
-                          </div>
-                      </Link>
+                    <Link href={`/notebooks/${notebook.id}`} className="w-full">
+                      <div
+                        className={`${
+                          isCurrentNotebook(pathName, notebook.id)
+                            ? "bg-[#ebebeb]"
+                            : "hover:bg-[#ebebeb]"
+                        } px-4 p-2 w-full flex  space-x-2`}
+                      >
+                        <p className="font-normal text-[15px]">
+                          {notebook.title}
+                        </p>
+                      </div>
+                    </Link>
                   </Button>
-              </div>
-                ))
-              }
-
-          </TabsContent>
+                </div>
+              ))}
+            </TabsContent>
+          )}
         </Tabs>
-        
       </div>
     </div>
   );

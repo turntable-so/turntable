@@ -45,8 +45,6 @@ import ChartComposer from '@/components/notebook/chart-composer'
 import FullScreenDialog from '@/components/FullScreenDialog'
 
 
-
-
 const InsertContentEventListener = () => {
     const { editor } = useEditor();
 
@@ -238,12 +236,6 @@ export default function Page() {
         setIsFullScreen(false)
         setFullScreenData(null)
     }
-
-    console.log({
-        fullScreenData
-    })
-
-
 
     return (
         <Fragment>

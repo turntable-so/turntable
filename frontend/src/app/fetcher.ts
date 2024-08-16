@@ -15,7 +15,6 @@ const fetchWithAuth = async (url: string, options = {} as any) => {
         headers["Content-Type"] = "application/json";
     }
 
-
     const response = await fetch(url, { ...options, headers });
     if (response.status === 401) {
         try {
@@ -51,15 +50,19 @@ const fetchWithAuth = async (url: string, options = {} as any) => {
 
 export const fetcher = (
     url: string,
-    options: { method?: string, body?: any, next?: any, cookies?: any, headers?: any } = {}
+    options: { method?: string, body?: any, next?: any, cookies?: any, headers?: any } = {},
+    signal: any = null
 ): Promise<any> => {
     const { method = "GET", body, next, cookies } = options;
-
     let fullUrl = `${baseUrl}${url}`;
     let fetchOptions : any = {
         method,
-        ...(body ? { body: ((body instanceof FormData) ? body : JSON.stringify(body)) } : {}),
-        ...(cookies ? { cookies } : {})
+        ...(body ? { body: JSON.stringify(body) } : {}),
+        ...(cookies ? { cookies } : {}),
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        signal,
     };
 
     if(!(body instanceof FormData)) {
