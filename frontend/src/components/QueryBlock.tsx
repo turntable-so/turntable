@@ -11,7 +11,6 @@ import {
   SelectLabel
 } from "@/components/ui/select";
 import { sql } from "@codemirror/lang-sql";
-import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 import {
   ColDef
 } from "ag-grid-community";
@@ -46,7 +45,6 @@ import {
   getCTEAutocomplete,
   getColumnAutocomplete,
   getDBCatalogAutocomplete,
-  getSchemaAutocomplete,
   getTableAutocomplete,
   runQueryOnServer,
 } from "../app/actions/actions";
@@ -57,7 +55,6 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 import LoadingVinyl from "./loading-vinyl-spinner";
-import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 // import 'codemirror/keymap/sublime';
@@ -101,7 +98,7 @@ import {
 import { ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
 import { ChartConfig, ChartContainer } from "@/components/ui/chart";
-import { FullScreenDialog } from "@/app/notebooks/[id]/page";
+
 const chartData = [
   { month: "January", desktop: 186, mobile: 80 },
   { month: "February", desktop: 305, mobile: 200 },
@@ -773,21 +770,11 @@ export default function QueryBlock(props: QueryBlockProps) {
     }
   }, [props.node.attrs.blockId]);
 
-  const getSchema = async (resourceId: string) => {
-    const answer = await getSchemaAutocomplete({ resourceId });
-    setSchemas(answer);
-  };
 
   // const getDBAutocomplete = async (resourceId: string) => {
   //   const answer = await getDBCatalogAutocomplete({ resourceId });
   //   setDBCatalog(answer);
   // };
-
-  useEffect(() => {
-    if (schemas === null) {
-      getSchema(props.node.attrs.resourceId);
-    }
-  }, [props.node.attrs.resourceId, schemas]);
 
   // useEffect(() => {
   //   if (schemas !== null && dbCatalog === null) {

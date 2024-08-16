@@ -1,5 +1,6 @@
+'use client';
 // @ts-nocheck
-import { Dialog } from "./ui/dialog";
+import * as Dialog from '@radix-ui/react-dialog';
 
 export default function FullScreenDialog({ children, isOpen, onOpenChange }: any) {
     return (
