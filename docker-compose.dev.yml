@@ -109,24 +109,24 @@ services:
         "8000",
         "--reload",
       ]
-  # web:
-  #   build:
-  #     context: frontend
-  #     dockerfile: Dockerfile
-  #   command: ["pnpm", "dev"]
-  #   ports:
-  #     - "3000:3000"
-  #   environment:
-  #     DEV: "true"
-  #   volumes:
-  #     - ./frontend:/code
+  web:
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    command: ["pnpm", "dev"]
+    ports:
+      - "3000:3000"
+    environment:
+      DEV: "true"
+    volumes:
+      - ./frontend:/code
 
   postgres:
     image: pgvector/pgvector:pg16
     environment:
       <<: [*postgres-credentials]
     ports:
-      - "65432:65432"
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -229,7 +229,7 @@ services:
       - postgres_test_db_data:/var/lib/postgresql/data
 
   populate_postgres_test_db:
-    <<: *common-backend
+    image: python:3.11
     entrypoint:
       ["/bin/sh", "-c", "chmod +x ./populate_db.sh && ./populate_db.sh"]
     working_dir: /code/fixtures/test_resources/jaffle_shop
