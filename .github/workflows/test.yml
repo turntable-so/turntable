@@ -10,7 +10,7 @@ jobs:
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: mypassword
       POSTGRES_HOST: localhost
-      POSTGRES_PORT: 6543
+      POSTGRES_PORT: 65432
       AWS_S3_ACCESS_KEY_ID: minio_admin
       AWS_S3_SECRET_ACCESS_KEY: minio_password
       AWS_STORAGE_BUCKET_NAME: artifacts
@@ -54,9 +54,10 @@ jobs:
             postgres 
             minio 
             createbuckets
+            postgres_test_db
+            populate_postgres_test_db
+            metabase
         env:
-          POSTGRES_HOST: postgres
-          POSTGRES_PORT: 5432
           AWS_S3_ENDPOINT_URL: http://minio:9000
 
 
@@ -64,6 +65,11 @@ jobs:
         run: |
           rye config --set-bool behavior.use-uv=true
           rye sync --no-lock
+        working-directory: backend
+      
+      - name: Run migrations
+        run: |
+          rye run python manage.py migrate app
         working-directory: backend
       
       - name: Run tests
