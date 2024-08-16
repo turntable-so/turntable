@@ -152,7 +152,7 @@ const CustomDocument = Document.extend({
 
 export const extensions = [
   GlobalDragHandle.configure({
-    dragHandleWidth: 20,
+    dragHandleWidth: 30,
     scrollThreshold: 100,
   }),
   AutoJoiner.configure({

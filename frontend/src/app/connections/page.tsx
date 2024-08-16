@@ -1,22 +1,9 @@
 import FullWidthPageLayout from "../../components/layout/FullWidthPageLayout";
-import Link from "next/link";
 
-import { getResources, getSources } from "../actions/actions";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "../../components/ui/card";
-import { Input } from "../../components/ui/input";
-import { Label } from "@radix-ui/react-dropdown-menu";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@radix-ui/react-select";
-import { Button } from "../../components/ui/button";
-import { DbtCorelogo } from "../../components/sources/AddNewSourceSection";
-import { Badge } from "../../components/ui/badge";
-import { Loader2, Plus } from "lucide-react";
-import dayjs from 'dayjs'
-import relativeTime from 'dayjs/plugin/relativeTime'
-import { getResourceIcon } from "../../lib/utils";
-import useSWR from "swr";
-import { getCookie } from 'cookies-next';
-import { GitHubLogoIcon } from "@radix-ui/react-icons";
-dayjs.extend(relativeTime)
+import { getResources } from "../actions/actions";
+
+import ConnectionCard from '@/components/connections/connection-card'
+import NewConnectionButton from "@/components/connections/new-connection-button";
 
 const DbtLogo = () => (
     <svg width="24px" height="24px" viewBox="0 0 256 256" version="1.1" preserveAspectRatio="xMidYMid">
@@ -135,123 +122,24 @@ const LookerLogo = () => (
 
 
 
-const SourceOptions = [
-    {
-        'name': 'dbt_core_project',
-        'type': 'DBT_PROJECT',
-        'label': 'DBT Project',
-        logo: <DbtLogo />
-    },
-    {
-        'name': 'looker',
-        'type': 'BI_TOOL',
-        'label': 'Looker',
-        logo: <LookerLogo />
-    },
-    {
-        'name': 'tableau',
-        'type': 'BI_TOOL',
-        'label': 'Tableau',
-        logo: <TableauLogo />
-    },
-    {
-        'name': 'metabase',
-        'type': 'BI_TOOL',
-        'label': 'Metabase',
-        logo: <MetabaseLogo />
-    },
-    {
-        'name': 'duckdb',
-        'type': 'DUCK_DB',
-        'label': 'DuckDB',
-        logo: <MetabaseLogo />
-    }
-
-]
-
 
 export default async function Page() {
 
     const resources = await getResources() || []
+    console.log({ resources })
 
     return (
-        <FullWidthPageLayout title='Sources'>
-            <div className='space-y-24'>
-                {resources.length > 0 && (
-                    <div className='flex flex-col space-y-4'>
-                        <div className='text-lg text-black font-medium mb-2'>Connected Sources</div>
-                        {resources.map((resource: any, i: number) => (
-                            <Card key={i}>
-                                <CardHeader>
-                                    <div className='flex items-center space-x-4'>
-                                        <div className='mb-1'>
-                                            {getResourceIcon(resource.type)}
-                                        </div>
-                                        <div className='w-full flex justify-between items-center'>
-                                            <div className='space-y-1'>
-                                                <CardTitle>{resource.type}</CardTitle>
-                                                <CardDescription>{resource.name}</CardDescription>
-                                            </div>
-
-                                            <div key={i} className='float-right space-y-0'>
-                                                <div className='flex justify-end'>
-                                                    <Badge variant='secondary'>
-                                                        <div className='text-sm'>{`Synced ${dayjs(resource.updated_at).fromNow()} `}</div>
-                                                    </Badge>
-                                                </div>
-                                            </div>
-
-                                        </div>
-                                    </div>
-                                </CardHeader>
-                            </Card>
-                        ))}
-                    </div>
-                )}
-                <div>
-                    <div className='text-lg text-black font-medium my-8'>Add a new Github Repository</div>
-                    <div className="grid grid-cols-3 gap-8 gap-y-0" >
-                        <Link href={`/github/new`}>
-                            <Card className="hover:shadow-md">
-                                <CardHeader>
-                                    <div className='flex flex-col space-y-4 items-center'>
-                                        <GitHubLogoIcon />
-                                        <CardTitle>{'GitHub'}</CardTitle>
-                                    </div>
-                                </CardHeader>
-                                <CardFooter className='flex justify-center'>
-                                    <Button variant='secondary' className='flex items-center'>
-                                        <Plus className='size-4 mr-1' />
-                                        Add
-                                    </Button>
-                                </CardFooter>
-                            </Card>
-                        </Link>
-                    </div>
+        <FullWidthPageLayout title='Connections'>
+            <div className='mb-8 flex justify-end'>
+                <NewConnectionButton />
+            </div>
+            {resources.length > 0 && (
+                <div className='flex flex-col space-y-4'>
+                    {resources.map((resource: any, i: number) => (
+                        <ConnectionCard key={i} resource={resource} />
+                    ))}
                 </div>
-                <div>
-                    <div className='text-lg text-black font-medium my-8'>Add a new Source</div>
-                    <div className="grid grid-cols-3 gap-8" >
-                        {SourceOptions.map((source, i) => (
-                            <Link key={i} href={`/sources/new?type=${source.type}`}>
-                                <Card className="hover:shadow-md">
-                                    <CardHeader>
-                                        <div className='flex flex-col space-y-4 items-center'>
-                                            {source.logo}
-                                            <CardTitle>{source.label}</CardTitle>
-                                        </div>
-                                    </CardHeader>
-                                    <CardFooter className='flex justify-center'>
-                                        <Button variant='secondary' className='flex items-center'>
-                                            <Plus className='size-4 mr-1' />
-                                            Add
-                                        </Button>
-                                    </CardFooter>
-                                </Card>
-                            </Link>
-                        ))}
-                    </div>
-                </div></div>
+            )}
         </FullWidthPageLayout >
     )
 }

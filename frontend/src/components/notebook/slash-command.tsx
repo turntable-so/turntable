@@ -36,7 +36,7 @@ export const suggestionItems = createSuggestionItems([
       editor.chain().focus().deleteRange(range).setSqlNode({
         title: '(Untitled) query',
         sql: '\n\n',
-        resourceId: '7bd3bd2f-84f3-4217-9ca0-7458995298e7',
+        resourceId: 'unknown',
         limit: 10000,
       }).run();
     },

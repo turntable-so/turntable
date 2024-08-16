@@ -21,7 +21,7 @@ import { DbtLogo } from "../ActionBar";
 import { useAppContext } from "../../contexts/AppContext";
 import { columns } from "../ui/Columns";
 import { ColumnTypeIcon } from "../ColumnTypeIcon";
-import { DbtCorelogo } from "../sources/AddNewSourceSection";
+import { DbtCorelogo } from "../connections/AddNewSourceSection";
 import { getAssetIcon } from "../../lib/utils";
 // import { useHotkeys } from 'react-hotkeys-hook';
 
