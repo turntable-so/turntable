@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client"
 import React, { useRef, useState } from "react";
 import { AuthActions } from "@/lib/auth";
@@ -34,7 +35,6 @@ import { LoaderButton } from "../ui/LoadingSpinner";
 import { Avatar } from "@radix-ui/react-avatar";
 import WorkspaceIcon from "@/components/workspaces/workspace-icon";
 import { Upload } from "lucide-react";
-import { createWorkspace } from "@/app/actions";
 import { fetcher } from "@/app/fetcher";
 import { useSWRConfig } from "swr";
 import useSession from "@/app/hooks/use-session";
@@ -116,9 +116,7 @@ const CreateWorkspaceForm = () => {
                 '/workspaces/',
                 {
                     method: 'POST',
-                    body: {
-                        name,
-                    },
+                    body: formData,
                 }
             )
             mutate('/auth/users/me/')

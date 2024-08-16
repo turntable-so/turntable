@@ -2,12 +2,19 @@
 
 import RegistrationForm from "@/components/auth/registration-form";
 import { Carter_One } from "next/font/google";
+import { useState, useEffect } from "react";
 
 const carterOne = Carter_One(
     { weight: "400", subsets: ["latin"], display: "swap" });
 
 export default function SignInPage() {
-    const invitationCode = new URLSearchParams(window.location.search).get('invitation_code');
+    const [invitationCode, setInvitationCode] = useState<any>(null);
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const code = new URLSearchParams(window.location.search).get('invitation_code');
+            setInvitationCode(code);
+        }
+    }, []);
     return (
         <div className='h-screen w-full flex justify-center bg-muted items-center mt-[-48px]'>
             <div>

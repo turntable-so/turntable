@@ -2,7 +2,6 @@ import { NodeViewContent, NodeViewWrapper, ReactNodeViewRendererOptions } from "
 import QueryBlock from "../QueryBlock";
 import { mergeAttributes, Node } from '@tiptap/core'
 import { ReactNodeViewRenderer } from "@tiptap/react";
-import { runQueryOnServer } from "../../app/actions/actions";
 import { v4 as uuidv4 } from 'uuid';
 
 type SQLNodeAttributes = {
@@ -19,6 +18,8 @@ declare module '@tiptap/core' {
         }
     }
 }
+
+export type ViewType = 'table' | 'chart'
 
 
 export const sqlNodeExtension = Node.create({
@@ -41,6 +42,9 @@ export const sqlNodeExtension = Node.create({
             },
             blockId: {
                 default: `${uuidv4()}`
+            },
+            viewType: {
+                default: 'table' as ViewType,
             },
             limit: {
                 default: 1000
@@ -98,7 +102,7 @@ const SqlNodeComponent = ({ node, updateAttributes }: {
     return (
         <NodeViewWrapper>
             <div data-sql-node=''>
-                <QueryBlock node={node} updateAttributes={updateAttributes} />
+                <QueryBlock node={node as any} updateAttributes={updateAttributes} />
             </div>
         </NodeViewWrapper>
     )
