@@ -43,7 +43,6 @@ jobs:
           up-flags: "--build --wait"
           down-flags: -v
           services: |
-            api
             postgres 
             minio 
             createbuckets
