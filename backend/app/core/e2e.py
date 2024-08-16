@@ -770,6 +770,7 @@ class DataHubDBParser:
                         error = AssetError(asset=asset, error=error.to_dict())
                         if error not in self.asset_errors:
                             print("error", error)
+                            print(error.error)
                             self.asset_errors.append(error)
                 lineage = node.lineage.to_networkx()
                 nx.set_edge_attributes(
