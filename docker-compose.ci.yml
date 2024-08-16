@@ -16,7 +16,7 @@ services:
       file: docker-compose.dev.yml
       service: postgres_test_db
     volumes:
-      - ${GITHUB_WORKSPACE}/turntable-test-db/turntable-test-db/postgres_test_db_data:/var/lib/postgresql/data
+      - ${GITHUB_WORKSPACE}/turntable-test-db/postgres_test_db_data:/var/lib/postgresql/data
   populate_postgres_test_db:
     extends:
       file: docker-compose.dev.yml
