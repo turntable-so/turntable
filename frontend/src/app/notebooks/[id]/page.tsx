@@ -3,7 +3,7 @@ import { useEditor } from '../../../packages/headless/src/components/novel'
 import { ScrollArea } from "../../../components/ui/scroll-area"
 import { extensions as defaultExtensions } from '../../../components/notebook/extensions'
 import QueryBlock from '../../../components/QueryBlock'
-import { getNotebook, runQueryOnServer, updateNotebook } from '../../actions/actions'
+import { getNotebook, updateNotebook } from '../../actions/actions'
 import { HotkeysProvider } from 'react-hotkeys-hook'
 
 import { defaultEditorContent } from "../../../lib/content";
@@ -18,7 +18,7 @@ import {
     type JSONContent,
 } from "novel";
 import { ImageResizer, StarterKit, handleCommandNavigation } from "novel/extensions";
-import { SyntheticEvent, useEffect, useState } from "react";
+import { Fragment, SyntheticEvent, useEffect, useRef, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { ColorSelector } from "../../../components/notebook/selectors/color-selector";
 import { LinkSelector } from "../../../components/notebook/selectors/link-selector";
@@ -37,6 +37,16 @@ import { Loader2 } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input'
 import { set } from 'date-fns'
+import * as Dialog from '@radix-ui/react-dialog';
+import { AgGridReact } from 'ag-grid-react'
+
+import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
+import { ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+
+import ChartComposer from '@/components/notebook/chart-composer'
+import FullScreenDialog from '@/components/FullScreenDialog'
+
+
 
 
 const InsertContentEventListener = () => {
@@ -50,7 +60,6 @@ const InsertContentEventListener = () => {
             sql, title,
             resourceId,
         }: { title: string, sql: string, resourceId: string }) => {
-            console.log('editor CHAIN', { resourceId, title })
             editor?.chain().focus('end')
                 .createParagraphNear()
                 .setSqlNode({
@@ -104,6 +113,7 @@ const AdvancedEditor = ({ setSaveStatus }: {
     const [openLink, setOpenLink] = useState(false);
     const [openAI, setOpenAI] = useState(false);
 
+
     const debouncedUpdates = useDebouncedCallback(async (editor: EditorInstance) => {
         const json = editor.getJSON();
         await updateNotebook(notebookId, { json_contents: JSON.stringify(json) });
@@ -124,7 +134,7 @@ const AdvancedEditor = ({ setSaveStatus }: {
     if (!initialContent) return null;
 
     return (
-        <>
+        <div className='w-full'>
             <EditorRoot>
                 <EditorContent
                     initialContent={initialContent}
@@ -184,9 +194,10 @@ const AdvancedEditor = ({ setSaveStatus }: {
                     </GenerativeMenuSwitch>
                 </EditorContent>
             </EditorRoot>
-        </>
+        </div>
     );
 };
+
 
 
 
@@ -195,8 +206,12 @@ export default function Page() {
     const [saveStatus, setSaveStatus] = useState<SaveStatus>("Saved");
 
     const [title, setTitle] = useState<string>('')
+    const [isDialogOpen, setIsDialogOpen] = useState(true);
+    const gridRef = useRef<AgGridReact>(null);
+
 
     const params = useParams()
+    const { isFullScreen, fullScreenData, setFullScreenData, setIsFullScreen } = useAppContext()
     const notebookId = params.id as string
 
     useEffect(() => {
@@ -221,31 +236,48 @@ export default function Page() {
 
     }
 
+    const closeFullScreen = () => {
+        setIsFullScreen(false)
+        setFullScreenData(null)
+    }
+
+    console.log({
+        fullScreenData
+    })
 
 
 
     return (
-        <ScrollArea className='flex flex-col h-full items-center'>
-            <div className='flex flex-col h-full items-center'>
-                <div className="px-20 py-12 max-w-6xl ">
-                    <div className='flex h-8 justify-end'>
-                        <Badge className='opacity-65' variant='secondary'>
-                            {saveStatus === "Saving" && (
-                                <Loader2 className="bg-zinc-200 h-3 w-3 animate-spin opacity-50 mr-1" />
-                            )}
-                            <div>
-                                {saveStatus}
-                            </div>
-                        </Badge>
+        <Fragment>
+            asd
+            <ScrollArea className='flex flex-col h-full items-center'>
+                <div className='flex flex-col h-full items-center'>
+                    <div className="px-20 py-12 w-full max-w-6xl ">
+                        <div className='flex h-8 justify-end'>
+                            <Badge className='opacity-65' variant='secondary'>
+                                {saveStatus === "Saving" && (
+                                    <Loader2 className="bg-zinc-200 h-3 w-3 animate-spin opacity-50 mr-1" />
+                                )}
+                                <div>
+                                    {saveStatus}
+                                </div>
+                            </Badge>
 
+                        </div>
+                        <div className='my-8 flex flex-wrap'>
+                            <input className="w-full border-none focus:outline-none scroll-m-20 text-4xl font-bold tracking-tight text-gray-800" value={title} onChange={handleTitleChange} />
+                        </div>
+                        <AdvancedEditor setSaveStatus={setSaveStatus} />
+                        <div className='h-6' />
                     </div>
-                    <div className='my-8 flex flex-wrap'>
-                        <input className="w-full border-none focus:outline-none scroll-m-20 text-4xl font-bold tracking-tight text-gray-800" value={title} onChange={handleTitleChange} />
-                    </div>
-                    <AdvancedEditor setSaveStatus={setSaveStatus} />
-                    <div className='h-6' />
                 </div>
-            </div>
-        </ScrollArea>
+            </ScrollArea>
+            {isFullScreen && (
+                <FullScreenDialog isOpen={isFullScreen} onOpenChange={setIsDialogOpen}>
+                    <Button variant='ghost' onClick={closeFullScreen}>X</Button>
+                    <ChartComposer data={fullScreenData} />
+                </FullScreenDialog>
+            )}
+        </Fragment>
     );
 }

@@ -5,6 +5,7 @@ import { Inter as FontSans } from "next/font/google"
 import { cn } from "../lib/utils";
 import { usePathname } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
+import { Toaster } from "sonner"
 
 import AuthenticatedAppLayout from "./layout/authenticated-app-layout";
 
@@ -46,6 +47,7 @@ export default function RootLayout({
             <AuthenticatedAppLayout>
               {children}
             </AuthenticatedAppLayout>
+            <Toaster richColors />
           </body>
         </html>
       )}

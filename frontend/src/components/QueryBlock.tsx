@@ -1,56 +1,52 @@
+// @ts-nocheck
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import { sql } from "@codemirror/lang-sql";
+import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
+import {
+  ColDef
+} from "ag-grid-community";
+import { AgGridReact } from "ag-grid-react"; // React Data Grid Component
 import {
   ChevronsDownUp,
   Clock,
-  Database,
   Download,
   Expand,
   Filter,
   Loader2,
-  Play,
+  Play
 } from "lucide-react";
-import { Button } from "./ui/button";
-import { Card, CardContent } from "./ui/card";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
-import { Fragment, SyntheticEvent, useEffect, useRef, useState } from "react";
-
-import { AgGridReact } from "ag-grid-react"; // React Data Grid Component
-import {
-  ColDef,
-  ColGroupDef,
-  GridApi,
-  GridOptions,
-  createGrid,
-} from "ag-grid-community";
-import "./ag-grid-custom-theme.css"; // Custom CSS Theme for Data Grid
 import {
   executeQuery,
-  getCTEAutocomplete,
-  getColumnAutocomplete,
-  getDBCatalogAutocomplete,
-  getSchemaAutocomplete,
-  getTableAutocomplete,
-  getWorkflow,
-  runQueryOnServer,
+  getWorkflow
 } from "../app/actions/actions";
-import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
-import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
+import "./ag-grid-custom-theme.css"; // Custom CSS Theme for Data Grid
 import LoadingVinyl from "./loading-vinyl-spinner";
-import { sql } from "@codemirror/lang-sql";
+import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
+import { Button } from "./ui/button";
+import { Card, CardContent } from "./ui/card";
 // import 'codemirror/keymap/sublime';
 // import 'codemirror/theme/quietlight.css';
-import CodeMirror, {
-  ReactCodeMirrorRef,
-  EditorView,
-  EditorState,
-  Extension,
-  basicSetup,
-} from "@uiw/react-codemirror";
+import { getQueryBlockResult } from "@/app/actions/query-actions";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CompletionContext, autocompletion } from "@codemirror/autocomplete";
 import { quietlight } from "@uiw/codemirror-theme-quietlight";
-import { autocompletion, CompletionContext } from "@codemirror/autocomplete";
-import { useAppContext } from "../contexts/AppContext";
+import CodeMirror, {
+  EditorState,
+  EditorView,
+  ReactCodeMirrorRef
+} from "@uiw/react-codemirror";
 import { useParams } from "next/navigation";
 import { v4 as uuidv4 } from 'uuid';
-import { getQueryBlockResult } from "@/app/actions/query-actions";
+import { useAppContext } from "../contexts/AppContext";
+import { ViewType } from "./notebook/sql-node";
 
 
 const getColumnType = (pandasType: string) => {
@@ -63,6 +59,53 @@ const getColumnType = (pandasType: string) => {
   return pandasType;
 };
 
+
+import { ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
+
+import { ChartConfig, ChartContainer } from "@/components/ui/chart";
+
+const chartData = [
+  { month: "January", desktop: 186, mobile: 80 },
+  { month: "February", desktop: 305, mobile: 200 },
+  { month: "March", desktop: 237, mobile: 120 },
+  { month: "April", desktop: 73, mobile: 190 },
+  { month: "May", desktop: 209, mobile: 130 },
+  { month: "June", desktop: 214, mobile: 140 },
+]
+
+const chartConfig = {
+  desktop: {
+    label: "Desktop",
+    color: "#2563eb",
+  },
+  mobile: {
+    label: "Mobile",
+    color: "#60a5fa",
+  },
+} satisfies ChartConfig
+
+export function ChartComponent() {
+  return (
+    <ChartContainer config={chartConfig} className="min-h-[400px] w-full">
+      <BarChart accessibilityLayer data={chartData}>
+        <CartesianGrid vertical={false} />
+        <XAxis
+          dataKey="month"
+          tickLine={false}
+          tickMargin={10}
+          axisLine={false}
+          tickFormatter={(value) => value.slice(0, 3)}
+        />
+        <ChartTooltip content={<ChartTooltipContent />} />
+        <Bar dataKey="desktop" fill="var(--color-desktop)" radius={4} />
+        <Bar dataKey="mobile" fill="var(--color-mobile)" radius={4} />
+      </BarChart>
+    </ChartContainer>
+  )
+}
+
+
 interface Suggestion {
   label: string;
   type: string;
@@ -70,18 +113,32 @@ interface Suggestion {
   apply?: (view: EditorView, completion: any, from: number, to: number) => void;
 }
 
-export default function QueryBlock(props: any) {
-  const { resources } = useAppContext();
+
+type QueryBlockProps = {
+  node: {
+    attrs: {
+      resourceId: string;
+      blockId: string;
+      title: string;
+      sql: string;
+      viewType: ViewType;
+    };
+  };
+  updateAttributes: (attrs: any) => void;
+}
+
+export default function QueryBlock(props: QueryBlockProps) {
+  const { resources, isFullScreen, setIsFullScreen, setFullScreenData } = useAppContext();
 
 
   const [records, setRecords] = useState([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [workflowId, setWorkflowId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [rowData, setRowData] = useState<any[] | null>(null);
   const [time, setTime] = useState<number>(0);
   const [colDefs, setColDefs] = useState<ColDef[] | null>(null);
-  const [isFullScreen, setIsFullScreen] = useState(false);
   const [schemas, setSchemas] = useState<any[] | null>(null);
   const [dbCatalog, setDBCatalog] = useState<any[] | null>(null);
   const [resourceType, setResourceType] = useState<string>("bigquery");
@@ -393,7 +450,6 @@ export default function QueryBlock(props: any) {
   };
 
   const getTablefromSignedUrl = async (signedUrl: string) => {
-    console.log('getTablefromSignedUrl')
     const response = await fetch(signedUrl)
     if (response.ok) {
       const table = await response.json()
@@ -411,6 +467,7 @@ export default function QueryBlock(props: any) {
         },
         cellClass: "p-0",
       }));
+      console.log({ defs, types: table.column_types, })
       setColDefs(defs);
       setRowData(table.data)
     }
@@ -423,6 +480,10 @@ export default function QueryBlock(props: any) {
       console.log('fetchWorkflowState', id)
       const data = await getWorkflow({ workflow_run_id: id })
       console.log({ data })
+      if (data.execute_query.status === 'failed') {
+        setError(data.execute_query.error)
+        setIsLoading(false)
+      }
       if (data.execute_query && data.execute_query.status === 'success') {
         console.log(data.execute_query.signed_url)
         getTablefromSignedUrl(data.execute_query.signed_url)
@@ -441,10 +502,10 @@ export default function QueryBlock(props: any) {
         getTablefromSignedUrl(block.results)
       }
     }
-    if (props.node.attrs.blockId) {
+    if (props.node.attrs.blockId && !rowData) {
       fetchQueryBlockResult()
     }
-  }, [])
+  }, [props.node.attrs.blockId])
 
   async function runQuery(query: string) {
     setTime(0);
@@ -455,7 +516,7 @@ export default function QueryBlock(props: any) {
     let data: any;
     try {
       data = await executeQuery({
-        notebook_id: notebookId,
+        notebook_id: notebookId as any,
         resource_id: props.node.attrs.resourceId,
         block_id: props.node.attrs.blockId,
         sql: query,
@@ -490,13 +551,11 @@ export default function QueryBlock(props: any) {
 
   useEffect(() => {
     if (resources) {
-      const resource = resources.find((r) => r.id === props.node.attrs.resourceId);
-      if (resource) {
-        const type = resource.type === "DBT" ? "bigquery" : resource.type;
-        setResourceType(type);
-      }
+      props.updateAttributes({
+        resourceId: resources[0].id,
+      })
     }
-  }, [resources, props.node.attrs.resourceId]);
+  }, [resources]);
 
   useEffect(() => {
     if (resourceType && resourceType.length > 0) {
@@ -571,10 +630,25 @@ export default function QueryBlock(props: any) {
       <div className="flex flex-col h-full flex-grow-1">
         <div className="flex flex-col h-full flex-grow-1">
           <div className="rounded-lg">
-            <div className="flex text-muted-foreground font-semibold  text-sm py-1 px-2 justify-between">
-              <div className="flex items-center gap-1 text-xs">
-                <Clock className="w-4 h-4" />
-                {`Ran in ${time.toFixed(2)}s`}
+            <div className="flex text-muted-foreground font-semibold  text-sm py-1 px-0 justify-between">
+              <div className='flex items-center gap-4'>
+
+                <Tabs defaultValue={props.node.attrs.viewType} onValueChange={(viewType: string) => {
+                  props.updateAttributes({
+                    viewType,
+                  })
+                }}>
+                  <TabsList>
+                    <TabsTrigger className="text-xs" value="table">
+                      Results
+                    </TabsTrigger>
+                    <TabsTrigger className="text-xs" value="chart">Chart</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+                <div className="flex items-center gap-1 text-xs">
+                  <Clock className="w-4 h-4" />
+                  {`Ran in ${time.toFixed(2)}s`}
+                </div>
               </div>
               <div className="flex items-center gap-0">
                 {false && (
@@ -592,7 +666,13 @@ export default function QueryBlock(props: any) {
                   className="gap-1 font-semibold"
                   variant="ghost"
                   size="sm"
-                  onClick={() => setIsFullScreen((p) => !p)}
+                  onClick={() => {
+                    setFullScreenData({
+                      rowData,
+                      colDefs,
+                    })
+                    setIsFullScreen(true)
+                  }}
                   disabled={!rowData}
                 >
                   {isFullScreen ? (
@@ -620,36 +700,37 @@ export default function QueryBlock(props: any) {
               </div>
             </div>
           </div>
-          {rowData && rowData.length > 0 ? (
-            <div className="flex flex-col w-full h-full flex-grow-1">
-              <AgGridReact
-                className="ag-theme-custom"
-                ref={gridRef}
-                suppressRowHoverHighlight={true}
-                columnHoverHighlight={true}
-                rowData={rowData}
-                pagination={true}
-                // @ts-ignore
-                columnDefs={colDefs}
-              />
-            </div>
-          ) : (
-            <div className="opacity-80 text-muted-foreground w-full border-2 bg-muted/50 flex flex-col h-full rounded-lg justify-center items-center">
-              {error && (
-                <div className="p-4 max-w-[500px]">
-                  <Alert variant="destructive">
-                    <ExclamationTriangleIcon className="h-4 w-4" />
-                    <AlertTitle>Query Error</AlertTitle>
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                </div>
-              )}
-              {isLoading && (
-                <div>
-                  <LoadingVinyl />
-                </div>
-              )}
-              {/* {!isLoading && !error && (
+          {props.node.attrs.viewType === 'table' && (
+            rowData && rowData.length > 0 ? (
+              <div className="flex flex-col w-full h-full flex-grow-1">
+                <AgGridReact
+                  className="ag-theme-custom"
+                  ref={gridRef}
+                  suppressRowHoverHighlight={true}
+                  columnHoverHighlight={true}
+                  rowData={rowData}
+                  pagination={true}
+                  // @ts-ignore
+                  columnDefs={colDefs}
+                />
+              </div>
+            ) : (
+              <div className="opacity-80 text-muted-foreground w-full border-2 bg-muted/50 flex flex-col h-full rounded-lg justify-center items-center">
+                {error && (
+                  <div className="p-4 max-w-[500px]">
+                    <Alert variant="destructive">
+                      <ExclamationTriangleIcon className="h-4 w-4" />
+                      <AlertTitle>Query Error</AlertTitle>
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  </div>
+                )}
+                {isLoading && (
+                  <div>
+                    <LoadingVinyl />
+                  </div>
+                )}
+                {/* {!isLoading && !error && (
                                 <div>
                                     <div className='flex text-md w-full items-center gap-6'>
                                         <div className='gap-2 flex items-center'>
@@ -663,10 +744,16 @@ export default function QueryBlock(props: any) {
                                     </div>
                                 </div>
                             )} */}
+              </div>
+            )
+          )}
+          {props.node.attrs.viewType === 'chart' && (
+            <div className='h-[400px]'>
+              <ChartComponent />
             </div>
           )}
         </div>
-      </div>
+      </div >
     );
   };
 
@@ -677,9 +764,11 @@ export default function QueryBlock(props: any) {
     }
   };
 
+  console.log({ resources })
+
   return (
     <Fragment>
-      {isFullScreen ? (
+      {false ? (
         <div className="absolute top-0 left-0 bg-muted w-full h-screen z-50">
           {renderGrid()}
         </div>
@@ -693,10 +782,16 @@ export default function QueryBlock(props: any) {
             />
             <div className="flex gap-4">
               <div className="flex items-center">
-                <Database className="w-4 h-4 mr-1" />
-                <div className="font-normal text-sm truncate w-36">
-                  {props.node.attrs.resourceId}
-                </div>
+                <Select defaultValue={resources.length > 0 && resources[0].id}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a resource" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {resources.map((resource) => (
+                      <SelectItem key={resource.id} value={resource.id}>{resource.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               {/* <Button variant='ghost' className='text-sm flex items-center gap-2'>
                                 <div gclassName='w-4 h-4 rounded-full bg-green-500 border ' />
@@ -756,6 +851,7 @@ export default function QueryBlock(props: any) {
         </div>
       )
       }
+
     </Fragment >
   );
 }

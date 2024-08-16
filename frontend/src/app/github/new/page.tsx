@@ -1,45 +1,34 @@
 "use client";
-import { createGithubConnection, createResource, getAuthProfiles, getGithubRepos, getSshKey, getWorkspace, testGithubConnection } from "../../actions/actions";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import FullWidthPageLayout from "../../../components/layout/FullWidthPageLayout";
 import { Button } from "../../../components/ui/button";
-import { Suspense, useEffect, useState } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { createGithubConnection, getSshKey, getWorkspace, testGithubConnection } from "../../actions/actions";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { GitHubLogoIcon } from "@radix-ui/react-icons";
+import { CopyIcon } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "../../../components/ui/card";
-import { Input } from "../../../components/ui/input";
-import { ScrollArea } from "../../../components/ui/scroll-area";
-import { CopyIcon, Github, Loader2, Search } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../../components/ui/select";
-import { LoaderButton } from "../../../components/ui/LoadingSpinner";
-import { Textarea } from "../../../components/ui/textarea";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { DbtCorelogo } from "../../../components/sources/AddNewSourceSection";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "../../../components/ui/form";
-import { GitHubLogoIcon } from "@radix-ui/react-icons";
-import React from "react";
+import { Input } from "../../../components/ui/input";
+import { LoaderButton } from "../../../components/ui/LoadingSpinner";
+import { ScrollArea } from "../../../components/ui/scroll-area";
+import { Textarea } from "../../../components/ui/textarea";
 
 const formSchema = z.object({
   deployKey: z.string({

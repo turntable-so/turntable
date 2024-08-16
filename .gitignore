@@ -49,3 +49,5 @@ backend/dev/data
 backend/.env
 **/__pycache__/**
 
+**/node_modules/**
+**/.next/**

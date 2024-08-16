@@ -1,13 +1,11 @@
-import FullWidthPageLayout from "../../components/layout/FullWidthPageLayout";
-import { getAuthProfiles, getGithubInstallation } from '../actions/actions'
-import AuthenticationProfiles from "./AuthenticationProfiles";
-import GithubConnection from "./GithubConnection";
 import { Suspense } from "react";
+import FullWidthPageLayout from "../../components/layout/FullWidthPageLayout";
+import AuthenticationProfiles from "./AuthenticationProfiles";
 
 
 export default async function SettingsPage() {
 
-    const authProfiles = await getAuthProfiles() || []
+    const authProfiles = [] as any
 
     return (
         <FullWidthPageLayout title='Settings'>

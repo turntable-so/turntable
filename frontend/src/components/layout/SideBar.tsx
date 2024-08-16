@@ -7,7 +7,7 @@ import useSession from "@/app/hooks/use-session";
 import { usePathname } from 'next/navigation';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button'
-import { Database, SquarePen, Network, Users, Settings, Search, ChevronDown, LogOut, NotebookTabs } from 'lucide-react';
+import { Database, SquarePen, Network, Users, Settings, Search, ChevronDown, LogOut, NotebookTabs, DatabaseZap, Boxes, Component, FileBox } from 'lucide-react';
 import { SearchDialog } from '../SearchDialog';
 
 
@@ -49,19 +49,13 @@ export default function SideBar({ collapsed }: { collapsed: boolean }) {
     }
 
 
-    const MenuItems = true ? [
-        { title: 'Sources', path: '/sources', Icon: () => <Database className='size-5' /> },
+    const MenuItems = [
+        { title: 'Connections', path: '/connections', Icon: () => <DatabaseZap className='size-5' /> },
         { title: 'Projects', path: '/notebooks', Icon: () => <NotebookTabs className='size-5' /> },
         { title: 'Lineage', path: '/lineage', Icon: () => <Network className='size-5' /> },
         { title: 'Workspace', path: '/team', Icon: () => <Users className='size-5' /> },
         { title: 'Settings', path: '/settings', Icon: () => <Settings className='size-5' /> },
-    ] : [
-        { title: 'Sources', path: '/sources', Icon: () => <Database className='size-5' /> },
-        { title: 'Lineage', path: '/lineage', Icon: () => <Network className='size-5' /> },
-        { title: 'Workspace', path: '/team', Icon: () => <Users className='size-5' /> },
-        { title: 'Settings', path: '/settings', Icon: () => <Settings className='size-5' /> },
     ]
-
 
     return (
         <aside className={`${collapsed ? 'w-[75px]' : 'w-[350px]'} border-r max-w-[350px] bg-muted left-0 flex justify-center h-full `}>
