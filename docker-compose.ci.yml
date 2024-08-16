@@ -1,8 +1,4 @@
 services:
-  api:
-    extends:
-      file: docker-compose.dev.yml
-      service: api
   postgres:
     extends:
       file: docker-compose.dev.yml
