@@ -56,6 +56,8 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y postgresql
+          echo $GITHUB_WORKSPACE
+          ls -la ${GITHUB_WORKSPACE}/turntable-test-db/postgres_test_db_data
           pg_isready -h localhost -p 5432
           pg_isready -h localhost -p 6543
           pg_istready -h postgres -p 5432
