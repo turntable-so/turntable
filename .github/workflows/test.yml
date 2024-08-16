@@ -19,6 +19,9 @@ jobs:
           repository: turntable-so/turntable-test-db
           path: turntable-test-db
 
+      - name: Print directory contents
+        run: ls -la /home/runner/work/turntable/turntable/turntable-test-db
+
       - name: Setup rye
         uses: eifinger/setup-rye@v3
         with:
