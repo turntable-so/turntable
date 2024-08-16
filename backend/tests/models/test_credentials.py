@@ -48,7 +48,7 @@ def test_validate_looker_serializer_success(test_resource_for_creds):
         "base_url": "https://looker.com",
         "name": "test looker creds",
         "client_id": "client_id",
-        "client_secret": "client",
+        "client_secret": "client_secret",
         "resource_id": test_resource_for_creds.id,
     }
     serializer = LookerDetailsSerializer(data=data)
@@ -60,14 +60,14 @@ def test_creds_are_decrypted_in_python(test_resource_for_creds):
         name="test looker creds",
         base_url="https://looker.com",
         client_id="client_id",
-        client_secret="client",
+        client_secret="client_secret",
         resource=test_resource_for_creds,
         project_path=None,
     )
     looker_creds.save()
 
     creds = LookerDetails.objects.get(id=looker_creds.id)
-    assert creds.client_secret == "client"
+    assert creds.client_secret == "client_secret"
 
 
 def test_creds_are_encrypted_in_db(test_resource_for_creds):
@@ -75,7 +75,7 @@ def test_creds_are_encrypted_in_db(test_resource_for_creds):
         name="test looker creds",
         base_url="https://looker.com",
         client_id="client_id",
-        client_secret="client",
+        client_secret="client_secret",
         resource=test_resource_for_creds,
         project_path=None,
     )
@@ -83,11 +83,11 @@ def test_creds_are_encrypted_in_db(test_resource_for_creds):
     looker_creds.refresh_from_db()
 
     with connection.cursor() as cursor:
-        cursor.execute(
-            "SELECT id, encrypted FROM app_resourcedetails WHERE id = %s",
-            [looker_creds.id],
-        )
-        result = cursor.fetchall()[0]
+        cursor.execute("SELECT client_id, client_secret FROM app_lookerdetails")
+        result = cursor.fetchone()
 
-    assert result[0] == looker_creds.id
-    assert "client_secret" not in result[1] and len(result[1]) > 10
+    client_id, client_secret = [bytes(val).decode("utf-8") for val in result]
+    assert client_id != "client_id"
+    assert client_secret != "client_secret"
+    assert len(client_id) > 10
+    assert len(client_secret) > 10

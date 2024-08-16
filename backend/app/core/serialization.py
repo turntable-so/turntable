@@ -10,11 +10,11 @@ from ibis.expr.datatypes import DataType
 from pydantic import BaseModel, ConfigDict
 
 import vinyl.lib.connect as vc
-from app.core.dbt_methods import DBTDialect
 from app.models import Resource
 from vinyl.lib.asset import model as model_decorator
 from vinyl.lib.asset import resource
 from vinyl.lib.connect import _ResourceConnector
+from vinyl.lib.dbt_methods import DBTDialect
 from vinyl.lib.definitions import Defs, _create_dag_from_model_dict_list
 from vinyl.lib.field import Field  # noqa F401
 from vinyl.lib.metric import MetricStore
@@ -69,7 +69,7 @@ class ResourceObject(BaseModel):
         if self.resource.type == "DBT":
             self._connector = vc.DBTConnectorLite
             dialect: DBTDialect = DBTDialect._value2member_map_[
-                self.resource.details.config.get("dialect")
+                getattr(self.resource.dbtdetails, "dialect")
             ]
             self._profile_contents = self.resource.details.get_dbt_profile_contents(
                 self.resource.resourcedetais
