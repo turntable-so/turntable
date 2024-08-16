@@ -1,4 +1,8 @@
 services:
+  api:
+    extends:
+      file: docker-compose.dev.yml
+      service: run-worker
   postgres:
     extends:
       file: docker-compose.dev.yml
@@ -23,10 +27,7 @@ services:
     extends:
       file: docker-compose.dev.yml
       service: metabase
-  run-worker:
-    extends:
-      file: docker-compose.dev.yml
-      service: run-worker
+
 
 volumes:
   postgres_data:
