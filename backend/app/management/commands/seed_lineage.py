@@ -1,3 +1,5 @@
+import os
+
 from django.core.management.base import BaseCommand
 
 from app.models import (
@@ -35,8 +37,8 @@ class Command(BaseCommand):
 
         PostgresDetails(
             resource=postgres_resource,
-            host="postgres_test_db",
-            port=5432,
+            host=os.getenv("POSTGRES_TEST_DB_HOST", "postgres_test_db"),
+            port=os.getenv("POSTGRES_TEST_DB_PORT", 5432),
             database="mydb",
             username="myuser",
             password="mypassword",
