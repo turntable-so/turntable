@@ -17,6 +17,7 @@ x-storage-credentials: &storage-credentials
   MINIO_ROOT_PASSWORD: ${AWS_S3_SECRET_ACCESS_KEY:-minio_password}
   MINIO_BUCKET_NAME: ${AWS_STORAGE_BUCKET_NAME:-artifacts}
   MINIO_ENDPOINT: ${AWS_S3_ENDPOINT_URL:-http://minio:9000}
+  MINIO_BROWSER_REDIRECT_URL: http://localhost:9001
 
 x-hatchet-credentials: &hatchet-credentials
   DATABASE_POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
@@ -41,6 +42,8 @@ x-hatchet-credentials: &hatchet-credentials
   SERVER_LOGGER_FORMAT: console
   DATABASE_LOGGER_LEVEL: warn
   DATABASE_LOGGER_FORMAT: console
+  HATCHET_ENV_PATH: /.hatchetconfig/.hatchetenv
+  HATCHET_CLIENT_TLS_STRATEGY: none
 
 x-ai-credentials: &ai-credentials
   OPENAI_API_KEY: ${OPENAI_API_KEY}
@@ -50,6 +53,11 @@ x-dev-credentials: &dev-credentials
   SNOWFLAKE_ACCOUNT: ${SNOWFLAKE_ACCOUNT}
   SNOWFLAKE_USER: ${SNOWFLAKE_USER}
   SNOWFLAKE_PASSWORD: ${SNOWFLAKE_PASSWORD}
+  GITHUB_APP_ID: 312164
+  GITHUB_PRIVATE_KEY_BASE64: ${GITHUB_PRIVATE_KEY_BASE64}
+  GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET}
+  ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+  DJANGO_SETTINGS_MODULE: api.settings
   DEV: "true"
 
 x-postgres-test-db-credentials: &postgres-test-db-credentials
@@ -74,15 +82,6 @@ x-common-backend: &common-backend
         *ai-credentials,
         *dev-credentials,
       ]
-    DEV: "true"
-    HATCHET_ENV_PATH: /.hatchetconfig/.hatchetenv
-    HATCHET_CLIENT_NAMESPACE: "docker"
-    HATCHET_CLIENT_TLS_STRATEGY: none
-    GITHUB_APP_ID: 312164
-    GITHUB_PRIVATE_KEY_BASE64: ${GITHUB_PRIVATE_KEY_BASE64}
-    GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET}
-    ENCRYPTION_KEY: ${ENCRYPTION_KEY}
-    DJANGO_SETTINGS_MODULE: api.settings
   depends_on:
     postgres:
       condition: service_healthy
@@ -117,7 +116,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DEV: "true"
+      DEV: "false"
     volumes:
       - ./frontend:/code
 
@@ -140,17 +139,9 @@ services:
     command: server --address 0.0.0.0:9000 /data --console-address ":9001"
     environment:
       <<: [*storage-credentials]
-      MINIO_BROWSER_REDIRECT_URL: http://localhost:9001
-      # MINIO_DEFAULT_BUCKETS: artifacts
     ports:
       - "9001:9001"
       - "127.0.0.1:9000:9000" # Expose port 9000
-    # healthcheck:
-    #   test: ["CMD", "curl", "-f", "http://minio:9000/minio/health/live"]
-    #   interval: 30s
-    #   timeout: 20s
-    #   retries: 3
-
     volumes:
       - minio_data:/data
 
