@@ -168,7 +168,7 @@ services:
       /usr/bin/mc anonymous set public myminio/public-assets;
       exit 0;
       "
-    restart: "no"
+    restart: no
 
 
   hatchet-lite:
