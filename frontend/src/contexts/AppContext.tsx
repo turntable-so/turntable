@@ -1,9 +1,7 @@
 
 "use client";
-import { getAssets, getResources } from "@/app/actions/actions";
-import { createBlock, getAssetPreview, runQueryOnServer } from "@/app/actions/actions";
+import { getAssetPreview, getAssets, getResources } from "@/app/actions/actions";
 import { Asset } from "@/components/lineage/LineageView";
-import { get } from "http";
 // contexts/GlobalContext.js
 import React, { createContext, useContext, useEffect, useState } from "react";
 
@@ -50,19 +48,6 @@ type Context = {
     sidebarCollapsed: boolean;
     collapseSidebar: (collapse: boolean) => void;
     addPromptBlock: () => void;
-    addBlock: ({
-        type,
-        sql,
-        title,
-        database,
-        notebook_id,
-    }: {
-        type: "query" | "prompt";
-        sql: string;
-        title: string;
-        database: string;
-        notebook_id: string;
-    }) => void;
     assets: any[];
     tags: string[];
     types: string[];
@@ -84,6 +69,10 @@ type Context = {
     }) => void;
     resources: any[];
     fetchResources: () => void;
+    setIsFullScreen: (isFullScreen: boolean) => void;
+    isFullScreen: boolean;
+    fullScreenData: any;
+    setFullScreenData: (data: any) => void;
 };
 
 export default function AppContextProvider({
@@ -115,6 +104,8 @@ export default function AppContextProvider({
         object | null
     >(null);
     const [resources, setResources] = useState<any[]>([]);
+    const [isFullScreen, setIsFullScreen] = useState<boolean>(false);
+    const [fullScreenData, setFullScreenData] = useState<any>(false);
 
     const fetchResources = async () => {
         const data = await getResources();
@@ -205,81 +196,6 @@ export default function AppContextProvider({
         });
     };
 
-    const addBlock = async ({
-        type,
-        sql,
-        title,
-        database,
-    }: {
-        type: "query" | "prompt";
-        sql: string;
-        title: string;
-        database: string;
-    }) => {
-        const blockId = `block-${uuidv4()}`;
-        const block: Block = {
-            id: blockId,
-            type,
-            title,
-            sql,
-            records: [],
-            database,
-        };
-        // @ts-ignore
-        setActiveNotebook({
-            ...activeNotebook,
-            blocks: [
-                // @ts-ignore
-                ...activeNotebook.blocks,
-                block,
-            ],
-        });
-        try {
-            const persistedBlock = await createBlock({
-                type,
-                title,
-                notebook_id: activeNotebook?.id as any,
-                sql,
-                database,
-            });
-        } catch (e) {
-            console.error(e);
-            return;
-        }
-        // setActiveNotebook({
-        //     ...activeNotebook,
-        //     blocks: activeNotebook.blocks.map(b => {
-        //         if (b.id === blockId) {
-        //             return {
-        //                 ...b,
-        //                 id: persistedBlock.id
-        //             }
-        //         }
-        //         return b;
-        //     })
-        // })
-    };
-
-    // const addSource = async (id: string) => {
-    //     console.log('add source', id)
-    //     // encode URL
-    //     const source = sources.find((source: any) => source.id === id)
-    //     if (!source) {
-    //         return
-    //     }
-
-    //     addBlock({
-    //         type: 'query',
-    //         // @ts-ignore
-    //         sql: source.sql,
-    //         notebook_id: '1',
-    //         // @ts-ignore
-    //         title: `Query #${activeNotebook.blocks.length + 1}`,
-    //         // @ts-ignore
-    //         database: source.database
-    //     })
-    // }
-
     const fetchAssetPreview = async (assetId: string) => {
         const asset = await getAssetPreview(assetId);
         console.log({ asset });
@@ -332,14 +248,17 @@ export default function AppContextProvider({
         areAssetsLoading,
         setIsLineageLoading,
         isLineageLoading,
-        addBlock,
         setFocusedAsset,
         focusedAsset,
         setAssetPreview,
         insertCurrentSqlContent,
         setInsertCurrentSqlContent,
         resources,
-        fetchResources
+        fetchResources,
+        setIsFullScreen,
+        isFullScreen,
+        fullScreenData,
+        setFullScreenData,
     };
 
     return (

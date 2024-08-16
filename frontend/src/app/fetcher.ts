@@ -56,14 +56,17 @@ export const fetcher = (
     const { method = "GET", body, next, cookies } = options;
 
     let fullUrl = `${baseUrl}${url}`;
-    let fetchOptions = {
+    let fetchOptions : any = {
         method,
-        ...(body ? { body: JSON.stringify(body) } : {}),
-        ...(cookies ? { cookies } : {}),
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        ...(body ? { body: ((body instanceof FormData) ? body : JSON.stringify(body)) } : {}),
+        ...(cookies ? { cookies } : {})
     };
+
+    if(!(body instanceof FormData)) {
+        fetchOptions['headers'] = {
+          "Content-Type": "application/json",
+        }
+      }
 
 
     if (next?.tags) {

@@ -1,6 +1,5 @@
 "use server";
 
-import { fetchApi } from '../../lib/api'
 import { revalidateTag } from 'next/cache'
 import { fetcher } from '@/app/fetcher'
 import { cookies } from 'next/headers'
@@ -92,12 +91,6 @@ export async function getNotebook(id: string) {
   return await response.json();
 }
 
-export async function getSources() {
-  const response = await fetchApi(`${ApiHost}/sources`);
-  const data = await response.json();
-
-  return data["sources"];
-}
 
 export async function getAssets(resourceId: string) {
   const response = await fetcher(`/assets/?resource_id=${resourceId}`, {
@@ -119,24 +112,6 @@ export async function getWorkspace() {
   return data;
 }
 
-export async function createSource() {
-  const response = await fetchApi(`${ApiHost}/sources`, {
-    next: {
-      tags: ["sources"],
-    },
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      name: "dbt Project",
-      type: "dbt_project",
-    }),
-  });
-  const source = await response.json();
-  revalidateTag("sources");
-  return source.source;
-}
 
 
 export async function executeQuery({ notebook_id, resource_id, sql, block_id }: { resource_id: string, sql: string, block_id: string, notebook_id: string }) {
@@ -161,96 +136,6 @@ export async function getWorkflow({ workflow_run_id }: { workflow_run_id: string
   return data
 }
 
-export async function createBlock({
-  type,
-  notebook_id,
-  sql,
-  title,
-  database,
-}: {
-  title: string;
-  notebook_id: string;
-  sql: string;
-  database: string;
-  type: "query" | "prompt";
-}) {
-  const response = await fetchApi(
-    `${ApiHost}/notebooks/${notebook_id}/blocks`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        notebook_id,
-        title,
-        type,
-        sql,
-        database,
-      }),
-    }
-  );
-  const block = await response.json();
-  return block;
-}
-
-export async function createGithubInstallation({
-  installationId,
-}: {
-  installationId: string;
-}) {
-  console.log("createGithubInstallation", {
-    installation_id: installationId,
-  });
-  const response = await fetchApi(
-    `${ApiHost}/github_installations`,
-    {
-      method: "POST",
-    },
-    {
-      installation_id: installationId,
-    }
-  );
-  const text = await response.text();
-  console.log({ text });
-  if (response.ok) {
-    revalidateTag("github");
-    const data = await response.json();
-    return data;
-  } else {
-    return null;
-  }
-}
-
-export async function getGithubInstallation() {
-  const response = await fetchApi(`${ApiHost}/github_installations`, {
-    method: "GET",
-    next: {
-      tags: ["github"],
-    },
-  });
-  if (response.ok) {
-    const data = await response.json();
-    return data;
-  } else {
-    return null;
-  }
-}
-
-export async function getGithubRepos() {
-  const response = await fetchApi(`${ApiHost}/github/repos`, {
-    method: "GET",
-    next: {
-      tags: ["github"],
-    },
-  });
-  if (response.ok) {
-    const data = await response.json();
-    return data["repos"];
-  } else {
-    return null;
-  }
-}
 
 export async function getGithubInstallations() {
   const response = await fetcher(`/github/`, {
@@ -320,6 +205,15 @@ export async function getResources() {
   return response.json();
 }
 
+
+export async function getResource(id: string) {
+  const response = await fetcher(`/resources/${id}/`, {
+    cookies,
+    method: "GET",
+  });
+  return response.json();
+}
+
 export async function getSshKey(tenant_id: string) {
   const response = await fetcher(
     `/ssh/?action=generate_ssh_key&tenant_id=${tenant_id}`,
@@ -349,59 +243,85 @@ export async function testGithubConnection(public_key: string, github_url: strin
   return response.json();
 }
 
+type CreateResourcePayload = {
+  resource: {
+    name: string
+    type: string
+  }
+  subtype: string
+  config: object
+}
 
-export async function createResource({
-  authProfileId,
-  dbtVersion,
-  dialect,
-  githubRepositoryId,
-  project,
-  dataset,
-  threads,
-  dbtProjectPath,
-  url,
-  environment,
-  name,
-  type,
-}: {
-  authProfileId: string;
-  dbtVersion?: string;
-  dbtProjectPath?: string;
-  dialect?: string;
-  githubRepositoryId?: string;
-  project?: string;
-  dataset?: string;
-  threads?: string;
-  url?: string;
-  environment?: string;
-  name: string;
-  type: string;
-}) {
-  const response = await fetchApi(
-    `${ApiHost}/resources`,
-    {
-      next: {
-        tags: ["resources"],
-      },
-      method: "POST",
+export async function createResource(payload: CreateResourcePayload) {
+
+  const response = await fetcher(`/resources/`, {
+    cookies,
+    method: "POST",
+    next: {
+      tags: ["resources"],
     },
-    {
-      auth_profile_id: authProfileId,
-      dbt_version: dbtVersion || "",
-      dialect,
-      github_repository_id: githubRepositoryId || "",
-      dbt_project_path: dbtProjectPath || "",
-      project: project || "",
-      dataset: dataset || "",
-      threads: threads || "",
-      url: url || "",
-      environment: environment || "",
-      name,
-      type,
-    }
-  );
+    body: payload
+  });
+  if (response.ok) {
+    revalidateTag("resources");
+    const data = await response.json();
+    return data
+  } else {
+    return false
+  }
+}
+
+export async function updateResource(id: string, payload: any) {
+
+  const response = await fetcher(`/resources/${id}/`, {
+    cookies,
+    method: "PATCH",
+    next: {
+      tags: ["resources"],
+    },
+    body: payload
+  });
+
   const data = await response.json();
   return data;
+}
+
+export async function deleteResource(id: string) {
+  const response = await fetcher(`/resources/${id}/`, {
+    cookies,
+    method: "DELETE",
+    next: {
+      tags: ["resources"],
+    },
+  });
+  if (response.ok) {
+    revalidateTag("resources");
+    return {
+      success: true,
+    };
+  }
+  return {
+    success: false,
+  };
+}
+
+export async function syncResource(id: string) {
+  const response = await fetcher(`/resources/${id}/sync/`, {
+    cookies,
+    method: "POST",
+    next: {
+      tags: ["resources"],
+    },
+  });
+  if (response.ok) {
+    revalidateTag("resources");
+    return {
+      success: true,
+    };
+  }
+  return {
+    success: false,
+  };
 }
 
 export async function createAuthProfile({
@@ -455,189 +375,4 @@ export async function deleteAuthProfile(id: string) {
   });
   revalidateTag("profiles");
   return response.ok;
-}
-
-export async function testConnection({
-  name,
-  description,
-  service_account_key,
-}: {
-  name: string;
-  description: string;
-  service_account_key: string | undefined;
-}) {
-  const response = await fetchApi(
-    `${ApiHost}/profiles/test`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    },
-    {
-      name: name,
-      description: description,
-      service_account_key: JSON.stringify(service_account_key),
-    }
-  );
-  const data = await response.json();
-  console.log({ data });
-  return data;
-}
-
-export async function getColumnAutocomplete({
-  resourceId,
-  beforeSql,
-  afterSql,
-  schemaList = null,
-}: {
-  resourceId: string;
-  beforeSql: string;
-  afterSql: string;
-  schemaList?: string[] | null;
-}) {
-  try {
-    const response = await fetchApi(
-      `${ApiHost}/${resourceId}/completion/column`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          before_sql: beforeSql,
-          after_sql: afterSql,
-          schema_list: schemaList,
-        }),
-      }
-    );
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error(error);
-    return [];
-  }
-}
-
-export const getTableAutocomplete = async ({
-  resourceId,
-  beforeSql,
-  afterSql,
-  schemaList = null,
-}: {
-  resourceId: string;
-  beforeSql: string;
-  afterSql: string;
-  schemaList?: string[] | null;
-}) => {
-  try {
-    const response = await fetchApi(
-      `${ApiHost}/${resourceId}/completion/table`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          before_sql: beforeSql,
-          after_sql: afterSql,
-          schema_list: schemaList,
-        }),
-      }
-    );
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error(error);
-    return { ctes: [], tables: [] };
-  }
-};
-
-export async function getSchemaAutocomplete({
-  resourceId,
-}: {
-  resourceId: string;
-}) {
-  try {
-    const response = await fetchApi(
-      `${ApiHost}/${resourceId}/completion/schema`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.log("entro error");
-    console.error(error);
-    return [];
-  }
-}
-
-export async function getDBCatalogAutocomplete({
-  resourceId,
-}: {
-  resourceId: string;
-}) {
-  try {
-    const response = await fetchApi(
-      `${ApiHost}/${resourceId}/completion/table/catalog`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          schema_list: null,
-        }),
-      }
-    );
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.log("entro error");
-    console.error(error);
-    return [];
-  }
-}
-
-export async function getCTEAutocomplete({
-  resourceId,
-  beforeSql,
-  afterSql,
-  schemaList = null,
-}: {
-  resourceId: string;
-  beforeSql: string;
-  afterSql: string;
-  schemaList?: string[] | null;
-}) {
-  try {
-    const response = await fetchApi(
-      `${ApiHost}/${resourceId}/completion/table/cte`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          before_sql: beforeSql,
-          after_sql: afterSql,
-          schema_list: schemaList,
-        }),
-      }
-    );
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.log("entro error");
-    console.error(error);
-    return [];
-  }
 }

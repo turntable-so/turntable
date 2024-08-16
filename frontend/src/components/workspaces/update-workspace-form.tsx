@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import { AuthActions } from "@/lib/auth";
@@ -33,7 +34,6 @@ import { LoaderButton } from "../ui/LoadingSpinner";
 import { Avatar } from "@radix-ui/react-avatar";
 import WorkspaceIcon from "@/components/workspaces/workspace-icon";
 import { Upload } from "lucide-react";
-import { createWorkspace } from "@/app/actions";
 import { fetcher } from "@/app/fetcher";
 import { useSWRConfig } from "swr";
 import useSession from "@/app/hooks/use-session";
@@ -49,7 +49,7 @@ type FormData = {
   iconUrl: string;
 };
 
-const UpdateWorkspaceForm = ({ workspace, enabled } : any) => {
+const UpdateWorkspaceForm = ({ workspace, enabled }: any) => {
   console.log(workspace);
   const router = useRouter();
   const [formRespError, setFormRespError] = useState<string | null>(null);

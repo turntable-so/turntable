@@ -111,10 +111,7 @@ export default function Page() {
 
   const { user } = useSession();
 
-  const role =
-    user.workspace_groups.find(
-      (group: any) => group.workspace_id === user.current_workspace.id
-    )?.name || "";
+  const role = false ? 'Member' : "Admin"
   return (
     <FullWidthPageLayout title="Workspace">
       <Modal
@@ -201,7 +198,7 @@ export default function Page() {
                               <Avatar className="size-8 border">
                                 <AvatarImage src="" />
                                 <AvatarFallback>
-                                  {listUser.name?.slice(0, 2).toUpperCase()}
+                                  {listUser.name?.slice(0, 2).toUpperCase() || ''}
                                 </AvatarFallback>
                               </Avatar>
                             </div>
