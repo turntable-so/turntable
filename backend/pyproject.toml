@@ -151,6 +151,7 @@ testpaths = [
     "private/tests",
 ]
 addopts = "--color=yes -v"
+DJANGO_SETTINGS_MODULE = "api.settings"
 
 [tool.ruff.lint]
 ignore = ["E711"]
