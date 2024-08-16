@@ -16,7 +16,7 @@ services:
       file: docker-compose.dev.yml
       service: postgres_test_db
     volumes:
-      - ./backend/fixtures/test_resources/jaffle_shop/turntable-test-db:/var/lib/postgresql/data
+      - ./backend/fixtures/test_resources/jaffle_shop/turntable-test-db/postgres_test_db_data:/var/lib/postgresql/data
   metabase:
     extends:
       file: docker-compose.dev.yml
