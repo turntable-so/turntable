@@ -69,7 +69,7 @@ jobs:
       
       - name: Run migrations
         run: |
-          rye run python manage.py migrate app
+          docker compose exec populate_postgres_test_db python manage.py migrate
         working-directory: backend
       
       - name: Run tests
