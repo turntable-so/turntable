@@ -481,6 +481,7 @@ class DBTCoreDetails(DBTResource):
                             "catalog_path": catalog_path,
                             "target_platform": self.resource.details.subtype,
                             "write_semantics": "override",
+                            "include_column_lineage": False,
                         },
                     },
                     "sink": get_sync_config(db_path),
