@@ -31,7 +31,7 @@ services:
 volumes:
   postgres_data:
   minio_data:
-  postgres_test_db:
+  postgres_test_db_data:
 
 
 networks:
