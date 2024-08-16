@@ -66,11 +66,6 @@ jobs:
           rye sync --no-lock
         working-directory: backend
       
-      - name: Run migrations
-        run: |
-          rye run python manage.py migrate app
-        working-directory: backend
-      
       - name: Run tests
         run: |
           rye run pytest
