@@ -20,7 +20,7 @@ jobs:
           path: turntable-test-db
 
       - name: Print directory contents
-        run: ls -la /home/runner/work/turntable/turntable/turntable-test-db
+        run: ls -la turntable-test-db/postgres_test_db_data
 
       - name: Setup rye
         uses: eifinger/setup-rye@v3
