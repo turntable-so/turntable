@@ -16,7 +16,7 @@ jobs:
       - name: Checkout test data
         uses: actions/checkout@v4
         with:
-          repository: turntable/turntable-test-db
+          repository: turntable-so/turntable-test-db
           path: backend/fixtures/test_resources/jaffle_shop
 
       - name: Setup rye
