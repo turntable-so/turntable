@@ -48,7 +48,7 @@ jobs:
 
       - name: Run tests
         run:
-          docker compose -f docker-compose.ci.yml exec run-worker pytest -x
+          docker compose -f docker-compose.ci.yml exec api pytest -x
 
       # - name: Install dependencies
       #   run: |
