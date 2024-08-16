@@ -40,7 +40,7 @@ jobs:
         uses: hoverkraft-tech/compose-action@v2.0.1
         with:
           compose-file: docker-compose.dev.yml
-          up-flags: "--build --wait"
+          up-flags: "--build"
           down-flags: -v
           services: |
             postgres 
