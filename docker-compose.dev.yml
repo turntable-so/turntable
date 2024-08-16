@@ -111,6 +111,7 @@ services:
     restart: no
 
   ensure_populate_test_db:
+    image: busybox:latest
     depends_on:
       populate_postgres_test_db:
         condition: service_completed_successfully
