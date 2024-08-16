@@ -223,12 +223,14 @@ services:
     image: python:3.11
     entrypoint:
       ["/bin/sh", "-c", "chmod +x ./populate_db.sh && ./populate_db.sh"]
-    working_dir: /code/fixtures/test_resources/jaffle_shop
+    working_dir: /jaffle_shop
     environment:
       <<: [*postgres-test-db-credentials]
     depends_on:
       - postgres_test_db
     restart: no
+    volumes:
+      - ./backend/fixtures/test_resources/jaffle_shop:/jaffle_shop
 
   metabase:
     image: metabase/metabase:latest
