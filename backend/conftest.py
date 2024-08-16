@@ -122,16 +122,6 @@ def local_metabase(db, workspace):
     return resource
 
 
-@pytest.fixture()
-def test_dbt_project(local_postgres):
-    dbt_core_resources = DBTCoreDetails.objects.filter(resource=local_postgres)
-    with dbt_core_resources[0].dbt_repo_context() as (
-        dbtproj,
-        dbt_path,
-    ):
-        return dbtproj
-
-
 def assert_ingest_output(resources):
     ## all tables have records
     assert Asset.objects.count() > 0
