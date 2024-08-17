@@ -94,7 +94,7 @@ Turntable is distributed under the AGPLv3 License.
 3. Make sure Git is installed on your machine.
 
 ### Run the app
-To start using Turntable
+To start using Turntable:
 
 1. Clone the repository
 
@@ -104,22 +104,23 @@ git clone https://github.com/turntable-so/turntable.git
 
 # Go to Turntable folder
 cd turntable
+
+# Copy .example.env to .env
+cp frontend/.env.example frontend/.env
+
+# Create a fresh encryption key
+echo "\nENCRYPTION_KEY=\"`openssl rand -base64 32`\"" >> .env
 ```
 
-2. Configure environment variables
-  - Copy the `.env.example` file to `.env`
+2. Configure additional environment variables
+
   - Set any variables (e.g. s3 credentials) you'd like for your environment
   - No environment variables except the `ENCRYPTION_KEY` are required to run the app, but some functionality may be limited (e.g. AI-written documentation)
-  - Crete an encryption key by running the following command:
-
-```bash
-echo "ENCRYPTION_KEY=\"`openssl rand -base64 32`\"" >> .env
-```
 
 3. Start the app
 
 ```bash
-docker compose up --env-file .env
+docker compose up
 ```
 
 You can now open your browser and go to http://localhost:3000 to connect to the application.
@@ -149,7 +150,7 @@ For now, we are not accepting pull requests from the community, but We are worki
 To start the development environment, simply follow the instructions above to start the app, but change the final commmand to:
 
 ```bash
-docker compose -f docker-compose.dev.yml up --env-file .env
+docker compose -f docker-compose.dev.yml up
 ```
 
 Unlike the production environemnt, this supports hot reload and adds development resources like a test Postgres instance.

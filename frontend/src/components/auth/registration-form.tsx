@@ -80,13 +80,16 @@ const RegistrationForm = ({invitationCode = ''} : any) => {
             .catch((err) => {
                 console.log("ERROR")
                 console.log(err)
-                setIsLoading(false)
-                if (err.json.email) {
+                if (err?.json?.email) {
                     setError("email", { type: "server", message: err.json.email })
                 }
-                if (err.json.password) {
+                if (err?.json?.password) {
                     setError("password", { type: "server", message: err.json.password })
                 }
+                if (err instanceof TypeError && err.message === "Failed to fetch") {
+                    setFormRespError("Unable to connect to the server. Please try again.")
+                }
+                setIsLoading(false)
             });
     };
 

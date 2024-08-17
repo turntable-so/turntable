@@ -49,6 +49,7 @@ services:
       DEV: "true"
     volumes:
       - ./frontend:/code
+    command: ["pnpm", "dev"]
 
   postgres:
     extends:

@@ -96,7 +96,7 @@ services:
     build:
       context: frontend
       dockerfile: Dockerfile
-    command: ["pnpm", "start"]
+    command: ["pnpm", "build", "&&", "pnpm", "start"]
     ports:
       - "3000:3000"
 
