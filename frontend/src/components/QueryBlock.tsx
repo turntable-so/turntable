@@ -251,7 +251,7 @@ export default function QueryBlock(props: QueryBlockProps) {
     if (editor?.editor && editor?.state && editor?.view && !codeMirrorRef.current) {
       setTimeout(() => {
         editor?.view?.focus();
-      }, 500);
+      }, 100);
       codeMirrorRef.current = editor; 
     }
   }

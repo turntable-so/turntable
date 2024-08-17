@@ -49,7 +49,6 @@ const InsertContentEventListener = () => {
 
     const { insertCurrentSqlContent } = useAppContext()
 
-
     useEffect(() => {
         const appendToDocument = ({
             sql, title,
@@ -240,7 +239,7 @@ export default function Page() {
         <Fragment>
             <ScrollArea className='flex flex-col h-full items-center'>
                 <div className='flex flex-col h-full items-center'>
-                    <div className="px-20 py-12 w-full max-w-6xl ">
+                    <div className="px-20 py-12 w-full">
                         <div className='flex h-8 justify-end'>
                             <Badge className='opacity-65' variant='secondary'>
                                 {saveStatus === "Saving" && (
