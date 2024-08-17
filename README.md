@@ -106,7 +106,7 @@ git clone https://github.com/turntable-so/turntable.git
 cd turntable
 
 # Copy .example.env to .env
-cp frontend/.env.example frontend/.env
+cp .env.example .env
 
 # Create a fresh encryption key
 echo "\nENCRYPTION_KEY=\"`openssl rand -base64 32`\"" >> .env
