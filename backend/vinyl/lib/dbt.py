@@ -27,6 +27,7 @@ class DBTProject(object):
     compiled_sql_path: str
     manifest_path: str
     catalog_path: str
+    run_results_path: str
     target_path: str
     manifest: dict[str, Any]
     model_graph: DAG
@@ -140,6 +141,7 @@ class DBTProject(object):
         if self.target_path:
             self.manifest_path = os.path.join(self.target_path, "manifest.json")
             self.catalog_path = os.path.join(self.target_path, "catalog.json")
+            self.run_results_path = os.path.join(self.target_path, "run_results.json")
             self.compiled_sql_path = os.path.join(self.target_path, "compiled")
         else:
             raise Exception("Target path not found")
@@ -307,7 +309,9 @@ class DBTProject(object):
             text=True,
             cwd=self.dbt_project_dir if not self.dbt1_5 else None,
         )
-        success = not DBTError.has_dbt_error(result.stdout)
+        success = not DBTError.has_dbt_error(
+            result.stdout
+        ) and not DBTError.has_dbt_error(result.stderr)
 
         return result.stdout, result.stderr, success
 
