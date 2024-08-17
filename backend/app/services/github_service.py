@@ -47,7 +47,8 @@ class GithubService:
             per_page=1000
         ).parsed_data.repositories
 
-    def get_repository_by_id(self, repo_id: int) -> GitHubRepository:
+    def get_repository_by_id(self, repo_id: str | int) -> GitHubRepository:
+        repo_id = int(repo_id)
         repositories = self.get_repositories()
         for repo in repositories:
             if repo.id == repo_id:
@@ -55,7 +56,7 @@ class GithubService:
 
         raise ValueError(f"Repository with id {repo_id} not found")
 
-    def get_zipball(self, repo_id: int):
+    def get_zipball(self, repo_id: str | int):
         client = self.get_client()
         repo: GitHubRepository = self.get_repository_by_id(repo_id)
         contents = client.rest.repos.download_zipball_archive(

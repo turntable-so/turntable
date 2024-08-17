@@ -73,6 +73,8 @@ x-common-backend: &common-backend
   depends_on:
     postgres:
       condition: service_healthy
+    createbuckets:
+      condition: service_started
   volumes:
     - .hatchetconfig:/.hatchetconfig
 
@@ -83,6 +85,12 @@ services:
     ports:
       - "8000:8000"
     entrypoint: ["/code/entrypoint.sh"]
+    healthcheck:
+      test: ["CMD-SHELL", "django-admin", "health_check"]
+      interval: 10s
+      timeout: 30s
+      retries: 20
+      start_period: 10s
     command:
       [
         "uvicorn",
@@ -92,6 +100,7 @@ services:
         "--port",
         "8000",
       ]
+  
   web:
     build:
       context: frontend
@@ -99,6 +108,9 @@ services:
     command: ["pnpm", "start"]
     ports:
       - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
 
   postgres:
     image: pgvector/pgvector:pg16
@@ -150,7 +162,7 @@ services:
       postgres:
         condition: service_healthy
       api:
-        condition: service_started
+        condition: service_healthy
     environment:
       <<: [*postgres-credentials, *hatchet-credentials]
       DEV: "true"
@@ -181,9 +193,11 @@ services:
     command: ["python", "workflows/main.py"]
     depends_on:
       postgres:
-        condition: service_healthy
+        condition: service_healthy        
       createbuckets:
         condition: service_started
+      api:
+        condition: service_healthy
       hatchet-lite:
         condition: service_healthy
 

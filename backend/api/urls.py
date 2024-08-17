@@ -19,6 +19,7 @@ from django.contrib import admin
 from django.urls import include, path, re_path
 from rest_framework import routers
 
+from app.consumers import WorkflowRunConsumer
 from app.views import (
     AssetViewSet,
     BlockViewSet,
@@ -29,15 +30,14 @@ from app.views import (
     NotebookViewSet,
     ResourceViewSet,
     SSHViewSet,
+    SyncResourceView,
     WorkflowViews,
     WorkspaceGroupViewSet,
     WorkspaceViewSet,
-    SyncResourceView,
     healthcheck,
 )
 
 from .views import CustomUserViewSet, LogoutView, OAuthView
-from app.consumers import WorkflowRunConsumer
 
 router = routers.DefaultRouter()
 router.register(r"workspaces", WorkspaceViewSet, basename="workspace")
@@ -89,5 +89,6 @@ urlpatterns = [
         name="asset-detail",
     ),
     path("/ws/subscribe/<str:workspace_id>/", WorkflowRunConsumer.as_asgi()),
+    re_path(r"^health_check/", include("health_check.urls")),
     path("", include(router.urls)),
 ]

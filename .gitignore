@@ -9,6 +9,7 @@
 .*venv/
 .*env
 .hatchetconfig
+private/
 
 # dependencies
 /node_modules

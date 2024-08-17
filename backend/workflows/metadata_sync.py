@@ -3,10 +3,12 @@ import tempfile
 from hatchet_sdk import Context
 
 from app.core.e2e import DataHubDBParser
-from app.models import DBTResourceSubtype, Resource, WorkflowRun
+from app.models import DBTResourceSubtype, Resource
 from workflows.hatchet import hatchet
+from workflows.utils.log import inject_workflow_run_logging
 
 
+@inject_workflow_run_logging(hatchet)
 @hatchet.workflow(on_events=["metadata_sync"], timeout="15m")
 class MetadataSyncWorkflow:
     """
@@ -17,16 +19,7 @@ class MetadataSyncWorkflow:
         }
     """
 
-    @hatchet.step(timeout="15s")
-    def create_workflow_run(self, context: Context):
-        resource = Resource.objects.get(id=context.workflow_input()["resource_id"])
-        workflow_run_id = context.workflow_run_id()
-        workflow_run = WorkflowRun.objects.create(
-            id=workflow_run_id, resource=resource, status="RUNNING"
-        )
-        return {"workflow_run_id": str(workflow_run.id)}
-
-    @hatchet.step(timeout="30m", parents=["create_workflow_run"])
+    @hatchet.step(timeout="30m")
     def prepare_dbt_repos(self, context: Context):
         resource = Resource.objects.get(id=context.workflow_input()["resource_id"])
         for dbt_repo in resource.dbtresource_set.all():
@@ -50,17 +43,3 @@ class MetadataSyncWorkflow:
                 parser.parse()
 
         DataHubDBParser.combine_and_upload([parser], resource)
-
-    @hatchet.step(timeout="15s", parents=["process_metadata"])
-    def mark_workflow_run_success(self, context: Context):
-        workflow_run_id = context.workflow_run_id()
-        workflow_run = WorkflowRun.objects.get(id=workflow_run_id)
-        workflow_run.status = "SUCCESS"
-        workflow_run.save()
-
-    @hatchet.on_failure_step()
-    def on_failure(self, context: Context):
-        workflow_run_id = context.workflow_run_id()
-        workflow_run = WorkflowRun.objects.get(id=workflow_run_id)
-        workflow_run.status = "FAILED"
-        workflow_run.save()
