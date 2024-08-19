@@ -40,13 +40,8 @@ import { set } from 'date-fns'
 import * as Dialog from '@radix-ui/react-dialog';
 import { AgGridReact } from 'ag-grid-react'
 
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
-import { ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-
-import ChartComposer from '@/components/notebook/chart-composer'
 import FullScreenDialog from '@/components/FullScreenDialog'
-
-
+import ChartComposer from '@/components/notebook/chart-composer'
 
 
 const InsertContentEventListener = () => {
@@ -241,15 +236,8 @@ export default function Page() {
         setFullScreenData(null)
     }
 
-    console.log({
-        fullScreenData
-    })
-
-
-
     return (
         <Fragment>
-            asd
             <ScrollArea className='flex flex-col h-full items-center'>
                 <div className='flex flex-col h-full items-center'>
                     <div className="px-20 py-12 w-full max-w-6xl ">
