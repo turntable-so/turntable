@@ -86,8 +86,8 @@ def local_postgres(db, workspace):
     )
     PostgresDetails(
         resource=resource,
-        host="postgres_test_db",
-        port=5432,
+        host=os.getenv("POSTGRES_TEST_DB_HOST", "postgres_test_db"),
+        port=os.getenv("POSTGRES_TEST_DB_PORT", 5432),
         database="mydb",
         username="myuser",
         password="mypassword",
@@ -120,16 +120,6 @@ def local_metabase(db, workspace):
     ).save()
 
     return resource
-
-
-@pytest.fixture()
-def test_dbt_project(local_postgres):
-    dbt_core_resources = DBTCoreDetails.objects.filter(resource=local_postgres)
-    with dbt_core_resources[0].dbt_repo_context() as (
-        dbtproj,
-        dbt_path,
-    ):
-        return dbtproj
 
 
 def assert_ingest_output(resources):

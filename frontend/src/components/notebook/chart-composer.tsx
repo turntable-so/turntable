@@ -1,29 +1,7 @@
 import { useRef, useState, useEffect } from "react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  XAxis,
-  LineChart,
-  Line,
-  YAxis,
-} from "recharts";
-import { ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { ChartConfig, ChartContainer } from "@/components/ui/chart";
 import { AgGridReact } from "ag-grid-react";
 import { FancyMultiSelect } from "@/components/ui/multi-select";
 import { ChartComponent } from "@/components/QueryBlock";
-
-const chartConfig = {
-  desktop: {
-    label: "Desktop",
-    color: "#2563eb",
-  },
-  mobile: {
-    label: "Mobile",
-    color: "#60a5fa",
-  },
-} satisfies ChartConfig;
 
 import * as React from "react";
 

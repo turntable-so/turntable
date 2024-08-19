@@ -336,18 +336,7 @@ class DatasetInfoParser(DataHubDBParserBase):
                     db_ast = db_ast.expression.copy()
                     db_sql = db_ast.sql(dialect=self.dialect)
 
-        # because of risk of self-referential compiled sql for dbt_incremental_models, we prioritize db compiled sql if possible
-        if materialization == "incremental" and db_sql is not None:
-            return db_sql
-
-        # if dbt compiled sql is present, use that because it is more comprehensive (e.g. for ephemeral models)
-        elif dbt_compiled_sql is not None:
-            return dbt_compiled_sql
-
-        elif db_sql is not None:
-            return db_sql
-
-        return None
+        return dbt_compiled_sql or db_sql or None
 
 
 class SchemaParser(DataHubDBParserBase):
@@ -781,6 +770,7 @@ class DataHubDBParser:
                         error = AssetError(asset=asset, error=error.to_dict())
                         if error not in self.asset_errors:
                             print("error", error)
+                            print(error.error)
                             self.asset_errors.append(error)
                 lineage = node.lineage.to_networkx()
                 nx.set_edge_attributes(

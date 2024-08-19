@@ -52,6 +52,8 @@ x-ai-credentials: &ai-credentials
 x-dev-credentials: &dev-credentials
   DEV: "false"
   ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+  DJANGO_SETTINGS_MODULE: api.settings
+
 
 x-common-backend: &common-backend
   build:
@@ -72,7 +74,6 @@ x-common-backend: &common-backend
     postgres:
       condition: service_healthy
   volumes:
-    - ./backend:/code
     - .hatchetconfig:/.hatchetconfig
 
 # Define services
@@ -90,30 +91,25 @@ services:
         "0.0.0.0",
         "--port",
         "8000",
-        "--reload",
       ]
   web:
     build:
       context: frontend
       dockerfile: Dockerfile
-    command: ["pnpm", "prod"]
+    command: ["pnpm", "start"]
     ports:
       - "3000:3000"
-    environment:
-      DEV: "true"
-    volumes:
-      - ./frontend:/code
 
   postgres:
     image: pgvector/pgvector:pg16
     environment:
       <<: [*postgres-credentials]
     ports:
-      - "65432:65432"
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -h $${POSTGRES_HOST} -p $${POSTGRES_PORT}"]
       interval: 2s
       timeout: 5s
       retries: 10
@@ -143,7 +139,7 @@ services:
       /usr/bin/mc anonymous set public myminio/public-assets;
       exit 0;
       "
-    restart: "no"
+    restart: no
 
   hatchet-lite:
     image: ghcr.io/hatchet-dev/hatchet/hatchet-lite:latest
@@ -178,7 +174,7 @@ services:
     volumes:
       - "hatchet_lite_rabbitmq_data:/var/lib/rabbitmq"
       - ".hatchetconfig:/config"
-    restart: "no"
+    restart: no
 
   run-worker:
     <<: *common-backend
