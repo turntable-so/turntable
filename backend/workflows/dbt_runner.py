@@ -19,7 +19,7 @@ def return_helper(success, stdouts, stderrs, run_results):
 
 
 @inject_workflow_run_logging(hatchet)
-@hatchet.workflow(on_events=["metadata_sync"], timeout="15m")
+@hatchet.workflow(on_events=["run_dbt"], timeout="15m")
 class DBTRunnerWorkflow:
     """
     input structure:

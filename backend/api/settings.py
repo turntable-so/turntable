@@ -54,7 +54,6 @@ INSTALLED_APPS = [
     "channels",
     "health_check",
     "health_check.db",
-    # "health_check.storage",
     "health_check.contrib.migrations",
     "app",
 ]
@@ -222,7 +221,7 @@ DOMAIN = "localhost:3000"
 ACCOUNT_EMAIL_REQUIRED = False
 ACCOUNT_EMAIL_VERIFICATION = "none"
 
-ENCRYPTION_KEY = "JkclG6Y9P10KlD7dB6KahU_tG5DgquZltyefLwT8HH8="
+ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")
 
 LOGGING = {
     "version": 1,
@@ -272,7 +271,6 @@ if os.getenv("DEV") == "true" and not os.getenv("STAGING") == "true":
     AWS_QUERYSTRING_EXPIRE = 60
 
     PUBLIC_MEDIA_LOCATION = "public-assets"
-    ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")
 
     if acl := os.getenv("AWS_DEFAULT_ACL"):
         AWS_DEFAULT_ACL = None if acl == "None" else acl
