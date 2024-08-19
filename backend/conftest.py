@@ -116,7 +116,7 @@ def local_metabase(db, workspace):
         resource=resource,
         username="test@example.com",
         password="mypassword1",
-        connect_uri="http://metabase:4000",
+        connect_uri=os.getenv("TEST_METABASE_URI", "http://metabase:4000"),
     ).save()
 
     return resource
