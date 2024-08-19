@@ -1,12 +1,12 @@
 import uuid
 from typing import List
 
+import ibis
 from django.db.models import Prefetch, QuerySet
 from django.db.models.fields.reverse_related import (
     ManyToManyRel,
     ManyToOneRel,
 )
-import ibis
 
 from app.models import Asset, Column, Resource
 from app.utils.queryset import get_with_queryset
@@ -40,9 +40,7 @@ class AssetService:
     def get_assets_for_resource(self, resource_id: uuid.UUID) -> QuerySet[Asset]:
         resource = Resource.objects.get(id=resource_id)
         if resource.type == "DUCKDB":
-            connection = ibis.duckdb.connect(
-                resource.config["file_path"], read_only=True
-            )
+            connection = ibis.duckdb.connect(resource.details.path, read_only=True)
             assets_to_delete = Asset.objects.filter(resource=resource)
             assets_to_delete.delete()
 

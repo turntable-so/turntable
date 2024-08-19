@@ -1,0 +1,36 @@
+services:
+  postgres:
+    extends:
+      file: docker-compose.dev.yml
+      service: postgres
+  minio:
+    extends:
+      file: docker-compose.dev.yml
+      service: minio
+  createbuckets:
+    extends:
+      file: docker-compose.dev.yml
+      service: createbuckets
+  postgres_test_db:
+    extends:
+      file: docker-compose.dev.yml
+      service: postgres_test_db
+    volumes:
+      - ./turntable-test-db/postgres_test_db_data:/var/lib/postgresql/data
+  populate_postgres_test_db:
+    extends:
+      file: docker-compose.dev.yml
+      service: populate_postgres_test_db
+  ensure_populate_test_db:
+    extends:
+      file: docker-compose.dev.yml
+      service: ensure_populate_test_db
+  metabase:
+    extends:
+      file: docker-compose.dev.yml
+      service: metabase
+
+
+volumes:
+  postgres_data:
+  minio_data:

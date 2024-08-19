@@ -3,9 +3,9 @@ jaffle_shop:
   outputs:
     dev:
       type: postgres
-      host: postgres_test_db
+      host: "{{ env_var('POSTGRES_TEST_DB_HOST', 'postgres_test_db') }}"
       user: myuser
       password: mypassword
-      port: 5432
+      port: "{{ env_var('POSTGRES_TEST_DB_PORT', 5432) | as_number }}"
       dbname: mydb # or database instead of dbname
       schema: dbt_sl_test
