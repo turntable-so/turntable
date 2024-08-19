@@ -113,30 +113,6 @@ export async function getWorkspace() {
 }
 
 
-
-export async function executeQuery({ notebook_id, resource_id, sql, block_id }: { resource_id: string, sql: string, block_id: string, notebook_id: string }) {
-  const response = await fetcher(`/notebooks/${notebook_id}/blocks/${block_id}/query/`, {
-    cookies,
-    method: 'POST',
-    body: JSON.stringify({
-      resource_id,
-      sql,
-      limit: 10000,
-    })
-  })
-  return await response.json()
-}
-
-export async function getWorkflow({ workflow_run_id }: { workflow_run_id: string }) {
-  const response = await fetcher(`/workflows/${workflow_run_id}/`, {
-    cookies,
-    method: 'GET'
-  })
-  const data = await response.json()
-  return data
-}
-
-
 export async function getGithubInstallations() {
   const response = await fetcher(`/github/`, {
     cookies,

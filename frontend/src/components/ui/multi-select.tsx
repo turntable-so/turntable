@@ -15,11 +15,11 @@ import { ScrollArea } from "./scroll-area";
 
 type Item = Record<"value" | "label", string>;
 
-export function FancyMultiSelect({ items, selected, setSelected, label }: { items: Item[], selected: Item[], setSelected: any, label: string }) {
+export function FancyMultiSelect({ items, selected, setSelected, label, functionSelected = null }: { items: Item[], selected: Item[], setSelected: any, label: string, functionSelected: any }) {
     const inputRef = React.useRef<HTMLInputElement>(null);
     const [open, setOpen] = React.useState(false);
     const [inputValue, setInputValue] = React.useState("");
-
+    const [selectables, setSelectables] = React.useState([]);
     const handleUnselect = React.useCallback((item: Item) => {
         setSelected((prev: any) => prev.filter((s: any) => s.value !== item.value));
     }, [setSelected]);
@@ -30,6 +30,11 @@ export function FancyMultiSelect({ items, selected, setSelected, label }: { item
             if (input) {
                 if (e.key === "Delete" || e.key === "Backspace") {
                     if (input.value === "") {
+                        if (functionSelected) {
+                            const newSelected = [...selected];
+                            newSelected.pop();
+                            return functionSelected(newSelected);
+                        }
                         setSelected((prev: Item[]) => {
                             const newSelected = [...prev];
                             newSelected.pop();
@@ -46,11 +51,13 @@ export function FancyMultiSelect({ items, selected, setSelected, label }: { item
         []
     );
 
-    const selectables = items.filter(
-        (item) => !selected.includes(item)
-    );
+    React.useEffect(() => {
+        setSelectables(items.filter(
+            (item) => !(selected.map(selectedItem => selectedItem.value).includes(item.value))
+        )
+        )
+    }, [items, selected])
 
-    console.log(selectables, selected, inputValue);
 
     return (
         <Command
@@ -109,6 +116,10 @@ export function FancyMultiSelect({ items, selected, setSelected, label }: { item
                                                 }}
                                                 onSelect={(value) => {
                                                     setInputValue("");
+                                                    if (functionSelected) {
+                                                        const newSelected = [...selected, item];
+                                                        return functionSelected(newSelected);
+                                                    }
                                                     setSelected((prev: any) => [...prev, item]);
                                                 }}
                                                 className={"cursor-pointer"}

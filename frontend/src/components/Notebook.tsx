@@ -13,22 +13,6 @@ import { Card, CardContent } from "./ui/card";
 
 
 
-
-
-
-
-// const TextBlock = ({ key, text }) => {
-//   return (
-//     <AutoExpandTextarea />
-//   )
-// }
-
-// type TextBlock = {
-//   content: string;
-// }
-
-
-
 const AutoExpandTextarea = () => {
   const [text, setText] = useState('');
 

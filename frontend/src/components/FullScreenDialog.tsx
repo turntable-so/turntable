@@ -1,12 +1,13 @@
+'use client';
 // @ts-nocheck
-import { Dialog } from "./ui/dialog";
+import * as Dialog from '@radix-ui/react-dialog';
 
 export default function FullScreenDialog({ children, isOpen, onOpenChange }: any) {
     return (
         <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
             <Dialog.Portal>
-                <Dialog.Overlay className="fixed inset-0 bg-black/50" />
-                <Dialog.Content className="fixed inset-4 overflow-hidden">
+                <Dialog.Overlay className="fixed inset-0 bg-black/50 z-40" />
+                <Dialog.Content className="fixed inset-4 overflow-hidden z-50">
                     <div className="h-full bg-white p-4 rounded-md">
                         {children}
                     </div>
