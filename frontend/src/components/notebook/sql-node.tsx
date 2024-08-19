@@ -1,13 +1,9 @@
 "use client";
-import {
-  NodeViewWrapper,
-  ReactNodeViewRendererOptions,
-} from "@tiptap/react";
+import { NodeViewWrapper, ReactNodeViewRendererOptions } from "@tiptap/react";
 import QueryBlock from "../QueryBlock";
 import { mergeAttributes, Node } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { v4 as uuidv4 } from "uuid";
-
 
 type SQLNodeAttributes = {
   title?: string;
@@ -74,7 +70,10 @@ export const sqlNodeExtension = Node.create({
   },
 
   renderHTML({ HTMLAttributes }) {
-    return ["div", mergeAttributes({ "data-sql-node": "" }, HTMLAttributes)];
+    return [
+      "div",
+      mergeAttributes({ "data-sql-node": "" }, HTMLAttributes),
+    ];
   },
 
   addNodeView() {
@@ -86,7 +85,7 @@ export const sqlNodeExtension = Node.create({
       setSqlNode:
         (attrs: SQLNodeAttributes) =>
         ({ commands }) => {
-        return commands.insertContent({
+          return commands.insertContent([{
             type: this.name,
             attrs: {
               title: attrs.title,
@@ -94,7 +93,11 @@ export const sqlNodeExtension = Node.create({
               resourceId: attrs.resourceId,
               limit: attrs.limit,
             },
-          });
+          },
+        {
+          type: 'paragraph',
+          text: ' '
+        }]);
         },
     };
   },
