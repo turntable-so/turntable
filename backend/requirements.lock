@@ -134,6 +134,7 @@ django==5.0.6
     # via dj-rest-auth
     # via django-allauth
     # via django-cors-headers
+    # via django-health-check
     # via django-invitations
     # via django-polymorphic
     # via django-storages
@@ -144,8 +145,9 @@ django==5.0.6
 django-allauth==0.61.1
     # via dj-rest-auth
 django-cors-headers==4.4.0
+django-health-check==3.18.3
 django-invitations==2.1.0
-django-polymorphic @ git+https://github.com/jazzband/django-polymorphic.git@1039f882b99f97bf657bd958c949ee6a3b00377a#egg=django-polymorphic
+django-polymorphic @ git+https://github.com/jazzband/django-polymorphic.git@1039f882b99f97bf657bd958c949ee6a3b00377a
 django-storages==1.14.3
 django-templated-mail==1.1.1
     # via djoser

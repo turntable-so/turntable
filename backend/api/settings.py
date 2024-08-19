@@ -52,6 +52,10 @@ INSTALLED_APPS = [
     "adrf",
     "rest_framework_simplejwt.token_blacklist",
     "channels",
+    "health_check",
+    "health_check.db",
+    # "health_check.storage",
+    "health_check.contrib.migrations",
     "app",
 ]
 

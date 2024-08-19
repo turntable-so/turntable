@@ -24,6 +24,7 @@ class DBTError:
     COMPILATION = "Compilation Error"
     DEPENDENCY = "Dependency Error"
     DATABASE = "Database Error"
+    MISCELLANEOUS = "Error"
 
     @classmethod
     def has_dbt_error(cls, text):
@@ -34,6 +35,8 @@ class DBTError:
         elif cls.DEPENDENCY in text:
             return True
         elif cls.DATABASE in text:
+            return True
+        elif cls.MISCELLANEOUS in text:
             return True
 
         return False
