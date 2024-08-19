@@ -120,7 +120,7 @@ echo "\nENCRYPTION_KEY=\"`openssl rand -base64 32`\"" >> .env
 3. Start the app
 
 ```bash
-docker compose up
+docker compose --env-file .env up
 ```
 
 You can now open your browser and go to http://localhost:3000 to connect to the application.
@@ -150,7 +150,7 @@ For now, we are not accepting pull requests from the community, but We are worki
 To start the development environment, simply follow the instructions above to start the app, but change the final commmand to:
 
 ```bash
-docker compose -f docker-compose.dev.yml up
+docker compose -f docker-compose.dev.yml --env-file .env up
 ```
 
 Unlike the production environemnt, this supports hot reload and adds development resources like a test Postgres instance.
