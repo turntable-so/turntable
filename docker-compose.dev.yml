@@ -48,7 +48,7 @@ services:
     environment:
       DEV: "true"
     volumes:
-      - ./frontend:/code
+      - ./frontend:/
     command: ["pnpm", "dev"]
 
   postgres:
