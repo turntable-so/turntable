@@ -71,5 +71,6 @@ jobs:
           AWS_S3_ENDPOINT_URL: http://localhost:9000
           POSTGRES_TEST_DB_HOST: localhost
           POSTGRES_TEST_DB_PORT: 6543
+          TEST_METABASE_URI: http://localhost:4000
           DEV: "true"
           TMPDIR: ${{ runner.temp }}

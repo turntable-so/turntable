@@ -1,4 +1,3 @@
-import json
 import os
 import re
 import tempfile
@@ -134,6 +133,24 @@ class Resource(models.Model):
     def has_dbt(self):
         return self.dbtresource_set.exists()
 
+    def get_dbt_resource(self, dbt_resource_id):
+        if dbt_resource_id is None:
+            dbt_resource_count = self.dbtresource_set.count()
+            assert (
+                dbt_resource_count == 1
+            ), f"Expected 1 dbt resource, found {dbt_resource_count}"
+            dbt_resource = self.dbtresource_set.first()
+        else:
+            dbt_resource = self.dbtresource_set.get(id=dbt_resource_id)
+            assert (
+                dbt_resource.resource.id == self.id
+            ), f"Specified DBT resource does not belong to the resource {self.id}"
+        assert (
+            dbt_resource.subtype == ResourceSubtype.DBT_CLOUD
+        ), "Expected DBT core resource. Currently, running dbt cloud resources is not supported."
+
+        return dbt_resource
+
 
 class ResourceDetails(PolymorphicModel):
     name = models.CharField(max_length=255, blank=False)
@@ -260,6 +277,17 @@ class ResourceDetails(PolymorphicModel):
             if len(errors) > 0:
                 return {"success": False, "errors": errors}
             return {"success": True}
+
+    def test_db_connection(self):
+        try:
+            connector = self.get_connector()
+            conn = connector._connect()
+            query = conn.raw_sql("SELECT 1").fetchone()[0]
+            if query != 1:
+                raise Exception("Query did not return expected value")
+            return {"success": True}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
 
     def get_datahub_config(self, db_path) -> dict[str, Any]:
         pass
@@ -684,7 +712,7 @@ class BigqueryDetails(DBDetails):
         )
 
     def get_datahub_config(self, db_path):
-        adj_service_account = json.loads(self.service_account)
+        adj_service_account = dict(self.service_account)
         adj_service_account.pop("universe_domain", None)
         return {
             "source": {

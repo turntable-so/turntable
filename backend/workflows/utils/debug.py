@@ -82,15 +82,22 @@ class WorkflowDebugger:
         self.context.data.setdefault("parents", {})[step._step_name] = output
 
     def run(self):
-        for i, generation in enumerate(nx.topological_generations(self.workflow_graph)):
-            if len(generation) == 1:
-                out = self.run_step(generation[0])
-                self.update_context(generation[0], out)
-            else:
-                with WorkerPool(use_dill=True) as pool:
-                    results = pool.map(self.run_step, generation)
-                for step, result in zip(generation, results):
-                    self.update_context(step, result)
+        try:
+            for i, generation in enumerate(
+                nx.topological_generations(self.workflow_graph)
+            ):
+                if len(generation) == 1:
+                    out = self.run_step(generation[0])
+                    self.update_context(generation[0], out)
+                else:
+                    with WorkerPool(use_dill=True) as pool:
+                        results = pool.map(self.run_step, generation)
+                    for step, result in zip(generation, results):
+                        self.update_context(step, result)
+        except Exception as e:
+            if hasattr(self.workflow, "on_failure"):
+                self.run_step(self.workflow.on_failure)
+            raise e
         return self
 
     def result(self):
