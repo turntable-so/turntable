@@ -68,10 +68,10 @@ export default function DbtProjectForm({ resource, details }: { resource?: any, 
         resolver: zodResolver(FormSchema),
         defaultValues: {
             database_resource_id: resource?.id || "",
-            deployKey: "",
+            deployKey: details?.deploy_key || "",
             dbtGitRepoUrl: details?.git_repo_url || "",
             mainGitBranch: details?.main_git_branch || "main",
-            subdirectory: details?.project_path || '/',
+            subdirectory: details?.project_path || '.',
             threads: details?.threads || 1,
             version: details?.version || '',
             database: details?.database || '',
@@ -88,7 +88,7 @@ export default function DbtProjectForm({ resource, details }: { resource?: any, 
             }
         };
 
-        if (user?.current_workspace?.id) {
+        if (user?.current_workspace?.id && !details?.deploy_key) {
             getSshKeyFunction(user.current_workspace.id);
         }
     }, [user, user.current_workspace]);
@@ -108,7 +108,8 @@ export default function DbtProjectForm({ resource, details }: { resource?: any, 
         }
     }
 
-    const isUpdate = resource?.id || false
+    const isUpdate = resource?.id ? true : false
+    console.log({ isUpdate })
 
 
 
@@ -117,8 +118,9 @@ export default function DbtProjectForm({ resource, details }: { resource?: any, 
             resource: {
                 type: 'db',
             },
-            ...(isUpdate ? {} : { subtype: 'dbt' }),
+            subtype: 'dbt',
             config: {
+                "deploy_key": data.deployKey,
                 "resource_id": data.database_resource_id,
                 "git_repo_url": data.dbtGitRepoUrl,
                 "main_git_branch": data.mainGitBranch,
@@ -129,7 +131,7 @@ export default function DbtProjectForm({ resource, details }: { resource?: any, 
                 "schema": data.schema
             }
         }
-        const res = isUpdate ? await updateResource(resource.id, payload) : await createResource(payload)
+        const res = isUpdate ? await updateResource(resource.id, payload) : await createResource(payload as any)
         if (res.ok && resource?.id) {
             toast.success('Connection updated')
             router.push(`/connections/${resource.id}`)

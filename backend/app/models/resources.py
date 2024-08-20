@@ -15,6 +15,7 @@ from polymorphic.models import PolymorphicModel
 
 from app.models.auth import Workspace
 from app.models.git_connections import GithubInstallation
+from app.services.code_repo_service import CodeRepoService
 from app.services.github_service import GithubService
 from app.utils.fields import encrypt
 from vinyl.lib.connect import (
@@ -68,8 +69,18 @@ def repo_path(obj):
     github_repo_id = getattr(obj, "github_repo_id")
     github_installation_id = getattr(obj, "github_installation_id")
     project_path = getattr(obj, "project_path")
-    git_repo_url = 
-    if github_repo_id is not None and github_installation_id is not None:
+    git_repo_url = getattr(obj, "git_repo_url")
+    if git_repo_url is not None:
+        deploy_key = getattr(obj, "deploy_key")
+        coderepo_service = CodeRepoService(obj.resource.workspace.id)
+        with coderepo_service.repo_context(
+            public_key=deploy_key,
+            git_repo_url=git_repo_url,
+        ) as temp_dir:
+            project_path = os.path.join(temp_dir, project_path)
+
+            yield project_path
+    elif github_repo_id is not None and github_installation_id is not None:
         github_service = GithubService(
             obj.resource.workspace.id, github_installation_id
         )
@@ -77,7 +88,7 @@ def repo_path(obj):
         with github_service.repo_context(repo.id) as (zip_contents, temp_dir):
             project_path = os.path.join(temp_dir, os.listdir(temp_dir)[0], project_path)
             yield project_path
-    else: getattr(obj, "project_path")
+    else:
         yield project_path
 
 
@@ -442,7 +453,7 @@ class DBTCoreDetails(DBTResource):
                     DBTProject(
                         project_path,
                         DBTDialect._value2member_map_[dialect_str],
-                        DBTVersion._value2member_map_[self.version],
+                        DBTVersion[self.version.split(".")[-1]],
                         dbt_profiles_dir=dbt_profiles_dir,
                         env_vars={} if env_vars is None else env_vars,
                     ),
