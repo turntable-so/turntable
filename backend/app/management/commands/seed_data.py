@@ -26,7 +26,7 @@ class Command(BaseCommand):
             return
 
         user = User.objects.create_user(
-            name="Turntable Dev", email="dev@turntable.so", password="OauthToken"
+            name="Turntable Dev", email="dev@turntable.so", password="mypassword"
         )
         # create turntable full
         workspace = Workspace.objects.create(

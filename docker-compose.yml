@@ -54,6 +54,14 @@ x-dev-credentials: &dev-credentials
   ENCRYPTION_KEY: ${ENCRYPTION_KEY}
   DJANGO_SETTINGS_MODULE: api.settings
 
+x-next-credentials: &next-credentials
+  NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+  NEXT_PUBLIC_POSTHOG_KEY: phc_XL4KyheAjc4gJV4Fzpg1lbn7goFP1QNqsnNUhY1O1CU
+  NEXT_PUBLIC_POSTHOG_HOST: https://us.i.posthog.com
+
+x-oauth-credentials: &oauth-credentials
+  GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+  GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
 
 x-common-backend: &common-backend
   build:
@@ -105,9 +113,11 @@ services:
     build:
       context: frontend
       dockerfile: Dockerfile
-    command: ["pnpm", "start"]
+    command: "/bin/sh -c 'pnpm build && pnpm start'"
     ports:
       - "3000:3000"
+    environment:
+      <<: [*dev-credentials, *next-credentials, *oauth-credentials]
     depends_on:
       api:
         condition: service_healthy

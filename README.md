@@ -114,6 +114,7 @@ cd turntable
 
 ```bash
 echo "ENCRYPTION_KEY=\"`openssl rand -base64 32`\"" >> .env
+echo "NEXTAUTH_SECRET=\"`openssl rand -base64 32`\"" >> .env
 ```
 
 3. Start the app
