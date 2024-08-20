@@ -448,17 +448,16 @@ class DBTCoreDetails(DBTResource):
                     adj_profile_contents = {profile_name: profile_contents}
                     yaml.dump(adj_profile_contents, f)
                 with open(os.path.join(dbt_profiles_dir, "profiles.yml"), "r") as f:
-                    print(f.read())
-                yield (
-                    DBTProject(
+                    yield (
+                        DBTProject(
+                            project_path,
+                            DBTDialect._value2member_map_[dialect_str],
+                            self.version,
+                            dbt_profiles_dir=dbt_profiles_dir,
+                            env_vars={} if env_vars is None else env_vars,
+                        ),
                         project_path,
-                        DBTDialect._value2member_map_[dialect_str],
-                        DBTVersion[self.version.split(".")[-1]],
-                        dbt_profiles_dir=dbt_profiles_dir,
-                        env_vars={} if env_vars is None else env_vars,
-                    ),
-                    project_path,
-                )
+                    )
 
     def upload_artifacts(self):
         with self.dbt_repo_context() as (dbtproj, project_path):
