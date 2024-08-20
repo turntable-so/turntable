@@ -288,6 +288,7 @@ class DBTCoreDetailsSerializer(ResourceDetailsSerializer):
         fields = [
             "git_repo_url",
             "main_git_branch",
+            "deploy_key",
             "project_path",
             "threads",
             "version",

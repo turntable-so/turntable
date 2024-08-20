@@ -146,6 +146,7 @@ class ResourceService:
         return ValidationError(f"Resource {resource.details.subtype} not suppported")
 
     def partial_update(self, resource_id: str, data: dict) -> Resource:
+        print("partial update", flush=True)
         resource = Resource.objects.get(id=resource_id, workspace=self.workspace)
         if resource is None:
             raise ValidationError("Resource not found.")
@@ -157,7 +158,22 @@ class ResourceService:
                 )
                 payload.is_valid(raise_exception=True)
                 resource = payload.save()  # This calls the update method
+            # the only subtype allowed to be attached or modified is dbt
+            if data.get("subtype") == "dbt":
+                if resource.dbtresource_set.exists():
 
+                    dbt_resource = resource.dbtresource_set.first()
+                    dbt_payload = DBTCoreDetailsSerializer(
+                        dbt_resource, data=data.get("config"), partial=True
+                    )
+                    dbt_payload.is_valid()
+                    print(dbt_payload.errors, flush=True)
+                    dbt_payload.is_valid(raise_exception=True)
+                    dbt_payload.save()
+                    return
+                else:
+                    print("creating dbt resource", flush=True)
+                    raise ValidationError("Resource does not have a dbt resource")
             if data.get("subtype") is not None:
                 raise ValidationError(
                     "Can't change the subtype of a resource. It must be removed."
