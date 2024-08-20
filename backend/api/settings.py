@@ -29,8 +29,7 @@ SECRET_KEY = "django-insecure-i7pd5iwtuo*0h9je%(n1!u8srlbka$^do)c(#y88h9grhilq3@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["turntable-django-4426.onrender.com", "localhost"]
-
+ALLOWED_HOSTS = os.getenv("BACKEND_HOST", []) + ["localhost"]
 
 # Application definition
 

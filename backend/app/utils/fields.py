@@ -1,4 +1,4 @@
-import json
+import os
 from typing import (
     Any,
     Sequence,
@@ -18,30 +18,6 @@ from django.db.backends.base.base import BaseDatabaseWrapper
 from django.utils.encoding import force_bytes
 from django.utils.translation import gettext_lazy as _
 from typing_extensions import Protocol
-
-
-class EncryptedJSONField(models.TextField):
-    def __init__(self, *args, **kwargs):
-        self.cipher = Fernet(settings.ENCRYPTION_KEY)
-        super().__init__(*args, **kwargs)
-
-    def get_prep_value(self, value):
-        if value is None:
-            return value
-        return self.cipher.encrypt(json.dumps(value).encode("utf-8")).decode("utf-8")
-
-    def from_db_value(self, value, expression, connection):
-        if value is None:
-            return value
-        return json.loads(self.cipher.decrypt(value.encode("utf-8")).decode("utf-8"))
-
-    def to_python(self, value):
-        if value is None:
-            return value
-        if isinstance(value, dict):
-            return value
-        return json.loads(self.cipher.decrypt(value.encode("utf-8")).decode("utf-8"))
-
 
 F = TypeVar("F", bound=models.Field)
 FIELD_CACHE: dict[type, type] = {}
@@ -78,8 +54,17 @@ class EncryptedMixin(models.Field):
         self.key: bytes | str = kwargs.pop("key", None)
         self.ttl: int = kwargs.pop("ttl", None)
 
-        self._fernet = Fernet(settings.ENCRYPTION_KEY)
+        self._fernet = self.get_fernet(refresh=True)
         super().__init__(*args, **kwargs)
+
+    def _get_new_fernet(self) -> Fernet:
+        return Fernet(settings.ENCRYPTION_KEY or self.key)
+
+    def get_fernet(self, refresh: bool = False) -> Fernet:
+        if refresh:
+            return self._get_new_fernet()
+        else:
+            return self._fernet or self._get_new_fernet()
 
     def _description(self) -> str:
         return _("Encrypted %s") % super().description
@@ -87,10 +72,15 @@ class EncryptedMixin(models.Field):
     description = property(_description)  # type: ignore[assignment]
 
     def _dump(self, value: Any) -> bytes:
-        return self._fernet.encrypt(orjson.dumps(value))
+        fernet = self.get_fernet(
+            refresh=os.getenv("NEW_WRITE_ENCRYPTION_KEY") == "true"
+        )
+
+        return fernet.encrypt(orjson.dumps(value))
 
     def _load(self, value: bytes) -> Any:
-        return orjson.loads(self._fernet.decrypt(value, self.ttl))
+        fernet = self.get_fernet(refresh=os.getenv("NEW_READ_ENCRYPTION_KEY") == "true")
+        return orjson.loads(fernet.decrypt(value))
 
     def check(self, **kwargs: Any) -> list[CheckMessage]:
         errors = super().check(**kwargs)
