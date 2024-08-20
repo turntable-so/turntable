@@ -73,6 +73,10 @@ type Context = {
     isFullScreen: boolean;
     fullScreenData: any;
     setFullScreenData: (data: any) => void;
+    notebookCharts: any;
+    setNotebookCharts: (charts: any) => void;
+    activeNode: any;
+    setActiveNode: (data: any) => void;
 };
 
 export default function AppContextProvider({
@@ -96,7 +100,7 @@ export default function AppContextProvider({
     const [types, setTypes] = useState([]);
     const [activeNotebook, setActiveNotebook] = useState<Notebook | null>(null);
     const [sidebarCollapsed, collapseSidebar] = useState(false);
-
+    const [activeNode, setActiveNode] = useState(null);
     const [areAssetsLoading, setAreAssetsLoading] = useState<boolean>(false);
     const [isLineageLoading, setIsLineageLoading] = useState<boolean>(false);
     const [focusedAsset, setFocusedAsset] = useState<any>(null);
@@ -106,6 +110,8 @@ export default function AppContextProvider({
     const [resources, setResources] = useState<any[]>([]);
     const [isFullScreen, setIsFullScreen] = useState<boolean>(false);
     const [fullScreenData, setFullScreenData] = useState<any>(false);
+
+    const [notebookCharts, setNotebookCharts] = useState<any[]>({});
 
     const fetchResources = async () => {
         const data = await getResources();
@@ -259,6 +265,10 @@ export default function AppContextProvider({
         isFullScreen,
         fullScreenData,
         setFullScreenData,
+        notebookCharts,
+        setNotebookCharts,
+        activeNode,
+        setActiveNode,
     };
 
     return (
