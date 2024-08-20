@@ -1,8 +1,8 @@
 "use server";
 
-import { revalidateTag } from 'next/cache'
-import { fetcher } from '@/app/fetcher'
-import { cookies } from 'next/headers'
+import { fetcher } from '@/app/fetcher';
+import { revalidateTag } from 'next/cache';
+import { cookies } from 'next/headers';
 
 const isDev = process.env.DEV ? true : false;
 
@@ -226,7 +226,7 @@ export async function getSshKey(tenant_id: string) {
   return response.json();
 }
 
-export async function testGithubConnection(public_key: string, github_url: string) {
+export async function testGitConnection(public_key: string, git_repo_url: string) {
   const response = await fetcher(
     `/ssh/`,
     {
@@ -234,8 +234,8 @@ export async function testGithubConnection(public_key: string, github_url: strin
       method: "POST",
       body: {
         public_key,
-        github_url,
-        action: "test_github_connection",
+        git_repo_url,
+        action: "test_git_connection",
       },
     }
   );

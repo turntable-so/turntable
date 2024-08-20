@@ -7,19 +7,20 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from app.models import (
     Asset,
     AssetLink,
+    BigqueryDetails,
     Block,
     Column,
     ColumnLink,
+    DBTCoreDetails,
     GithubInstallation,
     LookerDetails,
     Notebook,
+    PostgresDetails,
     Resource,
     ResourceDetails,
-    BigqueryDetails,
     User,
     Workspace,
     WorkspaceGroup,
-    PostgresDetails,
 )
 
 Invitation = get_invitation_model()
@@ -132,30 +133,6 @@ class WorkspaceDetailSerializer(serializers.ModelSerializer):
         model = Workspace
         fields = ["id", "name", "icon_url", "icon_file", "users"]
         depth = 1
-
-
-class ResourceSerializer(serializers.HyperlinkedModelSerializer):
-
-    class Meta:
-        model = Resource
-        fields = [
-            "id",
-            "name",
-            "updated_at",
-            "type",
-            "subtype",
-            "last_synced",
-            "status",
-        ]
-
-    def get_last_synced(self, obj):
-        return obj.last_synced
-
-    def get_status(self, obj):
-        return obj.status
-
-    def get_subtype(self, obj):
-        return obj.subtype
 
 
 class ColumnSerializer(serializers.ModelSerializer):
@@ -305,8 +282,53 @@ class PostgresDetailsSerializer(ResourceDetailsSerializer):
         fields = ["host", "username", "password", "database", "port"]
 
 
+class DBTCoreDetailsSerializer(ResourceDetailsSerializer):
+    class Meta:
+        model = DBTCoreDetails
+        fields = [
+            "git_repo_url",
+            "main_git_branch",
+            "project_path",
+            "threads",
+            "version",
+            "database",
+            "schema",
+        ]
+
+    def get_version(self, obj):
+        return obj.version + "foboar"
+
+
 class BlockSerializer(serializers.ModelSerializer):
     class Meta:
         model = Block
         fields = ["id", "results", "created_at", "updated_at"]
         read_only_fields = ["created_at", "updated_at"]
+
+
+class ResourceSerializer(serializers.HyperlinkedModelSerializer):
+
+    class Meta:
+        model = Resource
+        fields = [
+            "id",
+            "name",
+            "updated_at",
+            "type",
+            "subtype",
+            "last_synced",
+            "status",
+            "has_dbt",
+        ]
+
+    def get_last_synced(self, obj):
+        return obj.last_synced
+
+    def get_status(self, obj):
+        return obj.status
+
+    def get_subtype(self, obj):
+        return obj.subtype
+
+    def get_has_dbt(self, obj):
+        return obj.has_dbt

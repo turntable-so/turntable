@@ -2,6 +2,7 @@
 
 import BackToConnectionsButton from '@/components/connections/back-to-connections-button';
 import { BIToolOptions, TransformationOptions, WarehouseOptions } from '@/components/connections/connection-options';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from "@/components/ui/separator";
 import { useRouter } from 'next/navigation';
@@ -16,7 +17,7 @@ const ConnectionOptionCard = ({ option }: {
   const router = useRouter()
 
   return (
-    <Card className={`rounded-lg hover:bg-muted/50 hover:cursor-pointer shadow-none border`} onClick={() => {
+    <Card className={`rounded-lg hover:bg-muted/50 hover:cursor-pointer shadow-none border ${!option.url && 'hover:cursor-not-allowed opacity-50'}`} onClick={() => {
       if (option.url) {
         router.push(option.url)
       }
@@ -27,11 +28,14 @@ const ConnectionOptionCard = ({ option }: {
             <div>
               {option.logo}
             </div>
-            <CardTitle>{option.label}</CardTitle>
+            <div className='flex w-full items-center justify-between space-x-2'>
+              <CardTitle>{option.label}</CardTitle>
+              {!option.url && <Badge variant='secondary'>Coming Soon</Badge>}
+            </div>
           </div>
         </div>
       </CardHeader>
-    </Card>
+    </Card >
   )
 }
 
