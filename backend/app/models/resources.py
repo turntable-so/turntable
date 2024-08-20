@@ -146,7 +146,7 @@ class Resource(models.Model):
                 dbt_resource.resource.id == self.id
             ), f"Specified DBT resource does not belong to the resource {self.id}"
         assert (
-            dbt_resource.subtype == ResourceSubtype.DBT_CLOUD
+            dbt_resource.subtype == ResourceSubtype.DBT
         ), "Expected DBT core resource. Currently, running dbt cloud resources is not supported."
 
         return dbt_resource

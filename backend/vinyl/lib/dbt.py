@@ -79,7 +79,7 @@ class DBTProject(object):
             self.multitenant = True
         else:
             self.multitenant = False
-            self.install_dbt_if_necessary()
+            # self.install_dbt_if_necessary()
 
         # get profiles-dir
         self.dbt_profiles_dir = (
