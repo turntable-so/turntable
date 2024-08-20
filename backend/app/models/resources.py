@@ -48,11 +48,8 @@ class ResourceSubtype(models.TextChoices):
     POSTGRES = "postgres", "Postgres"
     DUCKDB = "duckdb", "File"
     FILE = "file", "File"
-
-
-class DBTResourceSubtype(models.TextChoices):
-    CORE = "core", "Core"
-    CLOUD = "cloud", "Cloud"
+    DBT = "dbt", "Dbt"
+    DBT_CLOUD = "dbt_cloud", "Dbt Cloud"
 
 
 # helper functions
@@ -71,6 +68,7 @@ def repo_path(obj):
     github_repo_id = getattr(obj, "github_repo_id")
     github_installation_id = getattr(obj, "github_installation_id")
     project_path = getattr(obj, "project_path")
+    git_repo_url = 
     if github_repo_id is not None and github_installation_id is not None:
         github_service = GithubService(
             obj.resource.workspace.id, github_installation_id
@@ -79,7 +77,7 @@ def repo_path(obj):
         with github_service.repo_context(repo.id) as (zip_contents, temp_dir):
             project_path = os.path.join(temp_dir, os.listdir(temp_dir)[0], project_path)
             yield project_path
-    else:
+    else: getattr(obj, "project_path")
         yield project_path
 
 
@@ -120,6 +118,10 @@ class Resource(models.Model):
     @property
     def subtype(self):
         return self.details.subtype
+
+    @property
+    def has_dbt(self):
+        return self.dbtresource_set.exists()
 
 
 class ResourceDetails(PolymorphicModel):
@@ -282,7 +284,7 @@ class DBTResource(PolymorphicModel):
 
     @classmethod
     def get_default_subtype(cls):
-        return DBTResourceSubtype.CORE
+        return ResourceSubtype.DBT
 
 
 ## BI polymorphisms
@@ -401,11 +403,14 @@ class MetabaseDetails(ResourceDetails):
 
 ## DBT polymorphisms
 class DBTCoreDetails(DBTResource):
-    subtype = models.CharField(max_length=255, default=DBTResourceSubtype.CORE)
+    subtype = models.CharField(max_length=255, default=ResourceSubtype.DBT)
     github_installation = models.ForeignKey(
         GithubInstallation, null=True, on_delete=models.CASCADE
     )
     github_repo_id = encrypt(models.CharField(max_length=255, null=True))
+    deploy_key = encrypt(models.TextField(null=True))
+    git_repo_url = models.CharField(max_length=255, null=True)
+    main_git_branch = models.CharField(max_length=255, null=True)
     project_path = models.CharField(max_length=255, blank=False)
     database = encrypt(models.CharField(max_length=255, blank=False))
     schema = encrypt(models.CharField(max_length=255, blank=False))
@@ -492,7 +497,7 @@ class DBTCoreDetails(DBTResource):
 
 
 class DBTCloudDetails(DBTResource):
-    subtype = models.CharField(max_length=255, default=DBTResourceSubtype.CLOUD)
+    subtype = models.CharField(max_length=255, default=ResourceSubtype.DBT_CLOUD)
     api_token = encrypt(models.CharField(max_length=255, blank=False))
     account_id = encrypt(models.CharField(max_length=255, blank=False))
     project_id = encrypt(models.CharField(max_length=255, blank=False))
