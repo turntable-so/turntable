@@ -9,22 +9,9 @@ import useSession from '@/app/hooks/use-session';
 export default function WorkspaceLayout({ children }: { children: React.ReactNode }) {
     const pathName = usePathname()
     const [sidebarCollapsed, collapseSidebar] = useState<boolean>(false)
-    const [sidebarContext, setSidebarContext] = useState<'ACTION' | 'STEP'>('ACTION')
+    const [sidebarContext, setSidebarContext] = useState<'ACTION'>('ACTION')
     const [actionBarContext, setActionBarContext] = useState<'NOTEBOOK' | 'LINEAGE'>('LINEAGE')
 
-    useEffect(() => {
-        collapseSidebar(
-            pathName.includes('/notebooks/') ||
-            pathName.includes('/lineage') ||
-            pathName.includes('/sources/')
-        )
-
-        if (pathName.includes('/sources/')) {
-            setSidebarContext('STEP')
-        } else {
-            setSidebarContext('ACTION')
-        }
-    }, [pathName, collapseSidebar])
 
     useEffect(() => {
         collapseSidebar(
@@ -53,10 +40,10 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
                         {sidebarCollapsed ? (
                             sidebarContext === 'ACTION' ? (
                                 <ResizablePanelGroup direction="horizontal" className=''>
-                                    <ResizablePanel defaultSize={25} className='w-[10px] bg-muted/50'>
+                                    <ResizablePanel minSize={15} defaultSize={25} className='w-[10px] bg-muted/50'>
                                         <ActionBar context={actionBarContext} />
                                     </ResizablePanel>
-                                    <ResizableHandle withHandle />
+                                    <ResizableHandle />
                                     <ResizablePanel defaultSize={75}>
                                         {children}
                                     </ResizablePanel>

@@ -1,8 +1,3 @@
-import ActionBar from "@/components/ActionBar";
-import SideBar from "@/components/layout/SideBar";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
-import AppContextProvider from "@/contexts/AppContext";
-import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import useSession from '@/app/hooks/use-session';
 import WorkspaceLayout from "./workspace-layout";

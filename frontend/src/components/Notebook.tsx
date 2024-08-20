@@ -1,31 +1,15 @@
 'use client'
-import { Button } from "./ui/button"
-import { Separator } from "./ui/separator"
+import { Button } from "./ui/button";
+import { Separator } from "./ui/separator";
 
 
+import { Plus } from "lucide-react";
+import { usePathname } from 'next/navigation';
+import { useEffect, useRef, useState } from "react";
 import { Block, useAppContext } from '../contexts/AppContext';
 import PromptBlock from './PromptBlock';
 import QueryBlock from './QueryBlock';
-import { usePathname } from 'next/navigation';
 import { Card, CardContent } from "./ui/card";
-import { Plus } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
-
-
-
-
-
-
-
-// const TextBlock = ({ key, text }) => {
-//   return (
-//     <AutoExpandTextarea />
-//   )
-// }
-
-// type TextBlock = {
-//   content: string;
-// }
 
 
 
@@ -66,7 +50,7 @@ type Notebook = {
 
 export default function Notebook({ notebook }: { notebook: Notebook }) {
 
-  const { activeNotebook, onSqlChange, runQuery, addPromptBlock, addBlock, setActiveNotebook } = useAppContext();
+  const { activeNotebook, onSqlChange, runQuery, addPromptBlock, setActiveNotebook } = useAppContext();
   const [maxWidth, setMaxWidth] = useState<number>(0)
   const divRef = useRef(null);
   const [blocks, setBlocks] = useState<[]>([])

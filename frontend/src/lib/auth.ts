@@ -59,8 +59,8 @@ const login = (email: string, password: string) => {
     return api.post({ email, password }, "/auth/jwt/create");
 };
 
-const loginOauth = (provider: string, token: string) => {
-    return api.post({ provider, token }, "/oauth/auth");
+const loginOauth = (provider: string, token: string, invitationCode = "") => {
+    return api.post({ provider, token, invitation_code: invitationCode }, "/oauth/auth");
 }
 
 /**

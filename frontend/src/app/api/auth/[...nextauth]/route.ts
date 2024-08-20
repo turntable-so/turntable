@@ -6,13 +6,10 @@ import { AuthActions } from "@/lib/auth";
 import { NextResponse } from "next/server";
 const { login, storeToken, loginOauth } = AuthActions();
 import {
-  deleteCookie,
-  getCookie,
-  setCookie,
-  hasCookie,
-  getCookies,
+  setCookie, deleteCookie,
 } from "cookies-next";
 import { cookies } from "next/headers";
+
 
 
 const handler = NextAuth({
@@ -20,6 +17,11 @@ const handler = NextAuth({
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      authorization: {
+        params: {
+          invitationCode: "",
+        },
+      },
     }),
     GitHubProvider({
       clientId: process.env.GITHUB_CLIENT_ID || "",
@@ -57,8 +59,12 @@ const handler = NextAuth({
   callbacks: {
     async signIn({ user, account, profile }: any) {
       if (account.provider === "google") {
+        const cookieStore = cookies();
+        let invitationCode : any = cookieStore.get("invitationCode");
+        invitationCode = invitationCode?.value;
+        deleteCookie("invitationCode");
         try {
-          const response = await loginOauth(account.provider, account.id_token);
+          const response = await loginOauth(account.provider, account.id_token, invitationCode);
 
           const data: any = await response.json();
           if (data.access && data.refresh) {
