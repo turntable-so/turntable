@@ -8,7 +8,7 @@ const isDev = process.env.DEV ? true : false;
 
 const ApiHost = isDev
   ? "http://localhost:8000"
-  : "https://notebook-backend-e9y5.onrender.com";
+  : process.env.NEXT_PUBLIC_API_BASE_URL;
 
 type CookiesContext = {
   cookies: any | undefined;

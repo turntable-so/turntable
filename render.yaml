@@ -83,6 +83,29 @@ services:
   - fromGroup: mandatory_inputs
   - fromGroup: optional_inputs
 
+- type: web
+  name: frontend
+  runtime: node
+  plan: free
+  repo: https://github.com/turntable-so/turntable
+  branch: justin/eng-1074-harden-app-encryption
+  region: ohio
+  buildCommand: npm install -g pnpm; pnpm install; pnpm build
+  startCommand: pnpm start
+  envVars:
+    - key: NODE_ENV
+      value: production
+    - key: NEXT_PUBLIC_API_BASE_URL
+      fromService:
+        type: web
+        name: api
+        envVarKey: RENDER_EXTERNAL_URL
+    - fromGroup: settings
+    - fromGroup: storage
+    - fromGroup: mandatory_inputs
+    - fromGroup: optional_inputs
+    
+
 # support services
 - type: web
   name: minio-server

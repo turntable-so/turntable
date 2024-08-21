@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react';
-const baseUrl = process.env.NODE_ENV === "development" ? "localhost:8000" : "turntable-django-4426.onrender.com";
+const baseUrl = process.env.NODE_ENV === "development" ? "localhost:8000" : process.env.NEXT_PUBLIC_API_BASE_URL;
 const protocol = process.env.NODE_ENV === "development" ? "ws" : "wss";
 
 const useWorkflowUpdates = (workspaceId: string) => {

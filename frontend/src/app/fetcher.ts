@@ -2,7 +2,7 @@ import { AuthActions } from "@/lib/auth"
 
 // Extract necessary functions from the AuthActions utility.
 const { handleJWTRefresh, storeToken, getToken, removeTokens } = AuthActions();
-const baseUrl = process.env.NODE_ENV === "development" ? "http://localhost:8000" : "https://turntable-django-4426.onrender.com";
+const baseUrl = process.env.NODE_ENV === "development" ? "http://localhost:8000" : process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const fetchWithAuth = async (url: string, options = {} as any) => {
     const token = getToken("access", options?.cookies);
