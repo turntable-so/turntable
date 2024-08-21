@@ -8,7 +8,7 @@ from typing import Any
 
 import yaml
 from django.contrib.postgres.fields import ArrayField
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files import File
 from django.db import models
 from polymorphic.models import PolymorphicModel
@@ -703,16 +703,17 @@ class BigqueryDetails(DBDetails):
     subtype = models.CharField(max_length=255, default=ResourceSubtype.BIGQUERY)
     service_account = encrypt(models.JSONField())
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    @property
+    def service_account_dict(self):
         if isinstance(self.service_account, str):
             try:
-                self.service_account = json.loads(self.service_account)
+                return json.loads(self.service_account)
             except json.JSONDecodeError:
-                # If it's not valid JSON, keep it as a string
-                pass
+                raise ValidationError("Invalid JSON in service_account")
+        return self.service_account
 
     def save(self, *args, **kwargs):
+        # ensure service account is saved as a JSON string
         if isinstance(self.service_account, dict):
             self.service_account = json.dumps(self.service_account)
         super().save(*args, **kwargs)
@@ -727,12 +728,12 @@ class BigqueryDetails(DBDetails):
 
     def get_connector(self):
         return BigQueryConnector(
-            service_account_info=self.service_account,
-            tables=[f"{self.service_account['project']}.*.*"],
+            service_account_info=self.service_account_dict,
+            tables=[f"{self.service_account_dict['project']}.*.*"],
         )
 
     def get_datahub_config(self, db_path):
-        service_account = self.service_account.copy()
+        service_account = self.service_account_dict.copy()
         service_account.pop("universe_domain", None)
         return {
             "source": {
@@ -761,7 +762,7 @@ class BigqueryDetails(DBDetails):
                     "method": "service-account-json",
                     "project": dbt_core_resource.database,
                     "schema": dbt_core_resource.schema,
-                    "keyfile_json": self.service_account,
+                    "keyfile_json": self.service_account_dict,
                     "threads": dbt_core_resource.threads,
                 }
             },

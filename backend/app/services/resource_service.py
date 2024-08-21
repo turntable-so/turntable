@@ -206,7 +206,6 @@ class ResourceService:
             raise ValidationError("Resource not found.")
 
         resource.delete()
-        return
 
     async def sync_resource(self, resource_id: int):
         from workflows.hatchet import hatchet
