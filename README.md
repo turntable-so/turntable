@@ -158,7 +158,7 @@ Unlike the production environemnt, this supports hot reload and adds development
 Once everything starts (this may take about a minute or more), run the command below to access the container:
 
 ```bash
-docker compose exec run-worker bash
+docker compose exec worker bash
 ```
 
 From here, backend tests can be run with `pytest`.

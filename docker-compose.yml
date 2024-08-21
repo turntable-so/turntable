@@ -198,7 +198,7 @@ services:
       - ".hatchetconfig:/config"
     restart: no
 
-  run-worker:
+  worker:
     <<: *common-backend
     command: ["python", "workflows/main.py"]
     depends_on:

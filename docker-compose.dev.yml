@@ -75,10 +75,10 @@ services:
       file: docker-compose.yml
       service: setup-hatchet
 
-  run-worker:
+  worker:
     extends:
       file: docker-compose.yml
-      service: run-worker
+      service: worker
     build:
       args:
         - ENV=dev

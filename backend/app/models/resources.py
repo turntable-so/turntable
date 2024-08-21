@@ -437,7 +437,9 @@ class DBTCoreDetails(DBTResource):
     project_path = models.CharField(max_length=255, blank=False)
     database = encrypt(models.CharField(max_length=255, blank=False))
     schema = encrypt(models.CharField(max_length=255, blank=False))
-    other_schemas = encrypt(ArrayField(models.CharField(max_length=255), null=True))
+    other_schemas = encrypt(
+        models.JSONField(null=True)
+    )  # use as array field, but needs to be json to enable encryption
     threads = models.IntegerField(null=True, default=1)
     version = models.CharField(
         choices=[(v, v.value) for v in DBTVersion], max_length=255, blank=False

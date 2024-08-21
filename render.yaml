@@ -1,0 +1,132 @@
+
+databases:
+- name: postgres
+  databaseName: postgres
+  user: db_user
+  plan: standard
+  region: ohio
+  ipAllowList:
+  - source: 0.0.0.0/0
+    description: everywhere
+  postgresMajorVersion: "16"
+services:
+- type: web
+  name: api
+  runtime: docker
+  repo: https://github.com/turntable-so/turntable
+  branch: justin/eng-1074-harden-app-encryption
+  plan: standard
+  envVars:
+  - key: ENCRYPTION_KEY
+    generateValue: true
+  - key: DATABASE_URL
+    fromDatabase:
+      name: turntable-app-db
+      property: connectionString
+  - key: BACKEND_HOST
+    fromService:
+      type: web
+      name: api
+      envVarKey: RENDER_EXTERNAL_URL
+
+  # env variables from other ser
+
+  # Mandatory inputs
+  - key: HATCHET_CLIENT_TOKEN
+    sync: false
+
+
+
+  # Optional inputs for app functionality
+  - key: GOOGLE_CLIENT_SECRET
+    sync: false
+  - key: GOOGLE_CLIENT_ID
+    sync: false
+  - key: OPENAI_API_KEY
+    sync: false
+
+
+  region: ohio
+  dockerCommand: python -m gunicorn api.asgi:application -k uvicorn.workers.UvicornWorker
+  dockerContext: .
+  dockerfilePath: Dockerfile
+  rootDir: backend
+- type: worker
+  name: worker
+  runtime: docker
+  repo: https://github.com/turntable-so/turntable
+  branch: justin/eng-1074-harden-app-encryption
+  plan: standard
+  envVars:
+  - fromGroup: backend-core-staging
+  region: ohio
+  dockerCommand: python workflows/main.py
+  dockerContext: .
+  dockerfilePath: Dockerfile
+  rootDir: backend
+
+# support services
+- type: web
+  name: minio-server
+  healthCheckPath: /minio/health/live
+  runtime: image
+  image:
+    url: docker.io/minio/minio:latest
+  dockerCommand: minio server /data --address $MINIO_HOST:$MINIO_PORT --console-address $MINIO_HOST:$MINIO_CONSOLE_PORT
+  autoDeploy: false
+  disk:
+    name: data
+    mountPath: /data
+  envVars:
+  - key: MINIO_ROOT_USER
+    generateValue: true
+  - key: MINIO_ROOT_PASSWORD
+    generateValue: true
+  - key: MINIO_HOST
+    value: "0.0.0.0"
+  - key: MINIO_PORT
+    value: 9000
+  - key: MINIO_CONSOLE_PORT
+    value: 9090
+
+- type: web
+  name: minio-console
+  runtime: docker
+  dockerContext: /
+  dockerfilePath: ./Dockerfile
+  autoDeploy: false
+  envVars:
+  - key: PORT
+    value: 10000
+  - key: MINIO_HOST
+    fromService:
+      name: minio-server
+      type: web
+      property: host
+  - key: MINIO_CONSOLE_PORT
+    fromService:
+      name: minio-server
+      type: web
+      envVarKey: CONSOLE_PORT
+
+
+envVarGroups:
+  - name: storage
+    envVars:
+    - key: AWS_S3_ACCESS_KEY_ID
+      fromService:
+        name: minio-server
+        type: web
+        envVarKey: MINIO_ROOT_USER
+    - key: AWS_S3_SECRET_ACCESS_KEY
+      fromService:
+        name: minio-server
+        type: web
+        envVarKey: MINIO_ROOT_PASSWORD
+    - key: AWS_STORAGE_BUCKET_NAME
+      value: artifacts
+    - key: AWS_S3_ENDPOINT_URL
+      value: http://0.0.0.0:9000
+      
+    
+version: "1"
