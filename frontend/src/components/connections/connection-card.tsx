@@ -7,7 +7,10 @@ import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import { EllipsisVertical, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import React from "react";
+import React, { useEffect } from "react";
+import useSWR from "swr";
+import useWorkflowUpdates from "@/app/hooks/use-workflow-updates";
+import useSession from "@/app/hooks/use-session";
 
 dayjs.extend(relativeTime)
 
@@ -26,8 +29,19 @@ type Resource = {
 export default function ConnectionCard({ resource }: {
     resource: Resource,
 }) {
+    const session = useSession();
     const router = useRouter()
+    const [realStatus, setRealStatus] = React.useState(resource.status);
 
+    const [status, resourceId] = useWorkflowUpdates(
+        session.user.current_workspace.id
+    );
+
+    useEffect(() => {
+        if (resourceId === resource.id) {
+          setRealStatus(status);
+        }
+      }, [status, resourceId]);
 
     return (
         <Card className='rounded-md hover:border-black hover:cursor-pointer' onClick={() => {
@@ -51,19 +65,19 @@ export default function ConnectionCard({ resource }: {
                         <div className='float-right space-y-0'>
                             <div className='flex justify-end items-center space-x-2'>
                                 <div>
-                                    {resource.status === 'RUNNING' && (
+                                    {realStatus === 'RUNNING' && (
                                         <Badge variant='secondary' className="flex space-x-2 items-center font-medium text-sm">
                                             <Loader2 className="h-3 w-3 animate-spin opacity-50" />
                                             <div>Syncing </div>
                                         </Badge>
                                     )}
-                                    {resource.status === 'FAILED' && (
+                                    {realStatus === 'FAILED' && (
                                         <Badge variant='secondary' className="flex space-x-2 items-center font-medium text-sm">
                                             <div className='w-2 h-2 rounded-full bg-red-500'></div>
                                             <div>Failed to sync </div>
                                         </Badge>
                                     )}
-                                    {resource.status === 'SUCCESS' && (
+                                    {realStatus === 'SUCCESS' && (
                                         <Badge variant='secondary' className="flex space-x-2 items-center font-medium text-sm">
                                             <div className='w-2 h-2 rounded-full bg-green-500'></div>
                                             <div>Connected </div>
