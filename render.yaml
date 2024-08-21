@@ -1,7 +1,7 @@
 
 databases:
 - name: postgres
-  databaseName: postgres
+  databaseName: db
   user: db_user
   plan: standard
   region: ohio
@@ -29,7 +29,21 @@ services:
       name: api
       envVarKey: RENDER_EXTERNAL_URL
 
-  # env variables from other ser
+  # env variables from other services
+  - key: AWS_S3_ACCESS_KEY_ID
+    fromService:
+      name: minio-server
+      type: web
+      envVarKey: MINIO_ROOT_USER
+  - key: AWS_S3_SECRET_ACCESS_KEY
+    fromService:
+      name: minio-server
+      type: web
+      envVarKey: MINIO_ROOT_PASSWORD
+  - key: AWS_STORAGE_BUCKET_NAME
+    value: artifacts
+  - key: AWS_S3_ENDPOINT_URL
+    value: http://0.0.0.0:9000
 
   # Mandatory inputs
   - key: HATCHET_CLIENT_TOKEN
@@ -108,25 +122,5 @@ services:
       name: minio-server
       type: web
       envVarKey: CONSOLE_PORT
-
-
-envVarGroups:
-  - name: storage
-    envVars:
-    - key: AWS_S3_ACCESS_KEY_ID
-      fromService:
-        name: minio-server
-        type: web
-        envVarKey: MINIO_ROOT_USER
-    - key: AWS_S3_SECRET_ACCESS_KEY
-      fromService:
-        name: minio-server
-        type: web
-        envVarKey: MINIO_ROOT_PASSWORD
-    - key: AWS_STORAGE_BUCKET_NAME
-      value: artifacts
-    - key: AWS_S3_ENDPOINT_URL
-      value: http://0.0.0.0:9000
-      
     
 version: "1"
