@@ -129,7 +129,7 @@ export default function ActionBar({
   const searchRef = useRef<HTMLInputElement>(null);
   const resizerRef = useRef<HTMLDivElement>(null);
   const { ref: treeRef, width, height } = useResizeObserver();
-  
+
   const {
     assets,
     clearAssetPreview,
@@ -408,7 +408,7 @@ export default function ActionBar({
           isFilterPopoverOpen ? "z-[-1]" : ""
         }`}
       >
-        <Tabs defaultValue="assets">
+        <Tabs defaultValue="assets" className="h-full">
           <TabsList
             className="grid w-full h-100 grid-cols-2"
             style={
@@ -437,47 +437,10 @@ export default function ActionBar({
             {isNotebook && <TabsTrigger value="pages">Pages</TabsTrigger>}
           </TabsList>
           <TabsContent value="assets" style={{ height: "100%" }}>
-            {!assetPreview ? (
-              <div className="flex flex-col h-full max-h-screen z-0">
-                {false ? (
-                  <div className="flex items-center justify-center h-full">
-                    <Loader2 className="mr-2 h-8 w-8 animate-spin opacity-50" />
-                  </div>
-                ) : (
-                  <Fragment>
-                    <div ref={treeRef} className="flex flex-col h-full">
-                      <Tree
-                        height={'100%'}
-                        width={width}
-                        data={treeData}
-                        initialSlelectedItemId="f12"
-                        onSelectChange={(item) => {
-                          if (item?.isSelectable) {
-                            if (context === "LINEAGE") {
-                              if (focusedAsset?.id !== item.id) {
-                                setIsLineageLoading(true);
-                                router.push(`/lineage/${item.id}`);
-                              }
-                            } else {
-                              fetchAssetPreview(item.id);
-                            }
-                          }
-                        }}
-                        folderIcon={Folder}
-                        itemIcon={Workflow}
-                      />
-                    </div>
-                  </Fragment>
-                )}
-              </div>
-            ) : (
-              <ResizablePanelGroup
-                direction="vertical"
-                className="z-0"
-                style={{ height: "100%" }}
-              >
-                <ResizablePanel defaultSize={50}>
-                  {areAssetsLoading ? (
+            <div className="h-full">
+              {!assetPreview ? (
+                <div className="flex flex-col h-full max-h-screen z-0">
+                  {false ? (
                     <div className="flex items-center justify-center h-full">
                       <Loader2 className="mr-2 h-8 w-8 animate-spin opacity-50" />
                     </div>
@@ -485,7 +448,7 @@ export default function ActionBar({
                     <Fragment>
                       <div ref={treeRef} className="flex flex-col h-full">
                         <Tree
-                          height={height}
+                          height={"100%"}
                           width={width}
                           data={treeData}
                           initialSlelectedItemId="f12"
@@ -505,31 +468,70 @@ export default function ActionBar({
                           itemIcon={Workflow}
                         />
                       </div>
-                      <div className="h-[150x]" />
                     </Fragment>
                   )}
-                </ResizablePanel>
-                <ResizableHandle withHandle className="bg-gray-300" />
-                <ResizablePanel
-                  defaultSize={50}
-                  className="p-0"
-                  onResize={(
-                    e: number | undefined,
-                    size: number | undefined
-                  ) => {
-                    setLowheight(
-                      ((size as number) / 100.0) * window.innerHeight
-                    );
-                  }}
+                </div>
+              ) : (
+                <ResizablePanelGroup
+                  direction="vertical"
+                  className="z-0"
+                  style={{ height: "100%" }}
                 >
-                  <ModelPreviewer
-                    context={context}
-                    clearAsset={clearAssetPreview}
-                    asset={assetPreview}
-                  />
-                </ResizablePanel>
-              </ResizablePanelGroup>
-            )}
+                  <ResizablePanel defaultSize={25}>
+                    {areAssetsLoading ? (
+                      <div className="flex items-center justify-center h-full">
+                        <Loader2 className="mr-2 h-8 w-8 animate-spin opacity-50" />
+                      </div>
+                    ) : (
+                      <Fragment>
+                        <div ref={treeRef} className="flex flex-col h-full">
+                          <Tree
+                            height={height}
+                            width={width}
+                            data={treeData}
+                            initialSlelectedItemId="f12"
+                            onSelectChange={(item) => {
+                              if (item?.isSelectable) {
+                                if (context === "LINEAGE") {
+                                  if (focusedAsset?.id !== item.id) {
+                                    setIsLineageLoading(true);
+                                    router.push(`/lineage/${item.id}`);
+                                  }
+                                } else {
+                                  fetchAssetPreview(item.id);
+                                }
+                              }
+                            }}
+                            folderIcon={Folder}
+                            itemIcon={Workflow}
+                          />
+                        </div>
+                        <div className="h-[150x]" />
+                      </Fragment>
+                    )}
+                  </ResizablePanel>
+                  <ResizableHandle withHandle className="bg-gray-300" />
+                  <ResizablePanel
+                    defaultSize={75}
+                    className="p-0"
+                    onResize={(
+                      e: number | undefined,
+                      size: number | undefined
+                    ) => {
+                      setLowheight(
+                        ((size as number) / 100.0) * window.innerHeight
+                      );
+                    }}
+                  >
+                    <ModelPreviewer
+                      context={context}
+                      clearAsset={clearAssetPreview}
+                      asset={assetPreview}
+                    />
+                  </ResizablePanel>
+                </ResizablePanelGroup>
+              )}
+            </div>
           </TabsContent>
           {isNotebook && (
             <TabsContent value="pages">
