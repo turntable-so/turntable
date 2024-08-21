@@ -140,7 +140,7 @@ services:
   region: ohio
   dockerContext: .
   dockerfilePath: Dockerfile
-  rootDir: backend
+  rootDir: deploy/minio-console
   autoDeploy: false
   envVars:
   - key: PORT
