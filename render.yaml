@@ -92,6 +92,7 @@ services:
   region: ohio
   buildCommand: npm install -g pnpm; pnpm install; pnpm build
   startCommand: pnpm start
+  rootDir: frontend
   envVars:
     - key: NODE_ENV
       value: production
