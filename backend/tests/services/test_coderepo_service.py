@@ -98,7 +98,7 @@ class CodeRepoServiceTests(TestCase):
             main_git_branch="main",
             project_path=".",
             threads=1,
-            version=DBTVersion.V1_6,
+            version=DBTVersion.V1_6.value,
             database="test",
             schema="test",
         )

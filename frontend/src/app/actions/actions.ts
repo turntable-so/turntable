@@ -16,7 +16,13 @@ type CookiesContext = {
 
 
 
-export async function createWorkspace({ name, iconUrl }: { name: string, iconUrl: string }) {
+export async function createWorkspace({ name, iconUrl }: { name: string, iconUrl: FormData }) {
+  console.log({
+    body: {
+      name,
+      iconUrl,
+    }
+  })
   const response = await fetcher(
     '/workspaces/',
     {
@@ -31,10 +37,10 @@ export async function createWorkspace({ name, iconUrl }: { name: string, iconUrl
       }
     }
   )
-  if (response.ok) {
-    return response.json();
-  }
-  return null;
+  const data = await response.json();
+  console.log({ data })
+  revalidateTag("workspaces");
+  return data;
 }
 
 type CreateNotebookArgs = {

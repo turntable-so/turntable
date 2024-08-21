@@ -1,43 +1,33 @@
 // @ts-nocheck
 "use client"
-import React, { useRef, useState } from "react";
 import { AuthActions } from "@/lib/auth";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { useRef, useState } from "react";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+    CardDescription
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
+import { createWorkspace } from "@/app/actions/actions";
+import useSession from "@/app/hooks/use-session";
 import {
     Form,
     FormControl,
-    FormDescription,
     FormField,
     FormItem,
     FormLabel,
-    FormMessage,
-} from "@/components/ui/form"
-import { PasswordInput } from "../ui/password-input";
-import { LoaderButton } from "../ui/LoadingSpinner";
-import { Avatar } from "@radix-ui/react-avatar";
+    FormMessage
+} from "@/components/ui/form";
 import WorkspaceIcon from "@/components/workspaces/workspace-icon";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Upload } from "lucide-react";
-import { fetcher } from "@/app/fetcher";
-import { useSWRConfig } from "swr";
-import useSession from "@/app/hooks/use-session";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { LoaderButton } from "../ui/LoadingSpinner";
 
 const FormSchema = z.object({
     name: z.string().min(2, {
@@ -83,7 +73,7 @@ const CreateWorkspaceForm = () => {
         }
     };
 
-    const session = useSession()
+    const { mutate } = useSession()
 
     const router = useRouter();
 
@@ -92,7 +82,6 @@ const CreateWorkspaceForm = () => {
     const { login, storeToken } = AuthActions();
     const [isLoading, setIsLoading] = useState<boolean>(false)
 
-    const { mutate } = useSWRConfig()
 
     const form = useForm<z.infer<typeof FormSchema>>({
         resolver: zodResolver(FormSchema),
@@ -106,23 +95,18 @@ const CreateWorkspaceForm = () => {
 
         setIsLoading(true)
         setFormRespError(null)
-        try {
-            const formData = new FormData();
-            formData.append("name", name);
-            if (iconFile) {
-                formData.append("icon_file", iconFile);
-            }
-            const resp = await fetcher(
-                '/workspaces/',
-                {
-                    method: 'POST',
-                    body: formData,
-                }
-            )
-            mutate('/auth/users/me/')
-            router.push("/")
-        } catch (err: any) {
-            setFormRespError(err.json.detail)
+        const formData = new FormData();
+        formData.append("name", name);
+        if (iconFile) {
+            formData.append("icon_file", iconFile);
+        }
+        const workspace = await createWorkspace({
+            name,
+            iconUrl: formData
+        })
+        if (workspace.id) {
+            await mutate()
+            router.push("/connections")
         }
     };
 
