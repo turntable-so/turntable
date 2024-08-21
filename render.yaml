@@ -3,7 +3,7 @@ databases:
 - name: postgres
   databaseName: db
   user: db_user
-  plan: standard
+  plan: free
   region: ohio
   ipAllowList:
   - source: 0.0.0.0/0
@@ -15,7 +15,7 @@ services:
   runtime: docker
   repo: https://github.com/turntable-so/turntable
   branch: justin/eng-1074-harden-app-encryption
-  plan: standard
+  plan: free
   envVars:
   - key: DATABASE_URL
     fromDatabase:
@@ -52,7 +52,7 @@ services:
   runtime: docker
   repo: https://github.com/turntable-so/turntable
   branch: justin/eng-1074-harden-app-encryption
-  plan: standard
+  plan: free
   region: ohio
   dockerCommand: python workflows/main.py
   dockerContext: .
