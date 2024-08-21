@@ -129,7 +129,7 @@ services:
     fromService:
       name: minio-server
       type: web
-      envVarKey: CONSOLE_PORT
+      envVarKey: MINIO_CONSOLE_PORT
 
 envVarGroups:
   - name: settings
