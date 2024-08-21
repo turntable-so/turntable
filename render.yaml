@@ -71,8 +71,6 @@ services:
   repo: https://github.com/turntable-so/turntable
   branch: justin/eng-1074-harden-app-encryption
   plan: standard
-  envVars:
-  - fromGroup: backend-core-staging
   region: ohio
   dockerCommand: python workflows/main.py
   dockerContext: .
