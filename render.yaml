@@ -130,6 +130,7 @@ services:
 
 envVarGroups:
   - name: settings
+    envVars:
       - key: DJANGO_SETTINGS_MODULE
         value: api.settings
       - key: ENCRYPTION_KEY
