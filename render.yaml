@@ -90,7 +90,7 @@ services:
   runtime: image
   image:
     url: docker.io/minio/minio:latest
-  plan: free
+  plan: starter
   region: ohio
   dockerCommand: minio server /data --address $MINIO_HOST:$MINIO_PORT --console-address $MINIO_HOST:$MINIO_CONSOLE_PORT
   autoDeploy: false
