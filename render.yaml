@@ -90,6 +90,8 @@ services:
   runtime: image
   image:
     url: docker.io/minio/minio:latest
+  plan: free
+  region: ohio
   dockerCommand: minio server /data --address $MINIO_HOST:$MINIO_PORT --console-address $MINIO_HOST:$MINIO_CONSOLE_PORT
   autoDeploy: false
   disk:
@@ -110,6 +112,8 @@ services:
 - type: web
   name: minio-console
   runtime: docker
+  plan: free
+  region: ohio
   dockerContext: /
   dockerfilePath: ./Dockerfile
   autoDeploy: false
