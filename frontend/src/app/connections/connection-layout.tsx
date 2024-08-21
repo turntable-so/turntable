@@ -47,8 +47,6 @@ export default function ConnectionLayout({ resource, details, dbtDetails }: { re
 
     const workflowUpdates = useWorkflowUpdates(session.user.current_workspace.id)
 
-    console.log({ resource, details, dbtDetails })
-
 
     return (
         <div className='max-w-7xl w-full px-16 py-4'>

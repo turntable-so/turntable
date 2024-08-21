@@ -146,7 +146,6 @@ class ResourceService:
         return ValidationError(f"Resource {resource.details.subtype} not suppported")
 
     def partial_update(self, resource_id: str, data: dict) -> Resource:
-        print("partial update", flush=True)
         resource = Resource.objects.get(id=resource_id, workspace=self.workspace)
         if resource is None:
             raise ValidationError("Resource not found.")

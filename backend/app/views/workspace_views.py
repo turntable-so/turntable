@@ -18,7 +18,6 @@ class WorkspaceViewSet(viewsets.ModelViewSet):
 
     def create(self, request):
         user = request.user
-        print("REQUEST.DATA", request.data)
         workspace = Workspace.objects.create(name=request.data["name"])
         workspace.add_admin(user)
         workspace.save()
