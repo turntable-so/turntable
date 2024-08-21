@@ -52,7 +52,7 @@ services:
   runtime: docker
   repo: https://github.com/turntable-so/turntable
   branch: justin/eng-1074-harden-app-encryption
-  plan: free
+  plan: starter
   region: ohio
   dockerCommand: python workflows/main.py
   dockerContext: .
