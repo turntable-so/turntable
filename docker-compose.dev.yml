@@ -50,6 +50,11 @@ services:
     volumes:
       - ./frontend:/code
 
+  redis:
+    extends:
+      file: docker-compose.yml
+      service: redis
+
   postgres:
     extends:
       file: docker-compose.yml
