@@ -114,8 +114,9 @@ services:
   runtime: docker
   plan: free
   region: ohio
-  dockerContext: /
-  dockerfilePath: ./Dockerfile
+  dockerContext: .
+  dockerfilePath: Dockerfile
+  rootDir: backend
   autoDeploy: false
   envVars:
   - key: PORT
