@@ -160,7 +160,6 @@ class ResourceViewSetTestCases(TestCase):
         resource_id = self._create_resource()
         data = {
             "resource": {
-                "name": "my dbt project",
                 "type": "db",
             },
             "subtype": "dbt",
@@ -178,13 +177,31 @@ class ResourceViewSetTestCases(TestCase):
         response = self.client.post("/resources/", data, format="json")
         self.assertContains(response, "id", status_code=201)
 
-        # should show up in the resource details on the list view
         resource_id = response.data["id"]
         response = self.client.get(f"/resources/{resource_id}/")
         self.assertContains(response, "dbt_details", status_code=200)
 
     def test_update_dbt(self):
         resource_id = self._create_resource()
+        data = {
+            "resource": {
+                "type": "db",
+            },
+            "subtype": "dbt",
+            "config": {
+                "resource_id": resource_id,
+                "git_repo_url": "git@github.com:turntable-so/dbt.git",
+                "main_git_branch": "main",
+                "project_path": "/",
+                "threads": 1,
+                "version": "1.6",
+                "database": "test",
+                "schema": "test",
+            },
+        }
+        response = self.client.post("/resources/", data, format="json")
+        self.assertContains(response, "id", status_code=201)
+
         data = {
             "subtype": "dbt",
             "config": {
@@ -201,7 +218,6 @@ class ResourceViewSetTestCases(TestCase):
         }
 
         response = self.client.patch(f"/resources/{resource_id}/", data, format="json")
-
         self.assertEqual(response.status_code, 200)
         resource = Resource.objects.get(id=resource_id)
         self.assertEqual(resource.name, "Test Resource")

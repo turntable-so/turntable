@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import tempfile
@@ -460,6 +461,11 @@ class DBTCoreDetails(DBTResource):
     )
     env_vars = encrypt(models.JSONField(null=True))
 
+    def save(self, *args, **kwargs):
+        if isinstance(self.version, DBTVersion):
+            self.version = self.version.value
+        super().save(*args, **kwargs)
+
     @contextmanager
     def dbt_repo_context(self):
         env_vars = self.env_vars or {}
@@ -697,6 +703,20 @@ class BigqueryDetails(DBDetails):
     subtype = models.CharField(max_length=255, default=ResourceSubtype.BIGQUERY)
     service_account = encrypt(models.JSONField())
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if isinstance(self.service_account, str):
+            try:
+                self.service_account = json.loads(self.service_account)
+            except json.JSONDecodeError:
+                # If it's not valid JSON, keep it as a string
+                pass
+
+    def save(self, *args, **kwargs):
+        if isinstance(self.service_account, dict):
+            self.service_account = json.dumps(self.service_account)
+        super().save(*args, **kwargs)
+
     @property
     def venv_path(self):
         return ".bigqueryvenv"
@@ -712,15 +732,15 @@ class BigqueryDetails(DBDetails):
         )
 
     def get_datahub_config(self, db_path):
-        adj_service_account = dict(self.service_account)
-        adj_service_account.pop("universe_domain", None)
+        service_account = self.service_account.copy()
+        service_account.pop("universe_domain", None)
         return {
             "source": {
                 "type": "bigquery",
                 "config": {
                     "start_time": f"-{self.lookback_days}d",
-                    "credential": adj_service_account,
-                    "project_ids": [adj_service_account["project_id"]],
+                    "credential": service_account,
+                    "project_ids": [service_account["project_id"]],
                     "include_table_lineage": False,
                     "include_table_location_lineage": False,
                     "include_view_lineage": False,

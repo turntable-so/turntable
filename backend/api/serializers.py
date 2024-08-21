@@ -22,6 +22,7 @@ from app.models import (
     Workspace,
     WorkspaceGroup,
 )
+from vinyl.lib.dbt_methods import DBTVersion
 
 Invitation = get_invitation_model()
 
@@ -282,7 +283,26 @@ class PostgresDetailsSerializer(ResourceDetailsSerializer):
         fields = ["host", "username", "password", "database", "port"]
 
 
+class DBTVersionField(serializers.ChoiceField):
+
+    def to_representation(self, obj):
+        if obj is None:
+            return None
+        if isinstance(obj, str):
+            return obj
+        return obj.value
+
+    def to_internal_value(self, data):
+        try:
+            return DBTVersion(data)
+        except ValueError:
+            self.fail("invalid_choice", input=data)
+
+
 class DBTCoreDetailsSerializer(ResourceDetailsSerializer):
+
+    version = DBTVersionField([(v, v.value) for v in DBTVersion])
+
     class Meta:
         model = DBTCoreDetails
         fields = [
@@ -295,9 +315,6 @@ class DBTCoreDetailsSerializer(ResourceDetailsSerializer):
             "database",
             "schema",
         ]
-
-    def get_version(self, obj):
-        return obj.version + "foboar"
 
 
 class BlockSerializer(serializers.ModelSerializer):
