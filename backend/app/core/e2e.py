@@ -33,6 +33,7 @@ django.setup()
 from app.models import AssetError, AssetLink, Column, ColumnLink
 
 _STR_JOIN_HELPER = "_____"
+_PK_SEPARATOR = "__"
 
 
 def get_duplicate_nodes_key(asset_id: str):
@@ -880,6 +881,10 @@ class DataHubDBParser:
         return Asset(id=id, name=asset_name, type=asset_type, resource=resource_it)
 
     @classmethod
+    def _adjust_id_for_workspace(self, id: str, resource: Resource):
+        return f"{id}{_PK_SEPARATOR}{resource.workspace.id}"
+
+    @classmethod
     def combine_and_upload(cls, parsers: list[DataHubDBParser], resource: Resource):
         combined = cls.combine(parsers, resource)
         all_resource_dict = {
@@ -917,6 +922,31 @@ class DataHubDBParser:
                 nullable=True,
             )
             indirect_columns.append(column)
+
+        # adjust ids to make them unique to workspce
+        for asset in [*combined["assets"], *indirect_assets]:
+            asset.id = cls._adjust_id_for_workspace(asset.id, Resource)
+        for asset_error in combined["asset_errors"]:
+            asset_error.asset_id = cls._adjust_id_for_workspace(
+                asset_error.asset_id, Resource
+            )
+        for asset_link in combined["asset_links"]:
+            asset_link.source_id = cls._adjust_id_for_workspace(
+                asset_link.source_id, Resource
+            )
+            asset_link.target_id = cls._adjust_id_for_workspace(
+                asset_link.target_id, Resource
+            )
+        for column in [*combined["columns"], *indirect_columns]:
+            column.id = cls._adjust_id_for_workspace(column.id, Resource)
+            column.asset_id = cls._adjust_id_for_workspace(column.asset_id, Resource)
+        for column_link in combined["column_links"]:
+            column_link.source_id = cls._adjust_id_for_workspace(
+                column_link.source_id, Resource
+            )
+            column_link.target_id = cls._adjust_id_for_workspace(
+                column_link.target_id, Resource
+            )
 
         delete_and_upsert(combined["assets"], resource, indirect_assets)
         delete_and_upsert(combined["asset_errors"], resource)
