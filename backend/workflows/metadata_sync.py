@@ -3,7 +3,7 @@ import tempfile
 from hatchet_sdk import Context
 
 from app.core.e2e import DataHubDBParser
-from app.models import DBTResourceSubtype, Resource
+from app.models import Resource, ResourceSubtype
 from workflows.hatchet import hatchet
 from workflows.utils.log import inject_workflow_run_logging
 
@@ -23,7 +23,7 @@ class MetadataSyncWorkflow:
     def prepare_dbt_repos(self, context: Context):
         resource = Resource.objects.get(id=context.workflow_input()["resource_id"])
         for dbt_repo in resource.dbtresource_set.all():
-            if dbt_repo.subtype == DBTResourceSubtype.CORE:
+            if dbt_repo.subtype == ResourceSubtype.DBT:
                 dbt_repo.upload_artifacts()
 
     @hatchet.step(timeout="120m", parents=["prepare_dbt_repos"])

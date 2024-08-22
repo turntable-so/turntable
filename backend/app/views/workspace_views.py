@@ -14,16 +14,11 @@ class WorkspaceViewSet(viewsets.ModelViewSet):
         user = request.user
         workspaces = Workspace.objects.filter(users=user)
         serializer = WorkspaceSerializer(workspaces, many=True)
-        print(serializer.data, flush=True)
         return Response(serializer.data)
 
     def create(self, request):
         user = request.user
-        print("user", user, flush=True)
-        print("data", dict(request.data), flush=True)
-        print("test", flush=True)
         workspace = Workspace.objects.create(name=request.data["name"])
-        print("created", flush=True)
         workspace.add_admin(user)
         workspace.save()
         if "icon_file" in request.data:
@@ -35,7 +30,6 @@ class WorkspaceViewSet(viewsets.ModelViewSet):
             workspace.icon_url = url.split("?")[0]
         workspace.save()
 
-        print("workspace serializers", flush=True)
         serializer = WorkspaceSerializer(workspace)
 
         return Response(serializer.data)
