@@ -8,7 +8,7 @@ const isDev = process.env.DEV ? true : false;
 
 const ApiHost = isDev
   ? "http://localhost:8000"
-  : process.env.NEXT_PUBLIC_API_BASE_URL;
+  : process.env.BACKEND_HOST;
 
 type CookiesContext = {
   cookies: any | undefined;

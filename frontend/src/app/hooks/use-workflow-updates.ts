@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react';
-const baseUrl = process.env.NODE_ENV === "development" ? "localhost:8000" : process.env.NEXT_PUBLIC_API_BASE_URL;
+const baseUrl = process.env.NODE_ENV === "development" ? "localhost:8000" : process.env.BACKEND_HOST;
 const protocol = process.env.NODE_ENV === "development" ? "ws" : "wss";
 
 const useWorkflowUpdates = (workspaceId: string) => {

@@ -53,6 +53,7 @@ x-dev-credentials: &dev-credentials
   DEV: "false"
   ENCRYPTION_KEY: ${ENCRYPTION_KEY}
   DJANGO_SETTINGS_MODULE: api.settings
+  BACKEND_HOST: ${BACKEND_HOST}
 
 x-next-credentials: &next-credentials
   NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
