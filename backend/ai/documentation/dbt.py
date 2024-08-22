@@ -137,14 +137,21 @@ def get_column_completion_from_dbt(
     progress_bar=True,
     parallel=True,
 ):
-    schema, compiled_sql = get_schema_and_compiled_sql(
-        dbtproj, "model_name", compile_if_not_found=compile_if_not_found
-    )
+    dbt_model_data = {}
+    for model_name in dbt_model_column_names:
+        schema, compiled_sql = get_schema_and_compiled_sql(
+            dbtproj, model_name, compile_if_not_found=compile_if_not_found
+        )
+        dbt_model_data[model_name] = {
+            "schema": schema,
+            "compiled_sql": compiled_sql,
+            "column_names": dbt_model_column_names[model_name],
+        }
 
     return get_column_completion(
         schema=schema,
         compiled_sql=compiled_sql,
-        column_names=dbt_model_column_names.keys(),
+        dbt_model_data=dbt_model_data,
         include_nested_fields=include_nested_fields,
         ai_model_name=ai_model_name,
         max_columns_per_batch=max_columns_per_batch,
@@ -153,10 +160,16 @@ def get_column_completion_from_dbt(
     )
 
 
+class ModelData(TypedDict):
+    schema: str
+    compiled_sql: str
+    column_names: list[str]
+
+
 def get_column_completion(
     schema: str,
     compiled_sql: str,
-    column_names: list[str],
+    dbt_model_data: dict[str, ModelData],
     include_nested_fields: bool = False,
     ai_model_name="gpt-4o",
     max_columns_per_batch=15,
