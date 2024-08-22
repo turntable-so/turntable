@@ -14,6 +14,7 @@ import {
 } from "../ui/alert"
 import { getLineage } from '../../app/actions/actions';
 import { useAppContext } from '../../contexts/AppContext';
+import { TooltipProvider } from "../ui/tooltip";
 
 export function ErrorFallback() {
     return (
@@ -397,29 +398,34 @@ export function LineageView({ lineage, rootAsset }: { lineage: Lineage, rootAsse
     }, [rootAsset, setFocusedAsset, setAssetPreview])
 
     return (
-        <LineageViewProvider startingLineage={lineage} rootAsset={rootAsset}>
-            <div
-                style={{
-                    position: 'relative',
-                    width: '100%',
-                    maxWidth: '100%',
-                    height: '100vh',
-                }}
-            >
-                {/* {true && (
+      <LineageViewProvider startingLineage={lineage} rootAsset={rootAsset}>
+        <div
+          style={{
+            position: "relative",
+            width: "100%",
+            maxWidth: "100%",
+            height: "100vh",
+          }}
+        >
+          {/* {true && (
                     <div className='rel     ative'>basdsdsg-</div>
                 )} */}
-                <ErrorBoundary fallback={
-                    <div className='bg-muted flex flex-col h-full text-muted-foreground font-semibold  justify-center  items-center'>
-                        <div className='max-w-[550px]'>
-                            <ErrorFallback />
-                        </div>
-                    </div>}>
-                    <ReactFlowProvider>
-                        <ColumnLineage />
-                    </ReactFlowProvider>
-                </ErrorBoundary >
-            </div >
-        </LineageViewProvider >
+          <ErrorBoundary
+            fallback={
+              <div className="bg-muted flex flex-col h-full text-muted-foreground font-semibold  justify-center  items-center">
+                <div className="max-w-[550px]">
+                  <ErrorFallback />
+                </div>
+              </div>
+            }
+          >
+            <ReactFlowProvider>
+              <TooltipProvider>
+                <ColumnLineage />
+              </TooltipProvider>
+            </ReactFlowProvider>
+          </ErrorBoundary>
+        </div>
+      </LineageViewProvider>
     );
 }
