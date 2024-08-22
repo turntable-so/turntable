@@ -29,7 +29,7 @@ SECRET_KEY = "django-insecure-i7pd5iwtuo*0h9je%(n1!u8srlbka$^do)c(#y88h9grhilq3@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost"]
+ALLOWED_HOSTS = ["localhost", "api"]
 backend_host = os.getenv("BACKEND_HOST")
 if "https://" in backend_host:
     backend_host = backend_host.replace("https://", "")
