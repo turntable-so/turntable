@@ -34,7 +34,12 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["localhost"]
 backend_host = os.getenv("BACKEND_HOST")
-if backend_host:
+
+if "https://" in backend_host:
+    backend_host = backend_host.replace("https://", "")
+elif "http://" in backend_host:
+    backend_host = backend_host.replace("http://", "")
+elif backend_host:
     ALLOWED_HOSTS = [backend_host] + ALLOWED_HOSTS
 
 # Application definition

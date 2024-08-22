@@ -1,4 +1,4 @@
-import { AuthActions } from "@/lib/auth"
+import { AuthActions } from "@/lib/auth";
 
 // Extract necessary functions from the AuthActions utility.
 const { handleJWTRefresh, storeToken, getToken, removeTokens } = AuthActions();
@@ -55,7 +55,7 @@ export const fetcher = (
 ): Promise<any> => {
     const { method = "GET", body, next, cookies } = options;
     let fullUrl = `${baseUrl}${url}`;
-    let fetchOptions : any = {
+    let fetchOptions: any = {
         method,
         ...(body ? { body: JSON.stringify(body) } : {}),
         ...(cookies ? { cookies } : {}),
@@ -65,11 +65,11 @@ export const fetcher = (
         signal,
     };
 
-    if(!(body instanceof FormData)) {
+    if (!(body instanceof FormData)) {
         fetchOptions['headers'] = {
-          "Content-Type": "application/json",
+            "Content-Type": "application/json",
         }
-      }
+    }
 
 
     if (next?.tags) {
