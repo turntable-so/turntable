@@ -34,6 +34,11 @@ services:
           "8000",
           "--reload",
         ]
+    depends_on:
+      metabase:
+        condition: service_healthy
+      ensure_populate_test_db:
+        condition: service_completed_successfully
     environment:
       <<: *dev-credentials
     volumes:
@@ -41,14 +46,14 @@ services:
     stdin_open: true
     tty: true 
 
-  web:
-    extends:
-      file: docker-compose.yml
-      service: web
-    environment:
-      DEV: "true"
-    volumes:
-      - ./frontend:/code
+  # web:
+  #   extends:
+  #     file: docker-compose.yml
+  #     service: web
+  #   environment:
+  #     DEV: "true"
+  #   volumes:
+  #     - ./frontend:/code
 
   postgres:
     extends:
