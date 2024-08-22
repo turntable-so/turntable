@@ -149,8 +149,6 @@ def get_column_completion_from_dbt(
         }
 
     return get_column_completion(
-        schema=schema,
-        compiled_sql=compiled_sql,
         dbt_model_data=dbt_model_data,
         include_nested_fields=include_nested_fields,
         ai_model_name=ai_model_name,
@@ -167,8 +165,6 @@ class ModelData(TypedDict):
 
 
 def get_column_completion(
-    schema: str,
-    compiled_sql: str,
     dbt_model_data: dict[str, ModelData],
     include_nested_fields: bool = False,
     ai_model_name="gpt-4o",
