@@ -1,12 +1,12 @@
 import pytest
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework.test import APIClient
-from app.models import User
-from app.models import Resource, Workspace
-from django.contrib.auth import get_user_model
+
 from api.serializers import (
     ResourceSerializer,
 )
+from app.models import Resource, User, Workspace
 
 User = get_user_model()
 
@@ -85,7 +85,7 @@ class ResourceViewSetTestCases(TestCase):
 
         self.assertEqual(response.status_code, 200)
         resource = Resource.objects.get(id=resource_id)
-        self.assertEquals(resource.name, "Test Resource")
+        self.assertEqual(resource.name, "Test Resource")
 
     def test_update_bigquery_resource_detail(self):
         resource_id = self._create_resource()
@@ -98,7 +98,7 @@ class ResourceViewSetTestCases(TestCase):
 
         self.assertEqual(response.status_code, 200)
         resource = Resource.objects.get(id=resource_id)
-        self.assertEquals(resource.details.service_account, "{ 'new': 'value' }")
+        self.assertEqual(resource.details.service_account, "{ 'new': 'value' }")
 
     def test_delete_bigquery_resource(self):
         resource_id = self._create_resource()
@@ -125,3 +125,99 @@ class ResourceViewSetTestCases(TestCase):
         }
         response = self.client.post("/resources/", data, format="json")
         self.assertContains(response, "id", status_code=201)
+
+    def test_create_dbt_resource(self):
+        resource_id = self._create_resource()
+        response = self.client.get("/resources/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data[0]["has_dbt"], False)
+        data = {
+            "resource": {
+                "name": "my dbt project",
+                "type": "db",
+            },
+            "subtype": "dbt",
+            "config": {
+                "resource_id": resource_id,
+                "git_repo_url": "git@github.com:turntable-so/dbt.git",
+                "main_git_branch": "main",
+                "project_path": "/",
+                "threads": 1,
+                "version": "1.6",
+                "database": "test",
+                "schema": "test",
+            },
+        }
+        response = self.client.post("/resources/", data, format="json")
+        self.assertContains(response, "id", status_code=201)
+
+        # should show up in the resource details on the list view
+        response = self.client.get("/resources/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data[0]["has_dbt"], True)
+
+    def test_create_dbt_resource_get_details(self):
+        resource_id = self._create_resource()
+        data = {
+            "resource": {
+                "type": "db",
+            },
+            "subtype": "dbt",
+            "config": {
+                "resource_id": resource_id,
+                "git_repo_url": "git@github.com:turntable-so/dbt.git",
+                "main_git_branch": "main",
+                "project_path": "/",
+                "threads": 1,
+                "version": "1.6",
+                "database": "test",
+                "schema": "test",
+            },
+        }
+        response = self.client.post("/resources/", data, format="json")
+        self.assertContains(response, "id", status_code=201)
+
+        resource_id = response.data["id"]
+        response = self.client.get(f"/resources/{resource_id}/")
+        self.assertContains(response, "dbt_details", status_code=200)
+
+    def test_update_dbt(self):
+        resource_id = self._create_resource()
+        data = {
+            "resource": {
+                "type": "db",
+            },
+            "subtype": "dbt",
+            "config": {
+                "resource_id": resource_id,
+                "git_repo_url": "git@github.com:turntable-so/dbt.git",
+                "main_git_branch": "main",
+                "project_path": "/",
+                "threads": 1,
+                "version": "1.6",
+                "database": "test",
+                "schema": "test",
+            },
+        }
+        response = self.client.post("/resources/", data, format="json")
+        self.assertContains(response, "id", status_code=201)
+
+        data = {
+            "subtype": "dbt",
+            "config": {
+                "resource_id": resource_id,
+                "deploy_key": "ssh-key",
+                "git_repo_url": "git@github.com:turntable-so/dbt.git",
+                "main_git_branch": "main",
+                "project_path": "/",
+                "threads": 1,
+                "version": "1.6",
+                "database": "test",
+                "schema": "test",
+            },
+        }
+
+        response = self.client.patch(f"/resources/{resource_id}/", data, format="json")
+        self.assertEqual(response.status_code, 200)
+        resource = Resource.objects.get(id=resource_id)
+        self.assertEqual(resource.name, "Test Resource")
