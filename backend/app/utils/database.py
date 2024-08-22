@@ -1,7 +1,51 @@
 from django.db.models import Model
 
-from app.models import Resource
+from app.models import (
+    Asset,
+    Column,
+    Resource
+)
 
+def detect_asset_changes(
+    new_asset: Asset,
+    new_columns: list[Column],
+):
+    if new_asset is None or new_asset.id is None:
+        raise ValueError(
+            "Resource must have an id to use the `detect_asset_changes` function"
+        )
+    
+    current_assets = Asset.objects.filter(id=new_asset.id)
+
+    if len(current_assets) == 0:
+        # This is a brand new asset
+        return True
+    if len(current_assets) > 1:
+        raise ValueError(
+            "Multiple assets with id {new_asset.id} found in the database"
+        )
+    current_asset = current_assets[0]
+
+    has_description_change = new_asset.description != current_asset.description
+    has_sql_change = new_asset.sql != current_asset.sql
+
+    # Return early to avoid unnecessary column lookups below
+    if has_description_change or has_sql_change:
+        return True
+
+    new_column_types = {}
+    for column in new_columns:
+        new_column_types[column.name] = column.type
+
+    current_columns = Column.objects.filter(asset_id=new_asset.id)
+    current_column_types = {}
+    for column in current_columns:
+        current_column_types[column.name] = column.type
+
+    column_diffs = set(new_column_types.items()) ^ set(current_column_types.items())
+    has_column_changes = bool(column_diffs)
+
+    return has_column_changes
 
 def delete_and_upsert(
     instances: list[Model],
