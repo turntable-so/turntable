@@ -48,6 +48,7 @@ services:
      extends:
        file: docker-compose.yml
        service: web
+     command: ["pnpm", "dev"]
      environment:
        DEV: "true"
        NEXTAUTH_URL_INTERNAL: "http://web:3000"
