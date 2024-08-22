@@ -1,8 +1,9 @@
 "use client";
 
-import * as React from "react";
 import { X } from "lucide-react";
+import * as React from "react";
 
+import { Command as CommandPrimitive } from "cmdk";
 import { Badge } from "./badge";
 import {
     Command,
@@ -10,7 +11,6 @@ import {
     CommandItem,
     CommandList,
 } from "./command";
-import { Command as CommandPrimitive } from "cmdk";
 import { ScrollArea } from "./scroll-area";
 
 type Item = Record<"value" | "label", string>;
@@ -51,7 +51,9 @@ export function FancyMultiSelect({ items, selected, setSelected, label, function
         []
     );
 
+
     React.useEffect(() => {
+        {/* @ts-ignore */ }
         setSelectables(items.filter(
             (item) => !(selected.map(selectedItem => selectedItem.value).includes(item.value))
         )
@@ -106,15 +108,15 @@ export function FancyMultiSelect({ items, selected, setSelected, label, function
                         <div className="absolute top-0 z-10 w-full rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
                             <ScrollArea>
                                 <CommandGroup className="max-h-[400px] overflow-auto">
-                                    {selectables.map((item) => {
+                                    {selectables.map((item: any) => {
                                         return (
                                             <CommandItem
-                                                key={item.value}
+                                                key={item.value as any}
                                                 onMouseDown={(e) => {
                                                     e.preventDefault();
                                                     e.stopPropagation();
                                                 }}
-                                                onSelect={(value) => {
+                                                onSelect={(item) => {
                                                     setInputValue("");
                                                     if (functionSelected) {
                                                         const newSelected = [...selected, item];
@@ -133,7 +135,7 @@ export function FancyMultiSelect({ items, selected, setSelected, label, function
                         </div>
                     ) : null}
                 </CommandList>
-            </div>
-        </Command>
+            </div >
+        </Command >
     );
 }
