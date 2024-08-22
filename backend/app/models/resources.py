@@ -410,7 +410,7 @@ class MetabaseDetails(ResourceDetails):
     subtype = models.CharField(max_length=255, default=ResourceSubtype.METABASE)
     username = encrypt(models.CharField(max_length=255, blank=False))
     password = encrypt(models.CharField(max_length=255, blank=False))
-    connect_uri = encrypt(models.URLField(blank=False))
+    connect_uri = encrypt(models.CharField(blank=False, max_length=255))
 
     @property
     def venv_path(self):
