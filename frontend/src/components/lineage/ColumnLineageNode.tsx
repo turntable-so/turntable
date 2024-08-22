@@ -23,8 +23,8 @@ import { columns } from "../ui/Columns";
 import { ColumnTypeIcon } from "../ColumnTypeIcon";
 import { DbtCorelogo } from "../connections/AddNewSourceSection";
 import { getAssetIcon } from "../../lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 // import { useHotkeys } from 'react-hotkeys-hook';
-
 
 const ModelIcon = () => (
   <div className="min-w-[1rem] h-4">
@@ -93,14 +93,14 @@ function Header({
         position={Position.Left}
       />
 
-      <div className={`font-medium items-center truncate text-ellipsis flex gap-1`}>
+      <div
+        className={`font-medium items-center truncate text-ellipsis flex gap-1`}
+      >
         {isLoading ? (
           <div />
         ) : (
           <>
-            <div className="mr-0.5">
-              {getAssetIcon(type, resourceType)}
-            </div>
+            <div className="mr-0.5">{getAssetIcon(type, resourceType)}</div>
             {/* {hasFile && (
                             <div
                                 className={`rounded-sm cursor-pointer hidden group-hover:block hover:opacity-50
@@ -115,8 +115,15 @@ function Header({
                         )} */}
           </>
         )}
-        <div className="flex gap-0 flex-col">
-          <div className="font-mono font-semibold">{tableName}</div>
+        <div className="flex gap-0 flex-col overflow-auto size-full">
+          <Tooltip>
+            <TooltipTrigger>
+              <div className="font-mono font-semibold truncate">
+                {tableName}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>{tableName}</TooltipContent>
+          </Tooltip>
           <div className="text-gray-500">{type}</div>
         </div>
       </div>
