@@ -119,7 +119,7 @@ function Header({
           <Tooltip>
             <TooltipTrigger>
               <div className="font-mono font-semibold truncate">
-                FOOOOOOOOOBAARFOOOOOOOOOBAARFOOOOOOOOOBAARFOOOOOOOOOBAARFOOOOOOOOOBAARFOOOOOOOOOBAARFOOOOOOOOOBAAR
+                {tableName}
               </div>
             </TooltipTrigger>
             <TooltipContent>{tableName}</TooltipContent>
