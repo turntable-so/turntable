@@ -13,8 +13,6 @@ from app.models import (
     Workspace,
 )
 from vinyl.lib.dbt_methods import DBTVersion
-from workflows.metadata_sync import MetadataSyncWorkflow
-from workflows.utils.debug import WorkflowDebugger
 
 
 def local_user():
@@ -88,9 +86,9 @@ class Command(BaseCommand):
 
         user = local_user()
         workspace = local_workspace(user)
-        postgres = local_postgres(workspace)
+        # postgres = local_postgres(workspace)
         metabase = local_metabase(workspace)
-        WorkflowDebugger(MetadataSyncWorkflow, {"resource_id": postgres.id}).run()
-        WorkflowDebugger(MetadataSyncWorkflow, {"resource_id": metabase.id}).run()
+        # WorkflowDebugger(MetadataSyncWorkflow, {"resource_id": postgres.id}).run()
+        # WorkflowDebugger(MetadataSyncWorkflow, {"resource_id": metabase.id}).run()
 
         self.stdout.write(self.style.SUCCESS("Successfully seeded the database"))
