@@ -128,8 +128,6 @@ def get_table_completion_from_dbt(
 
 
 def get_column_completion_from_dbt(
-    schema: str,
-    compiled_sql: str,
     dbtproj: DBTProject,
     dbt_model_column_names: dict[str, Any],
     include_nested_fields: bool = False,
@@ -151,8 +149,6 @@ def get_column_completion_from_dbt(
         }
 
     return get_column_completion(
-        schema=schema,
-        compiled_sql=compiled_sql,
         dbt_model_data=dbt_model_data,
         include_nested_fields=include_nested_fields,
         ai_model_name=ai_model_name,
@@ -161,14 +157,14 @@ def get_column_completion_from_dbt(
         parallel=parallel,
     )
 
+
 class ModelData(TypedDict):
     schema: str
     compiled_sql: str
     column_names: list[str]
 
+
 def get_column_completion(
-    schema: str,
-    compiled_sql: str,
     dbt_model_data: dict[str, ModelData],
     include_nested_fields: bool = False,
     ai_model_name="gpt-4o",

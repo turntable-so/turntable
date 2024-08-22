@@ -4,7 +4,7 @@ import sqlglot.optimizer as sgo
 from sqlglot.optimizer.qualify import qualify
 
 
-def get_column_completion_from_dbt(
+def get_column_completion(
     sql_statement: str, table_or_cte: str, dialect: str = "duckdb"
 ):
     parsed = sg.parse(sql_statement, dialect=dialect)[0]
@@ -46,4 +46,4 @@ def get_column_completion_from_dbt(
 if __name__ == "__main__":
     sql = "with x as (SELECT t.three FROM my_table as t), y as (select a.two from pear as a) select y.* from y left join x"
     # sql = "with x as (SELECT t.three FROM my_table as t) select * from x"
-    out = get_column_completion_from_dbt(sql, "t")
+    out = get_column_completion(sql, "t")
