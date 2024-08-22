@@ -188,7 +188,7 @@ django-allauth==0.61.1
 django-cors-headers==4.4.0
 django-health-check==3.18.3
 django-invitations==2.1.0
-django-polymorphic @ git+https://github.com/jazzband/django-polymorphic.git@1039f882b99f97bf657bd958c949ee6a3b00377a
+django-polymorphic @ git+https://github.com/jazzband/django-polymorphic.git@1039f882b99f97bf657bd958c949ee6a3b00377a#egg=django-polymorphic
 django-storages==1.14.3
 django-templated-mail==1.1.1
     # via djoser
@@ -553,7 +553,7 @@ pyasn1-modules==0.4.0
     # via google-auth
 pycparser==2.22
     # via cffi
-pydantic==2.8.0
+pydantic==2.8.2
     # via acryl-datahub
     # via dbt-semantic-interfaces
     # via fastapi
@@ -565,7 +565,7 @@ pydantic==2.8.0
     # via openai
     # via postgrest
     # via turntable-cli
-pydantic-core==2.20.0
+pydantic-core==2.20.1
     # via instructor
     # via pydantic
 pydata-google-auth==1.8.2
