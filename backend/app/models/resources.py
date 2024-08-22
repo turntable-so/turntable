@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import tempfile
@@ -7,13 +8,14 @@ from typing import Any
 
 import yaml
 from django.contrib.postgres.fields import ArrayField
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files import File
 from django.db import models
 from polymorphic.models import PolymorphicModel
 
 from app.models.auth import Workspace
 from app.models.git_connections import GithubInstallation
+from app.services.code_repo_service import CodeRepoService
 from app.services.github_service import GithubService
 from app.utils.fields import encrypt
 from vinyl.lib.connect import (
@@ -47,11 +49,8 @@ class ResourceSubtype(models.TextChoices):
     POSTGRES = "postgres", "Postgres"
     DUCKDB = "duckdb", "File"
     FILE = "file", "File"
-
-
-class DBTResourceSubtype(models.TextChoices):
-    CORE = "core", "Core"
-    CLOUD = "cloud", "Cloud"
+    DBT = "dbt", "Dbt"
+    DBT_CLOUD = "dbt_cloud", "Dbt Cloud"
 
 
 # helper functions
@@ -70,7 +69,18 @@ def repo_path(obj):
     github_repo_id = getattr(obj, "github_repo_id")
     github_installation_id = getattr(obj, "github_installation_id")
     project_path = getattr(obj, "project_path")
-    if github_repo_id is not None and github_installation_id is not None:
+    git_repo_url = getattr(obj, "git_repo_url")
+    if git_repo_url is not None:
+        deploy_key = getattr(obj, "deploy_key")
+        coderepo_service = CodeRepoService(obj.resource.workspace.id)
+        with coderepo_service.repo_context(
+            public_key=deploy_key,
+            git_repo_url=git_repo_url,
+        ) as temp_dir:
+            project_path = os.path.join(temp_dir, project_path)
+
+            yield project_path
+    elif github_repo_id is not None and github_installation_id is not None:
         github_service = GithubService(
             obj.resource.workspace.id, github_installation_id
         )
@@ -120,6 +130,10 @@ class Resource(models.Model):
     def subtype(self):
         return self.details.subtype
 
+    @property
+    def has_dbt(self):
+        return self.dbtresource_set.exists()
+
     def get_dbt_resource(self, dbt_resource_id):
         if dbt_resource_id is None:
             dbt_resource_count = self.dbtresource_set.count()
@@ -133,7 +147,7 @@ class Resource(models.Model):
                 dbt_resource.resource.id == self.id
             ), f"Specified DBT resource does not belong to the resource {self.id}"
         assert (
-            dbt_resource.subtype == DBTResourceSubtype.CORE
+            dbt_resource.subtype == ResourceSubtype.DBT
         ), "Expected DBT core resource. Currently, running dbt cloud resources is not supported."
 
         return dbt_resource
@@ -310,7 +324,7 @@ class DBTResource(PolymorphicModel):
 
     @classmethod
     def get_default_subtype(cls):
-        return DBTResourceSubtype.CORE
+        return ResourceSubtype.DBT
 
 
 ## BI polymorphisms
@@ -396,7 +410,7 @@ class MetabaseDetails(ResourceDetails):
     subtype = models.CharField(max_length=255, default=ResourceSubtype.METABASE)
     username = encrypt(models.CharField(max_length=255, blank=False))
     password = encrypt(models.CharField(max_length=255, blank=False))
-    connect_uri = encrypt(models.URLField(blank=False))
+    connect_uri = encrypt(models.CharField(blank=False, max_length=255))
 
     @property
     def venv_path(self):
@@ -429,11 +443,14 @@ class MetabaseDetails(ResourceDetails):
 
 ## DBT polymorphisms
 class DBTCoreDetails(DBTResource):
-    subtype = models.CharField(max_length=255, default=DBTResourceSubtype.CORE)
+    subtype = models.CharField(max_length=255, default=ResourceSubtype.DBT)
     github_installation = models.ForeignKey(
         GithubInstallation, null=True, on_delete=models.CASCADE
     )
     github_repo_id = encrypt(models.CharField(max_length=255, null=True))
+    deploy_key = encrypt(models.TextField(null=True))
+    git_repo_url = models.CharField(max_length=255, null=True)
+    main_git_branch = models.CharField(max_length=255, null=True)
     project_path = models.CharField(max_length=255, blank=False)
     database = encrypt(models.CharField(max_length=255, blank=False))
     schema = encrypt(models.CharField(max_length=255, blank=False))
@@ -445,6 +462,11 @@ class DBTCoreDetails(DBTResource):
         choices=[(v, v.value) for v in DBTVersion], max_length=255, blank=False
     )
     env_vars = encrypt(models.JSONField(null=True))
+
+    def save(self, *args, **kwargs):
+        if isinstance(self.version, DBTVersion):
+            self.version = self.version.value
+        super().save(*args, **kwargs)
 
     @contextmanager
     def dbt_repo_context(self):
@@ -461,14 +483,17 @@ class DBTCoreDetails(DBTResource):
                     )
                     adj_profile_contents = {profile_name: profile_contents}
                     yaml.dump(adj_profile_contents, f)
-                dbtproj = DBTProject(
-                    project_path,
-                    DBTDialect._value2member_map_[dialect_str],
-                    DBTVersion._value2member_map_[self.version],
-                    dbt_profiles_dir=dbt_profiles_dir,
-                    env_vars={} if env_vars is None else env_vars,
-                )
-                yield (dbtproj, project_path)
+                with open(os.path.join(dbt_profiles_dir, "profiles.yml"), "r") as f:
+                    yield (
+                        DBTProject(
+                            project_path,
+                            DBTDialect._value2member_map_[dialect_str],
+                            self.version,
+                            dbt_profiles_dir=dbt_profiles_dir,
+                            env_vars={} if env_vars is None else env_vars,
+                        ),
+                        project_path,
+                    )
 
     def upload_artifacts(self):
         with self.dbt_repo_context() as (dbtproj, project_path):
@@ -518,7 +543,7 @@ class DBTCoreDetails(DBTResource):
 
 
 class DBTCloudDetails(DBTResource):
-    subtype = models.CharField(max_length=255, default=DBTResourceSubtype.CLOUD)
+    subtype = models.CharField(max_length=255, default=ResourceSubtype.DBT_CLOUD)
     api_token = encrypt(models.CharField(max_length=255, blank=False))
     account_id = encrypt(models.CharField(max_length=255, blank=False))
     project_id = encrypt(models.CharField(max_length=255, blank=False))
@@ -681,6 +706,21 @@ class BigqueryDetails(DBDetails):
     service_account = encrypt(models.JSONField())
 
     @property
+    def service_account_dict(self):
+        if isinstance(self.service_account, str):
+            try:
+                return json.loads(self.service_account)
+            except json.JSONDecodeError:
+                raise ValidationError("Invalid JSON in service_account")
+        return self.service_account
+
+    def save(self, *args, **kwargs):
+        # ensure service account is saved as a JSON string
+        if isinstance(self.service_account, dict):
+            self.service_account = json.dumps(self.service_account)
+        super().save(*args, **kwargs)
+
+    @property
     def venv_path(self):
         return ".bigqueryvenv"
 
@@ -690,20 +730,20 @@ class BigqueryDetails(DBDetails):
 
     def get_connector(self):
         return BigQueryConnector(
-            service_account_info=self.service_account,
-            tables=[f"{self.service_account['project']}.*.*"],
+            service_account_info=self.service_account_dict,
+            tables=[f"{self.service_account_dict['project']}.*.*"],
         )
 
     def get_datahub_config(self, db_path):
-        adj_service_account = dict(self.service_account)
-        adj_service_account.pop("universe_domain", None)
+        service_account = self.service_account_dict.copy()
+        service_account.pop("universe_domain", None)
         return {
             "source": {
                 "type": "bigquery",
                 "config": {
                     "start_time": f"-{self.lookback_days}d",
-                    "credential": adj_service_account,
-                    "project_ids": [adj_service_account["project_id"]],
+                    "credential": service_account,
+                    "project_ids": [service_account["project_id"]],
                     "include_table_lineage": False,
                     "include_table_location_lineage": False,
                     "include_view_lineage": False,
@@ -724,7 +764,7 @@ class BigqueryDetails(DBDetails):
                     "method": "service-account-json",
                     "project": dbt_core_resource.database,
                     "schema": dbt_core_resource.schema,
-                    "keyfile_json": self.service_account,
+                    "keyfile_json": self.service_account_dict,
                     "threads": dbt_core_resource.threads,
                 }
             },

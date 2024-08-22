@@ -4,7 +4,7 @@
 import { BigQueryLogo } from '@/components/connections/connection-options';
 import BigqueryForm from "@/components/connections/forms/bigquery-form";
 import { Button } from "@/components/ui/button";
-import { Card, CardDescription, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoaderButton } from "@/components/ui/LoadingSpinner";
 import { Separator } from "@/components/ui/separator";
 import { ChevronLeft } from "lucide-react";
@@ -17,6 +17,8 @@ dayjs.extend(relativeTime)
 
 import useSession from '@/app/hooks/use-session';
 import useWorkflowUpdates from '@/app/hooks/use-workflow-updates';
+import DbtProjectForm from '@/components/connections/forms/dbt-project-form';
+import MetabaseForm from '@/components/connections/forms/metabase-form';
 import {
     AlertDialog,
     AlertDialogCancel,
@@ -27,16 +29,24 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import PostgresForm from "../../components/connections/forms/postgres-form";
-import { PostgresLogo } from "../../lib/utils";
+import { MetabaseIcon, PostgresLogo } from "../../lib/utils";
 import { deleteResource, syncResource } from "../actions/actions";
 
-export default function ConnectionLayout({ resource, details }: { resource?: any, details?: any }) {
+type DbtDetails = {
+    git_repo_url: string
+    main_git_branch: string
+    project_path: string
+    threads: number
+    version: string
+    database: string
+    schema: string
+}
+
+export default function ConnectionLayout({ resource, details, dbtDetails }: { resource?: any, details?: any, dbtDetails?: DbtDetails }) {
     const router = useRouter()
     const session = useSession()
 
     const workflowUpdates = useWorkflowUpdates(session.user.current_workspace.id)
-
-    console.log({ workflowUpdates })
 
 
     return (
@@ -48,6 +58,7 @@ export default function ConnectionLayout({ resource, details }: { resource?: any
                 <div className='flex space-x-2 items-center'>
                     {resource.subtype === 'bigquery' && <BigQueryLogo />}
                     {resource.subtype === 'postgres' && <PostgresLogo />}
+                    {resource.subtype === 'metabase' && <MetabaseIcon />}
                     <div>Edit {resource.name}</div>
                 </div>
             </Button>
@@ -69,11 +80,21 @@ export default function ConnectionLayout({ resource, details }: { resource?: any
                             syncResourceAndRefresh()
                         }} variant='secondary' > Run Sync</Button>
                     </Card>
-                    <Card className='px-3 py-6'>
-                        <CardTitle className='py-4'>Connection Details</CardTitle>
-                        {resource.subtype === 'bigquery' && <BigqueryForm resource={resource} details={details} />}
-                        {resource.subtype === 'postgres' && <PostgresForm resource={resource} details={details} />}
+                    <Card className='py-6'>
+                        <CardHeader>
+                            <CardTitle className="text-xl">
+                                Connection Details
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {resource.subtype === 'bigquery' && <BigqueryForm resource={resource} details={details} />}
+                            {resource.subtype === 'postgres' && <PostgresForm resource={resource} details={details} />}
+                            {resource.subtype === 'metabase' && <MetabaseForm resource={resource} details={details} />}
+                        </CardContent>
                     </Card>
+                    {dbtDetails && (
+                        <DbtProjectForm resource={resource} details={dbtDetails} />
+                    )}
                     <div className='h-4' />
                     <Card className='flex justify-between px-3 py-6 border-red-300'>
                         <div>

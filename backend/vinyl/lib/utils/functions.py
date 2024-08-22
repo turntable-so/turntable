@@ -5,7 +5,7 @@ from enum import Enum
 from functools import wraps
 from typing import get_type_hints
 
-from pydantic.validate_call_decorator import validate_call
+from pydantic import validate_call
 
 _validate = validate_call(
     validate_return=False, config={"arbitrary_types_allowed": True}
