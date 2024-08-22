@@ -1,6 +1,6 @@
 import pytest
 
-from ai.documentation.dbt import get_column_completion, get_table_completion
+from ai.documentation.dbt import get_column_completion_from_dbt, get_table_completion_from_dbt
 from ai.embeddings import embed
 from app.models import DBTCoreDetails
 
@@ -16,7 +16,7 @@ def test_table_description(local_postgres):
         dbtproj,
         dbt_path,
     ):
-        x = get_table_completion(
+        x = get_table_completion_from_dbt(
             dbtproj,
             "model.jaffle_shop.customers",
             ai_model_name="gpt-4o-mini",
@@ -32,7 +32,7 @@ def test_column_description(local_postgres):
         dbtproj,
         dbt_path,
     ):
-        x = get_column_completion(
+        x = get_column_completion_from_dbt(
             dbtproj,
             {"model.jaffle_shop.customers": ["count_lifetime_orders"]},
             ai_model_name="gpt-4o-mini",

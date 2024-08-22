@@ -7,6 +7,7 @@ from litellm import completion
 from mpire import WorkerPool
 from pydantic import BaseModel, create_model
 from tqdm import tqdm
+from typing import TypedDict
 
 from ai.embeddings import DEFAULT_EMBEDDING_MODEL, EmbeddingModes, embed
 from vinyl.lib.dbt import DBTProject
@@ -64,34 +65,65 @@ def get_schema_and_compiled_sql(
     return "\n".join([f"- {k}: {v['type']}" for k, v in columns.items()]), compiled_sql
 
 
-def get_table_completion(
-    dbtproj: DBTProject,
-    dbt_node_name: str,
+def get_chat_completion(
+    system_instructions_content: str,
+    prompt_content: str,
+    response_model: ModelDescription | ColumnDescription,
     ai_model_name="gpt-4o",
-    compile_if_not_found=True,
 ):
     client = instructor.from_litellm(completion, temperature=0)
-    schema, compiled_sql = get_schema_and_compiled_sql(
-        dbtproj, dbt_node_name, compile_if_not_found=compile_if_not_found
-    )
-    content = f"model name: {dbt_node_name.split('.')[-1]}\n\n"
-    content += f"schema:\n{schema}\n\n"
-    content += f"compiled_sql:\n{compiled_sql}"
     resp = client.chat.completions.create(
         model=ai_model_name,
         messages=[
             {
                 "role": "system",
-                "content": MODEL_SYSTEM_PROMPT,
+                "content": system_instructions_content,
             },
-            {"role": "user", "content": content},
+            {"role": "user", "content": prompt_content},
         ],
-        response_model=ModelDescription,
+        response_model=response_model,
     )
+
     return resp.description
 
 
-def get_column_completion(
+def get_table_completion(
+    model_name: str,
+    schema: str,
+    compiled_sql: str,
+    ai_model_name="gpt-4o",
+):
+    content = f"model name: {model_name.split('.')[-1]}\n\n"
+    content += f"schema:\n{schema}\n\n"
+    content += f"compiled_sql:\n{compiled_sql}"
+
+    return get_chat_completion(
+        system_instructions_content=MODEL_SYSTEM_PROMPT,
+        prompt_content=content,
+        ai_model_name=ai_model_name,
+        response_model=ModelDescription,
+    )
+
+
+def get_table_completion_from_dbt(
+    dbtproj: DBTProject,
+    dbt_node_name: str,
+    ai_model_name="gpt-4o",
+    compile_if_not_found=True,
+):
+    schema, compiled_sql = get_schema_and_compiled_sql(
+        dbtproj, dbt_node_name, compile_if_not_found=compile_if_not_found
+    )
+
+    return get_table_completion(
+        model_name=dbt_node_name.split(".")[-1],
+        schema=schema,
+        compiled_sql=compiled_sql,
+        ai_model_name=ai_model_name,
+    )
+
+
+def get_column_completion_from_dbt(
     dbtproj: DBTProject,
     dbt_model_column_names: dict[str, Any],
     include_nested_fields: bool = False,
@@ -101,8 +133,6 @@ def get_column_completion(
     progress_bar=True,
     parallel=True,
 ):
-    client = instructor.from_litellm(completion, temperature=0)
-
     def helper(model_name: str, colnames_orjson: str):
         colnames = orjson.loads(colnames_orjson)
         fields = {f"{k}": (ColumnDescription, ...) for k in colnames}
@@ -114,18 +144,13 @@ def get_column_completion(
         for colname in colnames:
             content += f"\n- {colname}"
         try:
-            resp, completion = client.chat.completions.create_with_completion(
-                model=ai_model_name,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": COLUMN_SYSTEM_PROMPT,
-                    },
-                    {"role": "user", "content": content},
-                ],
+            resp = get_chat_completion(
+                system_instructions_content=COLUMN_SYSTEM_PROMPT,
+                prompt_content=content,
+                ai_model_name=ai_model_name,
                 response_model=ColumnDescriptionModel,
-                strict=False,
             )
+
             return {
                 model_name: {k: v["description"] for k, v in resp.model_dump().items()}
             }
