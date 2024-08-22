@@ -35,15 +35,11 @@ const handler = NextAuth({
       },
       async authorize(credentials, req) {
         try {
-          console.log("Authorizing credentials:", credentials);
-
           const answer = await login(
             (credentials as any).email,
             (credentials as any).password
           );
           const json: any = await answer.json();
-          console.log("Login response:", json);
-
           setCookie("accessToken", json.access, { cookies });
           setCookie("refreshToken", json.refresh, { cookies });
           return {
