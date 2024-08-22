@@ -1,32 +1,29 @@
 "use client";
-import { useAppContext } from "@/contexts/AppContext";
-import useResizeObserver from "use-resize-observer";
 import { Button } from "@/components/ui/button";
+import { useAppContext } from "@/contexts/AppContext";
 import { Loader2, SlidersHorizontal } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
-import { Fragment, memo, useEffect, useMemo, useRef, useState } from "react";
-import { FixedSizeList as List } from "react-window";
-import { getNotebooks } from "../app/actions/actions";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import useResizeObserver from "use-resize-observer";
+import { getNotebooks } from "../app/actions/actions";
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@radix-ui/react-dropdown-menu";
+import { PopoverContent } from "@radix-ui/react-popover";
+import ModelPreviewer from "./ModelPreviewer";
+import { Card, CardContent } from "./ui/card";
+import { Popover, PopoverTrigger } from "./ui/popover";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "./ui/resizable";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ModelPreviewer from "./ModelPreviewer";
-import { Popover, PopoverTrigger } from "./ui/popover";
-import { PopoverContent } from "@radix-ui/react-popover";
-import { Card, CardContent } from "./ui/card";
-import { Label } from "@radix-ui/react-dropdown-menu";
 
-import { FancyMultiSelect } from "./ui/multi-select";
-import { getAssetIcon, getLeafIcon } from "@/lib/utils";
-import { ScrollArea } from "./ui/scroll-area";
 import { Tree } from "@/components/ui/tree";
-import { Workflow, Folder, Layout } from "lucide-react";
-import { Asset } from "./lineage/LineageView";
+import { getAssetIcon, getLeafIcon } from "@/lib/utils";
+import { Folder, Workflow } from "lucide-react";
+import { FancyMultiSelect } from "./ui/multi-select";
 // @ts-ignore
 const groupBy = (array, key) =>
   array.reduce((result: any, currentValue: any) => {
@@ -165,10 +162,10 @@ export default function ActionBar({
       const filteredAssetsFromTags =
         selectedTagFilters.length > 0
           ? filteredAssetsFromQuery.filter((asset: Model) =>
-              selectedTagFilters.some(
-                (tag) => asset.tags && asset.tags.includes(tag.value)
-              )
+            selectedTagFilters.some(
+              (tag) => asset.tags && asset.tags.includes(tag.value)
             )
+          )
           : filteredAssetsFromQuery;
 
       acc[resourceId] = {
@@ -269,12 +266,12 @@ export default function ActionBar({
         .map((name) =>
           nameGrouped[name].length > 1
             ? createChildNode(
-                resource,
-                assetType,
-                nameGrouped[name],
-                getAssetIcon,
-                name
-              )
+              resource,
+              assetType,
+              nameGrouped[name],
+              getAssetIcon,
+              name
+            )
             : createFinalNode(nameGrouped[name][0], getLeafIcon(assetType))
         ),
     });
@@ -321,7 +318,7 @@ export default function ActionBar({
 
     setTreeData(treeData);
   }, [filteredAssets, resources]);
-  const isCurrentNotebook = (pathName, id) => {
+  const isCurrentNotebook = (pathName: string, id: string) => {
     return pathName.includes(id);
   };
 
@@ -362,12 +359,13 @@ export default function ActionBar({
                       <Label className="flex space-x-1 items-center">
                         <div className="text-sm pl-1">Filter by tag</div>
                       </Label>
+                      {/* @ts-ignore */}
                       <FancyMultiSelect
                         items={tags.map((tag: string) => ({
                           label: tag,
                           value: tag,
                         }))}
-                        selected={selectedTagFilters}
+                        selected={selectedTagFilters as any}
                         setSelected={setSelectedTagFilters}
                         label="Select tags"
                       />
@@ -404,9 +402,8 @@ export default function ActionBar({
         </div>
       </div>
       <div
-        className={`flex-grow border-t mt-0 h-500 ${
-          isFilterPopoverOpen ? "z-[-1]" : ""
-        }`}
+        className={`flex-grow border-t mt-0 h-500 ${isFilterPopoverOpen ? "z-[-1]" : ""
+          }`}
       >
         <Tabs defaultValue="assets" className="h-full">
           <TabsList
@@ -414,10 +411,10 @@ export default function ActionBar({
             style={
               !isNotebook
                 ? {
-                    opacity: 0,
-                    pointerEvents: "none",
-                    height: 0,
-                  }
+                  opacity: 0,
+                  pointerEvents: "none",
+                  height: 0,
+                }
                 : {}
             }
           >
@@ -426,9 +423,9 @@ export default function ActionBar({
               style={
                 !isNotebook
                   ? {
-                      opacity: 0,
-                      pointerEvents: "none",
-                    }
+                    opacity: 0,
+                    pointerEvents: "none",
+                  }
                   : {}
               }
             >
@@ -540,24 +537,21 @@ export default function ActionBar({
                   <Button
                     variant={"ghost"}
                     size="icon"
-                    className={`w-full ${
-                      isCurrentNotebook(pathName, notebook.id)
-                        ? "opacity-100"
-                        : "opacity-50"
-                    } ${
-                      isCurrentNotebook(pathName, notebook.id)
+                    className={`w-full ${isCurrentNotebook(pathName, notebook.id)
+                      ? "opacity-100"
+                      : "opacity-50"
+                      } ${isCurrentNotebook(pathName, notebook.id)
                         ? "bg-"
                         : "bg-transparent"
-                    } `}
+                      } `}
                     aria-label={notebook.title}
                   >
                     <Link href={`/notebooks/${notebook.id}`} className="w-full">
                       <div
-                        className={`${
-                          isCurrentNotebook(pathName, notebook.id)
-                            ? "bg-[#ebebeb]"
-                            : "hover:bg-[#ebebeb]"
-                        } px-4 p-2 w-full flex  space-x-2`}
+                        className={`${isCurrentNotebook(pathName, notebook.id)
+                          ? "bg-[#ebebeb]"
+                          : "hover:bg-[#ebebeb]"
+                          } px-4 p-2 w-full flex  space-x-2`}
                       >
                         <p className="font-normal text-[15px]">
                           {notebook.title}
