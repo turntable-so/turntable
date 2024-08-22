@@ -22,6 +22,7 @@ from app.models import (
     Workspace,
     WorkspaceGroup,
 )
+from app.models.resources import MetabaseDetails
 from vinyl.lib.dbt_methods import DBTVersion
 
 Invitation = get_invitation_model()
@@ -281,6 +282,12 @@ class PostgresDetailsSerializer(ResourceDetailsSerializer):
     class Meta:
         model = PostgresDetails
         fields = ["host", "username", "password", "database", "port"]
+
+
+class MetabaseDetailsSerializer(ResourceDetailsSerializer):
+    class Meta:
+        model = MetabaseDetails
+        fields = ["username", "password", "connect_uri"]
 
 
 class DBTVersionField(serializers.ChoiceField):
