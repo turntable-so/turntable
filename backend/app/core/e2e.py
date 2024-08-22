@@ -17,15 +17,18 @@ from datahub.metadata.com.linkedin.pegasus2avro.assertion import (
 from datahub.metadata.urns import ChartUrn, DashboardUrn, DatasetUrn, SchemaFieldUrn
 from datahub.utilities.urns.error import InvalidUrnError
 from django.forms.models import model_to_dict
+from django.db.models import Model
 from sqlglot import Expression, exp
 from sqlglot.errors import ParseError
 
 from app.models import Asset, Resource, ResourceType
-from app.utils.database import delete_and_upsert
+from app.utils.database import detect_asset_changes, delete_and_upsert
 from vinyl.lib.errors import VinylError, VinylErrorType
 from vinyl.lib.schema import VinylSchema
 from vinyl.lib.sqlast import SQLAstNode
 from vinyl.lib.utils.graph import nx_remove_node_and_reconnect
+from ai.documentation.dbt import get_schema_description, get_table_completion, get_column_completion
+
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "api.settings")
 django.setup()
@@ -880,6 +883,65 @@ class DataHubDBParser:
         return Asset(id=id, name=asset_name, type=asset_type, resource=resource_it)
 
     @classmethod
+    def generate_descriptions_if_needed(
+        cls, assets: list[Asset], columns: list[Column]
+    ):
+        assets_with_descriptions = assets
+        columns_with_descriptions = columns
+
+        has_any_asset_changed = False
+
+        for idx, asset in enumerate(assets):
+            if asset.type != "model":
+                # We only generate descriptions for model assets
+                continue
+
+            asset_columns = list(filter(lambda x: x.asset_id == asset.id, columns))
+            schema = "\n".join(
+                [get_schema_description(columnName=column.name, columnType=column.type) for column in asset_columns]
+            )
+            has_asset_changed = detect_asset_changes(asset, columns)
+
+            if has_asset_changed:
+                has_any_asset_changed = True
+                breakpoint()
+                asset_ai_description = get_table_completion(
+                    asset.name, schema, asset.sql, ai_model_name="gpt-3.5-turbo-1106"
+                )
+                assets[idx].ai_description = asset_ai_description
+                breakpoint()
+
+        if has_any_asset_changed:
+            # We generate all column descriptions at once to avoid multiple calls to the AI model
+            # So if any asset has changed, we'll trigger a regeneration of column descriptions
+            dbt_model_data = {}
+            for asset in assets:
+                if asset.type != "model":
+                    continue
+                columns_for_asset = [
+                    column.name
+                    for column in list(
+                        filter(lambda x: x.asset_id == asset.id, columns)
+                    )
+                ]
+                dbt_model_data[asset.name] = {
+                    "schema": asset.schema,
+                    "compiled_sql": asset.sql,
+                    "column_names": columns_for_asset,
+                }
+
+            columns_with_descriptions = get_column_completion(
+                dbt_model_data=dbt_model_data,
+                ai_model_name="gpt-3.5-turbo-1106",
+            )
+            for idx, column in enumerate(columns):
+                columns_with_descriptions[
+                    idx
+                ].ai_description = columns_with_descriptions[column.id]
+
+        return assets_with_descriptions, columns_with_descriptions
+
+    @classmethod
     def combine_and_upload(cls, parsers: list[DataHubDBParser], resource: Resource):
         combined = cls.combine(parsers, resource)
         all_resource_dict = {
@@ -918,8 +980,14 @@ class DataHubDBParser:
             )
             indirect_columns.append(column)
 
-        delete_and_upsert(combined["assets"], resource, indirect_assets)
+        # Must run ai gen before this otherwise there will appear to be no diff
+        breakpoint()
+        assets_with_descriptions, columns_with_descriptions = (
+            cls.generate_descriptions_if_needed(combined["assets"], combined["columns"])
+        )
+
+        delete_and_upsert(assets_with_descriptions, resource, indirect_assets)
         delete_and_upsert(combined["asset_errors"], resource)
         delete_and_upsert(combined["asset_links"], resource)
         delete_and_upsert(combined["columns"], resource, indirect_columns)
-        delete_and_upsert(combined["column_links"], resource)
+        delete_and_upsert(columns_with_descriptions, resource)
