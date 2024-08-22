@@ -5,11 +5,18 @@ from rest_framework.exceptions import ValidationError
 from api.serializers import (
     BigQueryDetailsSerializer,
     DBTCoreDetailsSerializer,
+    MetabaseDetailsSerializer,
     PostgresDetailsSerializer,
     ResourceSerializer,
 )
 from app.models import DBTCoreDetails, Resource, Workspace
-from app.models.resources import BigqueryDetails, PostgresDetails, ResourceSubtype
+from app.models.resources import (
+    BigqueryDetails,
+    MetabaseDetails,
+    PostgresDetails,
+    ResourceSubtype,
+    ResourceType,
+)
 
 
 class CreateResourceSerializer(serializers.Serializer):
@@ -75,13 +82,14 @@ class ResourceService:
                 resource = Resource.objects.create(
                     **resource_data.validated_data, workspace=self.workspace
                 )
-                resource.save()
                 detail = PostgresDetails(
                     lookback_days=1,
                     resource=resource,
                     **detail_serializer.validated_data,
                 )
+                resource.save()
                 detail.save()
+
             return resource
         elif subtype == ResourceSubtype.DBT:
             resource_id = config.get("resource_id")
@@ -105,6 +113,29 @@ class ResourceService:
                 detail = DBTCoreDetails(
                     resource=resource,
                     **detail_serializer.data,
+                )
+                resource.save()
+                detail.save()
+
+            return resource
+        elif subtype == ResourceSubtype.METABASE:
+            detail_serializer = MetabaseDetailsSerializer(
+                data={
+                    "subtype": subtype,
+                    **config,
+                }
+            )
+            detail_serializer.is_valid()
+            print(detail_serializer.errors, flush=True)
+            detail_serializer.is_valid(raise_exception=True)
+            with transaction.atomic():
+                resource = Resource.objects.create(
+                    **resource_data.validated_data,
+                    workspace=self.workspace,
+                )
+                detail = MetabaseDetails(
+                    resource=resource,
+                    **detail_serializer.validated_data,
                 )
                 detail.save()
                 resource.save()
@@ -133,6 +164,20 @@ class ResourceService:
                     "details": PostgresDetailsSerializer(resource.details).data,
                 }
             ).data
+        elif resource.details.subtype == ResourceSubtype.METABASE:
+            response = ResourceDetailsSerializer(
+                {
+                    "resource": ResourceSerializer(resource).data,
+                    "details": MetabaseDetailsSerializer(resource.details).data,
+                }
+            ).data
+        else:
+            response = ResourceDetailsSerializer(
+                {
+                    "resource": ResourceSerializer(resource).data,
+                    "details": {},
+                }
+            ).data
 
         if resource.dbtresource_set.exists():
             # we only support one dbt project per resource for now
@@ -141,8 +186,6 @@ class ResourceService:
             ).data
 
             return response
-
-        return ValidationError(f"Resource {resource.details.subtype} not suppported")
 
     def partial_update(self, resource_id: str, data: dict) -> Resource:
         resource = Resource.objects.get(id=resource_id, workspace=self.workspace)
@@ -187,6 +230,13 @@ class ResourceService:
                 elif resource.details.subtype == ResourceSubtype.POSTGRES:
                     config_data = data.get("config")
                     detail_serializer = PostgresDetailsSerializer(
+                        resource.details, data=config_data, partial=True
+                    )
+                    detail_serializer.is_valid(raise_exception=True)
+                    detail_serializer.save()
+                elif resource.details.subtype == ResourceSubtype.METABASE:
+                    config_data = data.get("config")
+                    detail_serializer = MetabaseDetailsSerializer(
                         resource.details, data=config_data, partial=True
                     )
                     detail_serializer.is_valid(raise_exception=True)

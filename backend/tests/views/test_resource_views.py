@@ -221,3 +221,25 @@ class ResourceViewSetTestCases(TestCase):
         self.assertEqual(response.status_code, 200)
         resource = Resource.objects.get(id=resource_id)
         self.assertEqual(resource.name, "Test Resource")
+
+    def test_create_metabase_resource(self):
+        data = {
+            "resource": {
+                "name": "Test Metabase",
+                "type": "bi",
+            },
+            "subtype": "metabase",
+            "config": {
+                "connect_uri": "http://localhost:4000",
+                "username": "test",
+                "password": "test",
+            },
+        }
+        response = self.client.post("/resources/", data, format="json")
+        self.assertContains(response, "id", status_code=201)
+
+        response = self.client.get(f"/resources/{response.data['id']}/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.data["details"]["connect_uri"], "http://localhost:4000"
+        )

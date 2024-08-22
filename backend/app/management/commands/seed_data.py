@@ -4,10 +4,10 @@ from django.core.management.base import BaseCommand
 
 from app.models import (
     DBTCoreDetails,
-    DBTResourceSubtype,
     MetabaseDetails,
     PostgresDetails,
     Resource,
+    ResourceSubtype,
     ResourceType,
     User,
     Workspace,
@@ -51,7 +51,7 @@ def local_postgres(workspace):
         project_path="fixtures/test_resources/jaffle_shop",
         threads=1,
         version=DBTVersion.V1_7.value,
-        subtype=DBTResourceSubtype.CORE,
+        subtype=ResourceSubtype.DBT,
         database="mydb",
         schema="dbt_sl_test",
     ).save()
