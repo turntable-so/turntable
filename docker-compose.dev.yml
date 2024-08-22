@@ -34,6 +34,11 @@ services:
           "8000",
           "--reload",
         ]
+    depends_on:
+      metabase:
+        condition: service_healthy
+      ensure_populate_test_db:
+        condition: service_completed_successfully
     environment:
       <<: *dev-credentials
     volumes:
