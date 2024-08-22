@@ -8,8 +8,8 @@ from workflows.hatchet import hatchet
 from workflows.utils.log import inject_workflow_run_logging
 
 
-@inject_workflow_run_logging(hatchet)
 @hatchet.workflow(on_events=["metadata_sync"], timeout="15m")
+@inject_workflow_run_logging(hatchet)
 class MetadataSyncWorkflow:
     """
     input structure:
