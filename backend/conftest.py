@@ -142,6 +142,10 @@ def assert_ingest_output(resources):
         ]
         assert len(links_across_resources) > 0
 
+    ## at least one asset and one column have ai_description filled out
+    assert Asset.objects.filter(ai_description__isnull=False).count() > 0
+    assert Column.objects.filter(ai_description__isnull=False).count() > 0
+
 
 @pytest.fixture()
 def prepopulated_dev_db(local_metabase, local_postgres):

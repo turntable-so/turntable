@@ -27,7 +27,11 @@ from vinyl.lib.errors import VinylError, VinylErrorType
 from vinyl.lib.schema import VinylSchema
 from vinyl.lib.sqlast import SQLAstNode
 from vinyl.lib.utils.graph import nx_remove_node_and_reconnect
-from ai.documentation.dbt import get_schema_description, get_table_completion, get_column_completion
+from ai.documentation.dbt import (
+    get_schema_description,
+    get_table_completion,
+    get_column_completion,
+)
 
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "api.settings")
@@ -898,7 +902,12 @@ class DataHubDBParser:
 
             asset_columns = list(filter(lambda x: x.asset_id == asset.id, columns))
             schema = "\n".join(
-                [get_schema_description(columnName=column.name, columnType=column.type) for column in asset_columns]
+                [
+                    get_schema_description(
+                        columnName=column.name, columnType=column.type
+                    )
+                    for column in asset_columns
+                ]
             )
             has_asset_changed = detect_asset_changes(asset, columns)
 
@@ -909,8 +918,6 @@ class DataHubDBParser:
                     asset.name, schema, asset.sql, ai_model_name="gpt-3.5-turbo-1106"
                 )
                 assets_with_descriptions[idx].ai_description = asset_ai_description
-
-        breakpoint()
 
         # Only regenerate descriptions for the assets which have changed
         if len(changed_assets) > 0 and len(columns) > 0:
@@ -942,7 +949,6 @@ class DataHubDBParser:
                     columns_with_descriptions[
                         idx
                     ].ai_description = column_ai_description_dict[column.id]
-            breakpoint()
 
         return assets_with_descriptions, columns_with_descriptions
 
@@ -986,7 +992,6 @@ class DataHubDBParser:
             indirect_columns.append(column)
 
         # Must run ai gen before this otherwise there will appear to be no diff
-        breakpoint()
         assets_with_descriptions, columns_with_descriptions = (
             cls.generate_descriptions_if_needed(combined["assets"], combined["columns"])
         )
@@ -994,5 +999,5 @@ class DataHubDBParser:
         delete_and_upsert(assets_with_descriptions, resource, indirect_assets)
         delete_and_upsert(combined["asset_errors"], resource)
         delete_and_upsert(combined["asset_links"], resource)
-        delete_and_upsert(combined["columns"], resource, indirect_columns)
-        delete_and_upsert(columns_with_descriptions, resource)
+        delete_and_upsert(columns_with_descriptions, resource, indirect_columns)
+        delete_and_upsert(combined["column_links"], resource)
