@@ -18,6 +18,7 @@ dayjs.extend(relativeTime)
 import useSession from '@/app/hooks/use-session';
 import useWorkflowUpdates from '@/app/hooks/use-workflow-updates';
 import DbtProjectForm from '@/components/connections/forms/dbt-project-form';
+import MetabaseForm from '@/components/connections/forms/metabase-form';
 import {
     AlertDialog,
     AlertDialogCancel,
@@ -28,7 +29,7 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import PostgresForm from "../../components/connections/forms/postgres-form";
-import { PostgresLogo } from "../../lib/utils";
+import { MetabaseIcon, PostgresLogo } from "../../lib/utils";
 import { deleteResource, syncResource } from "../actions/actions";
 
 type DbtDetails = {
@@ -57,6 +58,7 @@ export default function ConnectionLayout({ resource, details, dbtDetails }: { re
                 <div className='flex space-x-2 items-center'>
                     {resource.subtype === 'bigquery' && <BigQueryLogo />}
                     {resource.subtype === 'postgres' && <PostgresLogo />}
+                    {resource.subtype === 'metabase' && <MetabaseIcon />}
                     <div>Edit {resource.name}</div>
                 </div>
             </Button>
@@ -87,6 +89,7 @@ export default function ConnectionLayout({ resource, details, dbtDetails }: { re
                         <CardContent>
                             {resource.subtype === 'bigquery' && <BigqueryForm resource={resource} details={details} />}
                             {resource.subtype === 'postgres' && <PostgresForm resource={resource} details={details} />}
+                            {resource.subtype === 'metabase' && <MetabaseForm resource={resource} details={details} />}
                         </CardContent>
                     </Card>
                     {dbtDetails && (

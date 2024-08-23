@@ -3472,8 +3472,8 @@ packages:
   posthog-js@1.141.3:
     resolution: {integrity: sha512-LZ+I6wJS82yX/SZVaK20V2WV4MEfB2G9fT2ZJoWlzwN5L3wsbpmjD9F2dVW818deBV3ms1w0Ho7rnlJtBGHx2g==}
 
-  preact-render-to-string@5.2.6:
-    resolution: {integrity: sha512-JyhErpYOvBV1hEPwIxc/fHWXPfnEGdRKxc8gFdAZ7XV4tlzyzG847XAyEZqoDnynP88akM4eaHcSOzNcLWFguw==}
+  preact-render-to-string@5.2.3:
+    resolution: {integrity: sha512-aPDxUn5o3GhWdtJtW0svRC2SS/l8D9MAgo2+AWml+BhDImb27ALf04Q2d+AHqUUOc6RdSXFIBVa2gxzgMKgtZA==}
     peerDependencies:
       preact: '>=10'
 
@@ -7687,7 +7687,7 @@ snapshots:
       oauth: 0.9.15
       openid-client: 5.6.5
       preact: 10.22.0
-      preact-render-to-string: 5.2.6(preact@10.22.0)
+      preact-render-to-string: 5.2.3(preact@10.22.0)
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
       uuid: 8.3.2
@@ -7949,7 +7949,7 @@ snapshots:
       preact: 10.22.0
       web-vitals: 4.2.0
 
-  preact-render-to-string@5.2.6(preact@10.22.0):
+  preact-render-to-string@5.2.3(preact@10.22.0):
     dependencies:
       preact: 10.22.0
       pretty-format: 3.8.0

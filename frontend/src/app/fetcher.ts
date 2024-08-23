@@ -1,8 +1,8 @@
-import { AuthActions } from "@/lib/auth"
+import { AuthActions } from "@/lib/auth";
 
 // Extract necessary functions from the AuthActions utility.
 const { handleJWTRefresh, storeToken, getToken, removeTokens } = AuthActions();
-const baseUrl = process.env.NODE_ENV === "development" ? "http://localhost:8000" : "https://turntable-django-4426.onrender.com";
+const baseUrl = process.env.NODE_ENV === "development" ? (process.env.NEXT_PUBLIC_BACKEND_HOST ?  process.env.NEXT_PUBLIC_BACKEND_HOST : "http://localhost:8000")  : process.env.NEXT_PUBLIC_BACKEND_HOST;
 
 const fetchWithAuth = async (url: string, options = {} as any) => {
     const token = getToken("access", options?.cookies);
@@ -14,7 +14,8 @@ const fetchWithAuth = async (url: string, options = {} as any) => {
     if (!(options?.body instanceof FormData)) {
         headers["Content-Type"] = "application/json";
     }
-
+    console.log("url", url)
+    console.log("base_url", baseUrl)
     const response = await fetch(url, { ...options, headers });
     if (response.status === 401) {
         try {
@@ -55,7 +56,7 @@ export const fetcher = (
 ): Promise<any> => {
     const { method = "GET", body, next, cookies } = options;
     let fullUrl = `${baseUrl}${url}`;
-    let fetchOptions : any = {
+    let fetchOptions: any = {
         method,
         ...(body ? { body: JSON.stringify(body) } : {}),
         ...(cookies ? { cookies } : {}),
@@ -65,11 +66,11 @@ export const fetcher = (
         signal,
     };
 
-    if(!(body instanceof FormData)) {
+    if (!(body instanceof FormData)) {
         fetchOptions['headers'] = {
-          "Content-Type": "application/json",
+            "Content-Type": "application/json",
         }
-      }
+    }
 
 
     if (next?.tags) {
