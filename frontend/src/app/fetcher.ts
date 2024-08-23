@@ -15,6 +15,7 @@ const fetchWithAuth = async (url: string, options = {} as any) => {
         headers["Content-Type"] = "application/json";
     }
     console.log("url", url)
+    console.log("base_url", baseUrl)
     const response = await fetch(url, { ...options, headers });
     if (response.status === 401) {
         try {
@@ -85,7 +86,6 @@ export const fetcher = (
 };
 
 export const fetcherAuth = async (url: string): Promise<any> => {
-    console.log(url)
-    const response = await fetchWithAuth(`https://api-nhw9.onrender.com/auth/users/me/`);
+    const response = await fetchWithAuth(`${baseUrl}${url}`);
     return response.json()
 };
