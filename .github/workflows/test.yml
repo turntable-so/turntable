@@ -74,3 +74,4 @@ jobs:
           TEST_METABASE_URI: http://localhost:4000
           DEV: "true"
           TMPDIR: ${{ runner.temp }}
+          BACKEND_HOST: localhost
