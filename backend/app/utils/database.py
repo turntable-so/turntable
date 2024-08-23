@@ -14,7 +14,11 @@ def detect_asset_changes(
         raise ValueError(
             "Resource must have an id to use the `detect_asset_changes` function"
         )
-    
+
+    # Always backfill ai_description if it hasn't been set before
+    if new_asset.ai_description is None or len(new_asset.ai_description) == 0:
+        return True
+
     current_assets = Asset.objects.filter(id=new_asset.id)
 
     if len(current_assets) == 0:
