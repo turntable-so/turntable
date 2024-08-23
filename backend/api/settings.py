@@ -39,17 +39,6 @@ if backend_host:
     if backend_host:
         ALLOWED_HOSTS = [backend_host] + ALLOWED_HOSTS
 
-frontend_hosts = os.getenv("FRONTEND_HOST")
-if frontend_hosts:
-    frontend_hosts = frontend_hosts.split(",")
-    for frontend_host in frontend_hosts:
-        if "https://" in frontend_host:
-            frontend_host = frontend_host.replace("https://", "")
-        if "http://" in frontend_host:
-            frontend_host = frontend_host.replace("http://", "")
-        if frontend_host:
-            ALLOWED_HOSTS = [frontend_host] + ALLOWED_HOSTS
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -95,6 +84,13 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     "https://app.turntable.so",
 ]
+
+frontend_hosts = os.getenv("FRONTEND_HOST")
+if frontend_hosts:
+    frontend_hosts = frontend_hosts.split(",")
+    for frontend_host in frontend_hosts:
+        CORS_ALLOWED_ORIGINS = [frontend_host] + CORS_ALLOWED_ORIGINS
+
 
 ROOT_URLCONF = "api.urls"
 
