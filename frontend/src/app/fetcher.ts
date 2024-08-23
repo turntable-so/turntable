@@ -14,7 +14,7 @@ const fetchWithAuth = async (url: string, options = {} as any) => {
     if (!(options?.body instanceof FormData)) {
         headers["Content-Type"] = "application/json";
     }
-
+    console.log("url", url)
     const response = await fetch(url, { ...options, headers });
     if (response.status === 401) {
         try {
