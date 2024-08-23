@@ -245,6 +245,7 @@ export const BIToolOptions = [
         'name': 'metabase',
         'type': 'BI_TOOL',
         'label': 'Metabase',
+        'url': '/connections/new/metabase',
         logo: <MetabaseLogo />
     },
     {
