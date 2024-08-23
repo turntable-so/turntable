@@ -85,6 +85,6 @@ export const fetcher = (
 };
 
 export const fetcherAuth = async (url: string): Promise<any> => {
-    const response = await fetchWithAuth(`${baseUrl}${url}`);
+    const response = await fetchWithAuth(`https://api-nhw9.onrender.com/auth/users/me/`);
     return response.json()
 };
