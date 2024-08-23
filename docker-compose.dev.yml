@@ -53,7 +53,7 @@ services:
        DEV: "true"
        NEXTAUTH_URL_INTERNAL: "http://web:3000"
        NEXTAUTH_URL: "http://localhost:3000"
-       API_URL: "http://api:8000"
+       NEXT_PUBLIC_BACKEND_HOST: "http://api:8000"
      volumes:
        - ./frontend:/code
 
