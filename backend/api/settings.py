@@ -29,15 +29,15 @@ SECRET_KEY = "django-insecure-i7pd5iwtuo*0h9je%(n1!u8srlbka$^do)c(#y88h9grhilq3@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost"]
+ALLOWED_HOSTS = ["localhost", "api"]
 backend_host = os.getenv("BACKEND_HOST")
-if "https://" in backend_host:
-    backend_host = backend_host.replace("https://", "")
-if "http://" in backend_host:
-    backend_host = backend_host.replace("http://", "")
 if backend_host:
-    ALLOWED_HOSTS = [backend_host] + ALLOWED_HOSTS
-
+    if "https://" in backend_host:
+        backend_host = backend_host.replace("https://", "")
+    if "http://" in backend_host:
+        backend_host = backend_host.replace("http://", "")
+    if backend_host:
+        ALLOWED_HOSTS = [backend_host] + ALLOWED_HOSTS
 
 # Application definition
 
@@ -84,6 +84,13 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     "https://app.turntable.so",
 ]
+
+frontend_hosts = os.getenv("FRONTEND_HOST")
+if frontend_hosts:
+    frontend_hosts = frontend_hosts.split(",")
+    for frontend_host in frontend_hosts:
+        CORS_ALLOWED_ORIGINS = [frontend_host] + CORS_ALLOWED_ORIGINS
+
 
 ROOT_URLCONF = "api.urls"
 

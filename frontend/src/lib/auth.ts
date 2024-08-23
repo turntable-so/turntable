@@ -3,7 +3,7 @@ import { deleteCookie, getCookie, setCookie } from 'cookies-next';
 import wretch from "wretch";
 
 // Base API setup for making HTTP requests
-const api = wretch(process.env.NODE_ENV === "development" ? "http://localhost:8000" : process.env.BACKEND_HOST).accept("application/json");
+const api = wretch(process.env.NODE_ENV === "development" ? (process.env.NEXT_PUBLIC_BACKEND_HOST ?  process.env.NEXT_PUBLIC_BACKEND_HOST : "http://localhost:8000") : process.env.NEXT_PUBLIC_BACKEND_HOST).accept("application/json");
 
 /**
  * Stores a token in cookies.

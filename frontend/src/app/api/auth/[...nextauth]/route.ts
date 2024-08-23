@@ -48,6 +48,8 @@ const handler = NextAuth({
             refreshToken: json.refresh,
           } as any;
         } catch (error) {
+          console.error("Error errror:", error);
+
           return null;
         }
       },
