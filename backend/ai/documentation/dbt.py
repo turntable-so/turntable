@@ -171,7 +171,7 @@ class ModelData(TypedDict):
 def get_column_completion(
     dbt_model_data: dict[str, ModelData],
     ai_model_name="gpt-4o",
-    max_columns_per_batch=15,
+    max_columns_per_batch=60,
     progress_bar=True,
     parallel=True,
 ):
