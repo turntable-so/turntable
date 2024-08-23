@@ -10,6 +10,7 @@ import { Fragment, useEffect } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { useAppContext } from "../contexts/AppContext";
 import Magic from "./icons/magic";
+import AiGenerated from "./icons/ai-generated";
 
 function ColumnPreviewer({ column }: { column: any }) {
   const columnDescription =
@@ -37,16 +38,7 @@ function ColumnPreviewer({ column }: { column: any }) {
             ))}
           </div>
           <div className="w-full grid grid-cols-10 items-center">
-            {isUsingAiDescription && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Magic className="w-5 h-5 col-span-1" />
-                  </TooltipTrigger>
-                  <TooltipContent>AI Generated</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
+            {isUsingAiDescription && <AiGenerated />}
             <div className="col-span-9 pt-1 font-normal">
               {columnDescription}
             </div>
@@ -139,7 +131,7 @@ export default function ModelPreviewer({
                 </div>
                 <div>
                   <div>Description</div>
-                  {isUsingAiDescription && <Magic className="w-4 h-4" />}
+                  {isUsingAiDescription && <AiGenerated />}
                   {assetDescription ? (
                     <div className="font-medium">{assetDescription}</div>
                   ) : (
