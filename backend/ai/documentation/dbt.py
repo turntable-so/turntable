@@ -12,6 +12,8 @@ from typing import TypedDict
 from ai.embeddings import DEFAULT_EMBEDDING_MODEL, EmbeddingModes, embed
 from vinyl.lib.dbt import DBTProject
 
+from app.models import Column
+from api.serializers import ColumnSerializer
 
 class ModelDescription(BaseModel):
     description: str
@@ -88,7 +90,7 @@ def get_chat_completion(
         response_model=response_model,
     )
 
-    return resp.description
+    return resp
 
 
 def get_table_completion(
@@ -101,12 +103,14 @@ def get_table_completion(
     content += f"schema:\n{schema}\n\n"
     content += f"compiled_sql:\n{compiled_sql}"
 
-    return get_chat_completion(
+    resp = get_chat_completion(
         system_instructions_content=MODEL_SYSTEM_PROMPT,
         prompt_content=content,
         ai_model_name=ai_model_name,
         response_model=ModelDescription,
     )
+
+    return resp.description
 
 
 def get_table_completion_from_dbt(
@@ -161,19 +165,18 @@ def get_column_completion_from_dbt(
 class ModelData(TypedDict):
     schema: str
     compiled_sql: str
-    column_names: list[str]
+    columns: list[Column]
 
 
 def get_column_completion(
     dbt_model_data: dict[str, ModelData],
-    include_nested_fields: bool = False,
     ai_model_name="gpt-4o",
     max_columns_per_batch=15,
     progress_bar=True,
     parallel=True,
 ):
-    def helper(model_name: str, colnames_orjson: str):
-        colnames = orjson.loads(colnames_orjson)
+    def helper(model_name: str, columns: list[dict]):
+        colnames = [col["name"] for col in columns]
         fields = {f"{k}": (ColumnDescription, ...) for k in colnames}
         ColumnDescriptionModel = create_model("ColumnDescriptionModel", **fields)
         content = f"model name: {model_name.split('.')[-1]}\n\n"
@@ -190,47 +193,45 @@ def get_column_completion(
                 response_model=ColumnDescriptionModel,
             )
 
-            return {
-                model_name: {k: v["description"] for k, v in resp.model_dump().items()}
-            }
+            column_id_description_dict = {}
+            for k, v in resp.model_dump().items():
+                column_id = next(filter(lambda x: x["name"] == k, columns))["id"]
+                column_id_description_dict[column_id] = v["description"]
+
+            return column_id_description_dict
         except Exception as e:  # noqa
             print(e)
             pass
 
     schema_dict = {}
     compiled_sql_dict = {}
+
+    # batches collects a list of batch results which are a mapping of { column_id: description }
     batches = []
     for model_name in dbt_model_data:
         model_data = dbt_model_data[model_name]
         schema = model_data["schema"]
         compiled_sql = model_data["compiled_sql"]
-        column_names = model_data["columns"]
+        columns = model_data["columns"]
 
         schema_dict[model_name] = schema
         compiled_sql_dict[model_name] = compiled_sql
 
-        if column_names is None:
-            column_names = [k["col_name"] for k in schema]
-
-        if not include_nested_fields:
-            column_names = [k for k in column_names if "." not in k]
-
-        if (
-            max_columns_per_batch is not None
-            and len(column_names) > max_columns_per_batch
-        ):
+        if max_columns_per_batch is not None and len(columns) > max_columns_per_batch:
             batches_it = [
-                (model_name, orjson.dumps(column_names[i : i + max_columns_per_batch]))
-                for i in range(0, len(column_names), max_columns_per_batch)
+                (
+                    model_name,
+                    ColumnSerializer(columns[i : i + max_columns_per_batch]).data,
+                )
+                for i in range(0, len(columns), max_columns_per_batch)
             ]
         else:
-            batches_it = [(model_name, orjson.dumps(column_names))]
+            batches_it = [(model_name, ColumnSerializer(columns, many=True).data)]
         batches.extend(batches_it)
 
     if parallel and len(batches) > 1:
         with WorkerPool() as pool:
             results = pool.map(helper, batches, progress_bar=progress_bar)
-
     else:
         results = []
         adj_batches = tqdm(batches) if progress_bar else batches
@@ -238,10 +239,10 @@ def get_column_completion(
             results.append(helper(*batch))
 
     out = {}
+
     for res in results:
         for k, v in res.items():
-            for k2, v2 in v.items():
-                out.setdefault(k, {})[k2] = v2
+            out[k] = v
 
     return out
 
