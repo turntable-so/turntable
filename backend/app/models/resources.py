@@ -66,10 +66,10 @@ def get_sync_config(db_path):
 
 @contextmanager
 def repo_path(obj):
-    github_repo_id = getattr(obj, "github_repo_id")
-    github_installation_id = getattr(obj, "github_installation_id")
+    github_repo_id = getattr(obj, "github_repo_id", None)
+    github_installation_id = getattr(obj, "github_installation_id", None)
     project_path = getattr(obj, "project_path")
-    git_repo_url = getattr(obj, "git_repo_url")
+    git_repo_url = getattr(obj, "git_repo_url", None)
     if git_repo_url is not None:
         deploy_key = getattr(obj, "deploy_key")
         coderepo_service = CodeRepoService(obj.resource.workspace.id)
