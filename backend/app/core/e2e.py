@@ -889,7 +889,7 @@ class DataHubDBParser:
         assets_with_descriptions = assets
         columns_with_descriptions = columns
 
-        has_any_asset_changed = False
+        changed_assets = []
 
         for idx, asset in enumerate(assets):
             if asset.type != "model":
@@ -903,41 +903,46 @@ class DataHubDBParser:
             has_asset_changed = detect_asset_changes(asset, columns)
 
             if has_asset_changed:
-                has_any_asset_changed = True
-                breakpoint()
-                asset_ai_description = get_table_completion(
-                    asset.name, schema, asset.sql, ai_model_name="gpt-3.5-turbo-1106"
-                )
-                assets[idx].ai_description = asset_ai_description
-                breakpoint()
+                changed_assets.append(asset)
 
-        if has_any_asset_changed:
-            # We generate all column descriptions at once to avoid multiple calls to the AI model
-            # So if any asset has changed, we'll trigger a regeneration of column descriptions
+                # asset_ai_description = get_table_completion(
+                #     asset.name, schema, asset.sql, ai_model_name="gpt-3.5-turbo-1106"
+                # )
+                # assets_with_descriptions[idx].ai_description = asset_ai_description
+
+        breakpoint()
+
+        # Only regenerate descriptions for the assets which have changed
+        if len(changed_assets) > 0 and len(columns) > 0:
             dbt_model_data = {}
-            for asset in assets:
-                if asset.type != "model":
-                    continue
-                columns_for_asset = [
-                    column.name
-                    for column in list(
-                        filter(lambda x: x.asset_id == asset.id, columns)
-                    )
-                ]
+
+            for asset in changed_assets:
+                asset_columns = list(filter(lambda c: c.asset_id == asset.id, columns))
+
                 dbt_model_data[asset.name] = {
-                    "schema": asset.schema,
+                    "schema": "\n".join(
+                        [
+                            get_schema_description(
+                                columnName=column.name, columnType=column.type
+                            )
+                            for column in asset_columns
+                        ]
+                    ),
                     "compiled_sql": asset.sql,
-                    "column_names": columns_for_asset,
+                    "columns": asset_columns,
                 }
 
-            columns_with_descriptions = get_column_completion(
+            column_ai_description_dict = get_column_completion(
                 dbt_model_data=dbt_model_data,
                 ai_model_name="gpt-3.5-turbo-1106",
             )
+
             for idx, column in enumerate(columns):
-                columns_with_descriptions[
-                    idx
-                ].ai_description = columns_with_descriptions[column.id]
+                if column.id in column_ai_description_dict:
+                    columns_with_descriptions[
+                        idx
+                    ].ai_description = column_ai_description_dict[column.id]
+            breakpoint()
 
         return assets_with_descriptions, columns_with_descriptions
 
