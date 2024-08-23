@@ -29,7 +29,7 @@ SECRET_KEY = "django-insecure-i7pd5iwtuo*0h9je%(n1!u8srlbka$^do)c(#y88h9grhilq3@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost", "api", "https://turntable-mu.vercel.app"]
+ALLOWED_HOSTS = ["localhost", "api"]
 backend_host = os.getenv("BACKEND_HOST")
 if "https://" in backend_host:
     backend_host = backend_host.replace("https://", "")
@@ -37,6 +37,14 @@ if "http://" in backend_host:
     backend_host = backend_host.replace("http://", "")
 if backend_host:
     ALLOWED_HOSTS = [backend_host] + ALLOWED_HOSTS
+
+frontend_host = os.getenv("FRONTEND_HOST")
+if "https://" in frontend_host:
+    frontend_host = frontend_host.replace("https://", "")
+if "http://" in frontend_host:
+    frontend_host = frontend_host.replace("http://", "")
+if frontend_host:
+    ALLOWED_HOSTS = [frontend_host] + ALLOWED_HOSTS
 
 
 # Application definition
