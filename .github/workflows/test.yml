@@ -75,3 +75,4 @@ jobs:
           DEV: "true"
           TMPDIR: ${{ runner.temp }}
           BACKEND_HOST: localhost
+          FRONTEND_HOST: localhost
