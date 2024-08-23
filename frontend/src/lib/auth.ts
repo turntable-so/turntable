@@ -1,9 +1,9 @@
 
+import { deleteCookie, getCookie, setCookie } from 'cookies-next';
 import wretch from "wretch";
-import { setCookie, deleteCookie, getCookie } from 'cookies-next';
 
 // Base API setup for making HTTP requests
-const api = wretch(process.env.NODE_ENV === "development" ? "http://localhost:8000" : "https://turntable-django-4426.onrender.com").accept("application/json");
+const api = wretch(process.env.NODE_ENV === "development" ? "http://localhost:8000" : process.env.BACKEND_HOST).accept("application/json");
 
 /**
  * Stores a token in cookies.

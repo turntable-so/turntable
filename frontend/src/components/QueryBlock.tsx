@@ -6,9 +6,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-  SelectGroup,
-  SelectLabel
+  SelectValue
 } from "@/components/ui/select";
 import { sql } from "@codemirror/lang-sql";
 import {
@@ -18,47 +16,33 @@ import {
 import {
   BarChartBig,
   ChevronsDownUp,
+  CircleStop,
   Clock,
   Download,
-  Expand,
+  EllipsisVertical,
   Filter,
   Loader2,
-  Play,
-  Table,
-  CircleStop,
-  EllipsisVertical,
+  Play
 } from "lucide-react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
-import { Fragment, SyntheticEvent, useEffect, useRef, useState } from "react";
 
 import { AgGridReact } from "ag-grid-react"; // React Data Grid Component
-import {
-  ColDef,
-  ColGroupDef,
-  GridApi,
-  GridOptions,
-  createGrid,
-} from "ag-grid-community";
 import "./ag-grid-custom-theme.css"; // Custom CSS Theme for Data Grid
 
-import {
-  getCTEAutocomplete,
-  getColumnAutocomplete,
-  getDBCatalogAutocomplete,
-  getTableAutocomplete,
-  runQueryOnServer,
-} from "../app/actions/actions";
+import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 import {
   executeQuery,
   getWorkflow,
-} from "../app/actions/client-actions"
-import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
-import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
+} from "../app/actions/client-actions";
 import LoadingVinyl from "./loading-vinyl-spinner";
+import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 // import 'codemirror/keymap/sublime';
 // import 'codemirror/theme/quietlight.css';
+import { getQueryBlockResult } from "@/app/actions/query-actions";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CompletionContext, autocompletion } from "@codemirror/autocomplete";
 import { quietlight } from "@uiw/codemirror-theme-quietlight";
 import CodeMirror, {
@@ -68,32 +52,19 @@ import CodeMirror, {
 } from "@uiw/react-codemirror";
 import { useParams } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
-import { getQueryBlockResult } from "@/app/actions/query-actions";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAppContext } from "../contexts/AppContext";
-
-import { ViewType } from "./notebook/sql-node";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-
-const getColumnType = (pandasType: string) => {
-  if (pandasType.toLowerCase().includes("date")) {
-    return "date";
-  }
-  if (pandasType === "boolean") {
-    return "string";
-  }
-  return pandasType;
-};
 
 import {
   Bar,
   BarChart,
   CartesianGrid,
+  Line,
+  LineChart,
   XAxis,
   YAxis,
-  LineChart,
-  Line,
 } from "recharts";
+import { ViewType } from "./notebook/sql-node";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 
 import { ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
@@ -252,12 +223,12 @@ export default function QueryBlock(props: QueryBlockProps) {
       setTimeout(() => {
         editor?.view?.focus();
       }, 100);
-      codeMirrorRef.current = editor; 
+      codeMirrorRef.current = editor;
     }
   }
 
   const abortControllerRef = useRef<AbortController | null>(null);
-  
+
   const [records, setRecords] = useState([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [workflowId, setWorkflowId] = useState<string | null>(null);
@@ -278,7 +249,7 @@ export default function QueryBlock(props: QueryBlockProps) {
 
   let columnAutocomplete = useRef<any[] | null>(null);
   let tableAutocomplete = useRef<any[] | null>(null);
-  
+
   const exportCsv = () => {
     gridRef.current!.api.exportDataAsCsv();
   };
@@ -452,30 +423,30 @@ export default function QueryBlock(props: QueryBlockProps) {
       },
     }));
 
-  const setColumnCompletion = async (
-    beforeSql: string,
-    afterSql: string
-  ): Promise<void> => {
-    const columnSuggestions = await getColumnAutocomplete({
-      resourceId: props.node.attrs.resourceId,
-      beforeSql,
-      afterSql,
-    });
+  // const setColumnCompletion = async (
+  //   beforeSql: string,
+  //   afterSql: string
+  // ): Promise<void> => {
+  //   const columnSuggestions = await getColumnAutocomplete({
+  //     resourceId: props.node.attrs.resourceId,
+  //     beforeSql,
+  //     afterSql,
+  //   });
 
-    const createCompletion = (
-      label: string,
-      type: string,
-      detail: string
-    ): Suggestion => ({
-      label,
-      type,
-      detail,
-    });
+  //   const createCompletion = (
+  //     label: string,
+  //     type: string,
+  //     detail: string
+  //   ): Suggestion => ({
+  //     label,
+  //     type,
+  //     detail,
+  //   });
 
-    columnAutocomplete.current = columnSuggestions.map((suggestion: string) =>
-      createCompletion(suggestion, "column", "column")
-    );
-  };
+  //   columnAutocomplete.current = columnSuggestions.map((suggestion: string) =>
+  //     createCompletion(suggestion, "column", "column")
+  //   );
+  // };
 
   const setApplyFunctionOnColumnCompletion = (
     beforeSql: string,
@@ -701,8 +672,8 @@ export default function QueryBlock(props: QueryBlockProps) {
     setRowData(null);
     setColDefs(null);
     setIsRunning(true);
-    const abortController =  new AbortController();
-    
+    const abortController = new AbortController();
+
     abortControllerRef.current = abortController;
     let data: any;
     try {
@@ -1020,7 +991,7 @@ export default function QueryBlock(props: QueryBlockProps) {
               )}
               <Popover>
                 <PopoverTrigger>
-                  <Button variant="outline" onClick={() => {}}>
+                  <Button variant="outline" onClick={() => { }}>
                     <EllipsisVertical className="w-4 h-4 text-green-500" />
                   </Button>
                 </PopoverTrigger>
