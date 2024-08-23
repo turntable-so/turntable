@@ -42,7 +42,7 @@ const useSession = () => {
     };
 
     return {
-        user,
+        user: user || {},
         logout,
         refreshSession: fetchUser, // Expose a method to manually refresh session
         loading, // Indicate whether the session is being loaded
