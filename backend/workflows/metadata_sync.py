@@ -15,6 +15,7 @@ class MetadataSyncWorkflow:
     input structure:
         {
             resource_id: str,
+            workunits_limit: int | None
             use_ai: bool
         }
     """
@@ -29,7 +30,8 @@ class MetadataSyncWorkflow:
     @hatchet.step(timeout="120m", parents=["prepare_dbt_repos"])
     def ingest_metadata(self, context: Context):
         resource = Resource.objects.get(id=context.workflow_input()["resource_id"])
-        resource.details.run_datahub_ingest()
+        workunits_limit = context.workflow_input().get("workunits_limit")
+        resource.details.run_datahub_ingest(workunits_limit=workunits_limit)
 
     @hatchet.step(timeout="120m", parents=["ingest_metadata"])
     def process_metadata(self, context: Context):

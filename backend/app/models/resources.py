@@ -215,22 +215,25 @@ class ResourceDetails(PolymorphicModel):
             check=True,
         )
 
-    def run_datahub_ingest(self):
+    def run_datahub_ingest(self, workunits_limit: int | None = None):
         self.create_venv_and_install_datahub()
 
         # run ingest
         with self.datahub_yaml_path() as (config_paths, db_path):
             for path in config_paths:
-                run_and_capture_subprocess(
-                    [
-                        self.get_venv_python(),
-                        "-m",
-                        "datahub",
-                        "ingest",
-                        "-c",
-                        path,
-                    ],
-                )
+                command = [
+                    self.get_venv_python(),
+                    "-m",
+                    "datahub",
+                    "ingest",
+                    "-c",
+                    path,
+                ]
+                if workunits_limit:
+                    command.extend(
+                        ["--preview", "--preview-workunits", str(workunits_limit)]
+                    )
+                run_and_capture_subprocess(command)
             with open(db_path, "rb") as f:
                 self.resource.datahub_db.save(
                     os.path.basename(db_path), File(f), save=True
