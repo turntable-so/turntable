@@ -905,10 +905,10 @@ class DataHubDBParser:
             if has_asset_changed:
                 changed_assets.append(asset)
 
-                # asset_ai_description = get_table_completion(
-                #     asset.name, schema, asset.sql, ai_model_name="gpt-3.5-turbo-1106"
-                # )
-                # assets_with_descriptions[idx].ai_description = asset_ai_description
+                asset_ai_description = get_table_completion(
+                    asset.name, schema, asset.sql, ai_model_name="gpt-3.5-turbo-1106"
+                )
+                assets_with_descriptions[idx].ai_description = asset_ai_description
 
         breakpoint()
 
