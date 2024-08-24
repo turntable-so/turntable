@@ -243,17 +243,19 @@ export default function DbtProjectForm({ resource, details }: { resource?: any, 
 
     const isUpdate = resource?.id ? true : false
 
-    async function onSubmit(data: z.infer<typeof FormSchema>) {
+    async function onSubmit(data: z.infer<typeof RemoteFormSchema> | z.infer<typeof LocalFormSchema>) {
         const payload = {
             resource: {
                 type: 'db',
             },
             subtype: 'dbt',
             config: {
-                "deploy_key": data.deployKey,
                 "resource_id": data.database_resource_id,
-                "git_repo_url": data.dbtGitRepoUrl,
-                "main_git_branch": data.mainGitBranch,
+                ...(selectedTab === 'remote' && {
+                    "git_repo_url": (data as z.infer<typeof RemoteFormSchema>).dbtGitRepoUrl,
+                    "main_git_branch": (data as z.infer<typeof RemoteFormSchema>).mainGitBranch,
+                    "deploy_key": (data as z.infer<typeof RemoteFormSchema>).deployKey
+                }),
                 "project_path": data.subdirectory,
                 "threads": data.threads,
                 "version": data.version,
