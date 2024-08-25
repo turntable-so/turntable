@@ -49,7 +49,6 @@ export default function BigqueryForm({ resource, details }: { resource?: any, de
     const router = useRouter()
 
 
-    console.log({ resource, details })
     const form = useForm<z.infer<typeof FormSchema>>({
         resolver: zodResolver(FormSchema),
         defaultValues: {
@@ -85,7 +84,6 @@ export default function BigqueryForm({ resource, details }: { resource?: any, de
             }
         }
         const res = isUpdate ? await updateResource(resource.id, payload) : await createResource(payload as any)
-        console.log({ res })
         if (!res.id) {
             toast.error('Failed to save connection: ' + res[0])
         }
