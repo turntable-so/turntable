@@ -918,6 +918,8 @@ class DataHubDBParser:
             )
             indirect_columns.append(column)
 
+        breakpoint()
+
         delete_and_upsert(combined["assets"], resource, indirect_assets)
         delete_and_upsert(combined["asset_errors"], resource)
         delete_and_upsert(combined["asset_links"], resource)

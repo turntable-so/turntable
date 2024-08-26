@@ -53,7 +53,7 @@ def log_stdout(func):
     return wrapper
 
 
-def inject_workflow_run_logging(hatchet, log_stdout: bool = False):
+def inject_workflow_run_logging(hatchet, log_stdout_to_hatchet: bool = False):
     """
     Must include resource_id in the input structure otherwise this will fail.
     """
@@ -112,9 +112,9 @@ def inject_workflow_run_logging(hatchet, log_stdout: bool = False):
         setattr(cls, "on_failure", on_failure)
 
         # log stdout
-        if log_stdout:
+        if log_stdout_to_hatchet:
             for step in debugger.workflow_graph.nodes:
-                setattr(cls, step, log_stdout(getattr(cls, step)))
+                setattr(cls, step.__name__, log_stdout(getattr(cls, step.__name__)))
 
         return cls
 

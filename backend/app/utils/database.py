@@ -8,6 +8,7 @@ def delete_and_upsert(
     resource: Resource,
     indirect_instances: list[Model] | None = None,
 ):
+    print(type(instances[0]))
     if resource is None or resource.id is None:
         raise ValueError(
             "Resource must have an id to use the `delete_and_upsert` function"
