@@ -1,14 +1,13 @@
 'use client'
-import Link from 'next/link'
-import { useState, useEffect } from 'react'
-import getFeatureFlags from "../../lib/feature-flags";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import useSession from "@/app/hooks/use-session";
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Boxes, DatabaseZap, LogOut, Network, Settings, Users } from 'lucide-react';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button'
-import { Database, SquarePen, Network, Users, Settings, Search, ChevronDown, LogOut, NotebookTabs, DatabaseZap, Boxes, Component, FileBox } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { SearchDialog } from '../SearchDialog';
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 
 
 
@@ -51,7 +50,7 @@ export default function SideBar({ collapsed }: { collapsed: boolean }) {
 
     const MenuItems = [
         { title: 'Connections', path: '/connections', Icon: () => <DatabaseZap className='size-5' /> },
-        { title: 'Projects', path: '/notebooks', Icon: () => <NotebookTabs className='size-5' /> },
+        { title: 'Assets', path: '/assets', Icon: () => <Boxes className='size-5' /> },
         { title: 'Lineage', path: '/lineage', Icon: () => <Network className='size-5' /> },
         { title: 'Workspace', path: '/team', Icon: () => <Users className='size-5' /> },
         { title: 'Settings', path: '/settings', Icon: () => <Settings className='size-5' /> },
@@ -70,13 +69,13 @@ export default function SideBar({ collapsed }: { collapsed: boolean }) {
                             </Avatar>
                         </div>
                     </Link>
-                    <div className=' text-gray-400 font-medium'
+                    {/* <div className=' text-gray-400 font-medium'
                         key={'Search'}>
                         <Button onClick={() => setSearchDialogOpen(true)} variant='secondary' className='hover:bg-[#ebebeb] text-foreground-muted flex justify-center items-center'>
                             <Search className='size-5' />
 
                         </Button>
-                    </div>
+                    </div> */}
                     <div className='flex flex-col justify-between h-full'>
                         <div className='space-y-4 py-2'>
                             {MenuItems.map((tab: any) => (
@@ -134,7 +133,7 @@ export default function SideBar({ collapsed }: { collapsed: boolean }) {
                             <div className='text-lg truncate text-muted-foreground font-medium tracking-tight whitespace-nowrap'>{workspace.name}</div>
                         </div>
                     </Link>
-                    <div className=' text-gray-400 font-medium' onClick={() => setSearchDialogOpen(true)}
+                    {/* <div className=' text-gray-400 font-medium' onClick={() => setSearchDialogOpen(true)}
                         key={'Search'}>
                         <div className="opacity-50 hover:opacity-100 cursor-pointer bg-white border border-gray-300 p-2 rounded-full w-full flex items-center justify-start space-x-2 px-4">
                             <Search className='size-6 mr-2' />
@@ -143,7 +142,7 @@ export default function SideBar({ collapsed }: { collapsed: boolean }) {
                                 <p className="">⌘K</p>
                             </div>
                         </div>
-                    </div>
+                    </div> */}
                     <div className='flex flex-col justify-between h-full'>
                         <div className='space-y-4 py-1'>
                             {MenuItems.map((tab: any) => (
