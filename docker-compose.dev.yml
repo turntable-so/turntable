@@ -24,7 +24,7 @@ services:
     build:
       args:
         - ENV=dev
-    entrypoint: entrypoint-dev.sh
+    entrypoint: ["/code/entrypoint-dev.sh"]
     command:
         [
           "uvicorn",
