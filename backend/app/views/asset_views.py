@@ -38,6 +38,9 @@ class AssetViewSet(viewsets.ModelViewSet):
                 "name": asset.name,
                 "type": asset.type,
                 "unique_name": asset.unique_name,
+                "description": asset.description,
+                "tags": asset.tags,
+                "num_columns": asset.num_columns,
             }
             for asset in assets
         ]
