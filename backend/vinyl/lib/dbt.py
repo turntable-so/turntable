@@ -60,7 +60,7 @@ class DBTProject(object):
         self.env_vars = env_vars
 
         # set version bool
-        self.version_list = [int(v[0]) for v in self.version.value.split(".")]
+        self.version_list = [int(v[0]) for v in self.version.split(".")]
         if tuple(self.version_list) >= (1, 5):
             self.dbt1_5 = True
         else:
@@ -79,7 +79,7 @@ class DBTProject(object):
             self.multitenant = True
         else:
             self.multitenant = False
-            self.install_dbt_if_necessary()
+            # self.install_dbt_if_necessary()
 
         # get profiles-dir
         self.dbt_profiles_dir = (
@@ -102,7 +102,7 @@ class DBTProject(object):
 
     def install_dbt_if_necessary(self):
         dbt_package = f"dbt-{self.dialect.value.lower()}"
-        install_package = f"{dbt_package}~={self.version.value}.0"
+        install_package = f"{dbt_package}~={self.version}.0"
         res = subprocess.run(
             ["uv", "pip", "show", dbt_package, "--python", sys.executable],
             capture_output=True,
@@ -124,7 +124,7 @@ class DBTProject(object):
         major_version_in_stdout = (
             res.stdout.decode().split("\n")[1].split(":")[1].strip().rsplit(".", 1)[0]
         )
-        if major_version_in_stdout != self.version.value:
+        if major_version_in_stdout != self.version:
             subprocess.run(
                 [
                     "uv",
@@ -300,7 +300,7 @@ class DBTProject(object):
                 self.dbt_profiles_dir,
                 "execute",
                 "--dbt",
-                f"dbt-{self.dialect.value}=={MAX_DIALECT_VERSION[self.dialect.value][self.version.value]}",
+                f"dbt-{self.dialect.value}=={MAX_DIALECT_VERSION[self.dialect.value][self.version]}",
                 "--",
                 *command,
             ],

@@ -21,14 +21,8 @@ const FormSchema = z.object({
     name: z.string().min(2, {
         message: "Name can't be empty",
     }),
-    host: z.string().min(1, {
-        message: "Hostname account can't be empty",
-    }),
-    port: z.number().min(1, {
-        message: "Port can't be empty",
-    }),
-    database: z.string().min(1, {
-        message: "Database can't be empty",
+    connect_uri: z.string().min(1, {
+        message: "Metabase uri can't be empty",
     }),
     username: z.string().min(1, {
         message: "Username can't be empty",
@@ -38,18 +32,16 @@ const FormSchema = z.object({
     }),
 })
 
-export default function PostgresForm({ resource, details }: { resource?: any, details?: any }) {
+export default function MetabaseForm({ resource, details }: { resource?: any, details?: any }) {
     const router = useRouter()
 
 
-    console.log({ resource })
+    console.log({ resource, details })
     const form = useForm<z.infer<typeof FormSchema>>({
         resolver: zodResolver(FormSchema),
         defaultValues: {
             name: resource?.name || "",
-            host: details?.host || "",
-            port: details?.port || 5432,
-            database: details?.database || "",
+            connect_uri: details?.connect_uri || "",
             username: details?.username || "",
             password: details?.password || "",
         },
@@ -65,11 +57,9 @@ export default function PostgresForm({ resource, details }: { resource?: any, de
                 name: data.name,
                 type: 'db',
             },
-            ...(isUpdate ? {} : { subtype: 'postgres' }),
+            ...(isUpdate ? {} : { subtype: 'metabase' }),
             config: {
-                host: data.host,
-                port: data.port,
-                database: data.database,
+                connect_uri: data.connect_uri,
                 username: data.username,
                 password: data.password,
             }
@@ -106,27 +96,12 @@ export default function PostgresForm({ resource, details }: { resource?: any, de
                         <div className='flex-grow'>
                             <FormField
                                 control={form.control}
-                                name="host"
+                                name="connect_uri"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Hostname</FormLabel>
+                                        <FormLabel>Metabase URI</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="host.turntable.so" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-                        <div className="flex-shrink ">
-                            <FormField
-                                control={form.control}
-                                name="port"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Port</FormLabel>
-                                        <FormControl>
-                                            <Input type='number' {...field} />
+                                            <Input placeholder="http://metabase:4000" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -134,19 +109,7 @@ export default function PostgresForm({ resource, details }: { resource?: any, de
                             />
                         </div>
                     </div>
-                    <FormField
-                        control={form.control}
-                        name="database"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Database</FormLabel>
-                                <FormControl>
-                                    <Input type='text' placeholder="production_database" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+
                     <div className='flex space-x-4 w-full'>
                         <div className='flex-grow'>
                             <FormField

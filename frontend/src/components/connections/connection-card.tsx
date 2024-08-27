@@ -1,16 +1,16 @@
 'use client'
-import { Badge } from "../ui/badge"
-import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card"
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+import { Loader2 } from 'lucide-react';
 import { getResourceIcon } from "../../lib/utils";
 import { useRouter } from 'next/navigation'
-import dayjs from 'dayjs'
-import relativeTime from 'dayjs/plugin/relativeTime'
-import { EllipsisVertical, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import React, { useEffect } from "react";
 import useSWR from "swr";
 import useWorkflowUpdates from "@/app/hooks/use-workflow-updates";
 import useSession from "@/app/hooks/use-session";
+import { Badge } from "../ui/badge";
+import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card";
 
 dayjs.extend(relativeTime)
 
@@ -23,6 +23,7 @@ type Resource = {
     last_synced: string
     status: string
     subtype: string
+    has_dbt: boolean
 }
 
 
@@ -49,8 +50,9 @@ export default function ConnectionCard({ resource }: {
         }}>
             <CardHeader>
                 <div className='flex items-center space-x-4'>
-                    <div className='mb-1'>
+                    <div className='mb-1 space-y-1'>
                         {getResourceIcon(resource.subtype)}
+                        {resource.has_dbt && getResourceIcon('dbt')}
                     </div>
                     <div className='w-full flex justify-between items-center'>
                         <div className='space-y-1'>

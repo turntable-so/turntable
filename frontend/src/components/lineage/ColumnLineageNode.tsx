@@ -23,8 +23,8 @@ import { columns } from "../ui/Columns";
 import { ColumnTypeIcon } from "../ColumnTypeIcon";
 import { DbtCorelogo } from "../connections/AddNewSourceSection";
 import { getAssetIcon } from "../../lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 // import { useHotkeys } from 'react-hotkeys-hook';
-
 
 const ModelIcon = () => (
   <div className="min-w-[1rem] h-4">
@@ -93,14 +93,14 @@ function Header({
         position={Position.Left}
       />
 
-      <div className={`font-medium items-center truncate text-ellipsis flex gap-1`}>
+      <div
+        className={`font-medium items-center truncate text-ellipsis flex gap-1`}
+      >
         {isLoading ? (
           <div />
         ) : (
           <>
-            <div className="mr-0.5">
-              {getAssetIcon(type, resourceType)}
-            </div>
+            <div className="mr-0.5">{getAssetIcon(type, resourceType)}</div>
             {/* {hasFile && (
                             <div
                                 className={`rounded-sm cursor-pointer hidden group-hover:block hover:opacity-50
@@ -115,8 +115,15 @@ function Header({
                         )} */}
           </>
         )}
-        <div className="flex gap-0 flex-col">
-          <div className="font-mono font-semibold">{tableName}</div>
+        <div className="flex gap-0 flex-col overflow-auto size-full">
+          <Tooltip>
+            <TooltipTrigger>
+              <div className="font-mono font-semibold truncate">
+                {tableName}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>{tableName}</TooltipContent>
+          </Tooltip>
           <div className="text-gray-500">{type}</div>
         </div>
       </div>
@@ -260,24 +267,26 @@ function LineageNode({ id, data, yPos }: any) {
     <div className="group">
       <div
         className={`cursor-pointer border-2 font-mono shadow-lg text-[12px] text-black rounded-md
-        border-solid ${isActiveResource ? "border-blue-400" : "border-gray-300"
-          }
-        bg-muted w-72 max-h-64 overflow-y-scroll overflow-x-hidden relative
+        border-solid ${isActiveResource ? "border-blue-400" : "border-gray-300"}
+        bg-muted w-72 max-h-120 overflow-y-scroll overflow-x-hidden relative
         ${columnsToDisplay.length > 10 ? "nowheel" : ""}
-        ${selectedColumn != null &&
-            data.filteredColumns?.length === 0 &&
-            hoveredNode?.nodeId !== id
+        ${
+          selectedColumn != null &&
+          data.filteredColumns?.length === 0 &&
+          hoveredNode?.nodeId !== id
             ? "opacity-40"
             : ""
-          }
-        ${selectedColumn?.startsWith(`${id}.`)
+        }
+        ${
+          selectedColumn?.startsWith(`${id}.`)
             ? "border-blue-400"
             : "hover:border-[color:var(--vscode-button-secondaryHoverBackground)]"
-          }
-        ${hasErrors
+        }
+        ${
+          hasErrors
             ? "border-red-400 hover:border-[color:var(--vscode-inputValidation-errorBorder)]"
             : ""
-          }
+        }
         `}
         onScroll={() => {
           updateNode(id);
@@ -298,8 +307,9 @@ function LineageNode({ id, data, yPos }: any) {
           onClick={() => fetchAssetPreview(id)}
           className={`sticky top-0 left-0 right-0
           bg-muted z-50
-          py-3 px-2 border-t-0 border-l-0 border-r-0 ${columnsToDisplay.length > 0 ? "border-b-2 border-solid" : ""
-            } font-bold text-title uppercase text-xs group`}
+          py-3 px-2 border-t-0 border-l-0 border-r-0 ${
+            columnsToDisplay.length > 0 ? "border-b-2 border-solid" : ""
+          } font-bold text-title uppercase text-xs group`}
         >
           <Header
             tableId={id}
@@ -331,18 +341,20 @@ function LineageNode({ id, data, yPos }: any) {
                   <div
                     className={`
                     ${column.hasEdges ? "cursor-pointer" : "cursor-not-allowed"}
-                    px-2 rounded-md ${selectedColumn === column.columnId
+                    px-2 rounded-md ${
+                      selectedColumn === column.columnId
                         ? "bg-gray-200"
                         : "hover:bg-gray-200"
-                      } ${selectedColumn != null &&
-                        !data.collapsed &&
-                        !column.hasFilteredEdges &&
-                        hoveredNode?.nodeId !== id
+                    } ${
+                      selectedColumn != null &&
+                      !data.collapsed &&
+                      !column.hasFilteredEdges &&
+                      hoveredNode?.nodeId !== id
                         ? "opacity-40"
                         : column.hasEdges
-                          ? "opacity-100"
-                          : "opacity-40"
-                      }
+                        ? "opacity-100"
+                        : "opacity-40"
+                    }
                   `}
                   >
                     <Column
