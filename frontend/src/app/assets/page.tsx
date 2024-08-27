@@ -36,8 +36,6 @@ export default function AssetsPage() {
     } = useAppContext()
     const router = useRouter()
 
-    console.log({ resources })
-
     const [filteredConnections, setFilteredConnections] = useState<string[]>([])
     const [filteredTypes, setFilteredTypes] = useState<string[]>([])
     const [filteredTags, setFilteredTags] = useState<string[]>([])

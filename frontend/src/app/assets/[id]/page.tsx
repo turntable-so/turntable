@@ -52,8 +52,6 @@ export default async function AssetPage({ params }: { params: { id: string } }) 
     const asset = await getAssetPreview(params.id)
     const { lineage, root_asset } = await getLineage({ nodeId: params.id, successor_depth: 1, predecessor_depth: 1, lineage_type: 'all' })
 
-    console.log({ asset })
-
     return (
         <div className="max-w-7xl w-full px-16 pt-16">
             <div className="flex gap-4 items-center">
