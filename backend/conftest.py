@@ -129,6 +129,10 @@ def assert_ingest_output(resources):
     assert Column.objects.count() > 0
     assert ColumnLink.objects.count() > 0
 
+    ## all assets have types
+    for asset in Asset.objects.all():
+        assert asset.type is not None, asset.__dict__
+
     ## all resources represented in assets
     for resource in resources:
         assert resource.asset_set.count() > 0

@@ -157,6 +157,7 @@ class ChartInfoParser(DataHubDBParserBase):
             if "chartInfo" in v and k in self.asset_dict:
                 for info in v["chartInfo"]:
                     self.asset_dict[k].name = info["title"]
+                    self.asset_dict[k].type = Asset.AssetType.CHART
                     if "description" in info:
                         self.asset_dict[k].description = info["description"]
                     if "chartUrl" in info:
@@ -179,6 +180,7 @@ class DashboardInfoParser(DataHubDBParserBase):
             if "dashboardInfo" in v and k in self.asset_dict:
                 for info in v["dashboardInfo"]:
                     self.asset_dict[k].name = info["title"]
+                    self.asset_dict[k].type = Asset.AssetType.DASHBOARD
                     if "description" in info:
                         self.asset_dict[k].description = info["description"]
                     if "dashboardUrl" in info:
@@ -252,14 +254,15 @@ class DatasetInfoParser(DataHubDBParserBase):
         dbt_info, db_info, _, _ = info_list
         for info in [*dbt_info, *db_info]:
             if "node_type" in info["customProperties"]:
-                return info["customProperties"]["node_type"]
-        return "dataset"
+                type_str = info["customProperties"]["node_type"].upper()
+                return Asset.AssetType[type_str]
+        return Asset.AssetType.DATASET
 
     def get_unique_name(self, info_list: list[dict[str, Any]]):
         dbt_info, _, _, _ = info_list
         for info in dbt_info:
             if "dbt_unique_id" in info["customProperties"]:
-                return info["customProperties"]["dbt_unique_id"]
+                return info["customProperties"]["dbt_unique_id"].upper()
 
         return None
 
@@ -606,16 +609,6 @@ class DataHubDBParser:
         if self.is_db:
             self.graph_contraction_helper("column")
 
-        # else:
-        #     for node in self.column_graph.nodes:
-        #         if node not in self.column_dict:
-        #             underlying_asset_id = SchemaFieldUrn.from_string(node).parent
-        #             self.column_dict[node] = Column(
-        #                 id=node,
-        #                 asset_id=underlying_asset_id,
-        #                 workspace_id=self.workspace_id,
-        #             )
-
         # make sure unconnected nodes are in the graph
         for id in self.column_dict:
             if id not in self.column_graph:
@@ -680,13 +673,8 @@ class DataHubDBParser:
         schema_helper = [
             (col_name, str) for col_name in self.asset_column_dict.get(k, [])
         ]
-        # schema_tples = []
-        # for col in self.column_dict.values():
-        #     if col.asset_id == k:
-        #         schema_tples.append((col.name, str))
         return VinylSchema(ibis.schema(schema_helper))
 
-    # @timeout(15)
     def get_ast_nodes(
         self, k: str, asset: Asset, lineage_types: list[ColumnLink.LineageType]
     ) -> SQLAstNode:

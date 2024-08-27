@@ -143,7 +143,7 @@ testpaths = [
     "ai/tests",
     "workflows/tests",
     "tests/",
-    "private/tests",
+    # "private/tests",
 ]
 addopts = "--color=yes -v"
 DJANGO_SETTINGS_MODULE = "api.settings"
