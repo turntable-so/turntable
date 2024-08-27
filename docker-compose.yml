@@ -54,6 +54,9 @@ x-dev-credentials: &dev-credentials
   ENCRYPTION_KEY: ${ENCRYPTION_KEY}
   DJANGO_SETTINGS_MODULE: api.settings
   BACKEND_HOST: ${BACKEND_HOST}
+  LOCAL_DB: ${LOCAL_DB:-true}
+  LOCAL_STORAGE: ${LOCAL_STORAGE:-true}
+  LOCAL_HOST: ${LOCAL_HOST:-true}
 
 x-next-credentials: &next-credentials
   NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
@@ -66,9 +69,7 @@ x-next-credentials: &next-credentials
 x-oauth-credentials: &oauth-credentials
   GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
   GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-  LOCAL_DB: ${LOCAL_DB:-true}
-  LOCAL_STORAGE: ${LOCAL_STORAGE:-true}
-  LOCAL_HOST: ${LOCAL_HOST:-true}
+
 
 x-common-backend: &common-backend
   build:
