@@ -88,7 +88,7 @@ urlpatterns = [
         AssetViewSet.as_view({"get": "retrieve"}),
         name="asset-detail",
     ),
-    path("/ws/subscribe/<str:workspace_id>/", WorkflowRunConsumer.as_asgi()),
+    path("ws/subscribe/<str:workspace_id>/", WorkflowRunConsumer.as_asgi()),
     re_path(r"^health_check/", include("health_check.urls")),
     path("", include(router.urls)),
 ]

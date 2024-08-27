@@ -16,6 +16,7 @@ from app.consumers import WorkflowRunConsumer
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 from channels.generic.websocket import AsyncWebsocketConsumer
+from channels.security.websocket import AllowedHostsOriginValidator
 
 
 class RealtimeNotificationConsumer(AsyncWebsocketConsumer):
@@ -36,13 +37,16 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "api.settings")
 application = ProtocolTypeRouter(
     {
         "http": get_asgi_application(),
-        "websocket": URLRouter(
-            [
-                re_path(
-                    r"^ws/subscribe/(?P<workspace_id>[^/]+)/$",
-                    WorkflowRunConsumer.as_asgi(),
-                ),
-            ]
-        ),
+        "websocket": 
+            AuthMiddlewareStack(
+                URLRouter(
+                    [
+                        re_path(
+                            r"^ws/subscribe/(?P<workspace_id>[^/]+)/$",
+                            WorkflowRunConsumer.as_asgi(),
+                        ),
+                    ]
+                )
+            )
     }
 )
