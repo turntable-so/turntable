@@ -49,15 +49,15 @@ jobs:
           up-flags: "--build"
           down-flags: -v
 
-      - name: Install dependencies and run migrations
+      - name: Install dependencies
         run: |
           rye config --set-bool behavior.use-uv=true
           rye sync --no-lock
-          rye run django-admin migrate
         working-directory: backend
       
-      - name: Run tests
+      - name: Run migrations and tests
         run: |
+          rye run django-admin migrate
           rye run pytest -x
         working-directory: backend
         env:
