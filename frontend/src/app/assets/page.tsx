@@ -1,13 +1,14 @@
 'use client'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { useAppContext } from "@/contexts/AppContext"
+import { AssetMap, useAppContext } from "@/contexts/AppContext"
 import { Separator } from "@/components/ui/separator"
-import { Columns3, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import MultiSelect from "@/components/ui/multi-select"
-import { DatabaseZap2 } from 'lucide-react'
-import { useState } from "react"
+import { Fragment, ReactNode, useCallback, useState } from "react"
+
+import MultiSelectCompact from "@/components/ui/multi-select-compact"
 
 
 type Asset = {
@@ -18,17 +19,13 @@ type Asset = {
     resource_id: string;
     description: string;
     num_columns: number;
+    tags: string[];
 };
 
 
-const frameworksList = [
-    { value: "react", label: "React", icon: DatabaseZap2 },
-    { value: "angular", label: "Angular", icon: DatabaseZap2 },
-    { value: "vue", label: "Vue", icon: DatabaseZap2 },
-    { value: "svelte", label: "Svelte", icon: DatabaseZap2 },
-    { value: "ember", label: "Ember", icon: DatabaseZap2 },
-];
-
+type Option = {
+    value: string, label: string, icon?: ReactNode
+}
 
 
 export default function AssetsPage() {
@@ -39,9 +36,12 @@ export default function AssetsPage() {
 
     console.log({ assets })
 
-    const [selectedFrameworks, setSelectedFrameworks] = useState([])
+    const [filteredConnections, setFilteredConnections] = useState<Option[]>([])
+    const [filteredTypes, setFilteredTypes] = useState<Option[]>([])
+    const [filteredTags, setFilteredTags] = useState<Option[]>([])
     const [query, setQuery] = useState("")
-
+    const [currentPage, setCurrentPage] = useState(1)
+    const totalPages = 97
 
     const allAssets = Object.entries(assets).reduce((acc, [resource_id, resource]) => {
         return acc.concat(
@@ -52,9 +52,67 @@ export default function AssetsPage() {
         );
     }, []);
 
-    const filteredAssets = allAssets.filter((asset: Asset) => {
-        return asset.name.toLowerCase().includes(query.toLowerCase())
-    })
+
+    let filteredAssets = allAssets.filter((asset: Asset) => {
+        console.log({ asset, filteredTypes })
+        const matchesQuery = asset.name.toLowerCase().includes(query.toLowerCase());
+        const filtersEnabled = filteredConnections.length > 0 || filteredTypes.length > 0 || filteredTags.length > 0;
+
+        const matchesConnection = filteredConnections.some(conn => conn.value === asset.resource_id);
+        const matchesType = filteredTypes.some(type => type.value === asset.type);
+        console.log({ matchesType })
+        const matchesTags = (asset.tags?.length > 0 ? filteredTags.some(tag => asset.tags.includes(tag.value)) : false);
+
+        console.log(filteredTypes.some(type => type.value === asset.type))
+
+        return matchesQuery && filtersEnabled ? (matchesConnection || matchesType || matchesTags) : true
+    });
+
+
+
+    const allTypeOptions = Array.from(
+        new Set([...allAssets.map((asset: Asset) => asset.type)])
+    ).map((type: string) => ({
+        value: type,
+        label: type
+    }))
+
+
+    const allTagOptions = allAssets.reduce((acc: string[], asset: Asset) => {
+        if (asset.tags && Array.isArray(asset.tags)) {
+            asset.tags.forEach((tag: string) => {
+                if (!acc.includes(tag)) {
+                    acc.push(tag);
+                }
+            });
+        }
+        return acc;
+    }, []).map((tag: string) => ({
+        value: tag,
+        label: tag
+    }))
+
+    const allConnectionOptions = Object.entries(assets).map(([resource_id, resource]) => ({
+        value: resource_id,
+        label: resource.name
+    }))
+
+    const handlePageChange = useCallback((newPage: number) => {
+        // This function would typically fetch new data or update the view
+        setCurrentPage(newPage)
+        console.log(`Navigating to page ${newPage}`)
+    }, [])
+
+    const getPageNumbers = () => {
+        const pageNumbers = [1, 2, 3]
+        if (currentPage > 3 && currentPage < totalPages - 1) {
+            pageNumbers.push(currentPage)
+        }
+        if (totalPages > 4) {
+            pageNumbers.push(totalPages)
+        }
+        return pageNumbers
+    }
 
 
     return (
@@ -73,33 +131,36 @@ export default function AssetsPage() {
 
                     </div>
                     <div className='flex gap-4 flex items-center justify-between'>
-                        <div className='text-sm font-medium text-gray-500 pl-1'>Showing 1-200 of {allAssets.length} assets</div>
+                        <div className='text-sm font-medium text-gray-500 pl-1'>Showing {filteredAssets.length} of {allAssets.length} assets</div>
                         <div className='flex gap-2'>
-                            <div>
-                                <MultiSelect
-                                    options={frameworksList}
-                                    onValueChange={setSelectedFrameworks}
-                                    defaultValue={selectedFrameworks}
+                            <div className='w-[200px]'>
+                                <MultiSelectCompact
+                                    label="Connections"
+                                    options={allConnectionOptions}
+                                    onValueChange={setFilteredConnections}
+                                    defaultValue={filteredConnections}
                                     placeholder="Connections"
                                     animation={2}
                                     maxCount={1}
                                 />
                             </div>
-                            <div>
-                                <MultiSelect
-                                    options={frameworksList}
-                                    onValueChange={setSelectedFrameworks}
-                                    defaultValue={selectedFrameworks}
+                            <div className='w-[150px]'>
+                                <MultiSelectCompact
+                                    label="Types"
+                                    options={allTypeOptions}
+                                    onValueChange={setFilteredTypes}
+                                    defaultValue={filteredTypes}
                                     placeholder="Types"
                                     animation={2}
                                     maxCount={1}
                                 />
                             </div>
-                            <div>
-                                <MultiSelect
-                                    options={frameworksList}
-                                    onValueChange={setSelectedFrameworks}
-                                    defaultValue={selectedFrameworks}
+                            <div className='w-[150px]'>
+                                <MultiSelectCompact
+                                    label="Tags"
+                                    options={allTagOptions}
+                                    onValueChange={setFilteredTags}
+                                    defaultValue={filteredTags}
                                     placeholder="Tags"
                                     animation={2}
                                     maxCount={1}
@@ -119,7 +180,7 @@ export default function AssetsPage() {
                             <CardHeader>
                                 <CardTitle>{asset.name.slice(0, 50)}</CardTitle>
                             </CardHeader>
-                            <CardContent className="flex h-24">
+                            <CardContent className="flex">
                                 {asset.description?.trim().length > 0 ? <p className="text-sm text-gray-500">{asset.description.slice(0, 240)}</p> : <p className="text-sm text-gray-500">No description</p>}
                             </CardContent>
                             <CardFooter>
@@ -132,6 +193,7 @@ export default function AssetsPage() {
                     ))}
                 </div>
             </div>
+            <div className="h-6" />
         </div>
     )
 }

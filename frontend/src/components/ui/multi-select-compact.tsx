@@ -10,7 +10,6 @@ import {
     WandSparkles,
     ListFilter,
 } from "lucide-react";
-
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -55,9 +54,9 @@ const multiSelectVariants = cva(
 );
 
 /**
- * Props for MultiSelect component
+ * Props for MultiSelectCompact component
  */
-interface MultiSelectProps
+interface MultiSelectCompactProps
     extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof multiSelectVariants> {
     /**
@@ -89,6 +88,12 @@ interface MultiSelectProps
     placeholder?: string;
 
     /**
+     * Label to be displayed in the badge.
+     * Optional, defaults to "Selected".
+     */
+    label: string;
+
+    /**
      * Animation duration in seconds for the visual effects (e.g., bouncing badges).
      * Optional, defaults to 0 (no animation).
      */
@@ -99,6 +104,12 @@ interface MultiSelectProps
      * Optional, defaults to 3.
      */
     maxCount?: number;
+
+
+    /**
+     * Icon to be displayed in the badge.
+     */
+    dropdownIcon?: React.ComponentType<{ className?: string }>;
 
     /**
      * The modality of the popover. When set to true, interaction with outside elements
@@ -120,9 +131,9 @@ interface MultiSelectProps
     className?: string;
 }
 
-const MultiSelect = React.forwardRef<
+const MultiSelectCompact = React.forwardRef<
     HTMLButtonElement,
-    MultiSelectProps
+    MultiSelectCompactProps,
 >(
     (
         {
@@ -135,6 +146,8 @@ const MultiSelect = React.forwardRef<
             maxCount = 3,
             modalPopover = false,
             asChild = false,
+            label,
+            dropdownIcon,
             className,
             ...props
         },
@@ -213,57 +226,14 @@ const MultiSelect = React.forwardRef<
                     >
                         <div className="flex justify-between items-center w-full">
                             <div className="flex flex-wrap items-center">
-                                <ListFilter className="h-4 w-4 mr-2 text-muted-foreground" />
                                 {selectedValues.length > 0 ? (
-                                    selectedValues.slice(0, maxCount).map((value) => {
-                                        const option = options.find((o) => o.value === value);
-                                        const IconComponent = option?.icon;
-                                        return (
-                                            <Badge
-                                                key={value}
-                                                className={cn(
-                                                    isAnimating ? "animate-bounce" : "",
-                                                    multiSelectVariants({ variant })
-                                                )}
-                                                style={{ animationDuration: `${animation}s` }}
-                                            >
-                                                {IconComponent && (
-                                                    <IconComponent className="h-4 w-4 mr-2" />
-                                                )}
-                                                {option?.label}
-                                                <XCircle
-                                                    className="ml-2 h-4 w-4 cursor-pointer"
-                                                    onClick={(event) => {
-                                                        event.stopPropagation();
-                                                        toggleOption(value);
-                                                    }}
-                                                />
-                                            </Badge>
-                                        );
-                                    })
+                                    <span className="text-xs text-muted-foreground mx-3">
+                                        {`${selectedValues.length} ${label}`}
+                                    </span>
                                 ) : (
                                     <span className="text-xs text-muted-foreground mx-3">
                                         {placeholder}
                                     </span>
-                                )}
-                                {selectedValues.length > maxCount && (
-                                    <Badge
-                                        className={cn(
-                                            "bg-transparent text-foreground border-foreground/1 hover:bg-transparent",
-                                            isAnimating ? "animate-bounce" : "",
-                                            multiSelectVariants({ variant })
-                                        )}
-                                        style={{ animationDuration: `${animation}s` }}
-                                    >
-                                        {`+ ${selectedValues.length - maxCount} more`}
-                                        <XCircle
-                                            className="ml-2 h-4 w-4 cursor-pointer"
-                                            onClick={(event) => {
-                                                event.stopPropagation();
-                                                clearExtraOptions();
-                                            }}
-                                        />
-                                    </Badge>
                                 )}
                             </div>
                             <div className="flex items-center justify-between">
@@ -298,23 +268,7 @@ const MultiSelect = React.forwardRef<
                         <CommandList>
                             <CommandEmpty>No results found.</CommandEmpty>
                             <CommandGroup>
-                                <CommandItem
-                                    key="all"
-                                    onSelect={toggleAll}
-                                    className="cursor-pointer"
-                                >
-                                    <div
-                                        className={cn(
-                                            "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
-                                            selectedValues.length === options.length
-                                                ? "bg-primary text-primary-foreground"
-                                                : "opacity-50 [&_svg]:invisible"
-                                        )}
-                                    >
-                                        <CheckIcon className="h-4 w-4" />
-                                    </div>
-                                    <span>(Select All)</span>
-                                </CommandItem>
+
                                 {options.map((option) => {
                                     const isSelected = selectedValues.includes(option.value);
                                     return (
@@ -374,6 +328,6 @@ const MultiSelect = React.forwardRef<
     }
 );
 
-MultiSelect.displayName = "MultiSelect";
+MultiSelectCompact.displayName = "MultiSelectCompact";
 
-export default MultiSelect;
+export default MultiSelectCompact;
