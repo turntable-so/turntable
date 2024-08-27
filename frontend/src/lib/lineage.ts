@@ -128,8 +128,6 @@ export const getColumnLineageForAsset = ({
     nodes: any[],
     columnLinks: any[]
 }) => {
-    console.log('getColumnLineageForAsset', { nodes, links, columnLinks })
-
     const tableLineage = buildTableLineage({
         links,
         currentModelId: assetId,

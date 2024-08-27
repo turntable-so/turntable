@@ -332,9 +332,9 @@ export function getAssetIcon(type: string, resourceType?: string) {
   if (type === 'chart') {
     <BarChartBig className='w-4 h-4 mr-1' />
   }
-  if (resourceType === 'Looker') {
+  if (resourceType === 'looker') {
     return (
-      <div className='w-4 h-4 mr-1'>
+      <div className='w-4 h-5 mr-1'>
         <LookerIcon />
       </div>
     )
@@ -345,7 +345,7 @@ export function getAssetIcon(type: string, resourceType?: string) {
   if (resourceType === 'bigquery') {
     return <div className='mr-1'><BigQueryLogo /></div>
   }
-  if (resourceType === 'DBT' || resourceType === null) {
+  if (resourceType === 'dbt' || resourceType === null) {
     if (type === 'source') {
       return <div className='mr-1'><BigQueryLogo /></div>
     } else {
