@@ -16,6 +16,10 @@ x-postgres-test-db-credentials: &postgres-test-db-credentials
   POSTGRES_HOST: postgres_test_db
   POSTGRES_PORT: 5432
 
+x-next-credentials: &next-credentials
+  NEXT_PUBLIC_BACKEND_HOST: "http://localhost:8000"
+
+
 services:
   api:
     extends:
@@ -46,14 +50,15 @@ services:
     tty: true 
 
   web:
-     extends:
-       file: docker-compose.yml
-       service: web
-     command: ["pnpm", "dev"]
-     environment:
-       DEV: "true"
-     volumes:
-       - ./frontend:/code
+    extends:
+      file: docker-compose.yml
+      service: web
+    command: ["pnpm", "dev"]
+    environment:
+      <<: *next-credentials
+      DEV: "true"
+    volumes:
+      - ./frontend:/code
 
   redis:
     extends:
