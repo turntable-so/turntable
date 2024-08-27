@@ -81,6 +81,7 @@ dependencies = [
     "pytest-asyncio>=0.23.8",
     "channels>=4.1.0",
     "django-health-check>=3.18.3",
+    "channels_redis>=4.2.0",
 ]
 
 [project.scripts]

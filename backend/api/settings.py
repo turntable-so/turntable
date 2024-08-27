@@ -87,6 +87,13 @@ CORS_ALLOWED_ORIGINS = [
     "https://app.turntable.so",
 ]
 
+frontend_hosts = os.getenv("FRONTEND_HOST")
+if frontend_hosts:
+    frontend_hosts = frontend_hosts.split(",")
+    for frontend_host in frontend_hosts:
+        CORS_ALLOWED_ORIGINS = [frontend_host] + CORS_ALLOWED_ORIGINS
+
+
 ROOT_URLCONF = "api.urls"
 
 TEMPLATES = [
@@ -305,6 +312,14 @@ CACHES = {
 
 CHANNEL_LAYERS = {
     "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",
-    }
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [
+                (
+                    os.environ.get("REDIS_HOST", "redis"),
+                    int(os.environ.get("REDIS_PORT", 6379)),
+                )
+            ],
+        },
+    },
 }
