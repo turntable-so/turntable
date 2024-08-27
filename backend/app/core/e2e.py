@@ -531,7 +531,6 @@ class DataHubDBParser:
                     id=id, resource_id=self.resource_id, workspace_id=self.workspace_id
                 ),
             )
-        breakpoint()
         if self.is_db:
             # remove from asset_dict dbt assets that are materialized in a db. We'll use the postgres id as the source_of_truth
             self.duplicate_helper = get_duplicate_nodes_helper(
@@ -542,7 +541,6 @@ class DataHubDBParser:
             for val in self.duplicate_helper.values():
                 self.asset_dict[val[0]] = base_asset_dict[val[0]]
         else:
-            breakpoint()
             self.asset_dict = base_asset_dict
 
     @classmethod
@@ -920,8 +918,6 @@ class DataHubDBParser:
                 nullable=True,
             )
             indirect_columns.append(column)
-
-        breakpoint()
 
         delete_and_upsert(combined["assets"], resource, indirect_assets)
         delete_and_upsert(combined["asset_errors"], resource)
