@@ -55,7 +55,7 @@ export default function MetabaseForm({ resource, details }: { resource?: any, de
         const payload = {
             resource: {
                 name: data.name,
-                type: 'db',
+                type: 'bi',
             },
             ...(isUpdate ? {} : { subtype: 'metabase' }),
             config: {
