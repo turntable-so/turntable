@@ -5,11 +5,10 @@ from hatchet_sdk import Context
 from app.core.e2e import DataHubDBParser
 from app.models import Resource, ResourceSubtype
 from workflows.hatchet import hatchet
-from workflows.utils.log import inject_workflow_run_logging
 
 
 @hatchet.workflow(on_events=["metadata_sync"], timeout="15m")
-@inject_workflow_run_logging(hatchet)
+# @inject_workflow_run_logging(hatchet)
 class MetadataSyncWorkflow:
     """
     input structure:
