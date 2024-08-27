@@ -12,7 +12,7 @@ import MultiSelectCompact from "@/components/ui/multi-select-compact"
 import { getResourceIcon } from "@/lib/utils"
 
 
-type Asset = {
+export type Asset = {
     id: string;
     name: string;
     type: string;

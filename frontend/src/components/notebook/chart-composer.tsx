@@ -1,5 +1,5 @@
 import { ChartComponent } from "@/components/QueryBlock";
-import { FancyMultiSelect } from "@/components/ui/multi-select";
+import MultiSelect from "@/components/ui/multi-select";
 import { AgGridReact } from "ag-grid-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -167,7 +167,7 @@ export default function ChartComposer({
           </div>
           <div>
             <div className="text-lg py-2 font-semibold">Y Axis</div>
-            <FancyMultiSelect
+            <MultiSelect
               items={currentOptions?.columnOptions.map((item: string) => ({
                 label: item,
                 value: item,
