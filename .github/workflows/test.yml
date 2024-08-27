@@ -57,7 +57,7 @@ jobs:
       
       - name: Run migrations and tests
         run: |
-          rye run PYTHONPATH="backend:${PYTHONPATH}" django-admin migrate
+          rye run django-admin migrate
           rye run pytest -x
         working-directory: backend
         env:
@@ -79,3 +79,4 @@ jobs:
           FRONTEND_HOST: localhost
           LOCAL_DB: "true"
           DJANGO_SETTINGS_MODULE: api.settings
+          PYTHONPATH: "backend:${PYTHONPATH}"
