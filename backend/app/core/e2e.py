@@ -513,8 +513,6 @@ class DataHubDBParser:
         if self.path is None:
             raise ValueError("Path not set")
 
-        breakpoint()
-
         return duckdb.connect(self.path, read_only=True).execute(self.query).fetchall()
 
     def get_row_dict(self):
