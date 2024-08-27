@@ -111,7 +111,7 @@ export default function AppContextProvider({
     const [isFullScreen, setIsFullScreen] = useState<boolean>(false);
     const [fullScreenData, setFullScreenData] = useState<any>(false);
 
-    const [notebookCharts, setNotebookCharts] = useState<any[]>({});
+    const [notebookCharts, setNotebookCharts] = useState<any>({});
 
     const fetchResources = async () => {
         const data = await getResources();

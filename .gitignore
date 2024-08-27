@@ -47,6 +47,7 @@ yarn-error.log*
 next-env.d.ts
 
 backend/dev/data
+backend/fixtures
 backend/.env
 **/__pycache__/**
 

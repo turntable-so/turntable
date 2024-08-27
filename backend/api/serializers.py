@@ -7,20 +7,23 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from app.models import (
     Asset,
     AssetLink,
+    BigqueryDetails,
     Block,
     Column,
     ColumnLink,
+    DBTCoreDetails,
     GithubInstallation,
     LookerDetails,
     Notebook,
+    PostgresDetails,
     Resource,
     ResourceDetails,
-    BigqueryDetails,
     User,
     Workspace,
     WorkspaceGroup,
-    PostgresDetails,
 )
+from app.models.resources import MetabaseDetails
+from vinyl.lib.dbt_methods import DBTVersion
 
 Invitation = get_invitation_model()
 
@@ -132,30 +135,6 @@ class WorkspaceDetailSerializer(serializers.ModelSerializer):
         model = Workspace
         fields = ["id", "name", "icon_url", "icon_file", "users"]
         depth = 1
-
-
-class ResourceSerializer(serializers.HyperlinkedModelSerializer):
-
-    class Meta:
-        model = Resource
-        fields = [
-            "id",
-            "name",
-            "updated_at",
-            "type",
-            "subtype",
-            "last_synced",
-            "status",
-        ]
-
-    def get_last_synced(self, obj):
-        return obj.last_synced
-
-    def get_status(self, obj):
-        return obj.status
-
-    def get_subtype(self, obj):
-        return obj.subtype
 
 
 class ColumnSerializer(serializers.ModelSerializer):
@@ -305,8 +284,76 @@ class PostgresDetailsSerializer(ResourceDetailsSerializer):
         fields = ["host", "username", "password", "database", "port"]
 
 
+class MetabaseDetailsSerializer(ResourceDetailsSerializer):
+    class Meta:
+        model = MetabaseDetails
+        fields = ["username", "password", "connect_uri"]
+
+
+class DBTVersionField(serializers.ChoiceField):
+
+    def to_representation(self, obj):
+        if obj is None:
+            return None
+        if isinstance(obj, str):
+            return obj
+        return obj.value
+
+    def to_internal_value(self, data):
+        try:
+            return DBTVersion(data)
+        except ValueError:
+            self.fail("invalid_choice", input=data)
+
+
+class DBTCoreDetailsSerializer(ResourceDetailsSerializer):
+
+    version = DBTVersionField([(v, v.value) for v in DBTVersion])
+
+    class Meta:
+        model = DBTCoreDetails
+        fields = [
+            "git_repo_url",
+            "main_git_branch",
+            "deploy_key",
+            "project_path",
+            "threads",
+            "version",
+            "database",
+            "schema",
+        ]
+
+
 class BlockSerializer(serializers.ModelSerializer):
     class Meta:
         model = Block
         fields = ["id", "results", "created_at", "updated_at"]
         read_only_fields = ["created_at", "updated_at"]
+
+
+class ResourceSerializer(serializers.HyperlinkedModelSerializer):
+
+    class Meta:
+        model = Resource
+        fields = [
+            "id",
+            "name",
+            "updated_at",
+            "type",
+            "subtype",
+            "last_synced",
+            "status",
+            "has_dbt",
+        ]
+
+    def get_last_synced(self, obj):
+        return obj.last_synced
+
+    def get_status(self, obj):
+        return obj.status
+
+    def get_subtype(self, obj):
+        return obj.subtype
+
+    def get_has_dbt(self, obj):
+        return obj.has_dbt

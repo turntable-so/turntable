@@ -3,7 +3,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import FullWidthPageLayout from "../../../components/layout/FullWidthPageLayout";
 import { Button } from "../../../components/ui/button";
-import { createGithubConnection, getSshKey, getWorkspace, testGithubConnection } from "../../actions/actions";
+import { createGithubConnection, getSshKey, getWorkspace, testGitConnection } from "../../actions/actions";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { GitHubLogoIcon } from "@radix-ui/react-icons";
@@ -86,7 +86,7 @@ function GithubConnection() {
 
   async function testConnection() {
     setTested(true);
-    const data = await testGithubConnection(
+    const data = await testGitConnection(
       form.getValues().deployKey,
       form.getValues().dbtGitRepoUrl
     );
@@ -225,36 +225,37 @@ function GithubConnection() {
               )}
             />
           </CardContent>
-          <CardFooter className="flex justify-end"></CardFooter>
+          <CardFooter className="flex justify-end">
+            <div className="float-right flex ">
+              {tested && (
+                connectionCheck ? (
+                  <div className="text-green-500 mt-2 mr-2">Connection successful</div>
+                ) : (
+                  <div className="text-red-500  mt-2 mr-2">Connection failed</div>
+                ))
+              }
+              <LoaderButton
+                isLoading={isSubmitting}
+                isDisabled={isSubmitting}
+                type="submit"
+                className="mr-2"
+                onClick={(event) => {
+                  event.preventDefault();
+                  testConnection();
+                }}
+              >
+                Test Connection
+              </LoaderButton>
+            </div>
+          </CardFooter>
         </Card>
-        <div className="float-right flex ">
-          {tested && (
-            connectionCheck ? (
-              <div className="text-green-500 mt-2 mr-2">Connection successful</div>
-            ) : (
-              <div className="text-red-500  mt-2 mr-2">Connection failed</div>
-            ))
-          }
-          <LoaderButton
-            isLoading={isSubmitting}
-            isDisabled={isSubmitting}
-            type="submit"
-            className="mr-2"
-            onClick={(event) => {
-              event.preventDefault();
-              testConnection();
-            }}
-          >
-            Test Connection
-          </LoaderButton>
-          <LoaderButton
-            isLoading={isSubmitting}
-            isDisabled={isSubmitting || !connectionCheck}
-            type="submit"
-          >
-            Add Git Connection
-          </LoaderButton>
-        </div>
+        <LoaderButton
+          isLoading={isSubmitting}
+          isDisabled={isSubmitting || !connectionCheck}
+          type="submit"
+        >
+          Add Git Connection
+        </LoaderButton>
       </form>
     </Form>
   );

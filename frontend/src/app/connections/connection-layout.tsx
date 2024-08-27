@@ -3,7 +3,13 @@
 import { BigQueryLogo } from "@/components/connections/connection-options";
 import BigqueryForm from "@/components/connections/forms/bigquery-form";
 import { Button } from "@/components/ui/button";
-import { Card, CardDescription, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { LoaderButton } from "@/components/ui/LoadingSpinner";
 import { Separator } from "@/components/ui/separator";
 import { ChevronLeft, Loader2 } from "lucide-react";
@@ -16,6 +22,8 @@ dayjs.extend(relativeTime);
 
 import useSession from "@/app/hooks/use-session";
 import useWorkflowUpdates from "@/app/hooks/use-workflow-updates";
+import DbtProjectForm from "@/components/connections/forms/dbt-project-form";
+import MetabaseForm from "@/components/connections/forms/metabase-form";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -26,17 +34,29 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import PostgresForm from "../../components/connections/forms/postgres-form";
-import { PostgresLogo } from "../../lib/utils";
+import { MetabaseIcon, PostgresLogo } from "../../lib/utils";
 import { deleteResource, syncResource } from "../actions/actions";
 import React, { useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 
+type DbtDetails = {
+  git_repo_url: string;
+  main_git_branch: string;
+  project_path: string;
+  threads: number;
+  version: string;
+  database: string;
+  schema: string;
+};
+
 export default function ConnectionLayout({
-  resource = {},
+  resource,
   details,
+  dbtDetails,
 }: {
   resource?: any;
   details?: any;
+  dbtDetails?: DbtDetails;
 }) {
   const router = useRouter();
   const session = useSession();
@@ -51,6 +71,7 @@ export default function ConnectionLayout({
       setRealStatus(status);
     }
   }, [status, resourceId]);
+
   return (
     <div className="max-w-7xl w-full px-16 py-4">
       <Button
@@ -64,11 +85,11 @@ export default function ConnectionLayout({
         <div className="flex space-x-2 items-center">
           {resource.subtype === "bigquery" && <BigQueryLogo />}
           {resource.subtype === "postgres" && <PostgresLogo />}
+          {resource.subtype === "metabase" && <MetabaseIcon />}
           <div>Edit {resource.name}</div>
         </div>
       </Button>
       <Separator />
-
       <div className="flex justify-center mb-16">
         <div className="flex-col justify-center w-full max-w-2xl py-8 space-y-8">
           <Card className="px-3 py-6 flex justify-between">
@@ -78,8 +99,6 @@ export default function ConnectionLayout({
                 resource.updated_at
               ).fromNow()} `}</CardDescription>
             </div>
-
-            <div className="float-right space-y-0">
               <div className="flex justify-end items-center space-x-2">
                 <div>
                   {realStatus === "RUNNING" && (
@@ -144,18 +163,42 @@ export default function ConnectionLayout({
                     </div>
                   )}
                 </div>
-              </div>
             </div>
+            <Button
+              onClick={() => {
+                const syncResourceAndRefresh = async () => {
+                  const res = await syncResource(resource.id);
+                  if (res.success) {
+                    router.replace("/connections/" + resource.id);
+                  }
+                };
+                syncResourceAndRefresh();
+              }}
+              variant="secondary"
+            >
+              {" "}
+              Run Sync
+            </Button>
           </Card>
-          <Card className="px-3 py-6">
-            <CardTitle className="py-4">Connection Details</CardTitle>
-            {resource.subtype === "bigquery" && (
-              <BigqueryForm resource={resource} details={details} />
-            )}
-            {resource.subtype === "postgres" && (
-              <PostgresForm resource={resource} details={details} />
-            )}
+          <Card className="py-6">
+            <CardHeader>
+              <CardTitle className="text-xl">Connection Details</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {resource.subtype === "bigquery" && (
+                <BigqueryForm resource={resource} details={details} />
+              )}
+              {resource.subtype === "postgres" && (
+                <PostgresForm resource={resource} details={details} />
+              )}
+              {resource.subtype === "metabase" && (
+                <MetabaseForm resource={resource} details={details} />
+              )}
+            </CardContent>
           </Card>
+          {dbtDetails && (
+            <DbtProjectForm resource={resource} details={dbtDetails} />
+          )}
           <div className="h-4" />
           <Card className="flex justify-between px-3 py-6 border-red-300">
             <div>

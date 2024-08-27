@@ -1,9 +1,8 @@
-import { useRef, useState, useEffect } from "react";
-import { AgGridReact } from "ag-grid-react";
-import { FancyMultiSelect } from "@/components/ui/multi-select";
 import { ChartComponent } from "@/components/QueryBlock";
+import { FancyMultiSelect } from "@/components/ui/multi-select";
+import { AgGridReact } from "ag-grid-react";
+import { useEffect, useRef, useState } from "react";
 
-import * as React from "react";
 
 import {
   Select,
@@ -68,7 +67,7 @@ export default function ChartComposer({
     }
   }, [data, currentOptions?.xAxis]);
 
-  const handleRangeChange = (event) => {
+  const handleRangeChange = (event: any) => {
     const { name, value } = event.target;
     setNotebookCharts({
       ...notebookCharts,
@@ -174,8 +173,8 @@ export default function ChartComposer({
                 value: item,
               }))}
               selected={currentOptions?.yAxisSeriesList}
-              setSelected={() => {}}
-              functionSelected={(newValue) => {
+              setSelected={() => { }}
+              functionSelected={(newValue: any) => {
                 setNotebookCharts({
                   ...notebookCharts,
                   [activeNode]: {

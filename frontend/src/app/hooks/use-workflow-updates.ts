@@ -1,7 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react';
-
-const baseUrl = process.env.NODE_ENV === "development" ? "localhost:8000" : "turntable-django-4426.onrender.com";
+const baseUrl = process.env.NODE_ENV === "development" ? (process.env.NEXT_PUBLIC_BACKEND_HOST ?  process.env.NEXT_PUBLIC_BACKEND_HOST : "http://localhost:8000") : process.env.NEXT_PUBLIC_BACKEND_HOST;
 const protocol = process.env.NODE_ENV === "development" ? "ws" : "wss";
 
 const useWorkflowUpdates = (workspaceId: string) => {
@@ -10,7 +9,8 @@ const useWorkflowUpdates = (workspaceId: string) => {
 
     useEffect(() => {
         // Construct the WebSocket URL
-        const socketUrl = `${protocol}://${baseUrl}/ws/subscribe/${workspaceId}/`;
+        const base = baseUrl?.split("ttp://")[1];
+        const socketUrl = `${protocol}://${base}/ws/subscribe/${workspaceId}/`;
         const socket = new WebSocket(socketUrl);
 
         socket.onopen = () => {

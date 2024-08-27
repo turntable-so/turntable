@@ -64,6 +64,10 @@ def inject_workflow_run_logging(hatchet, log_stdout: bool = False):
         debugger.build_workflow_graph()
         generations = list(nx.topological_generations(debugger.workflow_graph))
 
+        # remove all functions to ensure correct order
+        for step in debugger.workflow_graph:
+            delattr(cls, step.__name__)
+
         # on start
         @hatchet.step(timeout="15s")
         def create_workflow_run(self, context: Context):
@@ -79,6 +83,11 @@ def inject_workflow_run_logging(hatchet, log_stdout: bool = False):
             cur_parents = getattr(step, "_step_parents", [])
             setattr(step, "_step_parents", cur_parents + ["create_workflow_run"])
             setattr(cls, step.__name__, step)
+
+        # add back all other steps that were deleted
+        for generation in generations[1:]:
+            for step in generation:
+                setattr(cls, step.__name__, step)
 
         # on_end
         @hatchet.step(

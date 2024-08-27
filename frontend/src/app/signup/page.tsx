@@ -1,8 +1,9 @@
 "use client";
 
 import RegistrationForm from "@/components/auth/registration-form";
+import TurntableNamemark from "@/components/logos/turntable-namemark";
 import { Carter_One } from "next/font/google";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const carterOne = Carter_One(
     { weight: "400", subsets: ["latin"], display: "swap" });
@@ -18,13 +19,17 @@ export default function SignInPage() {
     return (
         <div className='h-screen w-full flex justify-center bg-muted items-center mt-[-48px]'>
             <div>
-                <div className={`${carterOne.className} text-2xl text-center my-8 py-2`}>
-                    turntable
+                <div className='flex justify-center mb-10'>
+                    <div>
+                        <div className='mb-12 flex justify-center'>
+                            <TurntableNamemark />
+                        </div>
+                        <div className='w-[450px]'>
+                            <RegistrationForm invitationCode={invitationCode} />
+                        </div>
+                    </div>
                 </div>
-                <div className='w-[450px]'>
-                    <RegistrationForm invitationCode={invitationCode} />
-                </div>
-            </div>
+            </div >
         </div>
     )
 }
