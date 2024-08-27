@@ -6,7 +6,7 @@ import wretch from "wretch";
 const baseUrl =
     typeof window === "undefined"
       ? process.env.NEXT_PUBLIC_BACKEND_HOST || "http://api:8000"
-      : process.env.NODE_ENV === "development"
+      : process.env.LOCAL_HOST == "true"
       ? "http://localhost:8000" // Client-side in development
       : process.env.NEXT_PUBLIC_BACKEND_HOST; // Client-side in production
 const api = wretch(baseUrl).accept("application/json");
