@@ -15,7 +15,7 @@ class Command(BaseCommand):
                 self.style.WARNING("Skipping hatchet database creation on staging.")
             )
             return
-        if os.getenv("DEV") == "true":
+        if os.getenv("LOCAL_DB") == "true":
             dbname = settings.DATABASES["default"]["NAME"]
             user = settings.DATABASES["default"]["USER"]
             password = settings.DATABASES["default"]["PASSWORD"]
