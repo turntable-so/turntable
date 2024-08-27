@@ -61,7 +61,7 @@ x-next-credentials: &next-credentials
   NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
   NEXTAUTH_URL_INTERNAL: "http://web:3000"
   NEXTAUTH_URL: "http://localhost:3000"
-  NEXT_PUBLIC_BACKEND_HOST: "http://api:8000"
+  NEXT_PUBLIC_BACKEND_HOST: "http://localhost:8000"
 
 x-common-backend: &common-backend
   build:
