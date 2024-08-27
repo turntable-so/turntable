@@ -41,25 +41,22 @@ def delete_and_upsert(
 
     # delete instances that are no longer in the new list
     to_delete = list(set(cur_instance_ids) - set(new_primary_keys))
-    breakpoint()
     if to_delete:
         model_type.objects.filter(id__in=to_delete).delete()
 
     # upsert the new instances
-    x = model_type.objects.bulk_create(
+    model_type.objects.bulk_create(
         instances,
         update_conflicts=True,
         update_fields=other_field_names,
         unique_fields=[primary_key_name],
     )
-    breakpoint()
 
     # insert the indirect instances if they don't exist.
     ## This functionality is necessary because links can exist across resources, and if the underyling nodes are not present, the link creation will raise a FK error.
     ## That said, we don't want to add these temporary nodes if the true nodes already exist in the graph.
     if indirect_instances is not None:
-        x = model_type.objects.bulk_create(
+        model_type.objects.bulk_create(
             indirect_instances,
             ignore_conflicts=True,
         )
-        breakpoint()
