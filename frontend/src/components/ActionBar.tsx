@@ -199,7 +199,7 @@ export default function ActionBar({
   ) {
     if (assetsForResource.assets.length === 0) {
       return TreeDataNode({
-        icon: getAssetIcon("dbt", resource.type),
+        icon: getAssetIcon("dbt", resource.subtype),
         id: resource.id,
         name: resource.name,
         isLoading: assetsForResource.isLoading,
@@ -207,11 +207,10 @@ export default function ActionBar({
         children: [],
       });
     }
-
+    
     const groupedAssets = groupBy(assetsForResource.assets, "type");
-
     return TreeDataNode({
-      icon: getAssetIcon("dbt", resource.type),
+      icon: getAssetIcon("dbt", resource.subtype),
       id: resource.id,
       name: resource.name,
       count: Object.keys(groupedAssets).reduce(
@@ -234,7 +233,7 @@ export default function ActionBar({
     groupBy: Function
   ) {
     return Object.keys(groupedAssets).flatMap((k) => {
-      if (resource.name.toLowerCase() === "looker") {
+      if (resource.subtype.toLowerCase() === "looker") {
         return handleLookerResources(
           resource,
           k,
@@ -255,11 +254,11 @@ export default function ActionBar({
     getAssetIcon: Function,
     groupBy: Function
   ) {
-    const nameGrouped = groupBy(groupedAssets, "name");
+    const nameGrouped = groupBy(groupedAssets, "type");
     return TreeDataNode({
       id: `${resource.id}-${assetType}`,
       name: `${assetType}s`, // Modified to show a grouped name if needed
-      icon: getAssetIcon(assetType, resource.type),
+      icon: getAssetIcon(assetType, resource.subtype),
       count: Object.keys(nameGrouped).length,
       children: Object.keys(nameGrouped)
         .sort((a, b) => a.localeCompare(b))
@@ -287,7 +286,7 @@ export default function ActionBar({
     return TreeDataNode({
       id: `${resource.id}-${assetType}-${overrideName || ""}`,
       name: `${overrideName || assetType}s`, // Modified to show a grouped name if needed
-      icon: getAssetIcon(assetType, resource.type),
+      icon: getAssetIcon(assetType, resource.subtype),
       count: assets.length,
       children: assets
         .sort((a, b) => a.name.localeCompare(b.name))
