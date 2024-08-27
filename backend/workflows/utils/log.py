@@ -50,6 +50,10 @@ def log_stdout(func):
 
         return result
 
+    for attr in func.__dict__:
+        if attr not in wrapper.__dict__:
+            setattr(wrapper, attr, func.__dict__[attr])
+
     return wrapper
 
 
