@@ -194,6 +194,9 @@ class AssetSerializer(serializers.ModelSerializer):
             "tests",
             "materialization",
             "resource_type",
+            "resource_subtype",
+            "resource_has_dbt",
+            "resource_name",
             "resource_id",
         ]
 

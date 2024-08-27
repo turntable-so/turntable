@@ -78,6 +78,17 @@ class Asset(models.Model):
             return self.resource.type
 
     @property
+    def resource_subtype(self) -> str:
+        if self.resource:
+            return self.resource.subtype
+
+    @property
+    def resource_has_dbt(self) -> bool:
+        if self.resource:
+            return self.resource.has_dbt
+        return False
+
+    @property
     def subtype(self) -> str:
         if self.resource:
             return self.resource.subtype
@@ -92,6 +103,12 @@ class Asset(models.Model):
     @property
     def num_columns(self) -> int:
         return self.columns.count()
+
+    @property
+    def resource_name(self) -> str:
+        if self.resource:
+            return self.resource.name
+        return ""
 
     class Meta:
         indexes = [

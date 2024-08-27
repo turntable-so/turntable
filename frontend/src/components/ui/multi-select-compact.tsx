@@ -9,6 +9,7 @@ import {
     XIcon,
     WandSparkles,
     ListFilter,
+    DatabaseZap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
@@ -105,11 +106,11 @@ interface MultiSelectCompactProps
      */
     maxCount?: number;
 
-
     /**
-     * Icon to be displayed in the badge.
+     * Icon to be displayed in the dropdown.
      */
-    dropdownIcon?: React.ComponentType<{ className?: string }>;
+    renderIcon: () => React.ReactNode;
+
 
     /**
      * The modality of the popover. When set to true, interaction with outside elements
@@ -147,7 +148,7 @@ const MultiSelectCompact = React.forwardRef<
             modalPopover = false,
             asChild = false,
             label,
-            dropdownIcon,
+            renderIcon,
             className,
             ...props
         },
@@ -225,13 +226,14 @@ const MultiSelectCompact = React.forwardRef<
                         )}
                     >
                         <div className="flex justify-between items-center w-full">
-                            <div className="flex flex-wrap items-center">
+                            <div className="flex items-center pl-2 w-full">
+                                {renderIcon()}
                                 {selectedValues.length > 0 ? (
-                                    <span className="text-xs text-muted-foreground mx-3">
-                                        {`${selectedValues.length} ${label}`}
+                                    <span className="text-xs text-muted-foreground mx-1">
+                                        {`${selectedValues.length} ${selectedValues.length > 1 ? label + 's' : label}`}
                                     </span>
                                 ) : (
-                                    <span className="text-xs text-muted-foreground mx-3">
+                                    <span className="text-xs text-muted-foreground mx-1">
                                         {placeholder}
                                     </span>
                                 )}
