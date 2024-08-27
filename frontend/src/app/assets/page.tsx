@@ -160,9 +160,8 @@ export default function AssetsPage() {
                         </div>
                     </div>
                 </div>
-                <div className='h-6' />
                 {filteredAssets.length === 0 && <div className='w-full  flex justify-center h-48 items-center'>No assets found</div>}
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-6 w-full mt-4'>
+                <div className='grid grid-cols-1  gap-2 w-full mt-4'>
                     {filteredAssets.map((asset: Asset) => (
                         <Card
                             key={asset.id}
@@ -174,7 +173,7 @@ export default function AssetsPage() {
                                     <CardTitle>{asset.name.slice(0, 50)}</CardTitle>
                                 </div>
                             </CardHeader>
-                            <CardContent className="flex flex-col h-[125px] overflow-y-auto">
+                            <CardContent className="flex flex-col h-[50px] overflow-y-auto">
                                 {asset.description?.trim().length > 0 ? (
                                     <p className="text-sm text-gray-500">
                                         {asset.description.length > 240
