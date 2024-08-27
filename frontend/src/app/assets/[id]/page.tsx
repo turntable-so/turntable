@@ -15,6 +15,7 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import ExploreInLineageViewerButton from "@/components/assets/explore-in-lineage-viewer-button"
+import { getResourceIcon } from "@/lib/utils"
 
 
 export function ColumnsTable({ columns }: {
@@ -51,18 +52,21 @@ export default async function AssetPage({ params }: { params: { id: string } }) 
     const asset = await getAssetPreview(params.id)
     const { lineage, root_asset } = await getLineage({ nodeId: params.id, successor_depth: 1, predecessor_depth: 1, lineage_type: 'all' })
 
-
-    console.log({ c: asset.columns })
+    console.log({ asset })
 
     return (
         <div className="max-w-7xl w-full px-16 pt-16">
             <div className="flex gap-4 items-center">
                 <div className="mb-8">
-                    <h1 className="text-2xl font-medium">{asset.name}</h1>
-                    <div className="flex gap-2">
-                        <p className="text-sm text-gray-500">{asset.subtype}</p>
+                    <h1 className="text-2xl font-medium text-black">{asset.name}</h1>
+                    <div className="flex gap-2 my-2 items-center">
+                        <div className='flex space-x-1'>
+                            <div>{getResourceIcon(asset.resource_subtype)}</div>
+                            <div>{asset.resource_has_dbt && getResourceIcon('dbt')}</div>
+                            <div className='text-sm text-gray-500'>{asset.resource_name}</div>
+                        </div>
                         <p className="text-sm text-gray-500">{'>'}</p>
-                        <p className="text-sm text-gray-500">{asset.type}</p>
+                        <p className="text-sm text-gray-500">{asset.type.toUpperCase()}</p>
                     </div>
                 </div>
             </div>
