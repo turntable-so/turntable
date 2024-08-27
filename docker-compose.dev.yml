@@ -9,16 +9,15 @@ x-dev-credentials: &dev-credentials
   GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET}
   DEV: "true"
 
+x-next-credentials: &next-credentials
+  NEXT_PUBLIC_BACKEND_HOST: "http://api:8000"
+
 x-postgres-test-db-credentials: &postgres-test-db-credentials
   POSTGRES_DB: mydb
   POSTGRES_USER: myuser
   POSTGRES_PASSWORD: mypassword
   POSTGRES_HOST: postgres_test_db
   POSTGRES_PORT: 5432
-
-x-next-credentials: &next-credentials
-  NEXT_PUBLIC_BACKEND_HOST: "http://localhost:8000"
-
 
 services:
   api:
@@ -90,10 +89,10 @@ services:
       file: docker-compose.yml
       service: setup-hatchet
 
-  run-worker:
+  worker:
     extends:
       file: docker-compose.yml
-      service: run-worker
+      service: worker
     build:
       args:
         - ENV=dev
