@@ -112,6 +112,7 @@ Create a `.env` file in the root of the project by running the following command
 ```bash
 echo "ENCRYPTION_KEY=\"`openssl rand -base64 32`\"" >> .env
 echo "NEXTAUTH_SECRET=\"`openssl rand -base64 32`\"" >> .env
+echo "DJANGO_SECRET
 ```
 
 No environment variables except the `ENCRYPTION_KEY` are required to run the app, but some functionality may be limited (e.g. AI-written documentation). See .env.example for a list of all available environment variables.
