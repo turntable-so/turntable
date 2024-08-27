@@ -77,12 +77,38 @@ class Asset(models.Model):
         if self.resource:
             return self.resource.details.subtype
 
+    @property
+    def resource_subtype(self) -> str:
+        if self.resource:
+            return self.resource.subtype
+
+    @property
+    def resource_has_dbt(self) -> bool:
+        if self.resource:
+            return self.resource.has_dbt
+        return False
+
+    @property
+    def subtype(self) -> str:
+        if self.resource:
+            return self.resource.subtype
+
     def get_resource_ids(self) -> set[str]:
         return {self.resource.id}
 
     @classmethod
     def get_for_resource(cls, resource_id: str):
         return cls.objects.filter(resource_id=resource_id)
+
+    @property
+    def num_columns(self) -> int:
+        return self.columns.count()
+
+    @property
+    def resource_name(self) -> str:
+        if self.resource:
+            return self.resource.name
+        return ""
 
     class Meta:
         indexes = [
@@ -106,7 +132,7 @@ class Column(models.Model):
 
     # relationships
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
-    asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="columns")
 
     def get_resource_ids(self) -> set[str]:
         return {self.asset.resource.id}

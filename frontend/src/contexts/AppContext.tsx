@@ -79,6 +79,14 @@ type Context = {
     setActiveNode: (data: any) => void;
 };
 
+export type AssetMap = {
+    [resource_id: string]: {
+        isLoading: boolean;
+        assets: Asset[];
+        name: string;
+    };
+};
+
 export default function AppContextProvider({
     children,
 }: {
@@ -89,12 +97,7 @@ export default function AppContextProvider({
     );
     const [assetPreview, setAssetPreview] = useState(null);
 
-    type AssetMap = {
-        [resource_id: string]: {
-            isLoading: boolean;
-            assets: Asset[];
-        };
-    };
+
     const [assets, setAssets] = useState<AssetMap>({});
     const [tags, setTags] = useState<any[]>([]);
     const [types, setTypes] = useState([]);
@@ -130,7 +133,7 @@ export default function AppContextProvider({
             try {
                 // Initialize the assets state with loading indicators
                 const initialAssetState = resources.reduce((acc: AssetMap, resource) => {
-                    acc[resource.id] = { isLoading: true, assets: [] };
+                    acc[resource.id] = { isLoading: true, assets: [], name: resource.name };
                     return acc;
                 }, {});
                 setAssets(initialAssetState);
@@ -148,7 +151,7 @@ export default function AppContextProvider({
                 setAssets((prevAssets) => {
                     const newAssets = { ...prevAssets };
                     resolvedAssets.forEach(({ resourceId, assets }) => {
-                        newAssets[resourceId] = { isLoading: false, assets };
+                        newAssets[resourceId] = { isLoading: false, assets, name: prevAssets[resourceId].name };
                     });
                     return newAssets;
                 });
