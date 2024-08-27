@@ -75,7 +75,7 @@ class Asset(models.Model):
     @property
     def resource_type(self) -> str:
         if self.resource:
-            return self.resource.type
+            return self.resource.details.subtype
 
     def get_resource_ids(self) -> set[str]:
         return {self.resource.id}
