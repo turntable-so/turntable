@@ -34,6 +34,7 @@ anyio==4.4.0
     # via watchfiles
 asgiref==3.8.1
     # via channels
+    # via channels-redis
     # via django
     # via django-cors-headers
 asn1crypto==1.5.1
@@ -96,6 +97,8 @@ cffi==1.16.0
     # via pynacl
     # via snowflake-connector-python
 channels==4.1.0
+    # via channels-redis
+channels-redis==4.2.0
 charset-normalizer==3.3.2
     # via requests
     # via snowflake-connector-python
@@ -188,7 +191,7 @@ django-allauth==0.61.1
 django-cors-headers==4.4.0
 django-health-check==3.18.3
 django-invitations==2.1.0
-django-polymorphic @ git+https://github.com/jazzband/django-polymorphic.git@1039f882b99f97bf657bd958c949ee6a3b00377a#egg=django-polymorphic
+django-polymorphic @ git+https://github.com/jazzband/django-polymorphic.git@1039f882b99f97bf657bd958c949ee6a3b00377a
 django-storages==1.14.3
 django-templated-mail==1.1.1
     # via djoser
@@ -405,6 +408,7 @@ more-itertools==10.3.0
 mpire==2.10.2
     # via turntable-cli
 msgpack==1.0.8
+    # via channels-redis
     # via logtail-python
     # via mashumaro
 multidict==6.0.5
@@ -657,6 +661,7 @@ questionary==2.0.1
 realtime==1.0.6
     # via supabase
 redis==5.0.7
+    # via channels-redis
     # via redis-cli
 redis-cli==1.0.1
 referencing==0.35.1
