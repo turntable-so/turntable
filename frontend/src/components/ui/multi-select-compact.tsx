@@ -134,7 +134,7 @@ interface MultiSelectCompactProps
 
 const MultiSelectCompact = React.forwardRef<
     HTMLButtonElement,
-    MultiSelectCompactProps,
+    MultiSelectCompactProps
 >(
     (
         {
