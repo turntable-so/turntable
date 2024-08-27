@@ -53,6 +53,7 @@ x-dev-credentials: &dev-credentials
   DEV: "false"
   ENCRYPTION_KEY: ${ENCRYPTION_KEY}
   DJANGO_SETTINGS_MODULE: api.settings
+  LOCAL_DB: ${LOCAL_DB:-true}
 
 
 x-common-backend: &common-backend
