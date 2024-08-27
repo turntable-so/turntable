@@ -40,5 +40,6 @@ RUN if [ "$ENV" = "dev" ]; then \
 # Copy the backend code
 COPY . .
 
-# Perform database migrations
+# Make entrypoint scripts executable
 RUN chmod +x /code/entrypoint.sh
+RUN chmod +x /code/entrypoint-dev.sh

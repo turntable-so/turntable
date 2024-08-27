@@ -16,11 +16,6 @@ x-postgres-test-db-credentials: &postgres-test-db-credentials
   POSTGRES_HOST: postgres_test_db
   POSTGRES_PORT: 5432
 
-x-next-credentials: &next-credentials
-  NEXTAUTH_URL_INTERNAL: "http://web:3000"
-  NEXTAUTH_URL: "http://localhost:3000"
-  API_URL: "http://api:8000"
-
 services:
   api:
     extends:
@@ -29,6 +24,7 @@ services:
     build:
       args:
         - ENV=dev
+    entrypoint: ["/code/entrypoint.sh"]
     command:
         [
           "uvicorn",
@@ -55,7 +51,6 @@ services:
        service: web
      command: ["pnpm", "dev"]
      environment:
-      <<: *next-credentials
       DEV: "true"
      volumes:
        - ./frontend:/code

@@ -113,7 +113,7 @@ ASGI_APPLICATION = "api.asgi.application"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 
-if os.getenv("DEV") == "true" and not os.getenv("STAGING") == "true":
+if os.getenv("LOCAL_DB") == "true":
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -135,7 +135,7 @@ else:
         ),
     }
 
-if os.getenv("DEV") == "true":
+if os.getenv("LOCAL_HOST") == "true":
     FE_URL = "http://localhost:3000/"
 else:
     FE_URL = "https://app.turntable.so/"
@@ -274,7 +274,7 @@ AWS_QUERYSTRING_EXPIRE = 60
 if region := os.getenv("AWS_S3_REGION_NAME"):
     AWS_S3_REGION_NAME = region
 
-if os.getenv("DEV") == "true" and not os.getenv("STAGING") == "true":
+if os.getenv("LOCAL_STORAGE") == "true":
     AWS_S3_PUBLIC_URL = (
         os.getenv("AWS_S3_PUBLIC_URL")
         if os.getenv("AWS_S3_PUBLIC_URL")

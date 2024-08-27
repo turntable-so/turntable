@@ -1,4 +1,3 @@
-from asgiref.sync import sync_to_async
 from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -61,7 +60,9 @@ class ResourceService:
             detail_serializer.is_valid(raise_exception=True)
             with transaction.atomic():
                 resource = Resource.objects.create(
-                    **resource_data.validated_data, workspace=self.workspace
+                    **resource_data.validated_data,
+                    workspace=self.workspace,
+                    type=ResourceType.DB,
                 )
                 resource.save()
                 detail = BigqueryDetails(
@@ -81,7 +82,9 @@ class ResourceService:
             detail_serializer.is_valid(raise_exception=True)
             with transaction.atomic():
                 resource = Resource.objects.create(
-                    **resource_data.validated_data, workspace=self.workspace
+                    **resource_data.validated_data,
+                    workspace=self.workspace,
+                    type=ResourceType.DB,
                 )
                 detail = PostgresDetails(
                     lookback_days=1,
@@ -132,6 +135,7 @@ class ResourceService:
             with transaction.atomic():
                 resource = Resource.objects.create(
                     **resource_data.validated_data,
+                    type=ResourceType.BI,
                     workspace=self.workspace,
                 )
                 detail = MetabaseDetails(
@@ -203,7 +207,6 @@ class ResourceService:
             # the only subtype allowed to be attached or modified is dbt
             if data.get("subtype") == "dbt":
                 if resource.dbtresource_set.exists():
-
                     dbt_resource = resource.dbtresource_set.first()
                     dbt_payload = DBTCoreDetailsSerializer(
                         dbt_resource, data=data.get("config"), partial=True

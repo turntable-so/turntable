@@ -59,10 +59,16 @@ x-next-credentials: &next-credentials
   NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
   NEXT_PUBLIC_POSTHOG_KEY: phc_XL4KyheAjc4gJV4Fzpg1lbn7goFP1QNqsnNUhY1O1CU
   NEXT_PUBLIC_POSTHOG_HOST: https://us.i.posthog.com
+  NEXTAUTH_URL_INTERNAL: "http://web:3000"
+  NEXTAUTH_URL: "http://localhost:3000"
+  API_URL: "http://api:8000"
 
 x-oauth-credentials: &oauth-credentials
   GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
   GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+  LOCAL_DB: ${LOCAL_DB:-true}
+  LOCAL_STORAGE: ${LOCAL_STORAGE:-true}
+  LOCAL_HOST: ${LOCAL_HOST:-true}
 
 x-common-backend: &common-backend
   build:
@@ -114,7 +120,7 @@ services:
     build:
       context: frontend
       dockerfile: Dockerfile
-    command: "/bin/sh -c 'pnpm build && pnpm start'"
+    command: /bin/sh -c "pnpm build && pnpm start"
     ports:
       - "3000:3000"
     environment:
@@ -142,7 +148,7 @@ services:
     command: server --address 0.0.0.0:9000 /data --console-address ":9001"
     environment:
       <<: [*storage-credentials]
-    ports:
+    ports: 
       - "9001:9001"
       - "127.0.0.1:9000:9000" # Expose port 9000
     volumes:

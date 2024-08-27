@@ -75,7 +75,6 @@ dependencies = [
     "django-invitations>=2.1.0",
     "boto3==1.34.20",
     "urllib3>=2.2",
-    # build from source to avoid issue like [this](https://github.com/home-assistant/core/issues/95192)
     "dj-database-url>=2.2.0",
     "adrf>=0.1.6",
     "django-polymorphic @ git+https://github.com/jazzband/django-polymorphic.git@v4.0.0a#egg=django-polymorphic",
@@ -88,12 +87,6 @@ dependencies = [
 vinyl = "vinyl.cli.main:app"
 hatchet = "workflows.main:start"
 encrypt_secret = "scripts.encrypt_secret:main"
-pull_db = "datastore.development:pull_db"
-repair_db = "datastore.development:repair_db"
-create_dev_db = "datastore.development:create_dev_db"
-dump_db = "datastore.development:dump_db"
-create_user = "datastore.users:create_user"
-populate_dev_db = "datastore.development:populate_dev_db"
 manage = "manage:main"
 
 # Rye configuration

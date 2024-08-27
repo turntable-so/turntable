@@ -10,12 +10,12 @@ class Command(BaseCommand):
     help = "Run hatchet custom permissions on start"
 
     def handle(self, *args, **kwargs):
-        if os.getenv("STAGING") == "true":
+        if os.getenv("LOCAL_STORAGE") != "true":
             self.stdout.write(
                 self.style.WARNING("Skipping hatchet database creation on staging.")
             )
             return
-        if os.getenv("DEV") == "true":
+        if os.getenv("LOCAL_DB") == "true":
             dbname = settings.DATABASES["default"]["NAME"]
             user = settings.DATABASES["default"]["USER"]
             password = settings.DATABASES["default"]["PASSWORD"]

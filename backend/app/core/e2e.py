@@ -513,6 +513,8 @@ class DataHubDBParser:
         if self.path is None:
             raise ValueError("Path not set")
 
+        breakpoint()
+
         return duckdb.connect(self.path, read_only=True).execute(self.query).fetchall()
 
     def get_row_dict(self):
@@ -520,6 +522,7 @@ class DataHubDBParser:
         for row in self.get_data():
             id = row[0]
             if self.exclude_node(id):
+                print(id)
                 continue
             self.input_dict.setdefault(id, {}).setdefault(row[1], []).append(
                 orjson.loads(row[3])
@@ -530,6 +533,7 @@ class DataHubDBParser:
                     id=id, resource_id=self.resource_id, workspace_id=self.workspace_id
                 ),
             )
+        breakpoint()
         if self.is_db:
             # remove from asset_dict dbt assets that are materialized in a db. We'll use the postgres id as the source_of_truth
             self.duplicate_helper = get_duplicate_nodes_helper(
@@ -540,6 +544,7 @@ class DataHubDBParser:
             for val in self.duplicate_helper.values():
                 self.asset_dict[val[0]] = base_asset_dict[val[0]]
         else:
+            breakpoint()
             self.asset_dict = base_asset_dict
 
     @classmethod
