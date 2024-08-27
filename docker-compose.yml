@@ -106,7 +106,7 @@ services:
     build:
       context: frontend
       dockerfile: Dockerfile
-    command: ["pnpm", "start"]
+    command: /bin/sh -c "pnpm build && pnpm start"
     ports:
       - "3000:3000"
     depends_on:
