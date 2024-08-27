@@ -25,7 +25,6 @@ export function SearchDialog({ setOpen, open }: { setOpen: (b: boolean) => void,
     const [plainAssets, setPlainAssets] = useState<any[]>([])
 
     useEffect(() => {
-        console.log({ assets })
         // setPlainAssets(Object.values(assets).map((resource: any) => resource.assets?.assets.map((asset: any) => ({ ...asset, value: (asset as any).name }))).flat())
     }, [assets])
 

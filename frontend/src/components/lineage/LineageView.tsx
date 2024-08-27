@@ -387,7 +387,7 @@ type Lineage = {
         target: string
     }
 };
-export function LineageView({ lineage, rootAsset }: { lineage: Lineage, rootAsset: Asset }) {
+export function LineageView({ lineage, rootAsset, style }: { lineage: Lineage, rootAsset: Asset, style?: React.CSSProperties }) {
     const { setFocusedAsset, setAssetPreview } = useAppContext()
 
     useEffect(() => {
@@ -404,6 +404,7 @@ export function LineageView({ lineage, rootAsset }: { lineage: Lineage, rootAsse
                     width: '100%',
                     maxWidth: '100%',
                     height: '100vh',
+                    ...style
                 }}
             >
                 {/* {true && (
