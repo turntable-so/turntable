@@ -345,6 +345,9 @@ export function getAssetIcon(type: string, resourceType?: string) {
   if (resourceType === 'bigquery') {
     return <div className='mr-1'><BigQueryLogo /></div>
   }
+  if (resourceType === 'metabase') {
+    return <MetabaseIcon />
+  }
   if (type === 'source') {
     return <div className='mr-1'><BigQueryLogo /></div>
   } else {
