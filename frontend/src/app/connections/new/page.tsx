@@ -17,14 +17,14 @@ const ConnectionOptionCard = ({ option }: {
   const router = useRouter()
 
   return (
-    <Card className={`rounded-lg hover:bg-muted/50 hover:cursor-pointer shadow-none border ${!option.url && 'hover:cursor-not-allowed opacity-50'}`} onClick={() => {
+    <Card className={`rounded-lg hover:bg-muted/50 hover:cursor-pointer shadow-none border ${!option.url && 'hover:cursor-not-allowed opacity-50'} ${option.url && 'hover:border-black'}`} onClick={() => {
       if (option.url) {
         router.push(option.url)
       }
     }}>
       <CardHeader>
         <div className='flex items-center space-x-4'>
-          <div className='w-full flex items-center space-x-2'>
+          <div className='w-full flex items-center space-x-4'>
             <div>
               {option.logo}
             </div>
