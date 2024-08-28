@@ -135,7 +135,7 @@ Run the following command:
 docker compose --env-file .env up --build
 ```
 
-You can now open your browser and go to http://localhost:3000 to see the app running. Signup with a username and password to start using the app.
+Once the docker build is complete, you will see a line in the terminal like this: 'The app is ready! Visit http://localhost:3000/ to get started'. Once you do, open your browser and go to http://localhost:3000 to see the app running. Signup with a username and password to start using the app.
 
 b. Demo resources
 
@@ -145,7 +145,7 @@ If you'd like to also see the product with a demo postgres dbt project and metab
 docker compose --env-file .env -f docker-compose.demo.yml up --build
 ```
 
-You can now open your browser and go to http://localhost:3000 to see the app running. The demo resources can be found in an account with user `dev@turntable.so` and password `mypassword`. Login with these credentials to see the demo resources, with associated lineage and asset viewer. If you'd like to start from a blank slate on this instance, simply sign up with a different email.
+Once the docker build is complete, you will see a line in the terminal like this: 'The app is ready! Visit http://localhost:3000/ to get started'. Once you do, open your browser and go to http://localhost:3000 to see the app running. The demo resources can be found in an account with user `dev@turntable.so` and password `mypassword`. Login with these credentials to see the demo resources, with associated lineage and asset viewer. If you'd like to start from a blank slate on this instance, simply sign up with a different email.
 
 ### Analytics and tracking for the self-hosted version
 Please note that Turntable, by default, tracks basic actions performed on your self-hosted instance, but you can easily opt out as part of the onboarding flow. If you do not disable tracking, you may receive specific communications or product updates. No matter what, Turntable will not collect store or have access to any sensitive data.

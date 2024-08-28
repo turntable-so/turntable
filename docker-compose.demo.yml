@@ -108,6 +108,10 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
+  ready:
+    extends:
+      file: docker-compose.yml
+      service: ready
 
 volumes:
   postgres_data:

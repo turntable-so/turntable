@@ -105,7 +105,7 @@ services:
     build:
       context: frontend
       dockerfile: Dockerfile
-    command: /bin/sh -c "pnpm build && pnpm start"
+    command: ["pnpm", "start"]
     ports:
       - "3000:3000"
     depends_on:
@@ -209,6 +209,18 @@ services:
         condition: service_healthy
       hatchet-lite:
         condition: service_healthy
+
+  ready:
+    image: busybox:latest
+    command: sh -c "echo 'The app is ready! Visit http://localhost:3000/ to get started'"
+    restart: no
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_started
+      worker:
+        condition: service_started
 
 volumes:
   postgres_data:
