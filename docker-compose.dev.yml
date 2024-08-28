@@ -41,7 +41,11 @@ services:
     extends:
       file: docker-compose.demo.yml
       service: web
+    build:
+      args:
+        - ENV=dev
     restart: always
+    command: ["pnpm", "dev"]
     environment:
       DEV: "true"
     volumes:
@@ -115,6 +119,11 @@ services:
     extends:
       file: docker-compose.demo.yml
       service: metabase
+
+  ready:
+    extends:
+      file: docker-compose.demo.yml
+      service: ready
 
 volumes:
   postgres_data:
