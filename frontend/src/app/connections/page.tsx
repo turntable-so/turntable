@@ -1,3 +1,4 @@
+import { DatabaseZap } from "lucide-react";
 import FullWidthPageLayout from "../../components/layout/FullWidthPageLayout";
 
 import { getResources } from "../actions/actions";
@@ -126,18 +127,30 @@ const LookerLogo = () => (
 export default async function Page() {
 
     const resources = await getResources() || []
-    console.log({ resources })
 
     return (
         <FullWidthPageLayout title='Connections'>
-            <div className='mb-8 flex justify-end'>
-                <NewConnectionButton />
-            </div>
             {resources.length > 0 && (
+                <div className='mb-8 flex justify-end'>
+                    <NewConnectionButton />
+                </div>
+            )}
+            {resources.length > 0 ? (
                 <div className='flex flex-col space-y-4'>
                     {resources.map((resource: any, i: number) => (
                         <ConnectionCard key={i} resource={resource} />
                     ))}
+                </div>
+            ) : (
+                <div className='mt-24'>
+                    <div className='flex flex-col items-center space-y-1 border-2 border-gray-200 rounded-lg p-8'>
+                        <DatabaseZap className="size-5" />
+                        <div className='text-lg font-semibold'>No Connections yet</div>
+                        <div className='text-sm text-gray-500'>Connect to your database, dbt Project and BI tools to get started</div>
+                        <div className='py-4'>
+                            <NewConnectionButton />
+                        </div>
+                    </div>
                 </div>
             )}
         </FullWidthPageLayout >

@@ -92,93 +92,67 @@ export default function ConnectionLayout({
       <Separator />
       <div className="flex justify-center mb-16">
         <div className="flex-col justify-center w-full max-w-2xl py-8 space-y-8">
-          <Card className="px-3 py-6 flex justify-between">
+          <Card className="px-5 py-6 flex justify-between items-center">
             <div>
               <CardTitle>Sync Connection</CardTitle>
               <CardDescription className="py-1">{`Last synced ${dayjs(
                 resource.updated_at
               ).fromNow()} `}</CardDescription>
             </div>
-              <div className="flex justify-end items-center space-x-2">
-                <div>
-                  {realStatus === "RUNNING" && (
+            <div className="flex justify-end items-center space-x-2">
+              <div>
+                {realStatus === "RUNNING" && (
+                  <Badge
+                    variant="secondary"
+                    className="flex space-x-2 items-center font-medium text-sm"
+                  >
+                    <Loader2 className="h-3 w-3 animate-spin opacity-50" />
+                    <div>Syncing </div>
+                  </Badge>
+                )}
+                {realStatus === "FAILED" && (
+                  <div className="flex flex-row">
                     <Badge
                       variant="secondary"
-                      className="flex space-x-2 items-center font-medium text-sm"
+                      className="flex space-x-2 items-center font-medium text-sm mr-2"
                     >
-                      <Loader2 className="h-3 w-3 animate-spin opacity-50" />
-                      <div>Syncing </div>
+                      <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                      <div>Failed to sync </div>
                     </Badge>
-                  )}
-                  {realStatus === "FAILED" && (
-                    <div className="flex flex-row">
-                      <Badge
-                        variant="secondary"
-                        className="flex space-x-2 items-center font-medium text-sm mr-2"
-                      >
-                        <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                        <div>Failed to sync </div>
-                      </Badge>
-                      <Button
-                        onClick={() => {
-                          const syncResourceAndRefresh = async () => {
-                            const res = await syncResource(resource.id);
-                            if (res.success) {
-                              router.replace("/connections/" + resource.id);
-                            }
-                          };
-                          syncResourceAndRefresh();
-                        }}
-                        variant="secondary"
-                      >
-                        {" "}
-                        Run Sync
-                      </Button>
-                    </div>
-                  )}
-                  {realStatus === "SUCCESS" && (
-                    <div className="flex flex-row">
-                      <Badge
-                        variant="secondary"
-                        className="flex space-x-2 items-center font-medium text-sm mr-2"
-                      >
-                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                        <div>Connected </div>
-                      </Badge>
-                      <Button
-                        onClick={() => {
-                          const syncResourceAndRefresh = async () => {
-                            const res = await syncResource(resource.id);
-                            if (res.success) {
-                              router.replace("/connections/" + resource.id);
-                            }
-                          };
-                          syncResourceAndRefresh();
-                        }}
-                        variant="secondary"
-                      >
-                        {" "}
-                        Run Sync
-                      </Button>
-                    </div>
-                  )}
-                </div>
+                  </div>
+                )}
+                {realStatus === "SUCCESS" && (
+                  <div className="flex flex-row">
+                    <Badge
+                      variant="secondary"
+                      className="flex space-x-2 items-center font-medium text-sm mr-2"
+                    >
+                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      <div>Connected </div>
+                    </Badge>
+                  </div>
+                )}
+
+              </div>
+              <Button
+                disabled={realStatus === "RUNNING"}
+                className={`${realStatus === "RUNNING" ? "opacity-50" : ""}`}
+                onClick={() => {
+                  const syncResourceAndRefresh = async () => {
+                    const res = await syncResource(resource.id);
+                    if (res.success) {
+                      router.replace("/connections/" + resource.id);
+                    }
+                  };
+                  syncResourceAndRefresh();
+                }}
+                variant="secondary"
+              >
+                {" "}
+                Run Sync
+              </Button>
             </div>
-            <Button
-              onClick={() => {
-                const syncResourceAndRefresh = async () => {
-                  const res = await syncResource(resource.id);
-                  if (res.success) {
-                    router.replace("/connections/" + resource.id);
-                  }
-                };
-                syncResourceAndRefresh();
-              }}
-              variant="secondary"
-            >
-              {" "}
-              Run Sync
-            </Button>
+
           </Card>
           <Card className="py-6">
             <CardHeader>

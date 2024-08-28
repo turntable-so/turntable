@@ -15,7 +15,6 @@ export default function ModelPreviewer({ asset, context, clearAsset }: { context
 
     const { setInsertCurrentSqlContent } = useAppContext();
 
-    console.log({ asset })
 
 
     const insertAssetSqlIntoCurrentContext = () => {
