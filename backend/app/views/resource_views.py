@@ -10,48 +10,41 @@ from app.services.resource_service import ResourceService
 class ResourceViewSet(viewsets.ModelViewSet):
     serializer_class = ResourceSerializer
 
-    def create(self, request):
+    def _preprocess(self, request):
         workspace = request.user.current_workspace()
         if not workspace:
             return Response(
                 {"detail": "Workspace not found."}, status=status.HTTP_403_FORBIDDEN
             )
-        data = request.data
         resource_service = ResourceService(workspace=workspace)
+        return workspace, resource_service
 
+    def create(self, request):
+        workspace, resource_service = self._preprocess(request)
+        data = request.data
         resource = resource_service.create_resource(data)
         serializer = self.get_serializer(resource)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def list(self, request):
-        workspace = request.user.current_workspace()
-        resource_service = ResourceService(workspace=workspace)
+        workspace, resource_service = self._preprocess(request)
         data = resource_service.list()
         return Response(data)
 
     def retrieve(self, request, pk=None):
-        workspace = request.user.current_workspace()
-        resource_service = ResourceService(workspace=workspace)
+        workspace, resource_service = self._preprocess(request)
         data = resource_service.get(resource_id=pk)
-
         return Response(data)
 
     def partial_update(self, request, pk=None):
-        workspace = request.user.current_workspace()
-        resource_service = ResourceService(workspace=workspace)
+        workspace, resource_service = self._preprocess(request)
         data = request.data
         resource = resource_service.partial_update(resource_id=pk, data=data)
         serializer = self.get_serializer(resource)
-
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def destroy(self, request, pk=None):
-        workspace = request.user.current_workspace()
-        if not workspace:
-            return Response(
-                {"detail": "Workspace not found."}, status=status.HTTP_403_FORBIDDEN
-            )
-        resource_service = ResourceService(workspace=workspace)
+        workspace, resource_service = self._preprocess(request)
         resource_service.delete_resource(resource_id=pk)
         return Response(status=status.HTTP_204_NO_CONTENT)
 

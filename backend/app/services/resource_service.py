@@ -8,6 +8,7 @@ from api.serializers import (
     MetabaseDetailsSerializer,
     PostgresDetailsSerializer,
     ResourceSerializer,
+    SnowflakeDetailsSerializer,
 )
 from app.models import DBTCoreDetails, Resource, Workspace
 from app.models.resources import (
@@ -17,6 +18,7 @@ from app.models.resources import (
     PostgresDetails,
     ResourceDetails,
     ResourceSubtype,
+    SnowflakeDetails,
 )
 
 
@@ -102,6 +104,12 @@ class BigQueryResourceService(ResourceServiceHelper):
     subtype = ResourceSubtype.BIGQUERY
     serializer = BigQueryDetailsSerializer
     details_obj = BigqueryDetails
+
+
+class SnowflakeResourceService(ResourceServiceHelper):
+    subtype = ResourceSubtype.SNOWFLAKE
+    serializer = SnowflakeDetailsSerializer
+    details_obj = SnowflakeDetails
 
 
 class PostgresResourceService(ResourceServiceHelper):
