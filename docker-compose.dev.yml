@@ -1,4 +1,3 @@
-
 x-dev-credentials: &dev-credentials
   GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS}
   SNOWFLAKE_ACCOUNT: ${SNOWFLAKE_ACCOUNT}
@@ -24,16 +23,17 @@ services:
     build:
       args:
         - ENV=dev
+    entrypoint: ["/code/entrypoint-dev.sh"]
     command:
-        [
-          "uvicorn",
-          "api.asgi:application",
-          "--host",
-          "0.0.0.0",
-          "--port",
-          "8000",
-          "--reload",
-        ]
+      [
+        "uvicorn",
+        "api.asgi:application",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--reload",
+      ]
     depends_on:
       ensure_populate_test_db:
         condition: service_completed_successfully
@@ -42,20 +42,25 @@ services:
     volumes:
       - ./backend:/code
     stdin_open: true
-    tty: true 
+    tty: true
 
-  # web:
-  #    extends:
-  #      file: docker-compose.yml
-  #      service: web
-  #    command: ["pnpm", "dev"]
-  #    environment:
-  #      DEV: "true"
-  #      NEXTAUTH_URL_INTERNAL: "http://web:3000"
-  #      NEXTAUTH_URL: "http://localhost:3000"
-  #      NEXT_PUBLIC_BACKEND_HOST: "http://api:8000"
-  #    volumes:
-  #      - ./frontend:/code
+  web:
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    command: ["pnpm", "dev"]
+    restart: always
+    environment:
+      DEV: "true"
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
 
   redis:
     extends:
@@ -87,14 +92,14 @@ services:
       file: docker-compose.yml
       service: setup-hatchet
 
-  run-worker:
+  worker:
     extends:
       file: docker-compose.yml
-      service: run-worker
+      service: worker
     build:
       args:
         - ENV=dev
-    environment:  
+    environment:
       <<: *dev-credentials
     volumes:
       - ./backend:/code
@@ -112,7 +117,11 @@ services:
     volumes:
       - postgres_test_db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -h $${POSTGRES_HOST} -p $${POSTGRES_PORT}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -h $${POSTGRES_HOST} -p $${POSTGRES_PORT}",
+        ]
       interval: 2s
       timeout: 5s
       retries: 10
@@ -164,5 +173,3 @@ networks:
   default:
     name: app_network
     driver: bridge
-
-  

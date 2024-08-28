@@ -1,4 +1,3 @@
-from asgiref.sync import sync_to_async
 from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -16,7 +15,6 @@ from app.models.resources import (
     MetabaseDetails,
     PostgresDetails,
     ResourceSubtype,
-    ResourceType,
 )
 
 
@@ -203,7 +201,6 @@ class ResourceService:
             # the only subtype allowed to be attached or modified is dbt
             if data.get("subtype") == "dbt":
                 if resource.dbtresource_set.exists():
-
                     dbt_resource = resource.dbtresource_set.first()
                     dbt_payload = DBTCoreDetailsSerializer(
                         dbt_resource, data=data.get("config"), partial=True

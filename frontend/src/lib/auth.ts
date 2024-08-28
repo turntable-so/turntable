@@ -1,14 +1,9 @@
 
 import { deleteCookie, getCookie, setCookie } from 'cookies-next';
 import wretch from "wretch";
-
+import getUrl from '@/app/url'
 // Base API setup for making HTTP requests
-const baseUrl =
-    typeof window === "undefined"
-      ? process.env.NEXT_PUBLIC_BACKEND_HOST || "http://api:8000"
-      : process.env.NODE_ENV === "development"
-      ? "http://localhost:8000" // Client-side in development
-      : process.env.NEXT_PUBLIC_BACKEND_HOST; // Client-side in production
+const baseUrl = getUrl()
 const api = wretch(baseUrl).accept("application/json");
 
 /**

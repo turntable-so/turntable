@@ -1,13 +1,8 @@
 import { AuthActions } from "@/lib/auth";
-
+import getUrl from '@/app/url'
 // Extract necessary functions from the AuthActions utility.
 const { handleJWTRefresh, storeToken, getToken, removeTokens } = AuthActions();
-const baseUrl =
-    typeof window === "undefined"
-      ? process.env.NEXT_PUBLIC_BACKEND_HOST || "http://api:8000"
-      : process.env.NODE_ENV === "development"
-      ? "http://localhost:8000" // Client-side in development
-      : process.env.NEXT_PUBLIC_BACKEND_HOST; // Client-side in production
+const baseUrl = getUrl()
 const fetchWithAuth = async (url: string, options = {} as any) => {
     const token = getToken("access", options?.cookies);
     const headers = {

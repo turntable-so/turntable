@@ -1,12 +1,9 @@
 from adrf.views import APIView
 from asgiref.sync import sync_to_async
-from django.db import IntegrityError
-from rest_framework import serializers, status, viewsets
-from rest_framework.decorators import action
+from rest_framework import status, viewsets
 from rest_framework.response import Response
 
-from api.serializers import ResourceDetailsSerializer, ResourceSerializer
-from app.models.resources import Resource
+from api.serializers import ResourceSerializer
 from app.services.resource_service import ResourceService
 
 
