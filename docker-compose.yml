@@ -56,12 +56,11 @@ x-dev-credentials: &dev-credentials
   LOCAL_DB: ${LOCAL_DB:-true}
   LOCAL_HOST: ${LOCAL_HOST:-true}
 
-x-next-credentials: &next-credentials
+x-next-credentials:
   LOCAL_HOST: ${LOCAL_HOST:-true}
   NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
   NEXTAUTH_URL_INTERNAL: "http://web:3000"
   NEXTAUTH_URL: "http://localhost:3000"
-  NEXT_PUBLIC_BACKEND_HOST: "http://localhost:8000"
 
 x-common-backend: &common-backend
   build:
@@ -100,22 +99,13 @@ services:
       retries: 20
       start_period: 10s
     command:
-      [
-        "uvicorn",
-        "api.asgi:application",
-        "--host",
-        "0.0.0.0",
-        "--port",
-        "8000",
-      ]
-  
+      ["uvicorn", "api.asgi:application", "--host", "0.0.0.0", "--port", "8000"]
+
   web:
     build:
       context: frontend
       dockerfile: Dockerfile
     command: /bin/sh -c "pnpm build && pnpm start"
-    environment:
-      <<: *next-credentials
     ports:
       - "3000:3000"
     depends_on:
@@ -131,7 +121,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -h $${POSTGRES_HOST} -p $${POSTGRES_PORT}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -h $${POSTGRES_HOST} -p $${POSTGRES_PORT}",
+        ]
       interval: 2s
       timeout: 5s
       retries: 10
@@ -208,7 +202,7 @@ services:
     command: ["python", "workflows/main.py"]
     depends_on:
       postgres:
-        condition: service_healthy        
+        condition: service_healthy
       createbuckets:
         condition: service_started
       api:

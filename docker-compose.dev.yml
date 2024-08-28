@@ -1,4 +1,3 @@
-
 x-dev-credentials: &dev-credentials
   GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS}
   SNOWFLAKE_ACCOUNT: ${SNOWFLAKE_ACCOUNT}
@@ -8,9 +7,6 @@ x-dev-credentials: &dev-credentials
   GITHUB_PRIVATE_KEY_BASE64: ${GITHUB_PRIVATE_KEY_BASE64}
   GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET}
   DEV: "true"
-
-x-next-credentials: &next-credentials
-  NEXT_PUBLIC_BACKEND_HOST: "http://api:8000"
 
 x-postgres-test-db-credentials: &postgres-test-db-credentials
   POSTGRES_DB: mydb
@@ -29,15 +25,15 @@ services:
         - ENV=dev
     entrypoint: ["/code/entrypoint-dev.sh"]
     command:
-        [
-          "uvicorn",
-          "api.asgi:application",
-          "--host",
-          "0.0.0.0",
-          "--port",
-          "8000",
-          "--reload",
-        ]
+      [
+        "uvicorn",
+        "api.asgi:application",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--reload",
+      ]
     depends_on:
       ensure_populate_test_db:
         condition: service_completed_successfully
@@ -46,18 +42,25 @@ services:
     volumes:
       - ./backend:/code
     stdin_open: true
-    tty: true 
+    tty: true
 
   web:
-    extends:
-      file: docker-compose.yml
-      service: web
+    build:
+      context: frontend
+      dockerfile: Dockerfile
     command: ["pnpm", "dev"]
+    restart: always
     environment:
-      <<: *next-credentials
       DEV: "true"
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
     volumes:
-      - ./frontend:/code
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
 
   redis:
     extends:
@@ -96,7 +99,7 @@ services:
     build:
       args:
         - ENV=dev
-    environment:  
+    environment:
       <<: *dev-credentials
     volumes:
       - ./backend:/code
@@ -114,7 +117,11 @@ services:
     volumes:
       - postgres_test_db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -h $${POSTGRES_HOST} -p $${POSTGRES_PORT}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -h $${POSTGRES_HOST} -p $${POSTGRES_PORT}",
+        ]
       interval: 2s
       timeout: 5s
       retries: 10
@@ -166,5 +173,3 @@ networks:
   default:
     name: app_network
     driver: bridge
-
-  

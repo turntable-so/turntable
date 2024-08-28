@@ -32,7 +32,7 @@ import { PasswordInput } from "../ui/password-input";
 import { LoaderButton } from "../ui/LoadingSpinner";
 import {
     setCookie,
-  } from "cookies-next";
+} from "cookies-next";
 const FormSchema = z.object({
     email: z.string().email('Invalid email address'),
     password: z.string().min(8, {
@@ -48,7 +48,7 @@ type FormData = {
     password: string;
 };
 
-const RegistrationForm = ({invitationCode = ''} : any) => {
+const RegistrationForm = ({ invitationCode = '' }: any) => {
     const router = useRouter();
 
     const [formRespError, setFormRespError] = useState<string | null>(null)
@@ -81,10 +81,10 @@ const RegistrationForm = ({invitationCode = ''} : any) => {
                 console.log("ERROR")
                 console.log(err)
                 setIsLoading(false)
-                if (err.json.email) {
+                if (err?.json?.email) {
                     setError("email", { type: "server", message: err.json.email })
                 }
-                if (err.json.password) {
+                if (err?.json?.password) {
                     setError("password", { type: "server", message: err.json.password })
                 }
             });
