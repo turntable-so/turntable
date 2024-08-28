@@ -18,7 +18,7 @@ import ExploreInLineageViewerButton from "@/components/assets/explore-in-lineage
 import { getResourceIcon } from "@/lib/utils"
 
 
-export function ColumnsTable({ columns }: {
+function ColumnsTable({ columns }: {
     columns: {
         name: string
         type: string
