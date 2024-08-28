@@ -345,18 +345,15 @@ export function getAssetIcon(type: string, resourceType?: string) {
   if (resourceType === 'bigquery') {
     return <div className='mr-1'><BigQueryLogo /></div>
   }
-  if (resourceType === 'dbt' || resourceType === null) {
-    if (type === 'source') {
-      return <div className='mr-1'><BigQueryLogo /></div>
-    } else {
-      return (
-        <div className="mr-1">
-          <DbtLogo />
-        </div>
-      )
-    }
+  if (type === 'source') {
+    return <div className='mr-1'><BigQueryLogo /></div>
+  } else {
+    return (
+      <div className="mr-1">
+        <DbtLogo />
+      </div>
+    )
   }
-  return getResourceIcon(resourceType || '')
 }
 
 export const PostgresLogo = () => (
