@@ -41,4 +41,8 @@ RUN if [ "$ENV" = "dev" ]; then \
 COPY . .
 
 # Perform database migrations
-RUN chmod +x /code/entrypoint.sh
+RUN if [ "$ENV" = "dev" ]; then \
+        chmod +x /code/entrypoint.sh; \
+    else \
+        chmod +x /code/entrypoint-dev.sh; \
+    fi

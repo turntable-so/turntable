@@ -23,7 +23,7 @@ import {
 import { Tree } from "@/components/ui/tree";
 import { getAssetIcon, getLeafIcon } from "@/lib/utils";
 import { Folder, Workflow } from "lucide-react";
-import { FancyMultiSelect } from "./ui/multi-select";
+import MultiSelect from "./ui/multi-select";
 // @ts-ignore
 const groupBy = (array, key) =>
   array.reduce((result: any, currentValue: any) => {
@@ -207,7 +207,7 @@ export default function ActionBar({
         children: [],
       });
     }
-    
+
     const groupedAssets = groupBy(assetsForResource.assets, "type");
     return TreeDataNode({
       icon: getAssetIcon("dbt", resource.subtype),
@@ -359,7 +359,7 @@ export default function ActionBar({
                         <div className="text-sm pl-1">Filter by tag</div>
                       </Label>
                       {/* @ts-ignore */}
-                      <FancyMultiSelect
+                      <MultiSelect
                         items={tags.map((tag: string) => ({
                           label: tag,
                           value: tag,

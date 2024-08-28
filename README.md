@@ -107,19 +107,25 @@ cd turntable
 ```
 
 2. Configure environment variables
-  - Copy the `.env.example` file to `.env`
-  - Set any variables (e.g. s3 credentials) you'd like for your environment
-  - No environment variables except the `ENCRYPTION_KEY` are required to run the app, but some functionality may be limited (e.g. AI-written documentation)
-  - Crete an encryption key by running the following command:
+Create a `.env` file in the root of the project by running the following command
+
+**MacOS or Linux**
 
 ```bash
-echo "ENCRYPTION_KEY=\"`openssl rand -base64 32`\"" >> .env
+bash generate_keys.sh
 ```
+
+**Windows**
+
+```Powershell
+
+
+No environment variables except the `ENCRYPTION_KEY` are required to run the app, but some functionality may be limited (e.g. AI-written documentation). See .env.example for a list of all available environment variables.
 
 3. Start the app
 
 ```bash
-docker compose up --env-file .env
+docker compose --env-file .env up
 ```
 
 You can now open your browser and go to http://localhost:3000 to connect to the application.
@@ -157,7 +163,7 @@ Unlike the production environemnt, this supports hot reload and adds development
 Once everything starts (this may take about a minute or more), run the command below to access the container:
 
 ```bash
-docker compose exec run-worker bash
+docker compose exec worker bash
 ```
 
 From here, backend tests can be run with `pytest`.

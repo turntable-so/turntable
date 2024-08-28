@@ -53,7 +53,14 @@ x-dev-credentials: &dev-credentials
   DEV: "false"
   ENCRYPTION_KEY: ${ENCRYPTION_KEY}
   DJANGO_SETTINGS_MODULE: api.settings
+  LOCAL_DB: ${LOCAL_DB:-true}
+  LOCAL_HOST: ${LOCAL_HOST:-true}
 
+x-next-credentials:
+  LOCAL_HOST: ${LOCAL_HOST:-true}
+  NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+  NEXTAUTH_URL_INTERNAL: "http://web:3000"
+  NEXTAUTH_URL: "http://localhost:3000"
 
 x-common-backend: &common-backend
   build:
@@ -92,20 +99,13 @@ services:
       retries: 20
       start_period: 10s
     command:
-      [
-        "uvicorn",
-        "api.asgi:application",
-        "--host",
-        "0.0.0.0",
-        "--port",
-        "8000",
-      ]
-  
+      ["uvicorn", "api.asgi:application", "--host", "0.0.0.0", "--port", "8000"]
+
   web:
     build:
       context: frontend
       dockerfile: Dockerfile
-    command: ["pnpm", "start"]
+    command: /bin/sh -c "pnpm build && pnpm start"
     ports:
       - "3000:3000"
     depends_on:
@@ -115,13 +115,17 @@ services:
   postgres:
     image: pgvector/pgvector:pg16
     environment:
-      <<: [*postgres-credentials]
+      <<: *postgres-credentials
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -h $${POSTGRES_HOST} -p $${POSTGRES_PORT}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -h $${POSTGRES_HOST} -p $${POSTGRES_PORT}",
+        ]
       interval: 2s
       timeout: 5s
       retries: 10
@@ -135,7 +139,7 @@ services:
     image: minio/minio
     command: server --address 0.0.0.0:9000 /data --console-address ":9001"
     environment:
-      <<: [*storage-credentials]
+      <<: *storage-credentials
     ports:
       - "9001:9001"
       - "127.0.0.1:9000:9000" # Expose port 9000
@@ -147,7 +151,7 @@ services:
     depends_on:
       - minio
     environment:
-      <<: [*storage-credentials]
+      <<: *storage-credentials
     entrypoint: >
       /bin/sh -c "
       until (/usr/bin/mc config host add myminio $${MINIO_ENDPOINT} $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD}) do echo '...waiting...' && sleep 1; done;
@@ -193,12 +197,12 @@ services:
       - ".hatchetconfig:/config"
     restart: no
 
-  run-worker:
+  worker:
     <<: *common-backend
     command: ["python", "workflows/main.py"]
     depends_on:
       postgres:
-        condition: service_healthy        
+        condition: service_healthy
       createbuckets:
         condition: service_started
       api:
