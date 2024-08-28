@@ -41,7 +41,7 @@ jobs:
           SNOWFLAKE_USER: op://Env/Snowflake/username
           OPENAI_API_KEY: op://Env/OpenAI/key
           HATCHET_CLIENT_TOKEN: op://Env/Hatchet/token
-      
+
       - name: Start test resources
         uses: hoverkraft-tech/compose-action@v2.0.1
         with:
@@ -54,7 +54,7 @@ jobs:
           rye config --set-bool behavior.use-uv=true
           rye sync --no-lock
         working-directory: backend
-      
+
       - name: Run tests
         run: |
           rye run pytest
@@ -75,4 +75,5 @@ jobs:
           DEV: "true"
           TMPDIR: ${{ runner.temp }}
           BACKEND_HOST: localhost
-          FRONTEND_HOST: localhost
+          FRONTEND_HOST: localhos
+          LOCAL_DB: true
