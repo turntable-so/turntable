@@ -33,6 +33,8 @@ from vinyl.lib.table import VinylTable
 from vinyl.lib.utils.graph import DAG
 from vinyl.lib.utils.text import _generate_random_ascii_string
 
+DIALECTS_ALLOWING_DEFAULT_DB = ["postgres"]
+
 
 class Catalog(dict[str, sch.Schema]):
     """A catalog of tables and their schemas."""
@@ -253,6 +255,7 @@ class SQLAstNode:
         dialect: Dialect = Dialect(),
         lineage: DAG | None = None,
         use_datahub_nodes: bool = False,
+        default_db: str | None = None,
     ):
         self.id: str = id
         self.ast = ast
@@ -264,13 +267,18 @@ class SQLAstNode:
         self.errors = errors
         self.lineage = lineage
         self.use_datahub_nodes = use_datahub_nodes
+        self.default_db = default_db
 
     def pre_qualify_transform(self, ast: Expression) -> Expression:
         if not isinstance(ast, exp.Table):
             return ast
 
-        if not ast.catalog or not ast.db:
-            return ast
+        if self.dialect in DIALECTS_ALLOWING_DEFAULT_DB:
+            if not ast.catalog and not ast.db:
+                return ast
+        else:
+            if not ast.catalog:
+                return ast
 
         new_name = ""
         if ast.catalog is not None:
@@ -289,6 +297,12 @@ class SQLAstNode:
     def post_qualify_relabel(self, col_name: str) -> str:
         db_location, col_name = col_name.replace(self.append_key, "").rsplit(".", 1)
         db_location = ".".join(db_location.split(self.join_str))
+        if (
+            db_location.startswith(".")
+            and self.dialect in DIALECTS_ALLOWING_DEFAULT_DB
+            and self.default_db
+        ):
+            db_location = self.default_db + db_location
 
         if not self.use_datahub_nodes:
             return db_location + "." + col_name
@@ -564,6 +578,7 @@ class SQLAstNode:
             or x.rsplit(".", 1)[1].startswith("*")
             or ("." in x.rsplit(".", 1)[0] and self.append_key in x)
         ]
+
         try:
             self.lineage.remove_nodes_and_reconnect(nodes_to_remove)
         except Exception as e:
