@@ -22,6 +22,7 @@ from vinyl.lib.connect import (
     BigQueryConnector,
     DatabaseFileConnector,
     PostgresConnector,
+    SnowflakeConnector,
 )
 from vinyl.lib.dbt import DBTProject
 from vinyl.lib.dbt_methods import DBTDialect, DBTVersion
@@ -215,28 +216,7 @@ class ResourceDetails(PolymorphicModel):
             check=True,
         )
 
-    def run_datahub_ingest(self):
-        self.create_venv_and_install_datahub()
-
-        # run ingest
-        with self.datahub_yaml_path() as (config_paths, db_path):
-            for path in config_paths:
-                run_and_capture_subprocess(
-                    [
-                        self.get_venv_python(),
-                        "-m",
-                        "datahub",
-                        "ingest",
-                        "-c",
-                        path,
-                    ],
-                )
-            with open(db_path, "rb") as f:
-                self.resource.datahub_db.save(
-                    os.path.basename(db_path), File(f), save=True
-                )
-
-    def test_datahub_connection(self):
+    def _run_datahub_ingest_base(self, test=False):
         self.create_venv_and_install_datahub()
 
         # run ingest test
@@ -246,38 +226,69 @@ class ResourceDetails(PolymorphicModel):
         errors = []
         with self.datahub_yaml_path() as (config_paths, db_path):
             for path in config_paths:
-                if os.path.basename(path) == "dbt.yml":
-                    # skip dbt config
+                if test and os.path.basename(path) == "dbt.yml":
+                    # skip dbt config if testing
                     continue
                 with tempfile.NamedTemporaryFile(suffix=".log", mode="r+") as log_file:
-                    run_and_capture_subprocess(
-                        [
-                            self.get_venv_python(),
-                            "-m",
-                            "datahub",
-                            "--log-file",
-                            log_file.name,
-                            "ingest",
-                            "-c",
-                            path,
-                            "--preview",
-                            "--preview-workunits",
-                            str(self.test_number_of_entries),
-                        ]
-                    )
-                    log_contents = log_file.read()
-                for line in log_contents.splitlines():
-                    match = log_pattern.match(line)
-                    if match and match.group("level") == "ERROR":
+                    command = [
+                        self.get_venv_python(),
+                        "-m",
+                        "datahub",
+                        "--log-file",
+                        log_file.name,
+                        "ingest",
+                        "-c",
+                        path,
+                    ]
+                    if test:
+                        command.extend(
+                            [
+                                "--preview",
+                                "--preview-workunits",
+                                str(self.test_number_of_entries),
+                            ]
+                        )
+                    process = run_and_capture_subprocess(command)
+                    connection_type = os.path.basename(path).split(".")[0]
+                    if process.returncode != 0:
                         errors.append(
                             {
-                                "connection_type": os.path.basename(path).split(".")[0],
-                                "error_message": match.group("message"),
+                                "connection_type": connection_type,
+                                "error_message": process.stderr,
                             }
                         )
+                    log_contents = log_file.read()
+                    for line in log_contents.splitlines():
+                        match = log_pattern.match(line)
+                        if match and match.group("level") == "ERROR":
+                            errors.append(
+                                {
+                                    "connection_type": connection_type,
+                                    "error_message": match.group("message"),
+                                }
+                            )
             if len(errors) > 0:
-                return {"success": False, "errors": errors}
-            return {"success": True}
+                return {"success": False, "command": command, "errors": errors}
+            elif not test:
+                with open(db_path, "rb") as f:
+                    self.resource.datahub_db.save(
+                        os.path.basename(db_path), File(f), save=True
+                    )
+        return {"success": True, "command": command}
+
+    def run_datahub_ingest(self):
+        result = self._run_datahub_ingest_base()
+        if not result["success"]:
+            raise Exception(
+                {
+                    "message": "Datahub ingest failed",
+                    "command": result["command"],
+                    "errors": result["errors"],
+                }
+            )
+
+    def test_datahub_connection(self):
+        return self._run_datahub_ingest_base(test=True)
 
     def test_db_connection(self):
         try:
@@ -454,7 +465,7 @@ class DBTCoreDetails(DBTResource):
     project_path = models.CharField(max_length=255, blank=False)
     database = encrypt(models.CharField(max_length=255, blank=False))
     schema = encrypt(models.CharField(max_length=255, blank=False))
-    other_schemas = encrypt(ArrayField(models.CharField(max_length=255), null=True))
+    other_schemas = encrypt(models.JSONField(null=True))
     threads = models.IntegerField(null=True, default=1)
     version = models.CharField(
         choices=[(v, v.value) for v in DBTVersion], max_length=255, blank=False
@@ -773,11 +784,66 @@ class SnowflakeDetails(DBDetails):
     subtype = models.CharField(max_length=255, default=ResourceSubtype.SNOWFLAKE)
     account = encrypt(models.CharField(max_length=255, blank=False))
     warehouse = encrypt(models.CharField(max_length=255, blank=False))
-    database = encrypt(models.CharField(max_length=255, blank=False))
-    schema = encrypt(models.CharField(max_length=255, blank=False))
     username = encrypt(models.CharField(max_length=255, blank=False))
     password = encrypt(models.CharField(max_length=255, blank=False))
     role = models.CharField(max_length=255, blank=False)
+
+    @property
+    def venv_path(self):
+        return ".snowflakevenv"
+
+    @property
+    def datahub_extras(self):
+        return ["snowflake", "dbt"]
+
+    def get_connector(self):
+        return SnowflakeConnector(
+            account=self.account,
+            user=self.username,
+            password=self.password,
+            warehouse=self.warehouse,
+            tables=["*.*.*"],
+        )
+
+    def get_datahub_config(self, db_path):
+        config = {
+            "source": {
+                "type": "snowflake",
+                "config": {
+                    "start_time": f"-{self.lookback_days}d",
+                    "account_id": self.account,
+                    "username": self.username,
+                    "password": self.password,
+                    "include_table_lineage": False,
+                    "include_table_location_lineage": False,
+                    "include_view_lineage": False,
+                    "include_view_column_lineage": False,
+                    "include_usage_stats": False,
+                },
+            },
+            "sink": get_sync_config(db_path),
+        }
+        if self.warehouse:
+            config["source"]["config"]["warehouse"] = self.warehouse
+        if self.role:
+            config["source"]["config"]["role"] = self.role
+        return config
+
+    def get_dbt_profile_contents(self, dbt_core_resource: DBTCoreDetails):
+        return {
+            "target": "prod",
+            "outputs": {
+                "prod": {
+                    "type": "snowflake",
+                    "account": self.account,
+                    "database": dbt_core_resource.database,
+                    "schema": dbt_core_resource.schema,
+                    "user": self.username,
+                    "password": self.password,
+                    "threads": dbt_core_resource.threads,
+                }
+            },
+        }
 
 
 class DuckDBDetails(DBDetails):
