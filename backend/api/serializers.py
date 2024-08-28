@@ -285,7 +285,7 @@ class BigQueryDetailsSerializer(ResourceDetailsSerializer):
 class SnowflakeDetailsSerializer(ResourceDetailsSerializer):
     class Meta:
         model = SnowflakeDetails
-        fields = ["account", "username", "password", "database", "warehouse", "role"]
+        fields = ["account", "username", "password", "warehouse", "role"]
 
 
 class PostgresDetailsSerializer(ResourceDetailsSerializer):
