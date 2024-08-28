@@ -18,7 +18,7 @@
     ·
     <a href="https://github.com/turntable-so/turntable/issues">Issues</a>
     ·
-    <a href="https://turntable-so.canny.io/">Roadmap</a>
+    <a href="https://turntable.productlane.com/roadmap">Roadmap</a>
   </p>
 
 <p align="center">
