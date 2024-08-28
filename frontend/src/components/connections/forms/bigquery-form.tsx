@@ -84,15 +84,15 @@ export default function BigqueryForm({ resource, details }: { resource?: any, de
             }
         }
         const res = isUpdate ? await updateResource(resource.id, payload) : await createResource(payload as any)
-        if (!res.id) {
+        if (res.id) {
+            if (isUpdate) {
+                toast.success('Connection updated')
+            } else {
+                toast.success('Connection created')
+            }
+            router.push(`/connections/${res.id}`)
+        } else {
             toast.error('Failed to save connection: ' + res[0])
-        }
-        if (res.id && resource?.id) {
-            toast.success('Connection updated')
-            router.push(`/connections/${resource.id}`)
-        }
-        else if (res.id) {
-            router.push(`/connections/`)
         }
     }
 
