@@ -356,6 +356,7 @@ export function getAssetIcon(type: string, resourceType?: string) {
       )
     }
   }
+  return getResourceIcon(resourceType || '')
 }
 
 export const PostgresLogo = () => (
