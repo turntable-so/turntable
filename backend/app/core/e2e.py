@@ -682,6 +682,7 @@ class DataHubDBParser:
             dialect=self.dialect,
             use_datahub_nodes=True,
             errors=[],
+            default_db=asset.db_location[0] if asset.db_location else None,
         )
         catalog = DatasetUrn.from_string(k).name.split(".")[0]
         try:

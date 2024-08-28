@@ -13,7 +13,6 @@ User = get_user_model()
 
 @pytest.mark.django_db
 class ResourceViewSetTestCases(TestCase):
-
     def setUp(self):
         # Set up initial data
         self.user = User.objects.create_user(
