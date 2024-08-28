@@ -24,20 +24,23 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-i7pd5iwtuo*0h9je%(n1!u8srlbka$^do)c(#y88h9grhilq3@"
+SECRET_KEY = os.getenv(
+    "DJANGO_SECRET_KEY",
+    "django-insecure-i7pd5iwtuo*0h9je%(n1!u8srlbka$^do)c(#y88h9grhilq3@",
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = ["localhost", "api"]
 backend_host = os.getenv("BACKEND_HOST")
+
 if backend_host:
     if "https://" in backend_host:
         backend_host = backend_host.replace("https://", "")
-    if "http://" in backend_host:
+    elif "http://" in backend_host:
         backend_host = backend_host.replace("http://", "")
-    if backend_host:
-        ALLOWED_HOSTS = [backend_host] + ALLOWED_HOSTS
+    ALLOWED_HOSTS = [backend_host] + ALLOWED_HOSTS
 
 # Application definition
 
@@ -61,7 +64,6 @@ INSTALLED_APPS = [
     "channels",
     "health_check",
     "health_check.db",
-    # "health_check.storage",
     "health_check.contrib.migrations",
     "app",
 ]
@@ -118,7 +120,7 @@ ASGI_APPLICATION = "api.asgi.application"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 
-if os.getenv("DEV") == "true" and not os.getenv("STAGING") == "true":
+if os.getenv("LOCAL_DB") == "true":
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -140,7 +142,7 @@ else:
         ),
     }
 
-if os.getenv("DEV") == "true":
+if os.getenv("LOCAL_HOST") == "true":
     FE_URL = "http://localhost:3000/"
 else:
     FE_URL = "https://app.turntable.so/"
@@ -236,7 +238,7 @@ DOMAIN = "localhost:3000"
 ACCOUNT_EMAIL_REQUIRED = False
 ACCOUNT_EMAIL_VERIFICATION = "none"
 
-ENCRYPTION_KEY = "JkclG6Y9P10KlD7dB6KahU_tG5DgquZltyefLwT8HH8="
+ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")
 
 LOGGING = {
     "version": 1,
@@ -264,7 +266,13 @@ STORAGES = {
 AWS_S3_ACCESS_KEY_ID = os.getenv("AWS_S3_ACCESS_KEY_ID")
 AWS_S3_SECRET_ACCESS_KEY = os.getenv("AWS_S3_SECRET_ACCESS_KEY")
 AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
-AWS_S3_ENDPOINT_URL = os.getenv("AWS_S3_ENDPOINT_URL")
+if "AWS_S3_ENDPOINT_URL" in os.environ:
+    AWS_S3_ENDPOINT_URL = os.getenv("AWS_S3_ENDPOINT_URL")
+elif "AWS_S3_ENDPOINT_HOST" in os.environ and "AWS_S3_ENDPOINT_PORT" in os.environ:
+    AWS_S3_ENDPOINT_URL = f"http://{os.getenv('AWS_S3_ENDPOINT_HOST')}:{os.getenv('AWS_S3_ENDPOINT_PORT')}"
+else:
+    AWS_S3_ENDPOINT_URL = None
+
 
 AWS_DEFAULT_ACL = None
 AWS_QUERYSTRING_AUTH = True
@@ -273,7 +281,7 @@ AWS_QUERYSTRING_EXPIRE = 60
 if region := os.getenv("AWS_S3_REGION_NAME"):
     AWS_S3_REGION_NAME = region
 
-if os.getenv("DEV") == "true" and not os.getenv("STAGING") == "true":
+if os.getenv("LOCAL_STORAGE") == "true":
     AWS_S3_PUBLIC_URL = (
         os.getenv("AWS_S3_PUBLIC_URL")
         if os.getenv("AWS_S3_PUBLIC_URL")
@@ -286,7 +294,6 @@ if os.getenv("DEV") == "true" and not os.getenv("STAGING") == "true":
     AWS_QUERYSTRING_EXPIRE = 60
 
     PUBLIC_MEDIA_LOCATION = "public-assets"
-    ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")
 
     if acl := os.getenv("AWS_DEFAULT_ACL"):
         AWS_DEFAULT_ACL = None if acl == "None" else acl
@@ -304,10 +311,15 @@ CACHES = {
 }
 
 CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': "channels_redis.core.RedisChannelLayer",
-        'CONFIG': {
-            "hosts": [(os.environ.get('REDIS_HOST', 'redis'), int(os.environ.get('REDIS_PORT', 6379)))],
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [
+                (
+                    os.environ.get("REDIS_HOST", "redis"),
+                    int(os.environ.get("REDIS_PORT", 6379)),
+                )
+            ],
         },
     },
 }

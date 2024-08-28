@@ -1,7 +1,10 @@
 "use client"
+import { Asset } from "@/app/assets/page"
 import { Button } from "@/components/ui/button"
 import { SquareArrowOutUpRight } from "lucide-react"
 import { useRouter } from "next/navigation"
+
+
 
 export default function ExploreInLineageViewerButton({ asset }: { asset: Asset }) {
 
