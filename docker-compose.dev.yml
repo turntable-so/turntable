@@ -45,18 +45,13 @@ services:
     tty: true
 
   web:
-    build:
-      context: frontend
-      dockerfile: Dockerfile
+    extends:
+      file: docker-compose.yml
+      service: web
     command: ["pnpm", "dev"]
     restart: always
     environment:
       DEV: "true"
-    ports:
-      - "3000:3000"
-    depends_on:
-      api:
-        condition: service_healthy
     volumes:
       - ./frontend:/app
       - /app/node_modules
