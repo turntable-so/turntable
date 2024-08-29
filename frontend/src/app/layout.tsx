@@ -1,18 +1,27 @@
 'use client'
-import { Inter } from "next/font/google";
-import "./globals.css";
-import { Inter as FontSans } from "next/font/google"
-import { cn } from "../lib/utils";
+import dynamic from "next/dynamic";
+import { Inter as FontSans } from "next/font/google";
 import { usePathname } from "next/navigation";
-import { Fragment, useEffect, useState } from "react";
-import { Toaster } from "sonner"
+import { Fragment } from "react";
+import { Toaster } from "sonner";
 import { TooltipProvider } from "../components/ui/tooltip";
+import { cn } from "../lib/utils";
+import "./globals.css";
 import AuthenticatedAppLayout from "./layout/authenticated-app-layout";
+import { PHProvider } from "./providers";
+
+const PostHogPageView = dynamic(() => import('./PostHogPageView'), {
+  ssr: false,
+})
+
 
 const fontSans = FontSans({
   subsets: ["latin"],
   variable: "--font-sans",
 });
+
+
+
 
 export default function RootLayout({
   children,
@@ -25,35 +34,42 @@ export default function RootLayout({
     <Fragment>
       {/* eventually we want to remove this and do nested layouts */}
       {pathName.includes("/signin") ||
-      pathName.includes("/signup") ||
-      pathName.includes("/workspace") ? (
+        pathName.includes("/signup") ||
+        pathName.includes("/workspace") ? (
         <html lang="en" suppressHydrationWarning>
           <head />
-          <body
-            className={cn(
-              "min-h-screen bg-muted font-sans antialiased",
-              fontSans.variable
-            )}
-          >
-            <div>{children}</div>
-          </body>
+          <PHProvider>
+            <body
+              className={cn(
+                "min-h-screen bg-muted font-sans antialiased",
+                fontSans.variable
+              )}
+            >
+              <PostHogPageView />
+              <div>{children}</div>
+            </body>
+          </PHProvider>
         </html>
       ) : (
         <html lang="en" suppressHydrationWarning>
           <head />
-          <body
-            className={cn(
-              "min-h-screen bg-background font-sans antialiased",
-              fontSans.variable
-            )}
-          >
-            <AuthenticatedAppLayout>
-              <TooltipProvider>{children}</TooltipProvider>
-            </AuthenticatedAppLayout>
-            <Toaster richColors />
-          </body>
+          <PHProvider>
+            <body
+              className={cn(
+                "min-h-screen bg-background font-sans antialiased",
+                fontSans.variable
+              )}
+            >
+              <AuthenticatedAppLayout>
+                <PostHogPageView />
+                <TooltipProvider>{children}</TooltipProvider>
+              </AuthenticatedAppLayout>
+              <Toaster richColors />
+            </body>
+          </PHProvider>
         </html>
-      )}
-    </Fragment>
+      )
+      }
+    </Fragment >
   );
 }
