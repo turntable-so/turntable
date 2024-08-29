@@ -32,6 +32,11 @@ services:
       file: docker-compose.yml
       service: postgres
 
+  create_hatchet_db:
+    extends:
+      file: docker-compose.yml
+      service: create_hatchet_db
+
   minio:
     extends:
       file: docker-compose.yml
@@ -56,6 +61,11 @@ services:
     extends:
       file: docker-compose.yml
       service: worker
+    depends_on:
+      ensure_populate_test_db:
+        condition: service_completed_successfully
+      metabase:
+        condition: service_healthy
 
   ## Test resources
   postgres_test_db:
@@ -110,6 +120,7 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
+  
   ready:
     extends:
       file: docker-compose.yml
