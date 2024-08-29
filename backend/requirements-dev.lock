@@ -727,7 +727,7 @@ scipy==1.14.0
 selenium==4.22.0
 sentry-sdk==2.7.1
     # via acryl-datahub
-setuptools==70.2.0
+setuptools==74.0.0
     # via grpcio-tools
     # via pydata-google-auth
 shandy-sqlfmt==0.21.3
@@ -906,6 +906,7 @@ websockets==12.0
     # via uvicorn
 werkzeug==3.0.3
     # via flask
+wheel==0.44.0
 wrapt==1.16.0
     # via deprecated
 wsproto==1.2.0

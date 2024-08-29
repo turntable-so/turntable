@@ -93,13 +93,12 @@ services:
       - "8000:8000"
     entrypoint: ["/code/entrypoint.sh"]
     healthcheck:
-      test: ["CMD-SHELL", "django-admin", "health_check"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthcheck/health/"]
       interval: 10s
-      timeout: 30s
+      timeout: 60s
       retries: 20
-      start_period: 10s
-    command:
-      ["uvicorn", "api.asgi:application", "--host", "0.0.0.0", "--port", "8000"]
+      start_period: 20s
+    command: ["uvicorn", "api.asgi:application", "--host", "0.0.0.0", "--port", "8000"]
 
   web:
     build:
