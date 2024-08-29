@@ -1,64 +1,8 @@
-import io
-import logging
-import sys
-
 import networkx as nx
 from hatchet_sdk import Context
 
 from app.models import Resource, WorkflowRun
 from workflows.utils.debug import WorkflowDebugger
-
-logger = logging.getLogger(__name__)
-
-
-class StreamLogger(io.StringIO):
-    def __init__(self, context: Context):
-        super().__init__()
-        self.context = context
-        self.original_stdout = sys.stdout
-
-    def write(self, s):
-        # Write to the StringIO buffer
-        super().write(s)
-        # Log the output to the context
-        # self.context.log(s)
-        logger.info(s)
-        # Also write to the original stdout
-        self.original_stdout.write(s)
-        return len(s)
-
-    def flush(self):
-        # Flush both the StringIO buffer and the original stdout
-        super().flush()
-        self.original_stdout.flush()
-
-
-# def log_stdout(func):
-#     def wrapper(self, *args, **kwargs):
-#         # Extract the context from the arguments
-#         context = kwargs.get("context", args[0] if args else None)
-#         if context is None:
-#             raise ValueError("Context argument with a log method is required")
-
-#         if isinstance(context, ContextDebugger):
-#             # If the context is a ContextDebugger object, then we don't need to log the output
-#             return func(self, *args, **kwargs)
-
-#         # Create a StreamLogger object to capture and log the output in real-time
-#         stream_logger = StreamLogger(context)
-
-#         # Redirect stdout to the StreamLogger
-#         with contextlib.redirect_stdout(stream_logger):
-#             result = func(self, *args, **kwargs)
-
-#         return result
-
-#     # ensure hatchet step attributes are copied over
-#     for attr in func.__dict__:
-#         if attr not in wrapper.__dict__:
-#             setattr(wrapper, attr, func.__dict__[attr])
-
-#     return wrapper
 
 
 def inject_workflow_run_logging(hatchet):
