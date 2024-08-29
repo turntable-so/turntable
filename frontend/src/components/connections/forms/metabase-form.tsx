@@ -65,12 +65,15 @@ export default function MetabaseForm({ resource, details }: { resource?: any, de
             }
         }
         const res = isUpdate ? await updateResource(resource.id, payload) : await createResource(payload as any)
-        if (res.ok && resource?.id) {
-            toast.success('Connection updated')
-            router.push(`/connections/${resource.id}`)
-        }
-        else if (res.id) {
-            router.push(`/connections/`)
+        if (res.id) {
+            if (isUpdate) {
+                toast.success('Connection updated')
+            } else {
+                toast.success('Connection created')
+            }
+            router.push(`/connections/${res.id}`)
+        } else {
+            toast.error('Failed to save connection: ' + res[0])
         }
     }
 

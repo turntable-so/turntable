@@ -18,6 +18,7 @@ from app.models import (
     PostgresDetails,
     Resource,
     ResourceDetails,
+    SnowflakeDetails,
     User,
     Workspace,
     WorkspaceGroup,
@@ -281,6 +282,12 @@ class BigQueryDetailsSerializer(ResourceDetailsSerializer):
         fields = ["service_account", "schema_include"]
 
 
+class SnowflakeDetailsSerializer(ResourceDetailsSerializer):
+    class Meta:
+        model = SnowflakeDetails
+        fields = ["account", "username", "password", "warehouse", "role"]
+
+
 class PostgresDetailsSerializer(ResourceDetailsSerializer):
     class Meta:
         model = PostgresDetails
@@ -294,7 +301,6 @@ class MetabaseDetailsSerializer(ResourceDetailsSerializer):
 
 
 class DBTVersionField(serializers.ChoiceField):
-
     def to_representation(self, obj):
         if obj is None:
             return None
@@ -310,7 +316,6 @@ class DBTVersionField(serializers.ChoiceField):
 
 
 class DBTCoreDetailsSerializer(ResourceDetailsSerializer):
-
     version = DBTVersionField([(v, v.value) for v in DBTVersion])
 
     class Meta:
@@ -335,7 +340,6 @@ class BlockSerializer(serializers.ModelSerializer):
 
 
 class ResourceSerializer(serializers.HyperlinkedModelSerializer):
-
     class Meta:
         model = Resource
         fields = [

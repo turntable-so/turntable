@@ -40,7 +40,6 @@ dependencies = [
     "mpire[dill]>=2.10.2",
     "acryl-datahub>=0.13.2.4",
     "Fernet>=1.0.1",
-    "uv>=0.2.5",
     "certifi>=2024.6.2",
     "redis>=5.0.5",
     "dbt-extractor>=0.5.1",
@@ -83,6 +82,7 @@ dependencies = [
     "channels>=4.1.0",
     "django-health-check>=3.18.3",
     "channels_redis>=4.2.0",
+    "uv==0.2.18",
 ]
 
 [project.scripts]
