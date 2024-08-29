@@ -56,7 +56,7 @@ x-dev-credentials: &dev-credentials
   LOCAL_DB: ${LOCAL_DB:-true}
   LOCAL_HOST: ${LOCAL_HOST:-true}
 
-x-next-credentials:
+x-next-credentials: &next-credentials
   LOCAL_HOST: ${LOCAL_HOST:-true}
   NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
   NEXTAUTH_URL_INTERNAL: "http://web:3000"
@@ -87,7 +87,11 @@ x-common-backend: &common-backend
     setup-hatchet:
       condition: service_completed_successfully
     createbuckets:
-      condition: service_started
+      condition: service_completed_successfully
+    create_hatchet_db:
+      condition: service_completed_successfully
+    redis:
+      condition: service_healthy
   volumes:
     - .hatchetconfig:/.hatchetconfig
 
@@ -98,13 +102,13 @@ services:
     ports:
       - "8000:8000"
     entrypoint: ["/code/entrypoint.sh"]
+    command: ["uvicorn", "api.asgi:application", "--host", "0.0.0.0", "--port", "8000"]
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/healthcheck/health/"]
       interval: 10s
       timeout: 60s
       retries: 20
       start_period: 10s
-    command: ["uvicorn", "api.asgi:application", "--host", "0.0.0.0", "--port", "8000"]
 
   web:
     build:
@@ -116,8 +120,10 @@ services:
     depends_on:
       api:
         condition: service_healthy
+      worker:
+        condition: service_started
     environment:
-      <<: *telemetry-credentials
+      <<: [*next-credentials, *telemetry-credentials]
 
 
   postgres:
@@ -140,10 +146,12 @@ services:
 
   create_hatchet_db:
     build:
-      context: backend/hatchet_initialization/
-      dockerfile: Dockerfile
-    command: ["python", "create_db.py"]
+      context: backend
+      dockerfile: hatchet_initialization/Dockerfile
+    command: ["python", "hatchet_initialization/create_db.py"]
     restart: no
+    environment:
+      <<: [*postgres-credentials, *hatchet-credentials, *dev-credentials]
     depends_on:
       postgres:
         condition: service_healthy
@@ -152,6 +160,11 @@ services:
     image: "redis:latest"
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
 
   minio:
     image: minio/minio
@@ -216,15 +229,6 @@ services:
   worker:
     <<: *common-backend
     command: ["python", "workflows/main.py"]
-    depends_on:
-      postgres:
-        condition: service_healthy
-      createbuckets:
-        condition: service_started
-      api:
-        condition: service_healthy
-      hatchet-lite:
-        condition: service_healthy
 
   ready:
     image: busybox:latest
