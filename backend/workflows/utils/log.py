@@ -1,4 +1,3 @@
-import contextlib
 import io
 import logging
 import sys
@@ -7,7 +6,7 @@ import networkx as nx
 from hatchet_sdk import Context
 
 from app.models import Resource, WorkflowRun
-from workflows.utils.debug import ContextDebugger, WorkflowDebugger
+from workflows.utils.debug import WorkflowDebugger
 
 logger = logging.getLogger(__name__)
 
@@ -34,35 +33,35 @@ class StreamLogger(io.StringIO):
         self.original_stdout.flush()
 
 
-def log_stdout(func):
-    def wrapper(self, *args, **kwargs):
-        # Extract the context from the arguments
-        context = kwargs.get("context", args[0] if args else None)
-        if context is None:
-            raise ValueError("Context argument with a log method is required")
+# def log_stdout(func):
+#     def wrapper(self, *args, **kwargs):
+#         # Extract the context from the arguments
+#         context = kwargs.get("context", args[0] if args else None)
+#         if context is None:
+#             raise ValueError("Context argument with a log method is required")
 
-        if isinstance(context, ContextDebugger):
-            # If the context is a ContextDebugger object, then we don't need to log the output
-            return func(self, *args, **kwargs)
+#         if isinstance(context, ContextDebugger):
+#             # If the context is a ContextDebugger object, then we don't need to log the output
+#             return func(self, *args, **kwargs)
 
-        # Create a StreamLogger object to capture and log the output in real-time
-        stream_logger = StreamLogger(context)
+#         # Create a StreamLogger object to capture and log the output in real-time
+#         stream_logger = StreamLogger(context)
 
-        # Redirect stdout to the StreamLogger
-        with contextlib.redirect_stdout(stream_logger):
-            result = func(self, *args, **kwargs)
+#         # Redirect stdout to the StreamLogger
+#         with contextlib.redirect_stdout(stream_logger):
+#             result = func(self, *args, **kwargs)
 
-        return result
+#         return result
 
-    # ensure hatchet step attributes are copied over
-    for attr in func.__dict__:
-        if attr not in wrapper.__dict__:
-            setattr(wrapper, attr, func.__dict__[attr])
+#     # ensure hatchet step attributes are copied over
+#     for attr in func.__dict__:
+#         if attr not in wrapper.__dict__:
+#             setattr(wrapper, attr, func.__dict__[attr])
 
-    return wrapper
+#     return wrapper
 
 
-def inject_workflow_run_logging(hatchet, log_stdout_to_hatchet: bool = False):
+def inject_workflow_run_logging(hatchet):
     """
     Must include resource_id in the input structure otherwise this will fail.
     """
@@ -119,11 +118,6 @@ def inject_workflow_run_logging(hatchet, log_stdout_to_hatchet: bool = False):
             workflow_run.save()
 
         setattr(cls, "on_failure", on_failure)
-
-        # log stdout
-        if log_stdout_to_hatchet:
-            for step in debugger.workflow_graph.nodes:
-                setattr(cls, step.__name__, log_stdout(getattr(cls, step.__name__)))
 
         return cls
 
