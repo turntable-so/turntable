@@ -569,7 +569,7 @@ scipy==1.14.0
     # via networkx
 sentry-sdk==2.7.1
     # via acryl-datahub
-setuptools==70.2.0
+setuptools==74.0.0
     # via grpcio-tools
     # via pydata-google-auth
 shandy-sqlfmt==0.21.3
@@ -698,6 +698,7 @@ watchfiles==0.22.0
 websockets==12.0
     # via realtime
     # via uvicorn
+wheel==0.44.0
 wrapt==1.16.0
     # via deprecated
 yarl==1.9.4
