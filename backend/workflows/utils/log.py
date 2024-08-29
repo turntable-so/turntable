@@ -114,7 +114,7 @@ def inject_workflow_run_logging(hatchet, log_stdout: bool = False):
         # log stdout
         if log_stdout:
             for step in debugger.workflow_graph.nodes:
-                setattr(cls, step, log_stdout(getattr(cls, step)))
+                setattr(cls, step.__name__, log_stdout(getattr(cls, step)))
 
         return cls
 
