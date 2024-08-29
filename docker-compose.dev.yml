@@ -19,7 +19,6 @@ x-postgres-test-db-credentials: &postgres-test-db-credentials
   POSTGRES_HOST: postgres_test_db
   POSTGRES_PORT: 5432
 
-
 x-hatchet-credentials: &hatchet-credentials
   SERVER_LOGGER_LEVEL: warn
   DATABASE_LOGGER_LEVEL: warn
