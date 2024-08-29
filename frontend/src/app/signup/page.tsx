@@ -5,9 +5,6 @@ import TurntableNamemark from "@/components/logos/turntable-namemark";
 import { Carter_One } from "next/font/google";
 import { useEffect, useState } from "react";
 
-const carterOne = Carter_One(
-    { weight: "400", subsets: ["latin"], display: "swap" });
-
 export default function SignInPage() {
     const [invitationCode, setInvitationCode] = useState<any>(null);
     useEffect(() => {
