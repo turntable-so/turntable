@@ -75,6 +75,11 @@ services:
       file: docker-compose.demo.yml
       service: postgres
 
+  create_hatchet_db:
+    extends:
+      file: docker-compose.demo.yml
+      service: create_hatchet_db
+
   minio:
     extends:
       file: docker-compose.demo.yml
