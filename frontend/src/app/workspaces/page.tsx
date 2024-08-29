@@ -5,9 +5,6 @@ import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import CreateWorkspaceForm from "@/components/workspaces/create-workspace-form";
 import { Carter_One } from "next/font/google";
 
-const carterOne = Carter_One(
-    { weight: "400", subsets: ["latin"], display: "swap" });
-
 export default function SignInPage() {
     return (
         <div className='h-screen w-full flex flex-col bg-muted items-center mt-[150px]'>

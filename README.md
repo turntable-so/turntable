@@ -3,14 +3,13 @@
     <img src="static/logo_header.svg">
 </p>
 
-
   <p align="center">
-     <span style="font-size: 24px;">An Open-Source Data Platform</span>
+     <span style="font-size: 24px;">Open-Source Data Platform</span>
     <br />
     <br />
-     <span style="font-size: 16px;">Metrics, Models, Jobs, Pages, End-to-end column lineage, and more!</span>
+     <span style="font-size: 16px;">Metrics, Models, Jobs, Notebooks, End-to-end Column Lineage, and More!</span>
     <br />
-    <span style="font-size: 16px;">Define your source of truth with an open standard.</span>
+    <span style="font-size: 16px;">Define your source of truth with an open standard</span>
     <br />
     <a href="https://join.slack.com/t/turntable-community/shared_invite/zt-25p0olvhz-Z~c5QWq1jv2YFHQ46mMFDA">Slack</a>
     ·
@@ -30,33 +29,47 @@
 </p>
 
 <!-- ABOUT THE PROJECT -->
-## Data toolset as good as software tools
-*Placeholder: add demo here*
+
+## A unified data stack
+
+_Placeholder: add demo here_
 
 **The problem:** Today's data stack is highly fragmented, insecure, and overpriced.
-- Most teams we've talked to have at least 5-10 tools in their data stack. They often don't work well together.
+
+- Most modern data teams have at least 5-10 tools in their data stack. They often don't work well together.
 - Today's closed ecosystem is vulnerable to [security breaches](https://www.wired.com/story/snowflake-breach-advanced-auto-parts-lendingtree/) and [tool discontinuation](https://news.ycombinator.com/item?id=40750391).
 - Vendor lock-in has led to [exorbitant costs](https://aws.amazon.com/marketplace/pp/prodview-tjpcf42nbnhko) and [rent-seeking behavior](https://www.fool.com/investing/2022/08/26/3-wild-metrics-highlight-snowflakes-staggering-mom/):
 
-
 **The Solution:** Turntable, a post-modern data stack
-- *Open:* Our whole repo is AGPL and always will be. 
-- *Private:* Self-deploy our open-source version or use our cloud product with our customer-deployed agent. Either way, your data never leaves your infrastructure.
-- *Integrated:* With Turntable, all of your metrics, models, and data documents exist in the same context. We think this will allow for some totally new experiences. Think clicking on a dashboard and seeing exactly where a number came from.
+
+- _Open:_ Our whole repo is AGPL and always will be.
+- _Private:_ Self-deploy our open-source version or use our cloud product with our customer-deployed agent. Either way, your data never leaves your infrastructure.
+- _Integrated:_ With Turntable, all of your metrics, models, and data documents exist in the same context. We think this will allow for some totally new experiences. Think clicking on a dashboard and seeing exactly where a number came from.
 
 ## ✨ Features
+
 - [x] **End-to-end Column lineage**: See your data's journey from source to dashboard.
-- [x] **Documentation**: See all your data assets in one place. We event write AI-generated descriptions for you (opt-in of course).
-- [x] **Pages**: Write and schedule analyses, reports, and data documents in a Notion-like interface.
-- [x] **Jobs**: Schedule and monitor your data pipelines.
+- [x] **Data catalog**: See all your data assets in one place. We event write AI-generated descriptions for you (opt-in of course).
+- [x] **Jobs (coming soon)**: Schedule and monitor your data pipelines.
+- [] **Pages (coming soon)**: Write and schedule analyses, reports, and data documents in an AI-powered, Notion-like interface.
 - [ ] **Full observability suite**: Detect anomalies, monitor data quality, reduce cost, secure PII and more.
-- [ ] **Metrics:** Define once, use anywhere, in pure SQL and GUI. No need to learn a new semantic layer framework. 
+- [ ] **Metrics:** Define once, use anywhere, in pure SQL and GUI. No need to learn a new semantic layer framework.
 - [ ] **Subscriptions**: Subscribe to data assets and get notified when they change. Each user gets their own dashboard
-- [ ] **Models:** Allow team members to schedule and publish sql queries that depend on one another, with best practices already built in. 
+- [ ] **Models:** Allow team members to schedule and publish sql queries that depend on one another, with best practices already built in.
 - [ ] **CLI**: Use the code editor you already love, but make secure onboarding a breeze.
 
+## 🔌 Integrations
+
+**Data Sources**: Postgres, Snowflake, BigQuery, DuckDB, Redshift, S3, and more.
+
+**BI Tools**: Looker, Tableau, Metabase, PowerBI.
+
+**Data Transformation**: dbt Core, dbt Cloud, SqlMesh
+
+**Saas (coming soon)**: Stripe, Zendesk, Hubspot, Salesforce, and more.
 
 ## 🔔 Stay up to date
+
 Turntable launched its v0.1 on August 2024. Lots of new features are coming, and are generally released on a bi-weekly basis. Watch updates of this repository to be notified of future updates.
 
 [Check out our public roadmap](https://turntable-so.canny.io/)
@@ -70,7 +83,7 @@ With that context, we wanted to explicitly call out some of the projects we love
 - [Ag-Grid](https://github.com/ag-grid/ag-grid): Table component
 - [DataHub](https://github.com/datahub-project/datahub): metadata ingest engine
 - [Django](https://github.com/django/django): Core application framework
-- [Hatchet](https://github.com/hatchet-dev/hatchet):*workflow scheduler
+- [Hatchet](https://github.com/hatchet-dev/hatchet):\*workflow scheduler
 - [Ibis](https://github.com/ibis-project/ibis): metrics layer and database connectors
 - [Instructor](https://github.com/jxnl/instructor): structured AI output
 - [Lago](https://github.com/getlago/lago): inspiration for our documentation
@@ -84,16 +97,19 @@ With that context, we wanted to explicitly call out some of the projects we love
 - [TipTap](https://github.com/ueberdosis/tiptap): Text editor
 
 ## 🔖 License
+
 Turntable is distributed under the AGPLv3 License.
 
 ## 💻 Deploy locally
 
 ### Requirements
+
 1. Install Docker on your machine;
 2. Make sure Docker Compose is installed and available (it should be the case if you have chosen to install Docker via Docker Desktop); and
 3. Make sure Git is installed on your machine.
 
 ### Run the app
+
 To start using Turntable
 
 1. Clone the repository
@@ -107,7 +123,7 @@ cd turntable
 ```
 
 2. Configure environment variables
-Create a `.env` file in the root of the project by running the following command
+   Create a `.env` file in the root of the project by running the following command
 
 **MacOS or Linux**
 
@@ -118,27 +134,46 @@ bash generate_keys.sh
 **Windows**
 
 ```Powershell
+powershell -executionpolicy bypass -File .\generate_keys.ps1
+```
 
-
-No environment variables except the `ENCRYPTION_KEY` are required to run the app, but some functionality may be limited (e.g. AI-written documentation). See .env.example for a list of all available environment variables.
+No environment variables except the secrets generated by the commands above are required to run the app, but some functionality may be limited (e.g. AI-written documentation). See `.env.example` for a list of all available environment variables.
 
 3. Start the app
+
+To start the app you have two choices:
+
+**(A) Run Turntable with No demo resources**
+
+Run the following command:
 
 ```bash
 docker compose --env-file .env up
 ```
 
-You can now open your browser and go to http://localhost:3000 to connect to the application.
+Once the docker build is complete (a few minutes), you will see a line in the terminal like this: 'The app is ready! Visit http://localhost:3000/ to get started'. Once you do, open your browser and go to http://localhost:3000 to see the app running. Signup with a username and password to start using the app.
+
+**(B) Run Turntable with demo resources**
+
+If you'd like to also see the product with a demo postgres, dbt project, and metabase already connected, run:
+
+```bash
+docker compose --env-file .env -f docker-compose.demo.yml up --build
+```
+
+Once the docker build is complete (longer than above, usually 5+ minutes), you will see a line in the terminal like this: 'The app is ready! Visit http://localhost:3000/ to get started'. Once you do, open your browser and go to http://localhost:3000 to see the app running. The demo resources can be found in an account with user `dev@turntable.so` and password `mypassword`. Login with these credentials to see the demo resources, with associated lineage and asset viewer. If you'd like to start from a blank slate on this instance, simply sign up with a different email.
 
 ### Analytics and tracking for the self-hosted version
-Please note that Turntable, by default, tracks basic actions performed on your self-hosted instance, but you can easily opt out as part of the onboarding flow. If you do not disable tracking, you may receive specific communications or product updates. No matter what, Turntable will not collect store or have access to any sensitive data.
 
+Please note that Turntable, by default, tracks basic actions performed on your self-hosted instance, but you can easily opt out by setting the value of `NEXT_PUBLIC_POSTHOG_KEY` to `""` in the docker-compose yml file you are using (e.g. `docker-compose.yml` or `docker-compose.demo.yml`). We do not track any telemetry in development (i.e. using `docker-compose.dev.yml`).
 For more information, please see our [privacy policy](www.turntable.so/privacy).
 
 ## ☁️ Use our cloud-based product
+
 [Email us](mailto:founders@turntable.so) or visit [our website](www.turntable.so) to get started with our cloud product. Their our two vairants: a fully-hosted offering, and hybrid one, which includes a customer-deployed agent.
 
 ## 🚀 Getting the most out of Turntable
+
 - See the [documentation](https://doc.turntable.so) to learn more about all the features;
 - Join our [Slack community](https://join.slack.com/t/turntable-community/shared_invite/zt-25p0olvhz-Z~c5QWq1jv2YFHQ46mMFDA) if you need help, or want to chat, we’re here to help;
 - Follow us on [Twitter](https://twitter.com/Turntable) or [LinkedIn](https://www.linkedin.com/company/turntabledata) for the latest news;
@@ -155,17 +190,15 @@ For now, we are not accepting pull requests from the community, but We are worki
 To start the development environment, simply follow the instructions above to start the app, but change the final commmand to:
 
 ```bash
-docker compose -f docker-compose.dev.yml up --env-file .env
+docker compose -f docker-compose.dev.yml --env-file .env up --build
 ```
 
-Unlike the production environemnt, this supports hot reload and adds development resources like a test Postgres instance.
+Unlike the production environemnt, this supports hot reload. It also includes the demo resources described above.
 
-Once everything starts (this may take about a minute or more), run the command below to access the container:
+Once everything starts (several minutes), run the command below to access a shell inside the container:
 
 ```bash
 docker compose exec worker bash
 ```
 
 From here, backend tests can be run with `pytest`.
-
-

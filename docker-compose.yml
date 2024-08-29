@@ -38,9 +38,9 @@ x-hatchet-credentials: &hatchet-credentials
   SERVER_GRPC_PORT: "7077"
   SERVER_URL: http://localhost:8888
   SERVER_AUTH_SET_EMAIL_VERIFIED: "t"
-  SERVER_LOGGER_LEVEL: warn
+  SERVER_LOGGER_LEVEL: error
   SERVER_LOGGER_FORMAT: console
-  DATABASE_LOGGER_LEVEL: warn
+  DATABASE_LOGGER_LEVEL: error
   DATABASE_LOGGER_FORMAT: console
   HATCHET_ENV_PATH: /.hatchetconfig/.hatchetenv
   HATCHET_CLIENT_NAMESPACE: "docker"
@@ -61,6 +61,10 @@ x-next-credentials:
   NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
   NEXTAUTH_URL_INTERNAL: "http://web:3000"
   NEXTAUTH_URL: "http://localhost:3000"
+
+x-telemetry-credentials: &telemetry-credentials
+  NEXT_PUBLIC_POSTHOG_KEY: "phc_XL4KyheAjc4gJV4Fzpg1lbn7goFP1QNqsnNUhY1O1CU"
+  NEXT_PUBLIC_POSTHOG_HOST: "https://us.i.posthog.com"
 
 x-common-backend: &common-backend
   build:
@@ -95,9 +99,9 @@ services:
       - "8000:8000"
     entrypoint: ["/code/entrypoint.sh"]
     healthcheck:
-      test: ["CMD-SHELL", "django-admin", "health_check"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthcheck/health/"]
       interval: 10s
-      timeout: 30s
+      timeout: 60s
       retries: 20
       start_period: 10s
     command: ["uvicorn", "api.asgi:application", "--host", "0.0.0.0", "--port", "8000"]
@@ -106,12 +110,15 @@ services:
     build:
       context: frontend
       dockerfile: Dockerfile
-    command: /bin/sh -c "pnpm build && pnpm start"
+    command: ["pnpm", "start"]
     ports:
       - "3000:3000"
     depends_on:
       api:
         condition: service_healthy
+    environment:
+      <<: *telemetry-credentials
+
 
   postgres:
     image: pgvector/pgvector:pg16
@@ -218,6 +225,18 @@ services:
         condition: service_healthy
       hatchet-lite:
         condition: service_healthy
+
+  ready:
+    image: busybox:latest
+    command: sh -c "echo 'The app is ready! Visit http://localhost:3000/ to get started'"
+    restart: no
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_started
+      worker:
+        condition: service_started
 
 volumes:
   postgres_data:

@@ -1,8 +1,7 @@
 #!/bin/sh
 
 # install dbt
-pip install uv
-uv pip install dbt-postgres~=1.7.0 --system
+/root/.cargo/bin/uv pip install dbt-postgres~=1.7.0 --system
 
 # prepare dbt
 dbt deps
