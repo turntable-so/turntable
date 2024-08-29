@@ -1,5 +1,6 @@
 import contextlib
 import io
+import logging
 import sys
 
 import networkx as nx
@@ -7,6 +8,8 @@ from hatchet_sdk import Context
 
 from app.models import Resource, WorkflowRun
 from workflows.utils.debug import ContextDebugger, WorkflowDebugger
+
+logger = logging.getLogger(__name__)
 
 
 class StreamLogger(io.StringIO):
@@ -19,7 +22,8 @@ class StreamLogger(io.StringIO):
         # Write to the StringIO buffer
         super().write(s)
         # Log the output to the context
-        self.context.log(s)
+        # self.context.log(s)
+        logger.info(s)
         # Also write to the original stdout
         self.original_stdout.write(s)
         return len(s)
@@ -50,6 +54,7 @@ def log_stdout(func):
 
         return result
 
+    # ensure hatchet step attributes are copied over
     for attr in func.__dict__:
         if attr not in wrapper.__dict__:
             setattr(wrapper, attr, func.__dict__[attr])
