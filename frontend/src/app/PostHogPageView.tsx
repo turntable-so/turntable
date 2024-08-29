@@ -34,7 +34,7 @@ export default function PostHogPageView(): null {
                 }
             )
         }
-    }, [pathname, searchParams, posthog, session])
+    }, [pathname, searchParams, session])
 
     return null
 }
