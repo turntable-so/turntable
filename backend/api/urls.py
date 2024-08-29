@@ -25,6 +25,7 @@ from app.views import (
     BlockViewSet,
     ExecuteQueryView,
     GithubInstallationViewSet,
+    HealthCheckViewSet,
     InvitationViewSet,
     LineageViewSet,
     NotebookViewSet,
@@ -34,7 +35,6 @@ from app.views import (
     WorkflowViews,
     WorkspaceGroupViewSet,
     WorkspaceViewSet,
-    healthcheck,
 )
 
 from .views import CustomUserViewSet, LogoutView, OAuthView
@@ -50,10 +50,10 @@ router.register(r"users/invitations", CustomUserViewSet, basename="user")
 router.register(r"github", GithubInstallationViewSet, basename="github")
 router.register(r"notebooks", NotebookViewSet, basename="notebook")
 router.register(r"blocks", BlockViewSet, basename="block")
+router.register(r"healthcheck", HealthCheckViewSet, basename="healthcheck")
 
 urlpatterns = [
     path("oauth/auth", OAuthView.as_view(), name="oauth-auth"),
-    path("healthcheck/", healthcheck, name="healthcheck"),
     path(
         "notebooks/<str:notebook_id>/blocks/<str:block_id>/query/",
         ExecuteQueryView.as_view(),
@@ -89,6 +89,5 @@ urlpatterns = [
         name="asset-detail",
     ),
     path("ws/subscribe/<str:workspace_id>/", WorkflowRunConsumer.as_asgi()),
-    re_path(r"^health_check/", include("health_check.urls")),
     path("", include(router.urls)),
 ]

@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import shutil
 import tempfile
 import uuid
 from contextlib import contextmanager
@@ -191,10 +192,13 @@ class ResourceDetails(PolymorphicModel):
             f". {self.venv_path}/bin/activate", shell=True, check=True
         )
 
-    def create_venv_and_install_datahub(self):
+    def create_venv_and_install_datahub(self, force=False):
         if os.path.exists(self.venv_path):
-            self.activate_datahub_env()
-            return
+            if not force:
+                self.activate_datahub_env()
+                return
+            else:
+                shutil.rmtree(self.venv_path)
 
         # Create a virtual environment
         run_and_capture_subprocess(["uv", "venv", self.venv_path], check=True)
@@ -203,18 +207,20 @@ class ResourceDetails(PolymorphicModel):
         self.activate_datahub_env()
 
         # Install datahub with correct extras
-        run_and_capture_subprocess(
-            [
-                "uv",
-                "pip",
-                "install",
-                "acryl-datahub[datahub-lite]",
-                *[f"acryl-datahub[{extra}]" for extra in self.datahub_extras],
-                "--python",
-                self.get_venv_python(),
-            ],
-            check=True,
-        )
+        package_to_install = "acryl-datahub[datahub-lite"
+        for extra in self.datahub_extras:
+            package_to_install += f",{extra}"
+        package_to_install += "]"
+        command = [
+            "uv",
+            "pip",
+            "install",
+            package_to_install,
+            "spacy==3.7.5",  # hardcode space version to prevent docker build issues on arm linux
+            "--python",
+            self.get_venv_python(),
+        ]
+        run_and_capture_subprocess(command, check=True)
 
     def _run_datahub_ingest_base(self, test=False):
         self.create_venv_and_install_datahub()
