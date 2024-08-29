@@ -62,6 +62,10 @@ x-next-credentials:
   NEXTAUTH_URL_INTERNAL: "http://web:3000"
   NEXTAUTH_URL: "http://localhost:3000"
 
+x-telemetry-credentials: &telemetry-credentials
+  NEXT_PUBLIC_POSTHOG_KEY: "phc_XL4KyheAjc4gJV4Fzpg1lbn7goFP1QNqsnNUhY1O1CU"
+  NEXT_PUBLIC_POSTHOG_HOST: "https://us.i.posthog.com"
+
 x-common-backend: &common-backend
   build:
     context: backend
@@ -110,6 +114,9 @@ services:
     depends_on:
       api:
         condition: service_healthy
+    environment:
+      <<: *telemetry-credentials
+
 
   postgres:
     image: pgvector/pgvector:pg16

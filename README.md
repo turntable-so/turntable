@@ -148,12 +148,12 @@ docker compose --env-file .env -f docker-compose.demo.yml up --build
 Once the docker build is complete (longer than above, usually 5+ minutes), you will see a line in the terminal like this: 'The app is ready! Visit http://localhost:3000/ to get started'. Once you do, open your browser and go to http://localhost:3000 to see the app running. The demo resources can be found in an account with user `dev@turntable.so` and password `mypassword`. Login with these credentials to see the demo resources, with associated lineage and asset viewer. If you'd like to start from a blank slate on this instance, simply sign up with a different email.
 
 ### Analytics and tracking for the self-hosted version
-Please note that Turntable, by default, tracks basic actions performed on your self-hosted instance, but you can easily opt out as part of the onboarding flow. If you do not disable tracking, you may receive specific communications or product updates. No matter what, Turntable will not collect store or have access to any sensitive data.
+Please note that Turntable, by default, tracks basic actions performed on your self-hosted instance, but you can easily opt out by setting the value of `NEXT_PUBLIC_POSTHOG_KEY` to `""` in the docker-compose yml file you are using (e.g. `docker-compose.yml` or `docker-compose.demo.yml`). We do not track any telemetry in development (i.e. using `docker-compose.dev.yml`).
 
 For more information, please see our [privacy policy](www.turntable.so/privacy).
 
 ## ☁️ Use our cloud-based product
-[Email us](mailto:founders@turntable.so) or visit [our website](www.turntable.so) to get started with our cloud product. Their our two vairants: a fully-hosted offering, and hybrid one, which includes a customer-deployed agent.
+[Email us](mailto:founders@turntable.so) or visit [our website](www.turntable.so) to get started with our cloud product. There our two vairants: a fully-hosted offering, and hybrid one, which includes a customer-deployed agent. The agent allows you to keep all sensitive data and credentials on-premise.
 
 ## 🚀 Getting the most out of Turntable
 - See the [documentation](https://doc.turntable.so) to learn more about all the features;
