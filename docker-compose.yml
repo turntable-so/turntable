@@ -80,6 +80,8 @@ x-common-backend: &common-backend
   depends_on:
     postgres:
       condition: service_healthy
+    setup-hatchet:
+      condition: service_completed_successfully
     createbuckets:
       condition: service_started
   volumes:
@@ -98,8 +100,7 @@ services:
       timeout: 30s
       retries: 20
       start_period: 10s
-    command:
-      ["uvicorn", "api.asgi:application", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["uvicorn", "api.asgi:application", "--host", "0.0.0.0", "--port", "8000"]
 
   web:
     build:
@@ -129,6 +130,16 @@ services:
       interval: 2s
       timeout: 5s
       retries: 10
+
+  create_hatchet_db:
+    build:
+      context: backend/hatchet_initialization/
+      dockerfile: Dockerfile
+    command: ["python", "create_db.py"]
+    restart: no
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   redis:
     image: "redis:latest"
@@ -168,10 +179,8 @@ services:
       - "8888:8888"
       - "7077:7077"
     depends_on:
-      postgres:
-        condition: service_healthy
-      api:
-        condition: service_healthy
+      create_hatchet_db:
+        condition: service_completed_successfully
     environment:
       <<: [*postgres-credentials, *hatchet-credentials]
       DEV: "true"
