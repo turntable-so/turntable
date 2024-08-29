@@ -345,16 +345,17 @@ export function getAssetIcon(type: string, resourceType?: string) {
   if (resourceType === 'bigquery') {
     return <div className='mr-1'><BigQueryLogo /></div>
   }
-  if (resourceType === 'dbt' || resourceType === null) {
-    if (type === 'source') {
-      return <div className='mr-1'><BigQueryLogo /></div>
-    } else {
-      return (
-        <div className="mr-1">
-          <DbtLogo />
-        </div>
-      )
-    }
+  if (resourceType === 'metabase') {
+    return <MetabaseIcon />
+  }
+  if (type === 'source') {
+    return <div className='mr-1'><BigQueryLogo /></div>
+  } else {
+    return (
+      <div className="mr-1">
+        <DbtLogo />
+      </div>
+    )
   }
 }
 
