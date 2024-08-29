@@ -9,7 +9,7 @@ from workflows.utils.log import inject_workflow_run_logging
 
 
 @hatchet.workflow(on_events=["metadata_sync"], timeout="15m")
-@inject_workflow_run_logging(hatchet)
+@inject_workflow_run_logging(hatchet, log_stdout=True)
 class MetadataSyncWorkflow:
     """
     input structure:
