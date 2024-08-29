@@ -8,6 +8,10 @@ x-dev-credentials: &dev-credentials
   GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET}
   DEV: "true"
 
+x-telemetry-credentials: &telemetry-credentials
+  NEXT_PUBLIC_POSTHOG_KEY: ""
+  NEXT_PUBLIC_POSTHOG_HOST: ""
+
 x-postgres-test-db-credentials: &postgres-test-db-credentials
   POSTGRES_DB: mydb
   POSTGRES_USER: myuser
@@ -51,6 +55,7 @@ services:
     command: ["pnpm", "dev"]
     restart: always
     environment:
+      <<: *telemetry-credentials
       DEV: "true"
     ports:
       - "3000:3000"
