@@ -1,9 +1,10 @@
+import pgbulk
 from django.db.models import Model
 
 from app.models import Resource
 
 
-def delete_and_upsert(
+def pg_delete_and_upsert(
     instances: list[Model],
     resource: Resource,
     indirect_instances: list[Model] | None = None,
@@ -20,11 +21,6 @@ def delete_and_upsert(
 
     model_type = model_types.pop()
     primary_key_name = model_type._meta.pk.name
-    other_field_names = [
-        field.name
-        for field in model_type._meta.fields
-        if field.name != primary_key_name
-    ]
     if not hasattr(model_type, "get_for_resource"):
         raise ValueError(
             f"Model {model_type.__name__} must have a get_for_resource method to use the `delete_and_upsert` function"
@@ -44,10 +40,15 @@ def delete_and_upsert(
         model_type.objects.filter(id__in=to_delete).delete()
 
     # upsert the new instances
-    model_type.objects.bulk_create(
-        instances,
-        update_conflicts=True,
-        update_fields=other_field_names,
+    new_instances = [i for i in instances if str(i.id) not in cur_instance_ids]
+    update_instances = [i for i in instances if str(i.id) in cur_instance_ids]
+    pgbulk.copy(
+        model_type,
+        new_instances,
+    )
+    pgbulk.upsert(
+        model_type,
+        update_instances,
         unique_fields=[primary_key_name],
     )
 
@@ -55,7 +56,9 @@ def delete_and_upsert(
     ## This functionality is necessary because links can exist across resources, and if the underyling nodes are not present, the link creation will raise a FK error.
     ## That said, we don't want to add these temporary nodes if the true nodes already exist in the graph.
     if indirect_instances is not None:
-        model_type.objects.bulk_create(
+        pgbulk.upsert(
+            model_type,
             indirect_instances,
-            ignore_conflicts=True,
+            update_fields=[],  # effectively only an insert if not already there
+            unique_fields=[primary_key_name],
         )

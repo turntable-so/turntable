@@ -95,6 +95,8 @@ x-common-backend: &common-backend
   volumes:
     - .hatchetconfig:/.hatchetconfig
 
+name: turntable
+
 # Define services
 services:
   api:
