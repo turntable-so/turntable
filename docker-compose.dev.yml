@@ -23,6 +23,8 @@ x-hatchet-credentials: &hatchet-credentials
   SERVER_LOGGER_LEVEL: warn
   DATABASE_LOGGER_LEVEL: warn
 
+name: dev
+
 services:
   api:
     extends:
@@ -153,5 +155,5 @@ volumes:
 
 networks:
   default:
-    name: app_network_dev
+    name: app_network
     driver: bridge
