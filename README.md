@@ -32,11 +32,10 @@
 
 ## A unified data stack
 
+<video src="https://github.com/user-attachments/assets/d0bb1be5-6b6c-4ab1-b949-ce5ec4c18c5e.mp4" width="320" height="240" controls autoplay></video>
 
-[![name]()(https://github.com/user-attachments/assets/d0bb1be5-6b6c-4ab1-b949-ce5ec4c18c5e)]
 
-
-**The problem:** Today's data stack is highly fragmented, insecure, and overpriced.
+**The problem:** Today's data stack is highly fragmented, insecure, and expensive.
 
 - Most modern data teams have at least 5-10 tools in their data stack. They often don't work well together.
 - Today's closed ecosystem is vulnerable to [security breaches](https://www.wired.com/story/snowflake-breach-advanced-auto-parts-lendingtree/) and [tool discontinuation](https://news.ycombinator.com/item?id=40750391).
