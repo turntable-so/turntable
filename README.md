@@ -32,7 +32,9 @@
 
 ## A unified data stack
 
-_Placeholder: add demo here_
+
+![name](https://github.com/user-attachments/assets/d0bb1be5-6b6c-4ab1-b949-ce5ec4c18c5e)
+
 
 **The problem:** Today's data stack is highly fragmented, insecure, and overpriced.
 
