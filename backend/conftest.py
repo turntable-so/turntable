@@ -146,6 +146,22 @@ def assert_ingest_output(resources):
         ]
         assert len(links_across_resources) > 0
 
+    ## all connected db assets have a column link
+    db_assets = Asset.objects.filter(resource__type=ResourceType.DB).values_list(
+        "id", flat=True
+    )
+    db_assets_with_asset_links = set()
+    for al in AssetLink.objects.all():
+        for id in [al.source.id, al.target.id]:
+            if id in db_assets:
+                db_assets_with_asset_links.add(id)
+    db_assets_with_column_links = set()
+    for cl in ColumnLink.objects.all():
+        for id in [cl.source.asset.id, cl.target.asset.id]:
+            if id in db_assets:
+                db_assets_with_column_links.add(id)
+    assert db_assets_with_asset_links == db_assets_with_column_links
+
 
 @pytest.fixture()
 def prepopulated_dev_db(local_metabase, local_postgres):
