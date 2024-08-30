@@ -119,7 +119,7 @@ services:
       test: curl --fail -I http://localhost:4000/api/health || exit 1
       interval: 15s
       timeout: 5s
-      retries: 5
+      retries: 10
   
   ready:
     extends:
