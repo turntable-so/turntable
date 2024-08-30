@@ -14,6 +14,10 @@ const PostHogPageView = dynamic(() => import('./PostHogPageView'), {
   ssr: false,
 })
 
+const AnonPostHogPageView = dynamic(() => import('./AnonPostHogPageView'), {
+  ssr: false,
+})
+
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -45,6 +49,7 @@ export default function RootLayout({
                 fontSans.variable
               )}
             >
+              <AnonPostHogPageView />
               <div>{children}</div>
             </body>
           </PHProvider>
@@ -60,6 +65,7 @@ export default function RootLayout({
               )}
             >
               <AuthenticatedAppLayout>
+                <PostHogPageView />
                 <TooltipProvider>{children}</TooltipProvider>
               </AuthenticatedAppLayout>
               <Toaster richColors />
