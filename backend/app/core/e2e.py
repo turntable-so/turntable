@@ -5,7 +5,6 @@ import os
 import traceback
 from typing import Any, Callable, Literal
 
-import django
 import duckdb
 import ibis
 import networkx as nx
@@ -20,17 +19,20 @@ from django.forms.models import model_to_dict
 from sqlglot import Expression, exp
 from sqlglot.errors import ParseError
 
-from app.models import Asset, Resource, ResourceType
-from app.utils.database import delete_and_upsert
+from app.models import (
+    Asset,
+    AssetError,
+    AssetLink,
+    Column,
+    ColumnLink,
+    Resource,
+    ResourceType,
+)
+from app.utils.database import pg_delete_and_upsert
 from vinyl.lib.errors import VinylError, VinylErrorType
 from vinyl.lib.schema import VinylSchema
 from vinyl.lib.sqlast import SQLAstNode
 from vinyl.lib.utils.graph import nx_remove_node_and_reconnect
-
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "api.settings")
-django.setup()
-
-from app.models import AssetError, AssetLink, Column, ColumnLink
 
 _STR_JOIN_HELPER = "_____"
 
@@ -804,6 +806,8 @@ class DataHubDBParser:
                 parser = cls(
                     row_dict=self.input_dict,
                     asset_dict=self.asset_dict,
+                    asset_graph=nx.DiGraph(),
+                    column_graph=nx.MultiDiGraph(),
                     dialect=self.dialect,
                     is_db=self.is_db,
                 )
@@ -907,8 +911,8 @@ class DataHubDBParser:
             )
             indirect_columns.append(column)
 
-        delete_and_upsert(combined["assets"], resource, indirect_assets)
-        delete_and_upsert(combined["asset_errors"], resource)
-        delete_and_upsert(combined["asset_links"], resource)
-        delete_and_upsert(combined["columns"], resource, indirect_columns)
-        delete_and_upsert(combined["column_links"], resource)
+        pg_delete_and_upsert(combined["assets"], resource, indirect_assets)
+        pg_delete_and_upsert(combined["asset_errors"], resource)
+        pg_delete_and_upsert(combined["asset_links"], resource)
+        pg_delete_and_upsert(combined["columns"], resource, indirect_columns)
+        pg_delete_and_upsert(combined["column_links"], resource)
