@@ -45,7 +45,6 @@ export default function RootLayout({
                 fontSans.variable
               )}
             >
-              <PostHogPageView />
               <div>{children}</div>
             </body>
           </PHProvider>
@@ -61,7 +60,6 @@ export default function RootLayout({
               )}
             >
               <AuthenticatedAppLayout>
-                <PostHogPageView />
                 <TooltipProvider>{children}</TooltipProvider>
               </AuthenticatedAppLayout>
               <Toaster richColors />
