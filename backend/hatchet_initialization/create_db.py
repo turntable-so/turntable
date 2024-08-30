@@ -2,7 +2,6 @@ import os
 
 import psycopg
 from psycopg import sql
-from psycopg.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 
 def create_hatchet_db():
@@ -19,13 +18,17 @@ def create_hatchet_db():
         port = os.getenv("POSTGRES_PORT")
 
         connection = psycopg.connect(
-            dbname=dbname, user=user, password=password, host=host, port=port
+            dbname=dbname,
+            user=user,
+            password=password,
+            host=host,
+            port=port,
+            autocommit=True,
         )
     else:
         database_url = os.getenv("DATABASE_URL")
-        connection = psycopg.connect(dsn=database_url)
+        connection = psycopg.connect(dsn=database_url, autocommit=True)
 
-    connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
     cursor = connection.cursor()
 
     # Check if the database exists

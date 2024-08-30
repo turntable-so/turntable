@@ -15,6 +15,7 @@ from datahub.metadata.com.linkedin.pegasus2avro.assertion import (
 )
 from datahub.metadata.urns import ChartUrn, DashboardUrn, DatasetUrn, SchemaFieldUrn
 from datahub.utilities.urns.error import InvalidUrnError
+from django.db import transaction
 from django.forms.models import model_to_dict
 from sqlglot import Expression, exp
 from sqlglot.errors import ParseError
@@ -814,8 +815,9 @@ class DataHubDBParser:
                 parser = cls(
                     row_dict=self.input_dict,
                     asset_dict=self.asset_dict,
-                    asset_graph=nx.DiGraph(),
-                    column_graph=nx.MultiDiGraph(),
+                    column_dict=self.column_dict,
+                    asset_graph=nx.DiGraph(),  # make sure to reset graph, not quite sure why this is necessary, but it is.
+                    column_graph=nx.MultiDiGraph(),  # make sure to reset graph
                     dialect=self.dialect,
                     is_db=self.is_db,
                 )
@@ -881,6 +883,7 @@ class DataHubDBParser:
         return Asset(id=id, name=asset_name, type=asset_type, resource=resource_it)
 
     @classmethod
+    @transaction.atomic
     def combine_and_upload(cls, parsers: list[DataHubDBParser], resource: Resource):
         combined = cls.combine(parsers, resource)
         all_resource_dict = {
