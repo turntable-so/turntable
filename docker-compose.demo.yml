@@ -5,6 +5,8 @@ x-postgres-test-db-credentials: &postgres-test-db-credentials
   POSTGRES_HOST: postgres_test_db
   POSTGRES_PORT: 5432
 
+name: demo
+
 services:
   api:
     extends:
@@ -137,5 +139,5 @@ volumes:
 
 networks:
   default:
-    name: app_network_demo
+    name: app_network
     driver: bridge

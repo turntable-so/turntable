@@ -678,7 +678,7 @@ class DataHubDBParser:
 
     def get_ast_nodes(
         self, k: str, asset: Asset, lineage_types: list[ColumnLink.LineageType]
-    ) -> SQLAstNode:
+    ) -> list[SQLAstNode]:
         node = SQLAstNode(
             id=k,
             dialect=self.dialect,
@@ -755,6 +755,7 @@ class DataHubDBParser:
             ltypes = [ltype for ltype in ColumnLink.LineageType]
 
             nodes = self.get_ast_nodes(k, asset, ltypes)
+            graph_it = nx.MultiDiGraph()
             for i, node in enumerate(nodes):
                 if node.errors:
                     for error in node.errors:
@@ -769,7 +770,12 @@ class DataHubDBParser:
                     {e: {"lineage_type": ltypes[i].value} for e in lineage.edges},
                 )
                 lineage = nx.MultiDiGraph(lineage)
-                graphs.append(lineage)
+                if i == 0:
+                    graph_it = lineage
+                else:
+                    # can't use compose because it doesn't allow for multiple edge types
+                    graph_it.add_nodes_from(lineage.nodes)
+                    graph_it.add_edges_from(lineage.edges(data=True))
 
                 # make sure no silent lineage failures
                 if (
@@ -788,6 +794,8 @@ class DataHubDBParser:
                     if error not in self.asset_errors:
                         self.asset_errors.append(error)
                         print("uncaught error", error)
+            graphs.append(graph_it)
+
         self.column_graph = nx.compose_all([self.column_graph, *graphs])
 
         # remove malformed nodes from the graph
