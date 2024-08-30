@@ -1,6 +1,7 @@
 import os
 
 import psycopg2
+from psycopg2 import sql
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 
@@ -29,13 +30,20 @@ def create_hatchet_db():
 
     # Check if the database exists
     hatchet_db = os.environ.get("DATABASE_POSTGRES_DB_NAME")
-    cursor.execute(f"SELECT 1 FROM pg_database WHERE datname='{hatchet_db}'")
+    cursor.execute(
+        "SELECT 1 FROM pg_database WHERE datname = %(db)s", {"db": hatchet_db}
+    )
     exists = cursor.fetchone()
 
     if not exists:
         # Create the database
-        cursor.execute(f"CREATE DATABASE {hatchet_db}")
-        cursor.execute(f"ALTER DATABASE {hatchet_db} OWNER to {user}")
+        cursor.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(hatchet_db)))
+        cursor.execute(
+            sql.SQL("ALTER DATABASE {} OWNER to {}").format(
+                sql.Identifier(hatchet_db), sql.Identifier(user)
+            )
+        )
+
         out = {"success": True, "msg": f"Database '{hatchet_db}' created successfully."}
     else:
         out = {"success": False, "msg": f"Database '{hatchet_db}' already exists."}
