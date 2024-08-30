@@ -1,6 +1,7 @@
 import { fetcherAuth } from '@/app/fetcher';
 import { AuthActions } from "@/lib/auth";
 import { useRouter } from 'next/navigation';
+import { usePostHog } from 'posthog-js/react';
 import useSWR from "swr";
 
 const useSession = () => {
@@ -10,6 +11,8 @@ const useSession = () => {
 
     const { logout: authLogout, removeTokens } = AuthActions();
 
+    const posthog = usePostHog()
+
 
     const logout = () => {
         authLogout()
@@ -17,6 +20,9 @@ const useSession = () => {
                 removeTokens();
                 mutate()
                 router.push("/");
+                if (posthog._isIdentified()) {
+                    posthog.reset()
+                }
             })
             .catch(() => {
                 removeTokens();
