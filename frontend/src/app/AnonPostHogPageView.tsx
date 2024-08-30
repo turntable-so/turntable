@@ -9,7 +9,6 @@ export default function PostHogPageView(): null {
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const posthog = usePostHog();
-    const { user } = useSession()
 
     useEffect(() => {
         // Track pageviews
@@ -27,17 +26,6 @@ export default function PostHogPageView(): null {
         }
     }, [pathname, searchParams, posthog])
 
-    useEffect(() => {
-        if (user && user.current_workspace) {
-            posthog.identify(`${user.current_workspace.id}:${user.id}`,
-                {
-                    email: user.email,
-                    workspace_id: user.current_workspace.id,
-                    workspace_name: user.current_workspace.name,
-                }
-            )
-        }
-    }, [posthog, user])
 
     return null
 }
