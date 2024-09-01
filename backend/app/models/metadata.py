@@ -189,8 +189,8 @@ WITH RECURSIVE traversed AS (
     UNION ALL
 
     SELECT
-        a.source_id AS from_id,
-        a.target_id AS to_id,
+        a.source_id,
+        a.target_id,
         t.depth + 1
     FROM traversed as t
     JOIN app_assetlink as a ON a.source_id = t.target_id

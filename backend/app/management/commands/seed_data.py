@@ -32,7 +32,7 @@ def local_workspace(user):
     id = "org_2XVt0EheumDcoCerhQzcUlVmXvG"
     name = "Parkers Vinyl Shop"
     try:
-        return Workspace.objects.get(id=id, name=name)
+        return Workspace.objects.get(id=id)
     except Workspace.DoesNotExist:
         workspace = Workspace.objects.create(id=id, name=name)
         workspace.add_admin(user)
