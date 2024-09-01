@@ -68,10 +68,10 @@ def get_sync_config(db_path):
 
 @contextmanager
 def repo_path(obj):
-    github_repo_id = getattr(obj, "github_repo_id")
-    github_installation_id = getattr(obj, "github_installation_id")
+    github_repo_id = getattr(obj, "github_repo_id", None)
+    github_installation_id = getattr(obj, "github_installation_id", None)
     project_path = getattr(obj, "project_path")
-    git_repo_url = getattr(obj, "git_repo_url")
+    git_repo_url = getattr(obj, "git_repo_url", None)
     if git_repo_url is not None:
         deploy_key = getattr(obj, "deploy_key")
         coderepo_service = CodeRepoService(obj.resource.workspace.id)
@@ -222,7 +222,9 @@ class ResourceDetails(PolymorphicModel):
         ]
         run_and_capture_subprocess(command, check=True)
 
-    def _run_datahub_ingest_base(self, test=False):
+    def _run_datahub_ingest_base(
+        self, test: bool = False, workunits: int | None = None
+    ):
         self.create_venv_and_install_datahub()
 
         # run ingest test
@@ -246,12 +248,12 @@ class ResourceDetails(PolymorphicModel):
                         "-c",
                         path,
                     ]
-                    if test:
+                    if workunits is not None:
                         command.extend(
                             [
                                 "--preview",
                                 "--preview-workunits",
-                                str(self.test_number_of_entries),
+                                str(workunits),
                             ]
                         )
                     process = run_and_capture_subprocess(command)
@@ -282,8 +284,8 @@ class ResourceDetails(PolymorphicModel):
                     )
         return {"success": True, "command": command}
 
-    def run_datahub_ingest(self):
-        result = self._run_datahub_ingest_base()
+    def run_datahub_ingest(self, workunits: int | None = None):
+        result = self._run_datahub_ingest_base(workunits=workunits)
         if not result["success"]:
             raise Exception(
                 {
@@ -294,7 +296,9 @@ class ResourceDetails(PolymorphicModel):
             )
 
     def test_datahub_connection(self):
-        return self._run_datahub_ingest_base(test=True)
+        return self._run_datahub_ingest_base(
+            test=True, workunits=self.test_number_of_entries
+        )
 
     def test_db_connection(self):
         try:
