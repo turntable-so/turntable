@@ -243,7 +243,10 @@ class ResourceDetails(PolymorphicModel):
         run_and_capture_subprocess(command, check=True)
 
     def _run_datahub_ingest_base(
-        self, test: bool = False, workunits: int | None = None
+        self,
+        test: bool = False,
+        workunits: int | None = None,
+        tolerate_errors: bool = True,
     ):
         self.create_venv_and_install_datahub()
 
@@ -295,13 +298,14 @@ class ResourceDetails(PolymorphicModel):
                                     "error_message": match.group("message"),
                                 }
                             )
-            if len(errors) > 0:
-                return {"success": False, "command": command, "errors": errors}
-            elif not test:
+            if not test and (len(errors) == 0 or tolerate_errors):
                 with open(db_path, "rb") as f:
                     self.resource.datahub_db.save(
                         os.path.basename(db_path), File(f), save=True
                     )
+            if len(errors) > 0:
+                return {"success": False, "command": command, "errors": errors}
+
         return {"success": True, "command": command}
 
     def run_datahub_ingest(
