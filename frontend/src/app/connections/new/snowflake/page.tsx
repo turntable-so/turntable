@@ -8,7 +8,7 @@ import { PostgresLogo, SnowflakeLogo } from "@/components/connections/connection
 import PostgresForm from "@/components/connections/forms/postgres-form";
 import SnowflakeForm from "@/components/connections/forms/snowflake-form";
 
-export default function PostgresPage() {
+export default function SnowflakePage() {
 
     const router = useRouter()
 
