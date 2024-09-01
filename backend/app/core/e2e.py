@@ -371,7 +371,7 @@ class SchemaParser(DataHubDBParserBase):
         dbt_info, db_info = info_list
         workspace_id = list(self.asset_dict.values())[
             0
-        ].workspace_id  # all assets have the same tenant id
+        ].workspace_id  # all assets have the same workspace id
         for info in dbt_info:
             if "fields" in info:
                 for field in info["fields"]:
@@ -881,7 +881,13 @@ class DataHubDBParser:
 
         ### if explicit resource doesn't exist (e.g. is dbt), use the resource that was passed in
         resource_it = all_resource_dict.get(resource_name, resource)
-        return Asset(id=id, name=asset_name, type=asset_type, resource=resource_it)
+        return Asset(
+            id=id,
+            name=asset_name,
+            type=asset_type,
+            resource=resource_it,
+            workspace_id=resource_it.workspace.id,
+        )
 
     @classmethod
     @transaction.atomic
@@ -909,17 +915,22 @@ class DataHubDBParser:
             [v.source_id for v in combined["column_links"]]
             + [v.target_id for v in combined["column_links"]]
         ) - set([v.id for v in combined["columns"]])
+        asset_dict = {v.id: v for v in [*combined["assets"], *indirect_assets]}
         for column_id in columns_to_add:
             parsed = SchemaFieldUrn.from_string(column_id)
             asset_id = parsed.parent
-            if asset_id not in combined["assets"] and asset_id not in indirect_assets:
+            if asset_id not in asset_dict:
                 asset = cls._get_indirect_asset(asset_id, all_resource_dict, resource)
                 indirect_assets.append(asset)
+                asset_dict[asset_id] = asset
+            else:
+                asset = asset_dict[asset_id]
             column = Column(
                 id=column_id,
                 asset_id=asset_id,
                 name=parsed.field_path,
                 nullable=True,
+                workspace_id=asset.workspace.id,
             )
             indirect_columns.append(column)
 
