@@ -25,7 +25,7 @@ const FormSchema = z.object({
         message: "Account can't be empty",
     }),
     username: z.string().min(1, {
-        message: "Username account can't be empty",
+        message: "Username can't be empty",
     }),
     password: z.string().min(1, {
         message: "Password can't be empty",
