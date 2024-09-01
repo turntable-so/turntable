@@ -167,7 +167,7 @@ class WorkflowRun(models.Model):
 
 
 class IngestError(models.Model):
-    id = models.UUIDField(primary_key=True)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     workflow_run = models.ForeignKey(
         "WorkflowRun", on_delete=models.CASCADE, null=True, related_name="ingest_errors"
     )
@@ -313,7 +313,9 @@ class ResourceDetails(PolymorphicModel):
         workunits: int | None = None,
         tolerate_errors: bool = True,
     ):
-        result = self._run_datahub_ingest_base(workunits=workunits)
+        result = self._run_datahub_ingest_base(
+            workunits=workunits, tolerate_errors=tolerate_errors
+        )
         if not result["success"]:
             ingest_errors = [
                 IngestError(
