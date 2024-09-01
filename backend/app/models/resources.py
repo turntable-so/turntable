@@ -303,9 +303,8 @@ class ResourceDetails(PolymorphicModel):
                     self.resource.datahub_db.save(
                         os.path.basename(db_path), File(f), save=True
                     )
-            if len(errors) > 0:
-                return {"success": False, "command": command, "errors": errors}
-
+        if len(errors) > 0:
+            return {"success": False, "command": command, "errors": errors}
         return {"success": True, "command": command}
 
     def run_datahub_ingest(
