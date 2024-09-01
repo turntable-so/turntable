@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 from datetime import timedelta
 from pathlib import Path
+from urllib.parse import urlparse
 
 import dj_database_url
 
@@ -318,11 +319,11 @@ if os.getenv("LOCAL_REDIS") == "true":
         )
     ]
 else:
-    redis_hosts = [
-        {
-            "address": os.getenv("REDIS_URL"),
-        }
-    ]
+    redis_url = os.getenv("REDIS_URL")
+    if not redis_url:
+        raise ValueError("REDIS_URL is required if LOCAL_REDIS is not set to true")
+    parsed_url = urlparse(redis_url)
+    redis_hosts = [(parsed_url.hostname, int(parsed_url.port))]
 
 CHANNEL_LAYERS = {
     "default": {
