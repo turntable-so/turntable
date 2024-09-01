@@ -310,16 +310,23 @@ CACHES = {
     }
 }
 
+if os.getenv("LOCAL_REDIS") == "true":
+    redis_hosts = [
+        (
+            os.getenv("REDIS_HOST", "localhost"),
+            int(os.getenv("REDIS_PORT", 6379)),
+        )
+    ]
+else:
+    redis_hosts = [
+        {
+            "address": os.getenv("REDIS_URL"),
+        }
+    ]
+
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [
-                (
-                    os.environ.get("REDIS_HOST", "redis"),
-                    int(os.environ.get("REDIS_PORT", 6379)),
-                )
-            ],
-        },
+        "CONFIG": {"hosts": redis_hosts},
     },
 }
