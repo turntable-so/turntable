@@ -155,6 +155,26 @@ class Resource(models.Model):
         return dbt_resource
 
 
+class WorkflowRun(models.Model):
+    id = models.UUIDField(primary_key=True)
+    status = models.TextField(choices=WorkflowStatus.choices, null=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+    resource = models.ForeignKey(
+        "Resource", on_delete=models.CASCADE, null=True, related_name="workflow_runs"
+    )
+
+
+class IngestError(models.Model):
+    id = models.UUIDField(primary_key=True)
+    workflow_run = models.ForeignKey(
+        "WorkflowRun", on_delete=models.CASCADE, null=True, related_name="ingest_errors"
+    )
+    command = models.TextField(null=True)
+    error = models.JSONField(null=True)
+
+
 class ResourceDetails(PolymorphicModel):
     name = models.CharField(max_length=255, blank=False)
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
@@ -284,16 +304,32 @@ class ResourceDetails(PolymorphicModel):
                     )
         return {"success": True, "command": command}
 
-    def run_datahub_ingest(self, workunits: int | None = None):
+    def run_datahub_ingest(
+        self,
+        workflow_run_id: str,
+        workunits: int | None = None,
+        tolerate_errors: bool = True,
+    ):
         result = self._run_datahub_ingest_base(workunits=workunits)
         if not result["success"]:
-            raise Exception(
-                {
-                    "message": "Datahub ingest failed",
-                    "command": result["command"],
-                    "errors": result["errors"],
-                }
-            )
+            ingest_errors = [
+                IngestError(
+                    workflow_run_id=workflow_run_id,
+                    command=result["command"],
+                    error=error,
+                )
+                for error in result["errors"]
+            ]
+            IngestError.objects.bulk_create(ingest_errors)
+            if not tolerate_errors:
+                raise Exception(
+                    {
+                        "message": "Datahub ingest failed",
+                        "command": result["command"],
+                        "errors": result["errors"],
+                    }
+                )
+        print(result)
 
     def test_datahub_connection(self):
         return self._run_datahub_ingest_base(
@@ -898,14 +934,3 @@ class DuckDBDetails(DBDetails):
 class DataFileDetails(ResourceDetails):
     subtype = models.CharField(max_length=255, default=ResourceSubtype.FILE)
     path = models.TextField(blank=False)
-
-
-class WorkflowRun(models.Model):
-    id = models.UUIDField(primary_key=True)
-    status = models.TextField(choices=WorkflowStatus.choices, null=False)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True, null=True)
-    resource = models.ForeignKey(
-        "Resource", on_delete=models.CASCADE, null=True, related_name="workflow_runs"
-    )
