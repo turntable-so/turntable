@@ -437,6 +437,7 @@ class LineageParser(DataHubDBParserBase):
                                     self.column_graph.add_edge(
                                         upstream_field,
                                         downstream_field,
+                                        key=0,  # ensures no duplicate edges
                                         confidence_score=confidence_score,
                                     )
 
@@ -922,6 +923,7 @@ class DataHubDBParser:
             )
             indirect_columns.append(column)
 
+        # upload the data to the db
         pg_delete_and_upsert(combined["assets"], resource, indirect_assets)
         pg_delete_and_upsert(combined["asset_errors"], resource)
         pg_delete_and_upsert(combined["asset_links"], resource)
