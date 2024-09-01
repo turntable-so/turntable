@@ -57,7 +57,7 @@ export default function SnowflakeForm({ resource, details }: { resource?: any, d
 
 
     async function onSubmit(data: z.infer<typeof FormSchema>) {
-        console.log('onSubmit', data)
+
         const isUpdate = resource?.id
 
         const payload = {
