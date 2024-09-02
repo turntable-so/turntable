@@ -92,7 +92,8 @@ frontend_hosts = os.getenv("FRONTEND_HOST")
 if frontend_hosts:
     frontend_hosts = frontend_hosts.split(",")
     for frontend_host in frontend_hosts:
-        if "://" not in frontend_host:
+        parsed = urlparse(frontend_host)
+        if not parsed.scheme and not parsed.netloc:
             frontend_host = f"http://{frontend_host}"
     for frontend_host in frontend_hosts:
         CORS_ALLOWED_ORIGINS = [frontend_host] + CORS_ALLOWED_ORIGINS
