@@ -55,14 +55,11 @@ export const fetcher = (
     let fullUrl = `${baseUrl}${url}`;
     let fetchOptions: any = {
         method,
-        ...(body ? { body: JSON.stringify(body) } : {}),
+        ...(body ? { body: (body instanceof FormData) ? body : JSON.stringify(body) } : {}),
         ...(cookies ? { cookies } : {}),
-        headers: {
-            'Content-Type': 'application/json'
-        },
         signal,
     };
-
+    console.log("body", body)
     if (!(body instanceof FormData)) {
         fetchOptions['headers'] = {
             "Content-Type": "application/json",

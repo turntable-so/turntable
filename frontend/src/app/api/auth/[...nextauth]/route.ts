@@ -47,10 +47,12 @@ const handler = NextAuth({
             accessToken: json.access,
             refreshToken: json.refresh,
           } as any;
-        } catch (error) {
+        } catch (error : any) {
           console.error("Error errror:", error);
 
-          return null;
+          const errorMessage = error.json.detail;
+          console.error(errorMessage);
+          throw new Error(errorMessage);
         }
       },
     }),

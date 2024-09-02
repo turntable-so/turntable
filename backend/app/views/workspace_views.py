@@ -4,6 +4,9 @@ from rest_framework.response import Response
 
 from api.serializers import WorkspaceDetailSerializer, WorkspaceSerializer
 from app.models import Workspace
+import os
+
+minio_host = os.getenv("MINIO_HOST")
 
 
 class WorkspaceViewSet(viewsets.ModelViewSet):
@@ -25,8 +28,8 @@ class WorkspaceViewSet(viewsets.ModelViewSet):
             workspace.icon_file = request.data["icon_file"]
             workspace.save()  # Save to ensure the file is uploaded
             url = workspace.icon_file.url
-            if url.startswith("http://minio:9000/"):
-                url = url.replace("http://minio:9000/", "http://localhost:9000/")
+            if url.startswith("http://minio:9000/") and minio_host:
+                url = url.replace("http://minio:9000/", minio_host)
             workspace.icon_url = url.split("?")[0]
         workspace.save()
 
@@ -41,7 +44,7 @@ class WorkspaceViewSet(viewsets.ModelViewSet):
             workspace.icon_file = request.data["icon_file"]
             workspace.save()  # Save to ensure the file is uploaded
             url = workspace.icon_file.url
-            if url.startswith("http://minio:9000/"):
+            if url.startswith("http://minio:9000/") and minio_host:
                 url = url.replace("http://minio:9000/", "http://localhost:9000/")
             url = url.split("?")[0]
             workspace.icon_url = url

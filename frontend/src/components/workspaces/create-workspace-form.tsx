@@ -100,10 +100,7 @@ const CreateWorkspaceForm = () => {
         if (iconFile) {
             formData.append("icon_file", iconFile);
         }
-        const workspace = await createWorkspace({
-            name,
-            iconUrl: formData
-        })
+        const workspace = await createWorkspace(formData)
         if (workspace.id) {
             await mutate()
             router.push("/connections")

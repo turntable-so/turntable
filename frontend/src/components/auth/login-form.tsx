@@ -99,7 +99,7 @@ const LoginForm = ({ invitationCode = "" }: any) => {
       redirect: false,
     });
     if ((res as any).status === 401) {
-      setFormRespError("Invalid email or password");
+      setFormRespError(res.error);
     } else {
       router.replace("/");
     }

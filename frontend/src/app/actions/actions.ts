@@ -16,7 +16,7 @@ type CookiesContext = {
 
 
 
-export async function createWorkspace({ name, iconUrl }: { name: string, iconUrl: FormData }) {
+export async function createWorkspace(body: any) {
   const response = await fetcher(
     '/workspaces/',
     {
@@ -25,10 +25,7 @@ export async function createWorkspace({ name, iconUrl }: { name: string, iconUrl
         tags: ["workspaces"],
       },
       method: 'POST',
-      body: {
-        name,
-        iconUrl,
-      }
+      body,
     }
   )
   const data = await response.json();
@@ -180,6 +177,16 @@ export async function getResources() {
   return response.json();
 }
 
+export async function testResource(resourceId) {
+  console.log("test test resource")
+  console.log(resourceId)
+  const response = await fetcher(`/resources/${resourceId}/test/`, {
+    cookies,
+    method: "POST",
+  });
+  console.log(response)
+  return response.json();
+}
 
 export async function getResource(id: string) {
   const response = await fetcher(`/resources/${id}/`, {
