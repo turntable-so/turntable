@@ -162,6 +162,12 @@ def assert_ingest_output(resources):
                 db_assets_with_column_links.add(id)
     assert db_assets_with_asset_links == db_assets_with_column_links
 
+    ## all instances have workspace_ids
+    assert Asset.objects.filter(workspace_id=None).count() == 0
+    assert AssetLink.objects.filter(workspace_id=None).count() == 0
+    assert Column.objects.filter(workspace_id=None).count() == 0
+    assert ColumnLink.objects.filter(workspace_id=None).count() == 0
+
 
 @pytest.fixture()
 def prepopulated_dev_db(local_metabase, local_postgres):
