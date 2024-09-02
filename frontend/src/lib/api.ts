@@ -1,27 +1,31 @@
 export async function fetchApi(
-    url: string,
-    options: RequestInit = {},
-    body: any | null = null
+  url: string,
+  options: RequestInit = {},
+  body: any | null = null
 ) {
-    const resp = ''
-    const jwt = 'await resp.getToken()'
-    const headers = options.headers || {};
+  const resp = "";
+  const jwt = "await resp.getToken()";
+  let headers:any = options.headers || {};
 
-    if (jwt) {
-        // @ts-ignore
-        headers["Authorization"] = `Bearer ${jwt}`;
-    }
+  if (jwt) {
+    // @ts-ignore
+    headers["Authorization"] = `Bearer ${jwt}`;
+  }
 
-    if (body) {
-        return fetch(url, {
-            ...options,
-            headers: { ...headers, "Content-Type": "application/json" },
-            body: JSON.stringify(body),
-        });
+  if (body) {
+    if (!(body instanceof FormData)) {
+      headers["Content-Type"] = "application/json";
     }
 
     return fetch(url, {
-        ...options,
-        headers: headers,
+      ...options,
+      headers: { ...headers },
+      body: JSON.stringify(body),
     });
-};
+  }
+
+  return fetch(url, {
+    ...options,
+    headers: headers,
+  });
+}
