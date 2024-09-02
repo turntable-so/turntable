@@ -184,7 +184,7 @@ For more information, please see our [privacy policy](www.turntable.so/privacy).
 
 You can follow the instructions below to set up ourm development environment on your machine. This is intended for people interested in contributing to Turntable. If you just want to try Turntable on your local system, we recommend that you the instructions above to run a prod instance.
 
-For now, we are not accepting pull requests from the community, but We are working on a process to make this possible in the future. For now, file an bug reports and feature requests as a [GitHub issue](https://github.com/turntable-so/turntable/issues), [Canny submission](https://turntable-so.canny.io/) or [Slack post](https://join.slack.com/t/turntable-community/shared_invite/zt-25p0olvhz-Z~c5QWq1jv2YFHQ46mMFDA).
+For now, we are not accepting pull requests from the community, but We are working on a process to make this possible in the future. For now, file an bug reports and feature requests as a [GitHub issue](https://github.com/turntable-so/turntable/issues), [Roadmap submission](https://turntable.productlane.com/roadmap) or [Slack post](https://join.slack.com/t/turntable-community/shared_invite/zt-25p0olvhz-Z~c5QWq1jv2YFHQ46mMFDA).
 
 ## 🧑‍💻 Development environment
 
