@@ -55,6 +55,7 @@ x-dev-credentials: &dev-credentials
   DJANGO_SETTINGS_MODULE: api.settings
   LOCAL_DB: ${LOCAL_DB:-true}
   LOCAL_HOST: ${LOCAL_HOST:-true}
+  LOCAL_REDIS: ${LOCAL_REDIS:-true}
 
 x-next-credentials: &next-credentials
   LOCAL_HOST: ${LOCAL_HOST:-true}
@@ -94,6 +95,8 @@ x-common-backend: &common-backend
       condition: service_healthy
   volumes:
     - .hatchetconfig:/.hatchetconfig
+
+name: turntable
 
 # Define services
 services:

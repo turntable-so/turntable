@@ -46,7 +46,6 @@ dependencies = [
     "shandy-sqlfmt[jinjafmt]>=0.21.3",
     "django>=5.0.6",
     "djangorestframework>=3.15.2",
-    "psycopg2>=2.9.9",
     "gunicorn>=22.0.0",
     "djangorestframework-simplejwt>=5.3.1",
     "dj-rest-auth[with_social]>=6.0.0",
@@ -83,6 +82,8 @@ dependencies = [
     "django-health-check>=3.18.3",
     "channels_redis>=4.2.0",
     "uv==0.2.18",
+    "django-pgbulk>=3.0.0",
+    "psycopg[binary]>=3.2.1",
 ]
 
 [project.scripts]
@@ -123,8 +124,6 @@ dev-dependencies = [
     "mpire[dashboard]>=2.10.2",
     "google-cloud-storage>=2.17.0",
     "google-cloud-dataproc>=5.9.3",
-    "psycopg2-binary>=2.9.9",
-    "psycopg2>=2.9.9",
     "pytest-django>=4.8.0",
     "dbt-postgres>=1.8.2",
     "harlequin>=1.23.1",
