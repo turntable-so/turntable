@@ -52,7 +52,7 @@
 - [x] **End-to-end Column lineage**: See your data's journey from source to dashboard.
 - [x] **Data catalog**: See all your data assets in one place. We event write AI-generated descriptions for you (opt-in of course).
 - [x] **Jobs (coming soon)**: Schedule and monitor your data pipelines.
-- [] **Pages (coming soon)**: Write and schedule analyses, reports, and data documents in an AI-powered, Notion-like interface.
+- [ ] **Pages (coming soon)**: Write and schedule analyses, reports, and data documents in an AI-powered, Notion-like interface.
 - [ ] **Full observability suite**: Detect anomalies, monitor data quality, reduce cost, secure PII and more.
 - [ ] **Metrics:** Define once, use anywhere, in pure SQL and GUI. No need to learn a new semantic layer framework.
 - [ ] **Subscriptions**: Subscribe to data assets and get notified when they change. Each user gets their own dashboard
