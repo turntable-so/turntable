@@ -202,4 +202,4 @@ Once everything starts (several minutes), run the command below to access a shel
 docker compose exec worker bash
 ```
 
-From here, backend tests can be run with `pytest`.
+From here, backend tests can be run with `pytest`. 
