@@ -94,6 +94,7 @@ if frontend_hosts:
     for frontend_host in frontend_hosts:
         if "://" not in frontend_host:
             frontend_host = f"http://{frontend_host}"
+    for frontend_host in frontend_hosts:
         CORS_ALLOWED_ORIGINS = [frontend_host] + CORS_ALLOWED_ORIGINS
 
 
