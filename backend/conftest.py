@@ -196,3 +196,6 @@ def prepopulated_dev_db(local_metabase, local_postgres):
 @pytest.fixture
 def recache(request):
     return request.config.getoption("--recache")
+
+
+print("apple")
