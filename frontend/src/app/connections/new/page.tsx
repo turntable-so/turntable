@@ -23,8 +23,8 @@ const ConnectionOptionCard = ({ option }: {
       }
     }}>
       <CardHeader>
-        <div className='flex items-center space-x-4'>
-          <div className='w-full flex items-center space-x-4'>
+        <div className='flex bg-green-items-center space-x-4 '>
+          <div className='h-full w-full flex items-center space-x-4'>
             <div>
               {option.logo}
             </div>
