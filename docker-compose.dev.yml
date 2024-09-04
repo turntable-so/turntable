@@ -7,6 +7,7 @@ x-dev-credentials: &dev-credentials
   GITHUB_PRIVATE_KEY_BASE64: ${GITHUB_PRIVATE_KEY_BASE64}
   GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET}
   DEV: "true"
+  LOCAL_STORAGE: "true"
 
 x-telemetry-credentials: &telemetry-credentials
   NEXT_PUBLIC_POSTHOG_KEY: ""

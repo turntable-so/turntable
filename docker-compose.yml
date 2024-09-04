@@ -102,13 +102,14 @@ services:
     ports:
       - "8000:8000"
     entrypoint: ["/code/entrypoint.sh"]
-    command: ["uvicorn", "api.asgi:application", "--host", "0.0.0.0", "--port", "8000"]
+    command:
+      ["uvicorn", "api.asgi:application", "--host", "0.0.0.0", "--port", "8000"]
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/healthcheck/health/"]
       interval: 10s
       timeout: 60s
       retries: 20
-      start_period: 10s
+      start_period: 20s
 
   web:
     build:
@@ -124,7 +125,6 @@ services:
         condition: service_started
     environment:
       <<: [*next-credentials, *telemetry-credentials]
-
 
   postgres:
     image: pgvector/pgvector:pg16

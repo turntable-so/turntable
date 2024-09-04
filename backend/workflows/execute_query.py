@@ -1,4 +1,5 @@
 import os
+from app.models.resources import ResourceSubtype
 
 import ibis
 import orjson
@@ -50,10 +51,18 @@ class ExecuteQueryWorkflow:
             return {"error": "block_id is empty"}
 
         resource = Resource.objects.get(id=resource_id)
-        details = ResourceDetails.objects.get(resource=resource)
         block, created = Block.objects.get_or_create(id=block_id)
         try:
-            connect = ibis.duckdb.connect(details.path, read_only=True)
+            if resource.details.subtype == ResourceSubtype.POSTGRES:
+                connect = ibis.postgres.connect(
+                    host=resource.details.host,
+                    port=resource.details.port,
+                    user=resource.details.username,
+                    password=resource.details.password,
+                    database=resource.details.database,
+                )
+            else:
+                connect = ibis.duckdb.connect(resource.details.path, read_only=True)
             table = connect.sql(query)
             df = table.execute()
         except Exception as e:

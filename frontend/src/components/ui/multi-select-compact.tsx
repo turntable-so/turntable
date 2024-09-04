@@ -109,7 +109,7 @@ interface MultiSelectCompactProps
     /**
      * Icon to be displayed in the dropdown.
      */
-    renderIcon: () => React.ReactNode;
+    renderIcon?: () => React.ReactNode;
 
 
     /**
@@ -227,7 +227,7 @@ const MultiSelectCompact = React.forwardRef<
                     >
                         <div className="flex justify-between items-center w-full">
                             <div className="flex items-center pl-2 w-full">
-                                {renderIcon()}
+                                {renderIcon && renderIcon()}
                                 {selectedValues.length > 0 ? (
                                     <span className="text-xs text-muted-foreground mx-1">
                                         {`${selectedValues.length} ${selectedValues.length > 1 ? label + 's' : label}`}

@@ -1,8 +1,7 @@
-import { ChartComponent } from "@/components/QueryBlock";
-import MultiSelect from "@/components/ui/multi-select";
+import { MultiSelect } from "@/components/ui/multi-select";
 import { AgGridReact } from "ag-grid-react";
 import { useEffect, useRef, useState } from "react";
-
+import Chart from "@/components/notebook/charts/chart";
 
 import {
   Select,
@@ -12,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAppContext } from "@/contexts/AppContext";
+import MultiSelectCompact from "../ui/multi-select-compact";
 
 export default function ChartComposer({
   data,
@@ -87,7 +87,7 @@ export default function ChartComposer({
       <div className="flex w-full h-full justify-between">
         <div className="flex-grow-1 w-4/5  flex-col items-between">
           <div className="flex flex-col w-full h-2/3 flex-grow-1">
-            <ChartComponent
+            <Chart
               chartType={currentOptions?.chartType}
               xAxis={currentOptions?.xAxis}
               yAxisSeriesList={currentOptions?.yAxisSeriesList}
@@ -168,13 +168,16 @@ export default function ChartComposer({
           <div>
             <div className="text-lg py-2 font-semibold">Y Axis</div>
             <MultiSelect
-              items={currentOptions?.columnOptions.map((item: string) => ({
-                label: item,
-                value: item,
-              }))}
-              selected={currentOptions?.yAxisSeriesList}
-              setSelected={() => { }}
-              functionSelected={(newValue: any) => {
+              maxCount={5}
+              label='Columns'
+              placeholder='Select columns'
+              options={
+                currentOptions?.columnOptions.map((item: string) => ({
+                  label: item,
+                  value: item,
+                }))
+              }
+              onValueChange={(newValue: any) => {
                 setNotebookCharts({
                   ...notebookCharts,
                   [activeNode]: {
@@ -183,7 +186,7 @@ export default function ChartComposer({
                   },
                 });
               }}
-              label="Select Y Axis columns"
+              defaultValue={notebookCharts[activeNode]?.yAxisSeriesList || []}
             />
           </div>
           {currentOptions?.isXAxisNumeric && (

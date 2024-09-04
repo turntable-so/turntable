@@ -65,123 +65,20 @@ import {
 } from "recharts";
 import { ViewType } from "./notebook/sql-node";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import Chart from "@/components/notebook/charts/chart";
 
-import { ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
-import { ChartConfig, ChartContainer } from "@/components/ui/chart";
 
-const chartData = [
-  { month: "January", desktop: 186, mobile: 80 },
-  { month: "February", desktop: 305, mobile: 200 },
-  { month: "March", desktop: 237, mobile: 120 },
-  { month: "April", desktop: 73, mobile: 190 },
-  { month: "May", desktop: 209, mobile: 130 },
-  { month: "June", desktop: 214, mobile: 140 },
-];
+const getColumnType = (pandasType: string) => {
+  if (pandasType.toLowerCase().includes("date")) {
+    return "date";
+  }
+  if (pandasType === "boolean") {
+    return "string";
+  }
+  return pandasType;
+};
 
-const chartConfig = {
-  desktop: {
-    label: "Desktop",
-    color: "#2563eb",
-  },
-  mobile: {
-    label: "Mobile",
-    color: "#60a5fa",
-  },
-} satisfies ChartConfig;
-const chartColors = ["#2563eb", "#60a5fa"];
-
-export function ChartComponent(props: any) {
-  const {
-    chartType,
-    xAxis,
-    yAxisSeriesList,
-    data,
-    isXAxisNumeric,
-    xAxisRange,
-  } = props;
-  const [filteredData, setFilteredData] = useState<any>([]);
-
-  const setData = () => {
-    if (isXAxisNumeric && data) {
-      const filteredData = data.filter(
-        (row) => row[xAxis] >= xAxisRange[0] && row[xAxis] <= xAxisRange[1]
-      );
-      setFilteredData(filteredData);
-    } else {
-      setFilteredData(filteredData);
-    }
-  };
-
-  useEffect(() => {
-    setData();
-  }, [xAxisRange, xAxis, data, isXAxisNumeric]);
-
-  useEffect(() => {
-    setData();
-  }, []);
-
-  return (
-    <ChartContainer config={chartConfig} className="min-h-[400px] w-full">
-      {chartType === "BAR" ? (
-        <BarChart accessibilityLayer data={filteredData}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis
-            dataKey={xAxis as string}
-            tickLine={false}
-            tickMargin={5}
-            axisLine={false}
-          />
-          <YAxis />
-          <ChartTooltip content={<ChartTooltipContent />} />
-          {(yAxisSeriesList || []).map((series: any, index: any) => (
-            <Bar
-              isAnimationActive={false}
-              key={series.value}
-              dataKey={series.value}
-              fill={chartColors[index % 2]}
-            />
-          ))}
-        </BarChart>
-      ) : chartType === "HBAR" ? (
-        <BarChart accessibilityLayer data={filteredData} layout="vertical">
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis type="number" />
-          <YAxis type="category" />
-          <ChartTooltip content={<ChartTooltipContent />} />
-          {(yAxisSeriesList || []).map((series: any, index: any) => (
-            <Bar
-              isAnimationActive={false}
-              key={series.value}
-              dataKey={series.value}
-              fill={chartColors[index % 2]}
-            />
-          ))}
-        </BarChart>
-      ) : (
-        <LineChart accessibilityLayer data={filteredData}>
-          <CartesianGrid vertical={false} />
-          <XAxis
-            dataKey={xAxis as string}
-            tickLine={false}
-            tickMargin={5}
-            axisLine={false}
-          />
-          <YAxis />
-          <ChartTooltip content={<ChartTooltipContent />} />
-          {(yAxisSeriesList || []).map((series: any, index: any) => (
-            <Line
-              isAnimationActive={false}
-              key={series.value}
-              dataKey={series.value}
-              fill={chartColors[index % 2]}
-            />
-          ))}
-        </LineChart>
-      )}
-    </ChartContainer>
-  );
-}
 
 interface Suggestion {
   label: string;
@@ -910,7 +807,7 @@ export default function QueryBlock(props: QueryBlockProps) {
           {props.node.attrs.viewType === "chart" && (
             <div className="h-[400px]">
               {notebookCharts[props.node.attrs.blockId] && (
-                <ChartComponent
+                <Chart
                   chartType={notebookCharts[props.node.attrs.blockId].chartType}
                   xAxis={notebookCharts[props.node.attrs.blockId].xAxis}
                   yAxisSeriesList={
