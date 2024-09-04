@@ -12,7 +12,10 @@ def send_status_update(sender, instance, **kwargs):
         old_status = WorkflowRun.objects.get(pk=instance.pk).status
     except WorkflowRun.DoesNotExist:
         old_status = None
+    print("paso")
+    print(old_status)
     new_status = instance.status
+    print(new_status)
 
     if old_status == new_status:
         return
