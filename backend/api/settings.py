@@ -323,7 +323,7 @@ else:
     if not redis_url:
         raise ValueError("REDIS_URL is required if LOCAL_REDIS is not set to true")
     parsed_url = urlparse(redis_url)
-    redis_hosts = [(parsed_url.hostname, int(parsed_url.port))]
+    redis_hosts = [(redis_url)]
 
 CHANNEL_LAYERS = {
     "default": {
