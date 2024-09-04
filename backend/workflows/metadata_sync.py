@@ -5,6 +5,7 @@ from hatchet_sdk import Context
 from app.core.e2e import DataHubDBParser
 from app.models import Resource, ResourceSubtype
 from workflows.hatchet import hatchet
+from workflows.utils.debug import ContextDebugger
 from workflows.utils.log import inject_workflow_run_logging
 
 
@@ -48,3 +49,9 @@ class MetadataSyncWorkflow:
                 parser.parse()
 
         DataHubDBParser.combine_and_upload([parser], resource)
+
+
+if __name__ == "__main__":
+    input = {"resource_id": "71eebb3b-33a4-4d56-b57b-1a566af0716b"}
+    context = ContextDebugger({"input": input})
+    MetadataSyncWorkflow().process_metadata(context)

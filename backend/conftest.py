@@ -10,16 +10,14 @@ from app.models import (
     AssetLink,
     Column,
     ColumnLink,
-    DBTCoreDetails,
-    MetabaseDetails,
-    PostgresDetails,
-    Resource,
-    ResourceSubtype,
     ResourceType,
-    User,
-    Workspace,
 )
-from vinyl.lib.dbt_methods import DBTVersion
+from fixtures.local_env import (
+    create_local_metabase,
+    create_local_postgres,
+    create_local_user,
+    create_local_workspace,
+)
 from workflows.metadata_sync import MetadataSyncWorkflow
 from workflows.utils.debug import ContextDebugger
 
@@ -66,60 +64,18 @@ def pytest_collection_modifyitems(config, items):
 
 @pytest.fixture
 def workspace():
-    user = User.objects.create_user(
-        name="Turntable Dev", email="dev@turntable.so", password="mypassword"
-    )
-    # create turntable full
-    workspace = Workspace.objects.create(
-        id="org_2XVt0EheumDcoCerhQzcUlVmXvG",
-        name="Parkers Vinyl Shop",
-    )
-    workspace.add_admin(user)
-    workspace.save()
-    return workspace
+    user = create_local_user()
+    return create_local_workspace(user)
 
 
-@pytest.fixture()
-def local_postgres(db, workspace):
-    resource = Resource.objects.create(
-        workspace=workspace, name="Test Postgres Resource", type=ResourceType.DB
-    )
-    PostgresDetails(
-        resource=resource,
-        host=os.getenv("POSTGRES_TEST_DB_HOST", "postgres_test_db"),
-        port=os.getenv("POSTGRES_TEST_DB_PORT", 5432),
-        database="mydb",
-        username="myuser",
-        password="mypassword",
-    ).save()
-
-    DBTCoreDetails(
-        resource=resource,
-        project_path="fixtures/test_resources/jaffle_shop",
-        threads=1,
-        version=DBTVersion.V1_7.value,
-        subtype=ResourceSubtype.DBT,
-        database="mydb",
-        schema="dbt_sl_test",
-    ).save()
-
-    return resource
+@pytest.fixture
+def local_postgres(workspace):
+    return create_local_postgres(workspace)
 
 
-@pytest.fixture()
-def local_metabase(db, workspace):
-    resource = Resource.objects.create(
-        workspace=workspace, name="Test Metabase Resource", type=ResourceType.BI
-    )
-
-    MetabaseDetails(
-        resource=resource,
-        username="test@example.com",
-        password="mypassword1",
-        connect_uri=os.getenv("TEST_METABASE_URI", "http://metabase:4000"),
-    ).save()
-
-    return resource
+@pytest.fixture
+def local_metabase(workspace):
+    return create_local_metabase(workspace)
 
 
 def assert_ingest_output(resources):

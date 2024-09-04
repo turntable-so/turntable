@@ -163,7 +163,7 @@ export const getColumnLineageForAsset = ({
             data: {
                 ntype: Array.from(
                     new Set(
-                        edge.connection_types.map(type =>
+                        (edge.connection_types ?? ['e2e']).map(type =>
                             ['having', 'qualify'].includes(type) ? 'filter' : type
                         )
                     )

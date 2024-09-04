@@ -4,6 +4,7 @@ import uuid
 
 from django.contrib.postgres.fields import ArrayField
 from django.db import connection, models
+from django.db.models import Q
 from pgvector.django import VectorField
 
 from app.models.auth import Workspace
@@ -284,10 +285,8 @@ FROM traversed
 
     @classmethod
     def get_for_resource(cls, resource_id: str):
-        return (
-            cls.objects.prefetch_related("resource")
-            .filter(source__resource_id=resource_id)
-            .filter(target__resource_id=resource_id)
+        return cls.objects.filter(
+            Q(source__resource_id=resource_id) | Q(target__resource_id=resource_id)
         )
 
     class Meta:
@@ -330,10 +329,9 @@ class ColumnLink(models.Model):
 
     @classmethod
     def get_for_resource(cls, resource_id: str):
-        return (
-            cls.objects.prefetch_related("asset", "resource")
-            .filter(source__asset__resource_id=resource_id)
-            .filter(target__asset__resource_id=resource_id)
+        return cls.objects.filter(
+            Q(source__asset__resource_id=resource_id)
+            | Q(target__asset__resource_id=resource_id)
         )
 
     class Meta:
