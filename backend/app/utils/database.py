@@ -42,6 +42,7 @@ def pg_delete_and_upsert(
     # upsert the new instances
     new_instances = [i for i in instances if str(i.id) not in cur_instance_ids]
     update_instances = [i for i in instances if str(i.id) in cur_instance_ids]
+
     pgbulk.copy(
         model_type,
         new_instances,

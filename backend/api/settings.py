@@ -320,7 +320,7 @@ if os.getenv("LOCAL_REDIS") == "true":
     ]
 else:
     redis_url = os.getenv("REDIS_URL")
-    if not redis_url:
+    if not redis_url and os.getenv("LOCAL_REDIS") != "true":
         raise ValueError("REDIS_URL is required if LOCAL_REDIS is not set to true")
     parsed_url = urlparse(redis_url)
     redis_hosts = [(parsed_url.hostname, int(parsed_url.port))]
