@@ -76,4 +76,6 @@ jobs:
           TMPDIR: ${{ runner.temp }}
           BACKEND_HOST: localhost
           FRONTEND_HOST: localhost
-          LOCAL_DB: true
+          LOCAL_DB: "true"
+          LOCAL_HOST: "true"
+          LOCAL_REDIS: "true"

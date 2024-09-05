@@ -139,6 +139,7 @@ django==5.0.6
     # via django-cors-headers
     # via django-health-check
     # via django-invitations
+    # via django-pgbulk
     # via django-polymorphic
     # via django-storages
     # via djangorestframework
@@ -150,6 +151,7 @@ django-allauth==0.61.1
 django-cors-headers==4.4.0
 django-health-check==3.18.3
 django-invitations==2.1.0
+django-pgbulk==3.0.0
 django-polymorphic @ git+https://github.com/jazzband/django-polymorphic.git@1039f882b99f97bf657bd958c949ee6a3b00377a
 django-storages==1.14.3
 django-templated-mail==1.1.1
@@ -411,7 +413,9 @@ protobuf==4.25.3
     # via proto-plus
 psutil==6.0.0
     # via acryl-datahub
-psycopg2==2.9.9
+psycopg==3.2.1
+psycopg-binary==3.2.1
+    # via psycopg
 psycopg2-binary==2.9.9
     # via turntable-spoonbill
 pyaes==1.6.1
@@ -657,6 +661,7 @@ typing-extensions==4.12.2
     # via hishel
     # via huggingface-hub
     # via openai
+    # via psycopg
     # via pydantic
     # via pydantic-core
     # via pygithub
@@ -698,7 +703,6 @@ watchfiles==0.22.0
 websockets==12.0
     # via realtime
     # via uvicorn
-wheel==0.44.0
 wrapt==1.16.0
     # via deprecated
 yarl==1.9.4

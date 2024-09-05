@@ -68,10 +68,10 @@ def get_sync_config(db_path):
 
 @contextmanager
 def repo_path(obj):
-    github_repo_id = getattr(obj, "github_repo_id")
-    github_installation_id = getattr(obj, "github_installation_id")
+    github_repo_id = getattr(obj, "github_repo_id", None)
+    github_installation_id = getattr(obj, "github_installation_id", None)
     project_path = getattr(obj, "project_path")
-    git_repo_url = getattr(obj, "git_repo_url")
+    git_repo_url = getattr(obj, "git_repo_url", None)
     if git_repo_url is not None:
         deploy_key = getattr(obj, "deploy_key")
         coderepo_service = CodeRepoService(obj.resource.workspace.id)
@@ -155,6 +155,26 @@ class Resource(models.Model):
         return dbt_resource
 
 
+class WorkflowRun(models.Model):
+    id = models.UUIDField(primary_key=True)
+    status = models.TextField(choices=WorkflowStatus.choices, null=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+    resource = models.ForeignKey(
+        "Resource", on_delete=models.CASCADE, null=True, related_name="workflow_runs"
+    )
+
+
+class IngestError(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    workflow_run = models.ForeignKey(
+        "WorkflowRun", on_delete=models.CASCADE, null=True, related_name="ingest_errors"
+    )
+    command = models.TextField(null=True)
+    error = models.JSONField(null=True)
+
+
 class ResourceDetails(PolymorphicModel):
     name = models.CharField(max_length=255, blank=False)
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
@@ -222,7 +242,12 @@ class ResourceDetails(PolymorphicModel):
         ]
         run_and_capture_subprocess(command, check=True)
 
-    def _run_datahub_ingest_base(self, test=False):
+    def _run_datahub_ingest_base(
+        self,
+        test: bool = False,
+        workunits: int | None = None,
+        tolerate_errors: bool = True,
+    ):
         self.create_venv_and_install_datahub()
 
         # run ingest test
@@ -246,12 +271,12 @@ class ResourceDetails(PolymorphicModel):
                         "-c",
                         path,
                     ]
-                    if test:
+                    if workunits is not None:
                         command.extend(
                             [
                                 "--preview",
                                 "--preview-workunits",
-                                str(self.test_number_of_entries),
+                                str(workunits),
                             ]
                         )
                     process = run_and_capture_subprocess(command)
@@ -273,28 +298,48 @@ class ResourceDetails(PolymorphicModel):
                                     "error_message": match.group("message"),
                                 }
                             )
-            if len(errors) > 0:
-                return {"success": False, "command": command, "errors": errors}
-            elif not test:
+            if not test and (len(errors) == 0 or tolerate_errors):
                 with open(db_path, "rb") as f:
                     self.resource.datahub_db.save(
                         os.path.basename(db_path), File(f), save=True
                     )
+        if len(errors) > 0:
+            return {"success": False, "command": command, "errors": errors}
         return {"success": True, "command": command}
 
-    def run_datahub_ingest(self):
-        result = self._run_datahub_ingest_base()
+    def run_datahub_ingest(
+        self,
+        workflow_run_id: str,
+        workunits: int | None = None,
+        tolerate_errors: bool = True,
+    ):
+        result = self._run_datahub_ingest_base(
+            workunits=workunits, tolerate_errors=tolerate_errors
+        )
         if not result["success"]:
-            raise Exception(
-                {
-                    "message": "Datahub ingest failed",
-                    "command": result["command"],
-                    "errors": result["errors"],
-                }
-            )
+            ingest_errors = [
+                IngestError(
+                    workflow_run_id=workflow_run_id,
+                    command=result["command"],
+                    error=error,
+                )
+                for error in result["errors"]
+            ]
+            IngestError.objects.bulk_create(ingest_errors)
+            if not tolerate_errors:
+                raise Exception(
+                    {
+                        "message": "Datahub ingest failed",
+                        "command": result["command"],
+                        "errors": result["errors"],
+                    }
+                )
+        print(result)
 
     def test_datahub_connection(self):
-        return self._run_datahub_ingest_base(test=True)
+        return self._run_datahub_ingest_base(
+            test=True, workunits=self.test_number_of_entries
+        )
 
     def test_db_connection(self):
         try:
@@ -894,14 +939,3 @@ class DuckDBDetails(DBDetails):
 class DataFileDetails(ResourceDetails):
     subtype = models.CharField(max_length=255, default=ResourceSubtype.FILE)
     path = models.TextField(blank=False)
-
-
-class WorkflowRun(models.Model):
-    id = models.UUIDField(primary_key=True)
-    status = models.TextField(choices=WorkflowStatus.choices, null=False)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True, null=True)
-    resource = models.ForeignKey(
-        "Resource", on_delete=models.CASCADE, null=True, related_name="workflow_runs"
-    )

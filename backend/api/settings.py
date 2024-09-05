@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 from datetime import timedelta
 from pathlib import Path
+from urllib.parse import urlparse
 
 import dj_database_url
 
@@ -310,16 +311,23 @@ CACHES = {
     }
 }
 
+if os.getenv("LOCAL_REDIS") == "true":
+    redis_hosts = [
+        (
+            os.getenv("REDIS_HOST", "localhost"),
+            int(os.getenv("REDIS_PORT", 6379)),
+        )
+    ]
+else:
+    redis_url = os.getenv("REDIS_URL")
+    if not redis_url:
+        raise ValueError("REDIS_URL is required if LOCAL_REDIS is not set to true")
+    parsed_url = urlparse(redis_url)
+    redis_hosts = [(redis_url)]
+
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [
-                (
-                    os.environ.get("REDIS_HOST", "redis"),
-                    int(os.environ.get("REDIS_PORT", 6379)),
-                )
-            ],
-        },
+        "CONFIG": {"hosts": redis_hosts},
     },
 }

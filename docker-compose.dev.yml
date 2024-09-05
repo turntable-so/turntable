@@ -23,7 +23,7 @@ x-hatchet-credentials: &hatchet-credentials
   SERVER_LOGGER_LEVEL: warn
   DATABASE_LOGGER_LEVEL: warn
 
-name: dev
+name: turntable-dev
 
 services:
   api:
