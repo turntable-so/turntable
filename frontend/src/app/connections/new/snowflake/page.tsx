@@ -1,13 +1,14 @@
 'use client'
 import { Button } from "@/components/ui/button";
+import { useRouter } from 'next/navigation'
+import { ChevronLeft, Plus } from 'lucide-react'
 import { Separator } from "@/components/ui/separator";
-import { ChevronLeft } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 
-import DbtProjectForm from "@/components/connections/forms/dbt-project-form";
-import DbtCoreLogo from "@/components/logos/dbt-core";
+import { PostgresLogo, SnowflakeLogo } from "@/components/connections/connection-options";
+import PostgresForm from "@/components/connections/forms/postgres-form";
+import SnowflakeForm from "@/components/connections/forms/snowflake-form";
 
-export default function PostgresPage() {
+export default function SnowflakePage() {
 
     const router = useRouter()
 
@@ -18,14 +19,14 @@ export default function PostgresPage() {
             }}>
                 <ChevronLeft className='size-5' />
                 <div className='flex items-center space-x-2'>
-                    <DbtCoreLogo />
-                    <div>Connect a dbt Core project</div>
+                    <SnowflakeLogo />
+                    <div>Create a Snowflake connection</div>
                 </div>
             </Button>
             <Separator />
             <div className='flex justify-center'>
                 <div className='flex justify-center w-full py-8'>
-                    <DbtProjectForm />
+                    <SnowflakeForm />
                 </div>
             </div>
         </div>
