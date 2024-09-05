@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { AuthActions } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { signIn } from "next-auth/react";
+import { signIn, SignInResponse } from "next-auth/react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -98,7 +98,7 @@ const LoginForm = ({ invitationCode = "" }: any) => {
       password: data.password,
       redirect: false,
     });
-    if ((res as any).status === 401) {
+    if (res?.status === 401) {
       setFormRespError(res?.error || '');
     } else {
       router.replace("/");
