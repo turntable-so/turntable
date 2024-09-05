@@ -17,7 +17,7 @@ export default function MetabasePage() {
                 router.push('/connections/new')
             }}>
                 <ChevronLeft className='size-5' />
-                <div className='flex space-x-2 items-center'>
+                <div className='flex items-center space-x-2'>
                     <MetabaseIcon />
                     <div>Create a Metabase connection</div>
                 </div>

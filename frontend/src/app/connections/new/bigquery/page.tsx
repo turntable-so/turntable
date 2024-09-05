@@ -17,7 +17,7 @@ export default function BigQueryPage() {
                 router.push('/connections/new')
             }}>
                 <ChevronLeft className='size-5' />
-                <div className='flex space-x-1'>
+                <div className='flex items-center space-x-2'>
                     <BigQueryLogo />
                     <div>Create a BigQuery connection</div>
                 </div>
