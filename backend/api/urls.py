@@ -32,6 +32,7 @@ from app.views import (
     ResourceViewSet,
     SSHViewSet,
     SyncResourceView,
+    TestResourceView,
     WorkflowViews,
     WorkspaceGroupViewSet,
     WorkspaceViewSet,
@@ -63,6 +64,11 @@ urlpatterns = [
         "resources/<str:resource_id>/sync/",
         SyncResourceView.as_view(),
         name="sync_resource",
+    ),
+    path(
+        "resources/<str:resource_id>/test/",
+        TestResourceView.as_view(),
+        name="test_resource",
     ),
     path(
         "workflows/<str:workflow_run_id>/",
