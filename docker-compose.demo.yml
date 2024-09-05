@@ -5,7 +5,7 @@ x-postgres-test-db-credentials: &postgres-test-db-credentials
   POSTGRES_HOST: postgres_test_db
   POSTGRES_PORT: 5432
 
-name: demo
+name: turntable-demo
 
 services:
   api:

@@ -17,7 +17,7 @@ export default function PostgresPage() {
                 router.push('/connections/new')
             }}>
                 <ChevronLeft className='size-5' />
-                <div className='flex space-x-1'>
+                <div className='flex items-center space-x-2'>
                     <PostgresLogo />
                     <div>Create a PostgresSQL connection</div>
                 </div>

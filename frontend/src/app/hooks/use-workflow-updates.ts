@@ -11,7 +11,7 @@ const useWorkflowUpdates = (workspaceId: string) => {
 
     useEffect(() => {
         // Construct the WebSocket URL
-        const base = baseUrl?.split("ttp://")[1];
+        const base = new URL(baseUrl).host;
         const socketUrl = `${protocol}://${base}/ws/subscribe/${workspaceId}/`;
         const socket = new WebSocket(socketUrl);
 
