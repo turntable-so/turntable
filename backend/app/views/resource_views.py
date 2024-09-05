@@ -62,3 +62,13 @@ class SyncResourceView(APIView):
             return Response(
                 {"detail": "Sync task started."}, status=status.HTTP_202_ACCEPTED
             )
+
+class TestResourceView(APIView):
+
+    def post(self, request, resource_id):
+        workspace = request.user.workspaces.first()
+        resource_service = ResourceService(workspace=workspace)
+        test = resource_service.test_resource(resource_id=resource_id)
+        return Response(
+            test
+        )

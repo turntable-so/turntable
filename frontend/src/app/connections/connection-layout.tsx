@@ -17,6 +17,7 @@ import { ChevronLeft, Loader2 } from "lucide-react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { useRouter } from "next/navigation";
+import { testResource } from "@/app/actions/actions";
 
 dayjs.extend(relativeTime);
 
@@ -62,6 +63,8 @@ export default function ConnectionLayout({
   const router = useRouter();
   const session = useSession();
   const [realStatus, setRealStatus] = React.useState(resource.status);
+  const [testStatus, setTestStatus] = React.useState(true);
+  const [testRun, setTestRun] = React.useState(false);
 
   const [status, resourceId] = useWorkflowUpdates(
     session.user.current_workspace.id
@@ -72,6 +75,13 @@ export default function ConnectionLayout({
       setRealStatus(status);
     }
   }, [status, resourceId]);
+
+  const testConnection = async (resource: any) => {
+    const tests = await testResource(resource.id);
+    setTestRun(true)
+    setTestStatus(tests.test_datahub.success && tests.test_db.success)
+    return tests;
+  }
 
   return (
     <div className="max-w-7xl w-full px-16 py-4">
@@ -162,10 +172,10 @@ export default function ConnectionLayout({
             </CardHeader>
             <CardContent>
               {resource.subtype === "bigquery" && (
-                <BigqueryForm resource={resource} details={details} />
+                <BigqueryForm resource={resource} details={details} testConnection={testConnection} tested={testRun} connectionCheck={testStatus} />
               )}
               {resource.subtype === "postgres" && (
-                <PostgresForm resource={resource} details={details} />
+                <PostgresForm resource={resource} details={details} testConnection={testConnection} tested={testRun} connectionCheck={testStatus} />
               )}
               {resource.subtype === "metabase" && (
                 <MetabaseForm resource={resource} details={details} />
