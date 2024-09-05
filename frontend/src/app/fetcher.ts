@@ -59,7 +59,6 @@ export const fetcher = (
         ...(cookies ? { cookies } : {}),
         signal,
     };
-    console.log("body", body)
     if (!(body instanceof FormData)) {
         fetchOptions['headers'] = {
             "Content-Type": "application/json",
