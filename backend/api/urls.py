@@ -68,7 +68,7 @@ urlpatterns = [
     path(
         "resources/<str:resource_id>/test/",
         TestResourceView.as_view(),
-        name="sync_resource",
+        name="test_resource",
     ),
     path(
         "workflows/<str:workflow_run_id>/",

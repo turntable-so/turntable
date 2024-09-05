@@ -45,7 +45,7 @@ class WorkspaceViewSet(viewsets.ModelViewSet):
             workspace.save()  # Save to ensure the file is uploaded
             url = workspace.icon_file.url
             if url.startswith("http://minio:9000/") and minio_host:
-                url = url.replace("http://minio:9000/", "http://localhost:9000/")
+                url = url.replace("http://minio:9000/", minio_host)
             url = url.split("?")[0]
             workspace.icon_url = url
 
