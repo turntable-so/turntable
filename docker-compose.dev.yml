@@ -33,16 +33,11 @@ services:
     build:
       args:
         - ENV=dev
-    command:
-      [
-        "uvicorn",
-        "api.asgi:application",
-        "--host",
-        "0.0.0.0",
-        "--port",
-        "8000",
-        "--reload",
-      ]
+    command: >
+      /bin/sh -c "
+      python manage.py migrate &&
+      python manage.py seed_data &&
+      uvicorn api.asgi:application --host 0.0.0.0 --port 8000 --reload"   
     environment:
       <<: *dev-credentials
     volumes:
@@ -155,5 +150,5 @@ volumes:
 
 networks:
   default:
-    name: app_network
+    name: app_network_dev
     driver: bridge

@@ -37,7 +37,9 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
-.env*.local
+.env
+.env.local
+.env.staging
 
 # vercel
 .vercel
@@ -47,9 +49,9 @@ yarn-error.log*
 next-env.d.ts
 
 backend/dev/data
-backend/fixtures
 backend/.env
 **/__pycache__/**
 
 **/node_modules/**
 **/.next/**
+.env.staging

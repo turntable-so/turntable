@@ -4,6 +4,7 @@ import uuid
 
 from django.contrib.postgres.fields import ArrayField
 from django.db import connection, models
+from django.db.models import Q
 from pgvector.django import VectorField
 
 from app.models.auth import Workspace
@@ -46,6 +47,7 @@ class Asset(models.Model):
     tests = ArrayField(models.TextField(), blank=True, null=True)
     materialization = models.TextField(null=True, choices=MaterializationType.choices)
     db_location = ArrayField(models.CharField(max_length=255), blank=True, null=True)
+    is_indirect = models.BooleanField(default=False)
 
     # relationships
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE, null=True)
@@ -97,7 +99,8 @@ class Asset(models.Model):
         return {self.resource.id}
 
     @classmethod
-    def get_for_resource(cls, resource_id: str):
+    def get_for_resource(cls, resource_id: str, inclusive: bool = True):
+        # return is the same for inclusive and exclusive
         return cls.objects.filter(resource_id=resource_id)
 
     @property
@@ -129,6 +132,7 @@ class Column(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     tests = ArrayField(models.TextField(), blank=True, null=True)
+    is_indirect = models.BooleanField(default=False)
 
     # relationships
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
@@ -138,10 +142,9 @@ class Column(models.Model):
         return {self.asset.resource.id}
 
     @classmethod
-    def get_for_resource(cls, resource_id: str):
-        return cls.objects.prefetch_related("resource").filter(
-            asset__resource_id=resource_id
-        )
+    def get_for_resource(cls, resource_id: str, inclusive: bool = True):
+        # return is the same for inclusive and exclusive
+        return cls.objects.filter(asset__resource_id=resource_id)
 
     class Meta:
         indexes = [
@@ -283,12 +286,14 @@ FROM traversed
         return set([self.source.resource.id, self.target.resource.id])
 
     @classmethod
-    def get_for_resource(cls, resource_id: str):
-        return (
-            cls.objects.prefetch_related("resource")
-            .filter(source__resource_id=resource_id)
-            .filter(target__resource_id=resource_id)
+    def get_for_resource(cls, resource_id: str, inclusive: bool = True):
+        conditions = (
+            Q(source__resource_id=resource_id),
+            Q(target__resource_id=resource_id),
         )
+        if inclusive:
+            return cls.objects.filter(conditions[0] | conditions[1])
+        return cls.objects.filter(conditions[0] & conditions[1])
 
     class Meta:
         indexes = [
@@ -329,12 +334,14 @@ class ColumnLink(models.Model):
     )
 
     @classmethod
-    def get_for_resource(cls, resource_id: str):
-        return (
-            cls.objects.prefetch_related("asset", "resource")
-            .filter(source__asset__resource_id=resource_id)
-            .filter(target__asset__resource_id=resource_id)
+    def get_for_resource(cls, resource_id: str, inclusive: bool = True):
+        conditions = (
+            Q(source__asset__resource_id=resource_id),
+            Q(target__asset__resource_id=resource_id),
         )
+        if inclusive:
+            return cls.objects.filter(conditions[0] | conditions[1])
+        return cls.objects.filter(conditions[0] & conditions[1])
 
     class Meta:
         indexes = [
@@ -358,7 +365,8 @@ class AssetError(models.Model):
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
 
     @classmethod
-    def get_for_resource(cls, resource_id: str):
+    def get_for_resource(cls, resource_id: str, inclusive: bool = True):
+        # return is the same for inclusive and exclusive
         return cls.objects.filter(asset__resource_id=resource_id)
 
     class Meta:

@@ -3,7 +3,8 @@ import tempfile
 from hatchet_sdk import Context
 
 from app.core.e2e import DataHubDBParser
-from app.models import Resource, ResourceSubtype
+from app.models import Resource
+from app.models.resources import ResourceSubtype
 from workflows.hatchet import hatchet
 from workflows.utils.log import inject_workflow_run_logging
 

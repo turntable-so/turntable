@@ -1,7 +1,30 @@
 import pgbulk
 from django.db.models import Model
+from django.utils import timezone
 
 from app.models import Resource
+
+
+def get_pg_instance_ids(model_type: Model, resource: Resource):
+    ## This function is used to get the primary keys of instances of a model that are associated with a resource.
+    ## Some instances are associated with multiple resources, `inclusive` includes these where `exclusive`` excludes these.
+    out = []
+    if not hasattr(model_type, "get_for_resource"):
+        raise ValueError(
+            f"Model {model_type.__name__} must have a get_for_resource method to use the `delete_and_upsert` function"
+        )
+    instances_ls = (
+        model_type.get_for_resource(resource.id),
+        model_type.get_for_resource(resource.id, inclusive=False),
+    )
+    pk_name = model_type._meta.pk.name
+    for instances in instances_ls:
+        if instances.exists():
+            out_it = [str(v) for v in instances.values_list(pk_name, flat=True)]
+        else:
+            out_it = []
+        out.append(out_it)
+    return out
 
 
 def pg_delete_and_upsert(
@@ -20,45 +43,50 @@ def pg_delete_and_upsert(
         raise ValueError("All instances must be of the same model type")
 
     model_type = model_types.pop()
-    primary_key_name = model_type._meta.pk.name
-    if not hasattr(model_type, "get_for_resource"):
-        raise ValueError(
-            f"Model {model_type.__name__} must have a get_for_resource method to use the `delete_and_upsert` function"
-        )
-    cur_instances = model_type.get_for_resource(resource.id)
-    cur_instance_ids = (
-        [v[primary_key_name] for v in cur_instances.values(primary_key_name).values()]
-        if cur_instances.exists()
-        else []
-    )
-
-    new_primary_keys = [str(getattr(i, primary_key_name)) for i in instances]
+    pk_name = model_type._meta.pk.name
+    cur_ids_inclusive, cur_ids_exclusive = get_pg_instance_ids(model_type, resource)
+    new_primary_keys = [str(getattr(i, pk_name)) for i in instances]
 
     # delete instances that are no longer in the new list
-    to_delete = list(set(cur_instance_ids) - set(new_primary_keys))
-    if to_delete:
-        model_type.objects.filter(id__in=to_delete).delete()
+    to_delete = list(set(cur_ids_exclusive) - set(new_primary_keys))
+    base_delete = model_type.objects.filter(id__in=to_delete)
+    model_field_names = [f.name for f in model_type._meta.get_fields()]
+    if "is_indirect" in model_field_names:
+        # only delete direct instances for now, indirect deletion handled later. This is required to ensure cross-resource connections are maintained.
+        base_delete = base_delete.filter(is_indirect=False)
+    base_delete.delete()
 
     # upsert the new instances
-    new_instances = [i for i in instances if str(i.id) not in cur_instance_ids]
-    update_instances = [i for i in instances if str(i.id) in cur_instance_ids]
+    new_instances = []
+    update_instances = []
+    for i in instances:
+        if str(i.id) not in cur_ids_inclusive:
+            new_instances.append(i)
+        else:
+            i.updated_at = timezone.now()
+            update_instances.append(i)
     pgbulk.copy(
         model_type,
         new_instances,
     )
-    pgbulk.upsert(
+    pgbulk.update(
         model_type,
         update_instances,
-        unique_fields=[primary_key_name],
+        ignore_unchanged=True,
     )
 
     # insert the indirect instances if they don't exist.
     ## This functionality is necessary because links can exist across resources, and if the underyling nodes are not present, the link creation will raise a FK error.
     ## That said, we don't want to add these temporary nodes if the true nodes already exist in the graph.
     if indirect_instances is not None:
-        pgbulk.upsert(
+        cur_ids = [
+            str(id) for id in model_type.objects.all().values_list(pk_name, flat=True)
+        ]
+        new_indirect_instances = [
+            i for i in indirect_instances if str(i.id) not in cur_ids
+        ]
+
+        pgbulk.copy(
             model_type,
-            indirect_instances,
-            update_fields=[],  # effectively only an insert if not already there
-            unique_fields=[primary_key_name],
+            new_indirect_instances,
         )
