@@ -1,4 +1,4 @@
-import { MultiSelect } from "@/components/ui/multi-select";
+// import { MultiSelect } from "@/components/ui/multi-select";
 import { AgGridReact } from "ag-grid-react";
 import { useEffect, useRef, useState } from "react";
 import Chart from "@/components/notebook/charts/chart";
@@ -167,7 +167,7 @@ export default function ChartComposer({
           </div>
           <div>
             <div className="text-lg py-2 font-semibold">Y Axis</div>
-            <MultiSelect
+            {/* <MultiSelect
               maxCount={5}
               label='Columns'
               placeholder='Select columns'
@@ -187,7 +187,7 @@ export default function ChartComposer({
                 });
               }}
               defaultValue={notebookCharts[activeNode]?.yAxisSeriesList || []}
-            />
+            /> */}
           </div>
           {currentOptions?.isXAxisNumeric && (
             <div>

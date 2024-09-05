@@ -5,7 +5,6 @@ import { AssetMap, useAppContext } from "@/contexts/AppContext"
 import { Separator } from "@/components/ui/separator"
 import { Box, DatabaseZap, Search, Tag } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import MultiSelect from "@/components/ui/multi-select"
 import { Fragment, ReactNode, useCallback, useState } from "react"
 
 import MultiSelectCompact from "@/components/ui/multi-select-compact"
@@ -109,7 +108,7 @@ export default function AssetsPage() {
                 <div className='w-full'>
                     <div className="flex items-center border border-gray-200 rounded-md focus-within:border-black mb-4">
                         <Search className="h-4 w-4 text-gray-500 ml-3" />
-                        <Input
+                        \       <Input
                             type="search"
                             placeholder="Search for models, datasets, charts & more..."
                             className="p-6 text-black font-medium border-0 focus-visible:ring-0 focus-visible:ring-offset-0"

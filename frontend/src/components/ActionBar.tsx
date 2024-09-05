@@ -23,7 +23,7 @@ import {
 import { Tree } from "@/components/ui/tree";
 import { getAssetIcon, getLeafIcon } from "@/lib/utils";
 import { Folder, Workflow } from "lucide-react";
-import MultiSelect from "./ui/multi-select";
+// import MultiSelect from "./ui/multi-select";
 // @ts-ignore
 const groupBy = (array, key) =>
   array.reduce((result: any, currentValue: any) => {
@@ -359,7 +359,7 @@ export default function ActionBar({
                         <div className="text-sm pl-1">Filter by tag</div>
                       </Label>
                       {/* @ts-ignore */}
-                      <MultiSelect
+                      {/* <MultiSelect
                         items={tags.map((tag: string) => ({
                           label: tag,
                           value: tag,
@@ -367,7 +367,7 @@ export default function ActionBar({
                         selected={selectedTagFilters as any}
                         setSelected={setSelectedTagFilters}
                         label="Select tags"
-                      />
+                      /> */}
                     </div>
                     {/*<div className="grid w-full items-center  text-muted-foreground space-y-4 mt-4">
                       <Label className="flex space-x-1 items-center">
