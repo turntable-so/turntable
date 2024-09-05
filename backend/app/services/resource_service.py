@@ -260,8 +260,6 @@ class ResourceService:
 
     def test_resource(self, resource_id: int):
         resource = Resource.objects.get(id=resource_id, workspace=self.workspace)
-        if resource is None:
-            raise ValidationError("Resource not found.")
 
         test_db = resource.details.test_db_connection()
         test_datahub = resource.details.test_datahub_connection()
