@@ -887,7 +887,23 @@ class DataHubDBParser:
             type=asset_type,
             resource=resource_it,
             workspace_id=resource_it.workspace.id,
+            is_indirect=True,
         )
+
+    @classmethod
+    def _delete_unused_indirect_instances(cls, type: Literal["asset", "column"]):
+        root_table = Asset if type == "asset" else Column
+        link_table = AssetLink if type == "asset" else ColumnLink
+        to_delete = []
+        source_ids = set()
+        target_ids = set()
+        for assetlink in link_table.objects.all():
+            source_ids.add(assetlink.source_id)
+            target_ids.add(assetlink.target_id)
+        for asset in root_table.objects.filter(is_indirect=True):
+            if asset.id not in source_ids and asset.id not in target_ids:
+                to_delete.append(asset.id)
+        root_table.objects.filter(id__in=to_delete).delete()
 
     @classmethod
     @transaction.atomic
@@ -931,6 +947,7 @@ class DataHubDBParser:
                 name=parsed.field_path,
                 nullable=True,
                 workspace_id=asset.workspace.id,
+                is_indirect=True,
             )
             indirect_columns.append(column)
 
@@ -940,3 +957,7 @@ class DataHubDBParser:
         pg_delete_and_upsert(combined["asset_links"], resource)
         pg_delete_and_upsert(combined["columns"], resource, indirect_columns)
         pg_delete_and_upsert(combined["column_links"], resource)
+
+        # cleanup unconnected indirects
+        cls._delete_unused_indirect_instances("asset")
+        cls._delete_unused_indirect_instances("column")

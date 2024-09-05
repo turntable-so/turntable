@@ -203,6 +203,15 @@ class ResourceDetails(PolymorphicModel):
     def test_number_of_entries(self) -> int:
         return 3
 
+    def db_config_paths(self, temp_dir: str):
+        db_path = os.path.join(
+            temp_dir, f"{self.resource.id}_{self.datahub_db_nickname}.duckdb"
+        )
+        config_path = os.path.join(
+            temp_dir, f"{self.resource.id}_{self.datahub_db_nickname}.yml"
+        )
+        return db_path, config_path
+
     def get_venv_python(self):
         # only works on unix
         return f"{os.path.abspath(self.venv_path)}/bin/python"
@@ -362,8 +371,7 @@ class ResourceDetails(PolymorphicModel):
     @contextmanager
     def datahub_yaml_path(self):
         with tempfile.TemporaryDirectory() as temp_dir:
-            db_path = os.path.join(temp_dir, self.datahub_db_nickname + ".duckdb")
-            config_path = os.path.join(temp_dir, self.datahub_db_nickname + ".yml")
+            db_path, config_path = self.db_config_paths(temp_dir)
             # add in dbt configs to same ingest
             config = self.get_datahub_config(db_path)
             with open(config_path, "w") as f:
@@ -446,8 +454,7 @@ class LookerDetails(ResourceDetails):
     @contextmanager
     def datahub_yaml_path(self):
         with tempfile.TemporaryDirectory() as temp_dir:
-            db_path = os.path.join(temp_dir, self.datahub_db_nickname + ".duckdb")
-            config_path = os.path.join(temp_dir, self.datahub_db_nickname + ".yml")
+            db_path, config_path = self.db_config_paths(temp_dir)
             config = self.get_datahub_config(db_path)
             with open(config_path, "w") as f:
                 yaml.dump(config, f)
@@ -485,8 +492,7 @@ class MetabaseDetails(ResourceDetails):
     @contextmanager
     def datahub_yaml_path(self):
         with tempfile.TemporaryDirectory() as temp_dir:
-            db_path = os.path.join(temp_dir, self.datahub_extras[0] + ".duckdb")
-            config_path = os.path.join(temp_dir, self.datahub_extras[0] + ".yml")
+            db_path, config_path = self.db_config_paths(temp_dir)
             config = {
                 "source": {
                     "type": "metabase",
@@ -628,6 +634,10 @@ class DBDetails(ResourceDetails):
     def allows_db_exclusions(self):
         return False
 
+    @property
+    def uses_dataset_terminology(self):
+        return False
+
     def get_dbt_profile_contents(self, dbt_core_resource: DBTCoreDetails):
         pass
 
@@ -675,8 +685,7 @@ class DBDetails(ResourceDetails):
     @contextmanager
     def datahub_yaml_path(self):
         with tempfile.TemporaryDirectory() as temp_dir:
-            db_path = os.path.join(temp_dir, self.datahub_db_nickname + ".duckdb")
-            config_path = os.path.join(temp_dir, self.datahub_db_nickname + ".yml")
+            db_path, config_path = self.db_config_paths(temp_dir)
             # add in dbt configs to same ingest, only supports dbt core for now
             dbt_resources: list[DBTCoreDetails] = list(
                 self.resource.dbtresource_set.all()
@@ -684,14 +693,23 @@ class DBDetails(ResourceDetails):
             with self.dbt_datahub_yml_paths(dbt_resources, db_path) as dbt_yaml_paths:
                 config = self.get_datahub_config(db_path)
                 self.add_patterns_to_datahub_config(config)
-                schema_pattern = config["source"]["config"].get("schema_pattern", {})
+                base_config = config["source"]["config"]
+                schema_pattern = base_config.get("schema_pattern", {})
                 allow_list = schema_pattern.get("allow")
                 # add dbt schemas to allow list if not pulling from all schemas
                 if allow_list is not None:
+                    schema_pattern.setdefault("allow", [])
                     for dbt in dbt_resources:
                         schema_pattern["allow"].append(dbt.schema)
                         if dbt.other_schemas is not None:
                             schema_pattern["allow"].extend(dbt.other_schemas)
+                        schema_pattern["allow"] = list(set(schema_pattern["allow"]))
+
+                # use dataset terminology if appropriate
+                if self.uses_dataset_terminology and "schema_pattern" in base_config:
+                    base_config["dataset_pattern"] = base_config.pop("schema_pattern")
+
+                # save and yield the config file
                 with open(config_path, "w") as f:
                     yaml.dump(config, f)
                 yield [config_path, *dbt_yaml_paths], db_path
@@ -773,6 +791,10 @@ class BigqueryDetails(DBDetails):
             except json.JSONDecodeError:
                 raise ValidationError("Invalid JSON in service_account")
         return self.service_account
+
+    @property
+    def uses_dataset_terminology(self):
+        return True
 
     def save(self, *args, **kwargs):
         # ensure service account is saved as a JSON string

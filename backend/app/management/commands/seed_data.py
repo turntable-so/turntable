@@ -1,104 +1,28 @@
-import os
-
 from django.core.management.base import BaseCommand
+from django.db import transaction
 
 from app.models import (
     Asset,
-    DBTCoreDetails,
-    MetabaseDetails,
-    PostgresDetails,
-    Resource,
-    ResourceSubtype,
-    ResourceType,
-    User,
-    Workspace,
 )
-from vinyl.lib.dbt_methods import DBTVersion
+from fixtures.local_env import (
+    create_local_metabase,
+    create_local_postgres,
+    create_local_user,
+    create_local_workspace,
+)
 from workflows.metadata_sync import MetadataSyncWorkflow
 from workflows.utils.debug import WorkflowDebugger
-
-
-def local_user():
-    name = "Turntable Dev"
-    email = "dev@turntable.so"
-    password = "mypassword"
-    try:
-        return User.objects.get(email=email)
-    except User.DoesNotExist:
-        return User.objects.create_user(name=name, email=email, password=password)
-
-
-def local_workspace(user):
-    id = "org_2XVt0EheumDcoCerhQzcUlVmXvG"
-    name = "Parkers Vinyl Shop"
-    try:
-        return Workspace.objects.get(id=id)
-    except Workspace.DoesNotExist:
-        workspace = Workspace.objects.create(id=id, name=name)
-        workspace.add_admin(user)
-        workspace.save()
-        return workspace
-
-
-def local_postgres(workspace):
-    resource_name = "Test Postgres Resource"
-    try:
-        resource = Resource.objects.get(
-            workspace=workspace, name=resource_name, type=ResourceType.DB
-        )
-    except Resource.DoesNotExist:
-        resource = Resource.objects.create(
-            workspace=workspace, name=resource_name, type=ResourceType.DB
-        )
-        PostgresDetails(
-            resource=resource,
-            host=os.getenv("POSTGRES_TEST_DB_HOST", "postgres_test_db"),
-            port=os.getenv("POSTGRES_TEST_DB_PORT", 5432),
-            database="mydb",
-            username="myuser",
-            password="mypassword",
-        ).save()
-        DBTCoreDetails(
-            resource=resource,
-            project_path="fixtures/test_resources/jaffle_shop",
-            threads=1,
-            version=DBTVersion.V1_7.value,
-            subtype=ResourceSubtype.DBT,
-            database="mydb",
-            schema="dbt_sl_test",
-        ).save()
-
-    return resource
-
-
-def local_metabase(workspace):
-    try:
-        return Resource.objects.get(
-            workspace=workspace, name="Test Metabase Resource", type=ResourceType.BI
-        )
-    except Resource.DoesNotExist:
-        resource = Resource.objects.create(
-            workspace=workspace, name="Test Metabase Resource", type=ResourceType.BI
-        )
-
-        MetabaseDetails(
-            resource=resource,
-            username="test@example.com",
-            password="mypassword1",
-            connect_uri=os.getenv("TEST_METABASE_URI", "http://metabase:4000"),
-        ).save()
-
-    return resource
 
 
 class Command(BaseCommand):
     help = "Seed data with inital user and workspace"
 
+    @transaction.atomic
     def handle(self, *args, **kwargs):
-        user = local_user()
-        workspace = local_workspace(user)
-        postgres = local_postgres(workspace)
-        metabase = local_metabase(workspace)
+        user = create_local_user()
+        workspace = create_local_workspace(user)
+        postgres = create_local_postgres(workspace)
+        metabase = create_local_metabase(workspace)
         if (
             Asset.objects.filter(resource=postgres).count() > 0
             and Asset.objects.filter(resource=metabase).count() > 0

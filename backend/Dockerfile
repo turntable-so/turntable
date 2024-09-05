@@ -30,7 +30,7 @@ RUN /install.sh && rm /install.sh
 # Install the notebook backend
 COPY requirements.lock .
 COPY requirements-dev.lock .
-RUN if [ "$ENV" = "dev" ]; then \
+RUN if [ "$ENV" != "prod" ]; then \
         /root/.cargo/bin/uv pip install --system --no-cache -r requirements-dev.lock; \
     else \
         /root/.cargo/bin/uv pip install --system --no-cache -r requirements.lock; \
@@ -39,10 +39,3 @@ RUN if [ "$ENV" = "dev" ]; then \
 
 # Copy the backend code
 COPY . .
-
-# Perform database migrations
-RUN if [ "$ENV" = "dev" ]; then \
-        chmod +x /code/entrypoint.sh; \
-    else \
-        chmod +x /code/entrypoint-dev.sh; \
-    fi
