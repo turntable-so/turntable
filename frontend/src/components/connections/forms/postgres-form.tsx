@@ -23,8 +23,8 @@ const FormSchema = z.object({
   host: z.string().min(1, {
     message: "Hostname account can't be empty",
   }),
-  port: z.number().min(1, {
-    message: "Port can't be empty",
+  port: z.coerce.number().min(1, {
+      message: "Port can't be empty",
   }),
   database: z.string().min(1, {
     message: "Database can't be empty",
