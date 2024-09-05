@@ -1,7 +1,17 @@
 import tempfile
 
+from pydantic import create_model
+from ai.documentation.dbt import (
+    COLUMN_SYSTEM_PROMPT,
+    MODEL_SYSTEM_PROMPT,
+    ColumnDescription,
+    ModelDescription,
+)
+from app.models.metadata import Asset, Column
+from vinyl.lib.enums import AssetType
 from hatchet_sdk import Context
-
+import instructor
+from django.db import transaction
 from app.core.e2e import DataHubDBParser
 from app.models import Resource
 from app.models.resources import ResourceSubtype
@@ -49,3 +59,97 @@ class MetadataSyncWorkflow:
                 parser.parse()
 
         DataHubDBParser.combine_and_upload([parser], resource)
+
+    @hatchet.step(timeout="120m", parents=["process_metadata"])
+    def generate_ai_descriptions(self, context: Context):
+        # early return
+        # if "use_ai" not in context.workflow_input() or not context.workflow_input()["use_ai"]:
+        #     return
+        assets = Asset.objects.filter(
+            resource__pk=context.workflow_input()["resource_id"], type="model"
+        )
+
+        model = (
+            "gpt-4o-mini"
+            if "model" not in context.workflow_input()
+            else context.workflow_input()["model"]
+        )
+
+        from litellm import completion
+
+        client = instructor.from_litellm(completion, temperature=0)
+
+        for asset in assets:
+            columns = Column.objects.filter(asset__pk=asset.id)
+            column_map = {col.name: col for col in columns}
+
+            content = create_prompt_content_from_asset(asset, column_map)
+            generate_and_set_model_ai_description(client, model, content, asset)
+
+            if len(column_map.keys() > 15):
+                batches = [
+                    column_map.keys()[i : i + 15]
+                    for i in range(0, len(column_map.keys()), 15)
+                ]
+            else:
+                batches = [column_map.keys()]
+
+            # async/parallel?
+            for batch in batches:
+                generate_and_set_columns_ai_description(
+                    client, model, content, batch, column_map
+                )
+
+            # only this needs to be transaction
+            @transaction
+            def save():
+                asset.save()
+                for col in column_map.values():
+                    col.save()
+
+            save()
+
+
+def generate_and_set_model_ai_description(client, model, content, asset):
+    resp = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": MODEL_SYSTEM_PROMPT},
+            {"role": "user", "content": content},
+        ],
+        response_model=ModelDescription,
+    )
+    asset.ai_description = resp.description
+
+
+def generate_and_set_columns_ai_description(
+    client, model, content, column_names, column_map
+):
+    fields = {f"{k}": (ColumnDescription, ...) for k in column_names}
+    ColumnDescriptionModel = create_model("ColumnDescriptionModel", **fields)
+    content += "\n\ncolumn_names_to_describe:"
+    for colname in column_names:
+        content += f"\n- {colname}"
+
+    resp, _ = client.chat.completions.create_with_completion(
+        model=model,
+        messages=[
+            {
+                "role": "system",
+                "content": COLUMN_SYSTEM_PROMPT,
+            },
+            {"role": "user", "content": content},
+        ],
+        response_model=ColumnDescriptionModel,
+        strict=False,
+    )
+    for col_name, col_description in resp.model_dump().items():
+        column_map.get(col_name).ai_description = col_description
+
+
+def create_prompt_content_from_asset(asset: Asset, column_map: dict):
+    schema = "\n".join([f"- {k}: {v.type}" for k, v in column_map.items()])
+    content = f"model name: {asset.name}\n\n"
+    content += f"schema:\n{schema}\n\n"
+    content += f"compiled_sql:\n{asset.sql}"
+    return content
