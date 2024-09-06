@@ -353,6 +353,7 @@ class ResourceDetails(PolymorphicModel):
         )
 
     def test_db_connection(self):
+        connector = self.get_connector()
         try:
             connector = self.get_connector()
             query = connector.sql_to_df("SELECT 1").iloc[0].iloc[0]
@@ -802,12 +803,6 @@ class BigqueryDetails(DBDetails):
     def schema_terminology(self):
         return "dataset"
 
-    def save(self, *args, **kwargs):
-        # ensure service account is saved as a JSON string
-        if isinstance(self.service_account, dict):
-            self.service_account = json.dumps(self.service_account)
-        super().save(*args, **kwargs)
-
     @property
     def venv_path(self):
         return ".bigqueryvenv"
@@ -817,9 +812,11 @@ class BigqueryDetails(DBDetails):
         return ["bigquery", "dbt"]
 
     def get_connector(self):
+        project_id = self.service_account_dict.get("project_id")
+        assert project_id, "project_id is required in service_account"
         return BigQueryConnector(
             service_account_info=self.service_account_dict,
-            tables=[f"{self.service_account_dict['project']}.*.*"],
+            tables=[f"{self.service_account_dict['project_id']}.*.*"],
         )
 
     def get_datahub_config(self, db_path):
