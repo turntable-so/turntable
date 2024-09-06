@@ -1,5 +1,4 @@
 import os
-from functools import wraps
 
 import pytest
 
@@ -12,18 +11,13 @@ def require_env_vars(*required_vars):
 
     :param required_vars: Names of required environment variables
     """
+    missing_vars = [var for var in required_vars if var not in os.environ]
 
-    def decorator(test_func):
-        @wraps(test_func)
-        def wrapper(*args, **kwargs):
-            missing_vars = [var for var in required_vars if var not in os.environ]
-            if missing_vars:
-                pytest.skip(
-                    f"Skipping test because environment variables are missing: {', '.join(missing_vars)}"
-                )
-            return test_func(*args, **kwargs)
-
-        return wrapper
+    def decorator(func):
+        return pytest.mark.skipif(
+            len(missing_vars) > 0,
+            reason=f"Missing required environment variables: {', '.join(missing_vars)}",
+        )(func)
 
     return decorator
 
