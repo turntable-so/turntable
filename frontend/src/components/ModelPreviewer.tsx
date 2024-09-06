@@ -1,7 +1,7 @@
 'use client'
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "./ui/accordion";
 import { Button } from './ui/button'
-import { Scroll, SquareArrowOutUpRight, X } from "lucide-react";
+import { Scroll, SquareArrowOutUpRight, X, Bot } from "lucide-react";
 import { ScrollArea } from "./ui/scroll-area";
 import { ColumnTypeIcon } from "./ColumnTypeIcon";
 import { Badge } from "./ui/badge";
@@ -69,17 +69,7 @@ export default function ModelPreviewer({ asset, context, clearAsset }: { context
                                     </div>
                                     <div className='font-medium text-gray-700'>{asset.table_name}</div>
                                 </div>
-                                <div>
-                                    <div>
-                                        Description
-                                    </div>
-                                    {asset.description ? (
-                                        <div className='font-medium'>{asset.description}</div>
-
-                                    ) : (
-                                        <div className='italic text-muted-foreground opacity-60'>No description</div>
-                                    )}
-                                </div>
+                                {renderModelDescription(asset)}
                                 <div>
                                     <div className='font-bold'>
                                         URL
@@ -147,7 +137,7 @@ export default function ModelPreviewer({ asset, context, clearAsset }: { context
                                                             <Badge variant='secondary' className='w-fit text-muted-foreground' key={i}>{test}</Badge>
                                                         ))}
                                                     </div>
-                                                    <div className='pt-1 font-normal'>{column.description}</div>
+                                                    {renderColumnDescription(column)}
                                                 </div>
                                             </div>
                                             <Separator className='text-black' />
@@ -164,4 +154,49 @@ export default function ModelPreviewer({ asset, context, clearAsset }: { context
             </div>
         </div >
     )
+}
+
+function renderModelDescription(asset: any) {
+  const hasDescription = "description" in asset && asset.description;
+  const hasAiDescription = "ai_description" in asset && asset.ai_description;
+  if (hasDescription)
+    return (
+      <div>
+        <div>Description</div>
+        <div className="font-medium">{asset.description}</div>
+      </div>
+    );
+
+  if (hasAiDescription)
+    return (
+      <div>
+        <div className="flex-row">
+          <Bot className="w-4 h-4" />
+          <div className="text-blue-600 font-medium">AI Description</div>
+        </div>
+        <div className="font-medium">{asset.ai_description}</div>
+      </div>
+    );
+
+  return (
+    <div>
+      <div>Description</div>
+      <div className="italic text-muted-foreground opacity-60">
+        No description
+      </div>
+    </div>
+  );
+}
+
+function renderColumnDescription(column: any) {
+  console.log(column)
+  const hasDescription = "description" in column && column.description;
+  const hasAiDescription = "ai_description" in column && column.ai_description;
+  if (hasDescription)
+    return <div className='pt-1 font-normal'>{column.description}</div>
+
+  if (hasAiDescription)
+    return <><Bot className="w-4 h-4" /><div className='pt-1 font-normal text-blue-600'>{column.ai_description.description}</div></>
+
+  return <></>;
 }

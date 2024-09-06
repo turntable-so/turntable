@@ -22,6 +22,7 @@ from app.models import (
     User,
     Workspace,
     WorkspaceGroup,
+    WorkspaceSetting,
 )
 from app.models.resources import MetabaseDetails
 from vinyl.lib.dbt_methods import DBTVersion
@@ -138,6 +139,13 @@ class WorkspaceDetailSerializer(serializers.ModelSerializer):
         depth = 1
 
 
+class WorkspaceSettingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkspaceSetting
+        fields = ["id", "name", "secret_value", "plaintext_value", "workspace"]
+        extra_kwargs = {"secret_value": {"write_only": True}}
+
+
 class ColumnSerializer(serializers.ModelSerializer):
     class Meta:
         model = Column
@@ -186,6 +194,7 @@ class AssetSerializer(serializers.ModelSerializer):
             "name",
             "columns",
             "description",
+            "ai_description",
             "url",
             "type",
             "tags",

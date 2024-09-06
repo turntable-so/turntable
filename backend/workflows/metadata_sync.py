@@ -14,6 +14,7 @@ import instructor
 from django.db import transaction
 from app.core.e2e import DataHubDBParser
 from app.models import Resource
+from app.models.auth import WorkspaceSetting
 from app.models.resources import ResourceSubtype
 from workflows.hatchet import hatchet
 from workflows.utils.log import inject_workflow_run_logging
@@ -67,6 +68,10 @@ class MetadataSyncWorkflow:
         #     return
         assets = Asset.objects.filter(
             resource__pk=context.workflow_input()["resource_id"], type="model"
+        )
+
+        settings = WorkspaceSetting.objects.filter(
+            name__in=["aiProvider", "openAiApiKey", "anthropicApiKey"]
         )
 
         model = (
@@ -144,7 +149,7 @@ def generate_and_set_columns_ai_description(
         strict=False,
     )
     for col_name, col_description in resp.model_dump().items():
-        column_map.get(col_name).ai_description = col_description
+        column_map.get(col_name).ai_description = col_description.description
 
 
 def create_prompt_content_from_asset(asset: Asset, column_map: dict):

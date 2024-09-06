@@ -9,6 +9,7 @@ from django.contrib.auth.models import (
 from django.db import models
 
 from app.services.storage_backends import PublicMediaStorage
+from app.utils.fields import encrypt
 
 
 class UserManager(BaseUserManager):
@@ -115,3 +116,19 @@ class WorkspaceGroup(models.Model):
 
     def __str__(self) -> str:
         return f"{self.name} - {self.workspace.name}"
+
+
+class WorkspaceSetting(models.Model):
+    name = models.CharField(max_length=255)
+    secret_value = encrypt(models.CharField(max_length=512, null=True))
+    plaintext_value = models.CharField(max_length=512, null=True)
+    workspace = models.ForeignKey(
+        Workspace, on_delete=models.CASCADE, related_name="settings"
+    )
+
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=["name", "workspace"]
+            ),  # Composite index on 'name' and 'workspace'
+        ]

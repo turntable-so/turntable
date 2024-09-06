@@ -36,12 +36,16 @@ from app.views import (
     WorkflowViews,
     WorkspaceGroupViewSet,
     WorkspaceViewSet,
+    WorkspaceSettingViewSet,
 )
 
 from .views import CustomUserViewSet, LogoutView, OAuthView
 
 router = routers.DefaultRouter()
 router.register(r"workspaces", WorkspaceViewSet, basename="workspace")
+router.register(
+    r"workspace_settings", WorkspaceSettingViewSet, basename="workspace_setting"
+)
 router.register(r"resources", ResourceViewSet, basename="resource")
 router.register(r"assets", AssetViewSet, basename="asset")
 router.register(r"lineage", LineageViewSet, basename="lineage")
