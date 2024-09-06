@@ -95,7 +95,6 @@ export default function ModelPreviewer({ asset, context, clearAsset }: { context
                                 </div>
                                 {asset.tags && (
 
-
                                     <div>
                                         <div>
                                             Tags

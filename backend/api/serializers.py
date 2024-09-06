@@ -162,6 +162,7 @@ class AssetIndexSerializer(serializers.ModelSerializer):
             "unique_name",
             "name",
             "type",
+            "tags",
         ]
 
 
