@@ -16,6 +16,7 @@ from .metadata import (
 from .notebook import Block, Notebook
 from .resources import (
     BigqueryDetails,
+    DatabricksDetails,
     DataFileDetails,
     DBTCloudDetails,
     DBTCoreDetails,

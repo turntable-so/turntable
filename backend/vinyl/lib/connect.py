@@ -15,7 +15,6 @@ from typing import Any, Optional
 import ibis
 import ibis.expr.types as ir
 import pandas as pd
-import pyarrow as pa
 from ibis import Schema
 from ibis.backends import BaseBackend
 from ibis.backends.duckdb import Backend as DuckDBBackend
@@ -59,7 +58,7 @@ class _ResourceConnector(ABC):
         pass
 
     @abstractmethod
-    def sql_to_df(self, query: str, limit: int | None) -> pa.Table:
+    def sql_to_df(self, query: str, limit: int | None) -> pd.DataFrame:
         pass
 
     @abstractmethod
@@ -92,7 +91,7 @@ class _TableConnector(_ResourceConnector):
         )
         return sampled
 
-    def sql_to_df(self, query: str, limit: int | None = _QUERY_LIMIT) -> pa.Table:
+    def sql_to_df(self, query: str, limit: int | None = _QUERY_LIMIT) -> pd.DataFrame:
         pass
 
     def validate_sql(self, query: str) -> ValidationOutput:
@@ -310,7 +309,7 @@ class _DatabaseConnector(_ResourceConnector):
         conn.drop_table(table_temp_name)
         return final_table
 
-    def sql_to_df(self, query: str, limit: int | None = _QUERY_LIMIT) -> pa.Table:
+    def sql_to_df(self, query: str, limit: int | None = _QUERY_LIMIT) -> pd.DataFrame:
         pass
 
     def validate_sql(self, query: str) -> ValidationOutput:
@@ -530,7 +529,7 @@ class BigQueryConnector(_DatabaseConnector):
 
         return conn
 
-    def sql_to_df(self, query: str, limit: int | None = _QUERY_LIMIT) -> pa.Table:
+    def sql_to_df(self, query: str, limit: int | None = _QUERY_LIMIT) -> pd.DataFrame:
         conn = self._connect()
         if limit is not None:
             query = f"select * from ({query}) limit {limit}"
@@ -671,7 +670,7 @@ class SnowflakeConnector(_DatabaseConnector):
         else:
             return ibis.snowflake.connect(account=account, user=user, password=password)
 
-    def sql_to_df(self, query: str, limit: int | None = _QUERY_LIMIT) -> pa.Table:
+    def sql_to_df(self, query: str, limit: int | None = _QUERY_LIMIT) -> pd.DataFrame:
         conn = self._connect()
         if limit is not None:
             query = f"select * from ({query}) limit {limit}"
@@ -699,6 +698,72 @@ class SnowflakeConnector(_DatabaseConnector):
                 dialect=self._get_name(),
             )
             return ValidationOutput(errors=[error], bytes_processed=None, cost=None)
+
+
+class DatabricksConnector(_DatabaseConnector):
+    _host: str
+    _token: str
+    _http_path: str
+
+    def __init__(
+        self,
+        host: str,
+        token: str,
+        http_path: str,
+        tables: list[str],
+        cluster_id: str | None = None,
+    ):
+        self._host = host
+        self._token = token
+        self._http_path = http_path
+        self._cluster_id = cluster_id
+        self._tables = tables
+
+    def _connect(self, use_spark: bool = True) -> BaseBackend:
+        self._conn = self._connect_helper(
+            self._host,
+            self._token,
+            self._cluster_id,
+            self._http_path,
+            use_spark=use_spark,
+        )
+        return self._conn
+
+    def _list_sources(self, with_schema=False) -> list[SourceInfo]:
+        raise NotImplementedError(
+            "Databricks ibis connection not currently supported, only SQL connection."
+        )
+
+    # caching ensures we create one bq connection per set of credentials across instances of the class
+    @staticmethod
+    @lru_cache()
+    def _connect_helper(
+        host: str,
+        token: str,
+        cluster_id: str | None,
+        http_path: str,
+        use_spark: bool = True,
+    ) -> BaseBackend:
+        if use_spark:
+            raise NotImplementedError(
+                "Databricks Spark connection not yet supported. Please use Databricks SQL connection."
+            )
+        else:
+            from databricks import sql
+
+            return sql.connect(
+                server_hostname=host, http_path=http_path, access_token=token
+            )
+
+    def sql_to_df(self, query: str, limit: int | None = _QUERY_LIMIT) -> pd.DataFrame:
+        conn = self._connect(use_spark=False)
+        if limit is not None:
+            query = f"select * from ({query}) limit {limit}"
+        with conn.cursor() as cursor:
+            cursor.execute(query)
+            out = cursor.fetchall_arrow().to_pandas()
+        conn.close()
+        return out
 
 
 @dataclass(frozen=True)

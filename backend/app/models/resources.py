@@ -22,6 +22,7 @@ from app.utils.fields import encrypt
 from vinyl.lib.connect import (
     BigQueryConnector,
     DatabaseFileConnector,
+    DatabricksConnector,
     PostgresConnector,
     SnowflakeConnector,
 )
@@ -49,6 +50,7 @@ class ResourceSubtype(models.TextChoices):
     BIGQUERY = "bigquery", "BigQuery"
     SNOWFLAKE = "snowflake", "Snowflake"
     POSTGRES = "postgres", "Postgres"
+    DATABRICKS = "databricks", "Databricks"
     DUCKDB = "duckdb", "File"
     FILE = "file", "File"
     DBT = "dbt", "Dbt"
@@ -343,7 +345,7 @@ class ResourceDetails(PolymorphicModel):
                         "errors": result["errors"],
                     }
                 )
-        print(result)
+        return result
 
     def test_datahub_connection(self):
         return self._run_datahub_ingest_base(
@@ -353,8 +355,7 @@ class ResourceDetails(PolymorphicModel):
     def test_db_connection(self):
         try:
             connector = self.get_connector()
-            conn = connector._connect()
-            query = conn.raw_sql("SELECT 1").fetchone()[0]
+            query = connector.sql_to_df("SELECT 1").iloc[0].iloc[0]
             if query != 1:
                 raise Exception("Query did not return expected value")
             return {"success": True}
@@ -635,8 +636,8 @@ class DBDetails(ResourceDetails):
         return False
 
     @property
-    def uses_dataset_terminology(self):
-        return False
+    def schema_terminology(self):
+        return "schema"
 
     def get_dbt_profile_contents(self, dbt_core_resource: DBTCoreDetails):
         pass
@@ -706,8 +707,13 @@ class DBDetails(ResourceDetails):
                         schema_pattern["allow"] = list(set(schema_pattern["allow"]))
 
                 # use dataset terminology if appropriate
-                if self.uses_dataset_terminology and "schema_pattern" in base_config:
-                    base_config["dataset_pattern"] = base_config.pop("schema_pattern")
+                if (
+                    self.schema_terminology != "schema"
+                    and "schema_pattern" in base_config
+                ):
+                    base_config[f"{self.schema_terminology}_pattern"] = base_config.pop(
+                        "schema_pattern"
+                    )
 
                 # save and yield the config file
                 with open(config_path, "w") as f:
@@ -793,8 +799,8 @@ class BigqueryDetails(DBDetails):
         return self.service_account
 
     @property
-    def uses_dataset_terminology(self):
-        return True
+    def schema_terminology(self):
+        return "dataset"
 
     def save(self, *args, **kwargs):
         # ensure service account is saved as a JSON string
@@ -914,6 +920,67 @@ class SnowflakeDetails(DBDetails):
                     "user": self.username,
                     "password": self.password,
                     "threads": dbt_core_resource.threads,
+                }
+            },
+        }
+
+
+class DatabricksDetails(DBDetails):
+    subtype = models.CharField(max_length=255, default=ResourceSubtype.DATABRICKS)
+    host = encrypt(models.CharField(max_length=255, blank=False))
+    token = encrypt(models.CharField(max_length=255, blank=False))
+    http_path = encrypt(models.CharField(max_length=255, blank=False))
+
+    @property
+    def venv_path(self):
+        return ".databricksvenv"
+
+    @property
+    def datahub_extras(self):
+        return ["databricks", "dbt"]
+
+    @property
+    def schema_terminology(self):
+        return "catalog"
+
+    def get_connector(self):
+        return DatabricksConnector(
+            host=self.host,
+            token=self.token,
+            http_path=self.http_path,
+            tables=["*.*.*"],
+        )
+
+    def get_datahub_config(self, db_path):
+        return {
+            "source": {
+                "type": "databricks",
+                "config": {
+                    "start_time": f"-{self.lookback_days}d",
+                    "workspace_url": f"https://{self.host}",
+                    "token": self.token,
+                    "warehouse_id": self.http_path.split("/")[-1],
+                    "include_table_lineage": False,
+                    "include_table_location_lineage": False,
+                    "include_view_lineage": False,
+                    "include_view_column_lineage": False,
+                    "include_usage_statistics": False,
+                },
+            },
+            "sink": get_sync_config(db_path),
+        }
+
+    def get_dbt_profile_contents(self, dbt_core_resource: DBTCoreDetails):
+        return {
+            "target": "prod",
+            "outputs": {
+                "prod": {
+                    "type": "databricks",
+                    "token": self.token,
+                    "host": self.host,
+                    "http_path": self.http_path,
+                    "catalog": dbt_core_resource.database,
+                    "schema": dbt_core_resource.schema,
                 }
             },
         }

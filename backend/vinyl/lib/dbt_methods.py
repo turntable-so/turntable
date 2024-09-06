@@ -16,6 +16,7 @@ class DBTDialect(Enum):
     BIGQUERY = "bigquery"
     SNOWFLAKE = "snowflake"
     POSTGRES = "postgres"
+    DATABRICKS = "databricks"
     DUCKDB = "duckdb"
 
 
@@ -63,6 +64,13 @@ MAX_DIALECT_VERSION = {
         DBTVersion.V1_5.value: "1.5.11",
         DBTVersion.V1_6.value: "1.6.11",
         DBTVersion.V1_7.value: "1.7.11",
+    },
+    DBTDialect.DATABRICKS.value: {
+        DBTVersion.V1_3.value: "1.3.2",
+        DBTVersion.V1_4.value: "1.4.3",
+        DBTVersion.V1_5.value: "1.5.7",
+        DBTVersion.V1_6.value: "1.6.9",
+        DBTVersion.V1_7.value: "1.7.17",
     },
     DBTDialect.DUCKDB.value: {
         DBTVersion.V1_3.value: "1.3.4",
