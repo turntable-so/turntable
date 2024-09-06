@@ -189,14 +189,20 @@ function renderModelDescription(asset: any) {
 }
 
 function renderColumnDescription(column: any) {
-  console.log(column)
   const hasDescription = "description" in column && column.description;
   const hasAiDescription = "ai_description" in column && column.ai_description;
   if (hasDescription)
-    return <div className='pt-1 font-normal'>{column.description}</div>
+    return <div className="pt-1 font-normal">{column.description}</div>;
 
   if (hasAiDescription)
-    return <><Bot className="w-4 h-4" /><div className='pt-1 font-normal text-blue-600'>{column.ai_description.description}</div></>
+    return (
+      <>
+        <Bot className="w-4 h-4" />
+        <div className="pt-1 font-normal text-blue-600">
+          {column.ai_description}
+        </div>
+      </>
+    );
 
   return <></>;
 }

@@ -7,6 +7,7 @@
 #   all-features: false
 #   with-sources: false
 #   generate-hashes: false
+#   universal: false
 
 acryl-datahub==0.13.3
 adrf==0.1.6
@@ -21,7 +22,9 @@ aiostream==0.5.2
     # via hatchet-sdk
 annotated-types==0.7.0
     # via pydantic
+anthropic==0.34.2
 anyio==4.4.0
+    # via anthropic
     # via httpx
     # via openai
     # via sse-starlette
@@ -127,6 +130,7 @@ dill==0.3.8
     # via multiprocess
 diskcache==5.6.3
 distro==1.9.0
+    # via anthropic
     # via openai
 dj-database-url==2.2.0
 dj-rest-auth==6.0.0
@@ -152,7 +156,7 @@ django-cors-headers==4.4.0
 django-health-check==3.18.3
 django-invitations==2.1.0
 django-pgbulk==3.0.0
-django-polymorphic @ git+https://github.com/jazzband/django-polymorphic.git@1039f882b99f97bf657bd958c949ee6a3b00377a
+django-polymorphic @ git+https://github.com/jazzband/django-polymorphic.git@1039f882b99f97bf657bd958c949ee6a3b00377a#egg=django-polymorphic
 django-storages==1.14.3
 django-templated-mail==1.1.1
     # via djoser
@@ -244,6 +248,7 @@ httpcore==1.0.5
 httptools==0.6.1
     # via uvicorn
 httpx==0.27.0
+    # via anthropic
     # via fastapi
     # via githubkit
     # via gotrue
@@ -276,7 +281,9 @@ jinja2==3.1.4
     # via litellm
     # via shandy-sqlfmt
 jiter==0.4.2
+    # via anthropic
     # via instructor
+    # via openai
 jmespath==0.10.0
     # via boto3
     # via botocore
@@ -350,7 +357,7 @@ numpy==1.26.4
 oauthlib==3.2.2
     # via requests-oauthlib
     # via social-auth-core
-openai==1.35.8
+openai==1.44.0
     # via instructor
     # via litellm
 orjson==3.10.5
@@ -434,6 +441,7 @@ pycparser==2.22
     # via cffi
 pydantic==2.8.2
     # via acryl-datahub
+    # via anthropic
     # via fastapi
     # via githubkit
     # via gotrue
@@ -589,6 +597,7 @@ six==1.16.0
     # via posthog
     # via python-dateutil
 sniffio==1.3.1
+    # via anthropic
     # via anyio
     # via httpx
     # via openai
@@ -633,6 +642,7 @@ tiktoken==0.7.0
 time-machine==2.14.2
     # via pendulum
 tokenizers==0.19.1
+    # via anthropic
     # via litellm
 toml==0.10.2
     # via acryl-datahub
@@ -654,6 +664,7 @@ typer==0.12.3
 typing-extensions==4.12.2
     # via acryl-datahub
     # via aiostream
+    # via anthropic
     # via dj-database-url
     # via fastapi
     # via fastapi-cache2

@@ -354,3 +354,41 @@ export async function deleteAuthProfile(id: string) {
   revalidateTag("profiles");
   return response.ok;
 }
+
+export async function getWorkspaceSettings() {
+  const response = await fetcher(`/workspace_settings/`, {
+    cookies,
+    method: "GET",
+    next: {
+      tags: ["workspace_settings"],
+    },
+  });
+  const data = await response.json();
+  return data;
+}
+
+export async function setWorkspaceSettings(id: string, body: any) {
+  const response = await fetcher(`/workspace_settings/${id}/`, {
+    cookies,
+    method: "PUT",
+    next: {
+      tags: ["workspace_settings"],
+    },
+    body: body,
+  });
+  const data = await response.json();
+  return data;
+}
+
+export async function createWorkspaceSettings(name: string, body: any) {
+  const response = await fetcher(`/workspace_settings/`, {
+    cookies,
+    method: "POST",
+    next: {
+      tags: ["workspace_settings"],
+    },
+    body: body,
+  });
+  const data = await response.json();
+  return data;
+}

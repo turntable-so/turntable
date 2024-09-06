@@ -18,6 +18,8 @@ from app.models.auth import WorkspaceSetting
 from app.models.resources import ResourceSubtype
 from workflows.hatchet import hatchet
 from workflows.utils.log import inject_workflow_run_logging
+from openai import OpenAI
+from anthropic import Anthropic
 
 
 @hatchet.workflow(on_events=["metadata_sync"], timeout="15m")
@@ -74,15 +76,52 @@ class MetadataSyncWorkflow:
             name__in=["aiProvider", "openAiApiKey", "anthropicApiKey"]
         )
 
-        model = (
-            "gpt-4o-mini"
-            if "model" not in context.workflow_input()
-            else context.workflow_input()["model"]
+        ai_provider_setting = [
+            setting for setting in settings if setting.name == "aiProvider"
+        ]
+        ai_provider_setting = (
+            ai_provider_setting[0] if len(ai_provider_setting) != 0 else None
         )
+
+        openai_api_key_setting = [
+            setting for setting in settings if setting.name == "openAiApiKey"
+        ]
+        openai_api_key_setting = (
+            openai_api_key_setting[0] if len(openai_api_key_setting) != 0 else None
+        )
+
+        anthropic_api_key_setting = [
+            setting for setting in settings if setting.name == "anthropicApiKey"
+        ]
+        anthropic_api_key_setting = (
+            anthropic_api_key_setting[0]
+            if len(anthropic_api_key_setting) != 0
+            else None
+        )
+
+        model_defaults = {
+            "openai": "gpt-4o-mini",
+            "anthropic": "claude-3-opus-20240229",
+        }
+        model = "gpt-4o-mini"
+        if ai_provider_setting is not None:
+            model = model_defaults.get(ai_provider_setting.plaintext_value)
+        if "model" in context.workflow_input():
+            model = context.workflow_input()["model"]
+        context.log(model)
 
         from litellm import completion
 
-        client = instructor.from_litellm(completion, temperature=0)
+        if ai_provider_setting.plaintext_value == "openai":
+            client = instructor.from_openai(
+                OpenAI(api_key=openai_api_key_setting.secret_value), temperature=0
+            )
+        elif ai_provider_setting.plaintext_value == "anthropic":
+            client = instructor.from_anthropic(
+                Anthropic(api_key=anthropic_api_key_setting.secret_value), temperature=0
+            )
+        else:
+            client = instructor.from_litellm(completion, temperature=0)
 
         for asset in assets:
             columns = Column.objects.filter(asset__pk=asset.id)
@@ -91,7 +130,7 @@ class MetadataSyncWorkflow:
             content = create_prompt_content_from_asset(asset, column_map)
             generate_and_set_model_ai_description(client, model, content, asset)
 
-            if len(column_map.keys() > 15):
+            if len(column_map.keys()) > 15:
                 batches = [
                     column_map.keys()[i : i + 15]
                     for i in range(0, len(column_map.keys()), 15)
@@ -106,7 +145,7 @@ class MetadataSyncWorkflow:
                 )
 
             # only this needs to be transaction
-            @transaction
+            @transaction.atomic
             def save():
                 asset.save()
                 for col in column_map.values():
@@ -118,6 +157,7 @@ class MetadataSyncWorkflow:
 def generate_and_set_model_ai_description(client, model, content, asset):
     resp = client.chat.completions.create(
         model=model,
+        max_tokens=2048,
         messages=[
             {"role": "system", "content": MODEL_SYSTEM_PROMPT},
             {"role": "user", "content": content},
@@ -138,6 +178,7 @@ def generate_and_set_columns_ai_description(
 
     resp, _ = client.chat.completions.create_with_completion(
         model=model,
+        max_tokens=2048,
         messages=[
             {
                 "role": "system",
@@ -149,7 +190,7 @@ def generate_and_set_columns_ai_description(
         strict=False,
     )
     for col_name, col_description in resp.model_dump().items():
-        column_map.get(col_name).ai_description = col_description.description
+        column_map.get(col_name).ai_description = col_description["description"]
 
 
 def create_prompt_content_from_asset(asset: Asset, column_map: dict):

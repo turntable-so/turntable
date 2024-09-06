@@ -11,3 +11,4 @@ from .ssh_views import SSHViewSet
 from .workflow_views import WorkflowViews
 from .workspace_group_views import WorkspaceGroupViewSet
 from .workspace_views import WorkspaceViewSet
+from .workspace_setting_views import WorkspaceSettingViewSet
