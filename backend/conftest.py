@@ -12,7 +12,7 @@ from fixtures.local_env import (
     create_local_user,
     create_local_workspace,
 )
-from fixtures.staging_env import group_4
+from fixtures.staging_env import group_1, group_2, group_4
 from workflows.metadata_sync import MetadataSyncWorkflow
 from workflows.utils.debug import ContextDebugger
 
@@ -72,6 +72,16 @@ def local_postgres(user):
 def local_metabase(user):
     workspace = create_local_workspace(user)
     return create_local_metabase(workspace)
+
+
+@pytest.fixture
+def remote_bigquery(user):
+    return group_1(user)[0]
+
+
+@pytest.fixture
+def remote_snowflake(user):
+    return group_2(user)[0]
 
 
 @pytest.fixture

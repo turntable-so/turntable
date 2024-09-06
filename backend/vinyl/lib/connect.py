@@ -26,7 +26,10 @@ from vinyl.lib.dbt import DBTProject
 from vinyl.lib.dbt_methods import DBTDialect, DBTVersion
 from vinyl.lib.errors import VinylError, VinylErrorType
 from vinyl.lib.utils.pkg import _get_project_directory
-from vinyl.lib.utils.text import _extract_uri_scheme
+from vinyl.lib.utils.text import (
+    _extract_uri_scheme,
+    _generate_random_ascii_string,
+)
 
 _TEMP_PATH_PREFIX = "vinyl_"
 _QUERY_LIMIT = 100000
@@ -309,8 +312,19 @@ class _DatabaseConnector(_ResourceConnector):
         conn.drop_table(table_temp_name)
         return final_table
 
+    def _sql_to_df_query_helper(
+        self, query: str, limit: int | None = _QUERY_LIMIT
+    ) -> str:
+        alias = _generate_random_ascii_string(8)
+        query = f"select * from ({query}) as {alias}"
+        if limit:
+            query += f" limit {limit}"
+        return query
+
     def sql_to_df(self, query: str, limit: int | None = _QUERY_LIMIT) -> pd.DataFrame:
-        pass
+        conn = self._connect()
+        query = self._sql_to_df_query_helper(query, limit)
+        return conn.sql(query).execute()
 
     def validate_sql(self, query: str) -> ValidationOutput:
         pass
@@ -531,8 +545,7 @@ class BigQueryConnector(_DatabaseConnector):
 
     def sql_to_df(self, query: str, limit: int | None = _QUERY_LIMIT) -> pd.DataFrame:
         conn = self._connect()
-        if limit is not None:
-            query = f"select * from ({query}) limit {limit}"
+        query = self._sql_to_df_query_helper(query, limit)
         rows = conn.client.query_and_wait(query)
         if rows.total_rows < self._BQ_ITERATOR_ROW_CUTOFF:
             # faster to use iterators for small datasets
@@ -670,18 +683,11 @@ class SnowflakeConnector(_DatabaseConnector):
         else:
             return ibis.snowflake.connect(account=account, user=user, password=password)
 
-    def sql_to_df(self, query: str, limit: int | None = _QUERY_LIMIT) -> pd.DataFrame:
-        conn = self._connect()
-        if limit is not None:
-            query = f"select * from ({query}) limit {limit}"
-        cursor = conn.raw_sql(query)
-        return cursor.fetch_pandas_all()
-
     def validate_sql(self, query: str) -> ValidationOutput:
         conn = self._connect()
         query = f"EXPLAIN USING JSON ({query})"
         try:
-            cursor = conn.raw_sql(query)
+            cursor = conn.sql(query)
             out = json.loads(cursor.fetchall()[0][0])
             bytes_processed = out["GlobalStats"]["bytesAssigned"]
             cost = (
@@ -757,8 +763,7 @@ class DatabricksConnector(_DatabaseConnector):
 
     def sql_to_df(self, query: str, limit: int | None = _QUERY_LIMIT) -> pd.DataFrame:
         conn = self._connect(use_spark=False)
-        if limit is not None:
-            query = f"select * from ({query}) limit {limit}"
+        query = self._sql_to_df_query_helper(query, limit)
         with conn.cursor() as cursor:
             cursor.execute(query)
             out = cursor.fetchall_arrow().to_pandas()
