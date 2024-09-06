@@ -17,7 +17,6 @@ agate==1.9.1
     # via dbt-postgres
 aiohttp==3.9.5
     # via acryl-datahub
-    # via fastapi-cache2
     # via instructor
     # via litellm
 aiosignal==1.3.1
@@ -133,6 +132,7 @@ cycler==0.12.1
     # via matplotlib
 daff==1.3.46
     # via dbt-core
+databricks-sql-connector==3.4.0
 db-dtypes==1.2.0
     # via turntable-spoonbill
 dbt-adapters==1.4.0
@@ -215,13 +215,13 @@ duckdb==1.0.0
     # via turntable-spoonbill
 email-validator==2.2.0
     # via fastapi
+et-xmlfile==1.1.0
+    # via openpyxl
 executing==2.0.1
     # via stack-data
 expandvars==0.12.0
     # via acryl-datahub
 fastapi==0.111.0
-    # via fastapi-cache2
-fastapi-cache2 @ git+https://github.com/turntable-so/fastapi-cache@2c04eaaa1174f44ee44a2094e8a4c859bc7cd9ed
 fastapi-cli==0.0.4
     # via fastapi
 fernet==1.0.1
@@ -380,6 +380,8 @@ logtail-python==0.3.0
 loguru==0.7.2
     # via hatchet-sdk
 lxml==5.2.2
+lz4==4.3.3
+    # via databricks-sql-connector
 markdown-it-py==3.0.0
     # via mdit-py-plugins
     # via rich
@@ -433,6 +435,7 @@ networkx==3.3
 ngrok==1.3.0
 numpy==1.26.4
     # via contourpy
+    # via databricks-sql-connector
     # via db-dtypes
     # via geopandas
     # via harlequin
@@ -447,11 +450,14 @@ numpy==1.26.4
     # via shapely
     # via turntable-spoonbill
 oauthlib==3.2.2
+    # via databricks-sql-connector
     # via requests-oauthlib
     # via social-auth-core
 openai==1.35.8
     # via instructor
     # via litellm
+openpyxl==3.1.5
+    # via databricks-sql-connector
 ordered-set==4.1.0
     # via deepdiff
 orjson==3.10.5
@@ -477,6 +483,7 @@ packaging==24.1
 palettable==3.3.3
     # via lets-plot
 pandas==2.2.2
+    # via databricks-sql-connector
     # via db-dtypes
     # via geopandas
     # via networkx
@@ -492,8 +499,6 @@ pathspec==0.12.1
     # via black
     # via dbt-common
     # via dbt-core
-pendulum==3.0.0
-    # via fastapi-cache2
 pexpect==4.9.0
     # via ipython
 pgvector==0.3.0
@@ -539,7 +544,6 @@ psutil==6.0.0
 psycopg==3.2.1
 psycopg-binary==3.2.1
     # via psycopg
-psycopg2==2.9.9
 psycopg2-binary==2.9.9
     # via dbt-postgres
     # via turntable-spoonbill
@@ -550,6 +554,7 @@ pure-eval==0.2.2
 pyaes==1.6.1
     # via fernet
 pyarrow==16.1.0
+    # via databricks-sql-connector
     # via db-dtypes
     # via textual-fastdatatable
     # via turntable-spoonbill
@@ -623,11 +628,9 @@ python-dateutil==2.9.0.post0
     # via hatchet-sdk
     # via matplotlib
     # via pandas
-    # via pendulum
     # via posthog
     # via realtime
     # via storage3
-    # via time-machine
     # via turntable-cli
     # via turntable-spoonbill
 python-dotenv==1.0.1
@@ -676,6 +679,7 @@ regex==2024.5.15
     # via tiktoken
     # via turntable-spoonbill
 requests==2.32.3
+    # via databricks-sql-connector
     # via dbt-common
     # via dbt-core
     # via django-allauth
@@ -751,6 +755,7 @@ six==1.16.0
     # via mixpanel
     # via posthog
     # via python-dateutil
+    # via thrift
 sniffio==1.3.1
     # via anyio
     # via httpx
@@ -805,10 +810,10 @@ textual-fastdatatable==0.9.0
     # via harlequin
 textual-textarea==0.14.0
     # via harlequin
+thrift==0.20.0
+    # via databricks-sql-connector
 tiktoken==0.7.0
     # via litellm
-time-machine==2.14.2
-    # via pendulum
 tokenizers==0.19.1
     # via litellm
 toml==0.10.2
@@ -854,7 +859,6 @@ typing-extensions==4.12.2
     # via dbt-semantic-interfaces
     # via dj-database-url
     # via fastapi
-    # via fastapi-cache2
     # via githubkit
     # via hishel
     # via huggingface-hub
@@ -879,13 +883,13 @@ typing-inspect==0.9.0
     # via acryl-datahub
 tzdata==2024.1
     # via pandas
-    # via pendulum
 uc-micro-py==1.0.3
     # via linkify-it-py
 ujson==5.10.0
     # via fastapi
 urllib3==2.2.2
     # via botocore
+    # via databricks-sql-connector
     # via docker
     # via hatchet-sdk
     # via mixpanel
@@ -896,7 +900,6 @@ urllib3==2.2.2
 uv==0.2.18
 uvicorn==0.30.1
     # via fastapi
-    # via fastapi-cache2
     # via sse-starlette
 uvloop==0.19.0
     # via uvicorn
