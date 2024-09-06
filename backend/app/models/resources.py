@@ -353,7 +353,6 @@ class ResourceDetails(PolymorphicModel):
         )
 
     def test_db_connection(self):
-        connector = self.get_connector()
         try:
             connector = self.get_connector()
             query = connector.sql_to_df("SELECT 1").iloc[0].iloc[0]
