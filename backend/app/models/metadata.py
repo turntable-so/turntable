@@ -11,6 +11,31 @@ from app.models.auth import Workspace
 from app.models.resources import Resource
 
 
+class AssetContainer(models.Model):
+    class AssetContainerType(models.TextChoices):
+        WORKBOOK = "workbook"
+        PROJECT = "project"
+        DATABASE = "database"
+        SCHEMA = "schema"
+
+    # pk
+    id = models.TextField(primary_key=True, editable=False)
+    type = models.CharField(max_length=255, choices=AssetContainerType.choices)
+    name = models.TextField()
+    description = models.TextField(null=True)
+
+    # relationships
+    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
+
+    @classmethod
+    def get_for_resource(cls, resource_id: str, inclusive: bool = True):
+        # return is the same for inclusive and exclusive
+        # replace across resources, don't delete any
+        if inclusive:
+            return cls.objects.all()
+        return cls.objects.none()
+
+
 class Asset(models.Model):
     class AssetType(models.TextChoices):
         MODEL = "model"
@@ -52,6 +77,7 @@ class Asset(models.Model):
     # relationships
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE, null=True)
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
+    containers = models.ManyToManyField(AssetContainer, related_name="assets")
 
     @property
     def dataset(self) -> str:
