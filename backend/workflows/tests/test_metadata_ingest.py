@@ -38,3 +38,13 @@ def test_databricks_metadata_sync(remote_databricks):
     }
     WorkflowDebugger(MetadataSyncWorkflow, input).run()
     assert_ingest_output([remote_databricks])
+
+
+@pytest.mark.django_db
+@require_env_vars("TABLEAU_1_USERNAME")
+def test_tableau_metadata_sync(remote_tableau):
+    input = {
+        "resource_id": remote_tableau.id,
+    }
+    WorkflowDebugger(MetadataSyncWorkflow, input).run()
+    assert_ingest_output([remote_tableau])
