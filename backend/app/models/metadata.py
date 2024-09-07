@@ -7,8 +7,8 @@ from django.db import connection, models
 from django.db.models import Q
 from pgvector.django import VectorField
 
-from app.models.auth import Workspace
 from app.models.resources import Resource
+from app.models.workspace import Workspace
 
 
 class Asset(models.Model):

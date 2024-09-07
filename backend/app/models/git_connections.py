@@ -2,7 +2,8 @@ import uuid
 
 from django.db import models
 
-from app.models.auth import User, Workspace
+from app.models.user import User
+from app.models.workspace import Workspace
 
 
 class SSHKey(models.Model):

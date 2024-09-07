@@ -62,7 +62,7 @@ export default function SideBar({ collapsed }: { collapsed: boolean }) {
             <SearchDialog open={searchDialogOpen} setOpen={setSearchDialogOpen} />
             {collapsed ? (
                 <nav className="text-[15px] flex flex-col items-center space-y-4 mt-4">
-                    <Link href='/team'>
+                    <Link href='/workspaces'>
                         <div className='opacity-80 hover:opacity-100 text-ellipsis hover:cursor-pointer hover:bg-[#ebebeb] py-2 rounded-lg truncate  text-muted-foreground font flex items-center space-x-2 px-2'>
                             <Avatar className='border h-8 w-8 flex items-center justify-center bg-gray-400 rounded-sm'>
                                 <AvatarImage src={workspace.icon_url} />
@@ -123,7 +123,7 @@ export default function SideBar({ collapsed }: { collapsed: boolean }) {
                 </nav>
             ) : (
                 <nav className="text-[15px] flex flex-col space-y-4 mt-4 p-0 px-6 mb-2   w-[275px]">
-                    <Link href='/team'>
+                    <Link href='/workspaces'>
                         <div className='opacity-80 hover:opacity-100 text-ellipsis hover:cursor-pointer hover:bg-[#ebebeb] py-2 rounded-lg truncate  text-muted-foreground font flex items-center space-x-2 px-2'>
                             <div className='mr-1'>
                                 <Avatar className='border h-8 w-8 flex items-center justify-center bg-gray-400 rounded-sm'>
