@@ -49,4 +49,3 @@ def test_databricks_sync(remote_databricks, recache: bool):
 @require_env_vars("TABLEAU_0_USERNAME")
 def test_tableau_sync(remote_tableau, recache: bool):
     run_test_sync([remote_tableau], recache)
-    breakpoint()
