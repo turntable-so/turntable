@@ -10,6 +10,7 @@ from app.models import (
     Resource,
     ResourceType,
     SnowflakeDetails,
+    TableauDetails,
     User,
     Workspace,
 )
@@ -249,6 +250,38 @@ def create_looker_n(workspace, n):
     return looker
 
 
+def create_tableau_n(workspace, n):
+    connect_uri = os.getenv(f"TABLEAU_{n}_CONNECT_URI")
+    username = os.getenv(f"TABLEAU_{n}_USERNAME")
+    password = os.getenv(f"TABLEAU_{n}_PASSWORD")
+    resource_name = os.getenv(f"TABLEAU_{n}_RESOURCE_NAME")
+
+    assert connect_uri, f"must provide TABLEAU_{n}_CONNECT_URI to use this test"
+    assert username, f"must provide TABLEAU_{n}_USERNAME to use this test"
+    assert password, f"must provide TABLEAU_{n}_PASSWORD to use this test"
+    assert resource_name, f"must provide TABLEAU_{n}_RESOURCE_NAME to use this test"
+
+    try:
+        resource = Resource.objects.get(workspace=workspace, type=ResourceType.BI)
+    except Resource.DoesNotExist:
+        resource = Resource.objects.create(
+            workspace=workspace, type=ResourceType.BI, name=resource_name
+        )
+
+    if not hasattr(resource, "details") or not isinstance(
+        resource.details, TableauDetails
+    ):
+        TableauDetails(
+            resource=resource,
+            connect_uri=connect_uri,
+            site=os.getenv(f"TABLEAU_{n}_SITE", ""),
+            username=username,
+            password=password,
+        ).save()
+
+    return resource
+
+
 ### GROUPS
 def group_1(user):
     workspace = create_workspace_n(user, "bigquery", 1)
@@ -278,6 +311,7 @@ def group_3(user):
 def group_4(user):
     workspace = create_workspace_n(user, "databricks", 1)
     databricks = create_databricks_n(workspace, 1)
+    tableau = create_tableau_n(workspace, 1)
     create_dbt_n(databricks, 5)
 
-    return [databricks]
+    return [databricks, tableau]

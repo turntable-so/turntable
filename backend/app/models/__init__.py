@@ -28,5 +28,6 @@ from .resources import (
     ResourceSubtype,
     ResourceType,
     SnowflakeDetails,
+    TableauDetails,
     WorkflowRun,
 )

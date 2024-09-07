@@ -89,6 +89,11 @@ def remote_databricks(user):
     return group_4(user)[0]
 
 
+@pytest.fixture
+def remote_tableau(user):
+    return group_4(user)[1]
+
+
 @pytest.fixture()
 def prepopulated_dev_db(local_metabase, local_postgres):
     resources = [local_metabase, local_postgres]
