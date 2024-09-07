@@ -99,7 +99,7 @@ export default function ConnectionLayout({
           {resource.subtype === "postgres" && <PostgresLogo />}
           {resource.subtype === "metabase" && <MetabaseIcon />}
           {resource.subtype === "snowflake" && <SnowflakeLogo />}
-          {resource.subtype === "databricks" && <DatabricksLogo />}
+          {resource.subtype === "databricks" && <DatabricksLogo height={24} width={24} />}
           <div>Edit {resource.name}</div>
         </div>
       </Button>
