@@ -268,7 +268,7 @@ function LineageNode({ id, data, yPos }: any) {
       <div
         className={`cursor-pointer border-2 font-mono shadow-lg text-[12px] text-black rounded-md
         border-solid ${isActiveResource ? "border-blue-400" : "border-gray-300"}
-        bg-muted w-72 max-h-120 overflow-y-scroll overflow-x-hidden relative
+        bg-muted w-72 max-h-72 overflow-y-scroll overflow-x-hidden relative
         ${columnsToDisplay.length > 10 ? "nowheel" : ""}
         ${
           selectedColumn != null &&
