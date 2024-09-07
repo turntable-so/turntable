@@ -11,6 +11,7 @@ from app.models import (
     Block,
     Column,
     ColumnLink,
+    DatabricksDetails,
     DBTCoreDetails,
     GithubInstallation,
     LookerDetails,
@@ -292,6 +293,12 @@ class PostgresDetailsSerializer(ResourceDetailsSerializer):
     class Meta:
         model = PostgresDetails
         fields = ["host", "username", "password", "database", "port"]
+
+
+class DatabricksDetailsSerializer(ResourceDetailsSerializer):
+    class Meta:
+        model = DatabricksDetails
+        fields = ["host", "token", "http_path"]
 
 
 class MetabaseDetailsSerializer(ResourceDetailsSerializer):

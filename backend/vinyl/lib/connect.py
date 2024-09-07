@@ -15,7 +15,6 @@ from typing import Any, Optional
 import ibis
 import ibis.expr.types as ir
 import pandas as pd
-import pyarrow as pa
 from ibis import Schema
 from ibis.backends import BaseBackend
 from ibis.backends.duckdb import Backend as DuckDBBackend
@@ -27,7 +26,10 @@ from vinyl.lib.dbt import DBTProject
 from vinyl.lib.dbt_methods import DBTDialect, DBTVersion
 from vinyl.lib.errors import VinylError, VinylErrorType
 from vinyl.lib.utils.pkg import _get_project_directory
-from vinyl.lib.utils.text import _extract_uri_scheme
+from vinyl.lib.utils.text import (
+    _extract_uri_scheme,
+    _generate_random_ascii_string,
+)
 
 _TEMP_PATH_PREFIX = "vinyl_"
 _QUERY_LIMIT = 100000
@@ -59,7 +61,7 @@ class _ResourceConnector(ABC):
         pass
 
     @abstractmethod
-    def sql_to_df(self, query: str, limit: int | None) -> pa.Table:
+    def sql_to_df(self, query: str, limit: int | None) -> pd.DataFrame:
         pass
 
     @abstractmethod
@@ -92,7 +94,7 @@ class _TableConnector(_ResourceConnector):
         )
         return sampled
 
-    def sql_to_df(self, query: str, limit: int | None = _QUERY_LIMIT) -> pa.Table:
+    def sql_to_df(self, query: str, limit: int | None = _QUERY_LIMIT) -> pd.DataFrame:
         pass
 
     def validate_sql(self, query: str) -> ValidationOutput:
@@ -310,8 +312,19 @@ class _DatabaseConnector(_ResourceConnector):
         conn.drop_table(table_temp_name)
         return final_table
 
-    def sql_to_df(self, query: str, limit: int | None = _QUERY_LIMIT) -> pa.Table:
-        pass
+    def _sql_to_df_query_helper(
+        self, query: str, limit: int | None = _QUERY_LIMIT
+    ) -> str:
+        alias = _generate_random_ascii_string(8)
+        query = f"select * from ({query}) as {alias}"
+        if limit:
+            query += f" limit {limit}"
+        return query
+
+    def sql_to_df(self, query: str, limit: int | None = _QUERY_LIMIT) -> pd.DataFrame:
+        conn = self._connect()
+        query = self._sql_to_df_query_helper(query, limit)
+        return conn.sql(query).execute()
 
     def validate_sql(self, query: str) -> ValidationOutput:
         pass
@@ -530,10 +543,9 @@ class BigQueryConnector(_DatabaseConnector):
 
         return conn
 
-    def sql_to_df(self, query: str, limit: int | None = _QUERY_LIMIT) -> pa.Table:
+    def sql_to_df(self, query: str, limit: int | None = _QUERY_LIMIT) -> pd.DataFrame:
         conn = self._connect()
-        if limit is not None:
-            query = f"select * from ({query}) limit {limit}"
+        query = self._sql_to_df_query_helper(query, limit)
         rows = conn.client.query_and_wait(query)
         if rows.total_rows < self._BQ_ITERATOR_ROW_CUTOFF:
             # faster to use iterators for small datasets
@@ -671,18 +683,11 @@ class SnowflakeConnector(_DatabaseConnector):
         else:
             return ibis.snowflake.connect(account=account, user=user, password=password)
 
-    def sql_to_df(self, query: str, limit: int | None = _QUERY_LIMIT) -> pa.Table:
-        conn = self._connect()
-        if limit is not None:
-            query = f"select * from ({query}) limit {limit}"
-        cursor = conn.raw_sql(query)
-        return cursor.fetch_pandas_all()
-
     def validate_sql(self, query: str) -> ValidationOutput:
         conn = self._connect()
         query = f"EXPLAIN USING JSON ({query})"
         try:
-            cursor = conn.raw_sql(query)
+            cursor = conn.sql(query)
             out = json.loads(cursor.fetchall()[0][0])
             bytes_processed = out["GlobalStats"]["bytesAssigned"]
             cost = (
@@ -699,6 +704,71 @@ class SnowflakeConnector(_DatabaseConnector):
                 dialect=self._get_name(),
             )
             return ValidationOutput(errors=[error], bytes_processed=None, cost=None)
+
+
+class DatabricksConnector(_DatabaseConnector):
+    _host: str
+    _token: str
+    _http_path: str
+
+    def __init__(
+        self,
+        host: str,
+        token: str,
+        http_path: str,
+        tables: list[str],
+        cluster_id: str | None = None,
+    ):
+        self._host = host
+        self._token = token
+        self._http_path = http_path
+        self._cluster_id = cluster_id
+        self._tables = tables
+
+    def _connect(self, use_spark: bool = True) -> BaseBackend:
+        self._conn = self._connect_helper(
+            self._host,
+            self._token,
+            self._cluster_id,
+            self._http_path,
+            use_spark=use_spark,
+        )
+        return self._conn
+
+    def _list_sources(self, with_schema=False) -> list[SourceInfo]:
+        raise NotImplementedError(
+            "Databricks ibis connection not currently supported, only SQL connection."
+        )
+
+    # caching ensures we create one bq connection per set of credentials across instances of the class
+    @staticmethod
+    @lru_cache()
+    def _connect_helper(
+        host: str,
+        token: str,
+        cluster_id: str | None,
+        http_path: str,
+        use_spark: bool = True,
+    ) -> BaseBackend:
+        if use_spark:
+            raise NotImplementedError(
+                "Databricks Spark connection not yet supported. Please use Databricks SQL connection."
+            )
+        else:
+            from databricks import sql
+
+            return sql.connect(
+                server_hostname=host, http_path=http_path, access_token=token
+            )
+
+    def sql_to_df(self, query: str, limit: int | None = _QUERY_LIMIT) -> pd.DataFrame:
+        conn = self._connect(use_spark=False)
+        query = self._sql_to_df_query_helper(query, limit)
+        with conn.cursor() as cursor:
+            cursor.execute(query)
+            out = cursor.fetchall_arrow().to_pandas()
+        conn.close()
+        return out
 
 
 @dataclass(frozen=True)
