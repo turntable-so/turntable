@@ -46,10 +46,26 @@ class WorkspaceViewSetTestCase(TestCase):
         self.assertEqual(response.data["name"], "Updated Workspace")
 
     def test_retrieve_workspace(self):
-        self.user.current_workspace = (
-            lambda: self.workspace1
-        )  # Mock current_workspace method
-        response = self.client.get(f"/workspaces/{self.workspace1.id}/")
+        self.user.switch_workspace(self.workspace1)
+        response = self.client.get(f"/workspaces/me/")
         self.assertEqual(response.status_code, 200)
         serializer = WorkspaceDetailSerializer(self.workspace1)
+
         self.assertEqual(response.data, serializer.data)
+
+    def test_switch_workspace(self):
+        self.user.switch_workspace(self.workspace1)
+
+        response = self.client.get("/workspaces/me/")
+        self.assertEqual(response.data["id"], str(self.workspace1.id))
+
+        data = {
+            "workspace_id": self.workspace2.id,
+        }
+
+        response = self.client.post(
+            "/workspaces/switch_workspace/", data, format="json"
+        )
+
+        response = self.client.get("/workspaces/me/")
+        self.assertEqual(response.data["id"], str(self.workspace2.id))

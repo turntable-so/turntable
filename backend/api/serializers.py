@@ -119,7 +119,7 @@ class GroupSerializer(serializers.HyperlinkedModelSerializer):
 class WorkspaceSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Workspace
-        fields = ["id", "name", "icon_url", "icon_file"]
+        fields = ["id", "name", "icon_url", "icon_file", "member_count"]
 
 
 class WorkspaceUserSerializer(serializers.ModelSerializer):

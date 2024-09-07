@@ -1,6 +1,7 @@
 from rest_framework import viewsets
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.decorators import action
 
 from api.serializers import WorkspaceDetailSerializer, WorkspaceSerializer
 from app.models import Workspace
@@ -23,6 +24,7 @@ class WorkspaceViewSet(viewsets.ModelViewSet):
         user = request.user
         workspace = Workspace.objects.create(name=request.data["name"])
         workspace.add_admin(user)
+
         workspace.save()
         if "icon_file" in request.data:
             workspace.icon_file = request.data["icon_file"]
@@ -32,6 +34,8 @@ class WorkspaceViewSet(viewsets.ModelViewSet):
                 url = url.replace("http://minio:9000/", minio_host)
             workspace.icon_url = url.split("?")[0]
         workspace.save()
+
+        user.switch_workspace(workspace)
 
         serializer = WorkspaceSerializer(workspace)
 
@@ -59,6 +63,17 @@ class WorkspaceViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, pk=None):
         user = request.user
         workspace = user.current_workspace()
-        serializer = WorkspaceDetailSerializer(workspace)
+        serializer = WorkspaceDetailSerializer(
+            workspace, context={"request": request}, many=False
+        )
 
+        return Response(serializer.data)
+
+    @action(detail=False, methods=["post"])
+    def switch_workspace(self, request):
+        user = request.user
+        workspace_id = request.data.get("workspace_id")
+        workspace = Workspace.objects.get(id=workspace_id)
+        user.switch_workspace(workspace)
+        serializer = WorkspaceSerializer(workspace)
         return Response(serializer.data)
