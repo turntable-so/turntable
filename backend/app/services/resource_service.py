@@ -4,6 +4,7 @@ from rest_framework.exceptions import ValidationError
 
 from api.serializers import (
     BigQueryDetailsSerializer,
+    DatabricksDetailsSerializer,
     DBTCoreDetailsSerializer,
     MetabaseDetailsSerializer,
     PostgresDetailsSerializer,
@@ -13,6 +14,7 @@ from api.serializers import (
 from app.models import DBTCoreDetails, Resource, Workspace
 from app.models.resources import (
     BigqueryDetails,
+    DatabricksDetails,
     DBTResource,
     MetabaseDetails,
     PostgresDetails,
@@ -116,6 +118,12 @@ class PostgresResourceService(ResourceServiceHelper):
     subtype = ResourceSubtype.POSTGRES
     serializer = PostgresDetailsSerializer
     details_obj = PostgresDetails
+
+
+class DatabricksResourceService(ResourceServiceHelper):
+    subtype = ResourceSubtype.DATABRICKS
+    serializer = DatabricksDetailsSerializer
+    details_obj = DatabricksDetails
 
 
 class MetabaseResourceService(ResourceServiceHelper):

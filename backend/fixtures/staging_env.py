@@ -3,6 +3,7 @@ import os
 
 from app.models import (
     BigqueryDetails,
+    DatabricksDetails,
     DBTCoreDetails,
     GithubInstallation,
     LookerDetails,
@@ -128,27 +129,57 @@ def create_snowflake_n(workspace, n):
     return resource
 
 
-def create_dbt_n(resource: Resource, n):
-    github_installation_id = os.getenv(f"DBT_{n}_GITHUB_INSTALLATION_ID")
+def create_databricks_n(workspace, n):
+    host = os.getenv(f"DATABRICKS_{n}_HOST")
+    token = os.getenv(f"DATABRICKS_{n}_TOKEN")
+    http_path = os.getenv(f"DATABRICKS_{n}_HTTP_PATH")
+    resource_name = os.getenv(f"DATABRICKS_{n}_RESOURCE_NAME")
 
-    github_repo_id = os.getenv(f"DBT_{n}_GITHUB_REPO_ID")
+    assert host, f"must provide DATABRICKS_{n}_HOST to use this test"
+    assert token, f"must provide DATABRICKS_{n}_TOKEN to use this test"
+    assert http_path, f"must provide DATABRICKS_{n}_HTTP_PATH to use this test"
+
+    try:
+        resource = Resource.objects.get(workspace=workspace, type=ResourceType.DB)
+    except Resource.DoesNotExist:
+        resource = Resource.objects.create(
+            workspace=workspace, type=ResourceType.DB, name=resource_name
+        )
+
+    if not hasattr(resource, "details") or not isinstance(
+        resource.details, DatabricksDetails
+    ):
+        DatabricksDetails(
+            resource=resource,
+            host=host,
+            token=token,
+            http_path=http_path,
+        ).save()
+
+    return resource
+
+
+def create_dbt_n(resource: Resource, n):
     database = os.getenv(f"DBT_{n}_DATABASE")
     schema = os.getenv(f"DBT_{n}_SCHEMA")
     dbt_version = os.getenv(f"DBT_{n}_VERSION")
-    assert (
-        github_installation_id
-    ), f"must provide DBT_{n}_GITHUB_INSTALLATION_ID to use this test"
-    assert github_repo_id, f"must provide DBT_{n}_GITHUB_REPO_ID to use this test"
     assert database, f"must provide DBT_{n}_DATABASE to use this test"
     assert schema, f"must provide DBT_{n}_SCHEMA to use this test"
     assert dbt_version, f"must provide DBT_{n}_VERSION to use this test"
 
-    try:
-        github_installation = GithubInstallation.objects.get(id=github_installation_id)
-    except GithubInstallation.DoesNotExist:
-        github_installation = GithubInstallation.objects.create(
-            id=github_installation_id, workspace=resource.workspace
-        )
+    github_installation_id = os.getenv(f"DBT_{n}_GITHUB_INSTALLATION_ID")
+    github_repo_id = os.getenv(f"DBT_{n}_GITHUB_REPO_ID")
+    project_path = os.getenv(f"DBT_{n}_PROJECT_PATH", ".")
+
+    if github_installation_id:
+        try:
+            github_installation = GithubInstallation.objects.get(
+                id=github_installation_id
+            )
+        except GithubInstallation.DoesNotExist:
+            github_installation = GithubInstallation.objects.create(
+                id=github_installation_id, workspace=resource.workspace
+            )
 
     dbt_major, dbt_minor = dbt_version.split(".")
     other_schemas = os.getenv(f"DBT_{n}_OTHER_SCHEMAS")
@@ -156,12 +187,20 @@ def create_dbt_n(resource: Resource, n):
         other_schemas = json.loads(other_schemas)
 
     for dbtres in resource.dbtresource_set.all():
-        if dbtres.github_installation == github_installation:
+        dbt_resource_already_created = (
+            (
+                not github_installation_id
+                or dbtres.github_installation == github_installation
+            )
+            and (not github_repo_id or dbtres.github_repo_id == github_repo_id)
+            and (project_path == dbtres.project_path)
+        )
+        if dbt_resource_already_created:
             return resource
 
     DBTCoreDetails(
         resource=resource,
-        github_installation=github_installation,
+        github_installation_id=github_installation_id,
         github_repo_id=github_repo_id,
         project_path=os.getenv(f"DBT_{n}_PROJECT_PATH", "."),
         threads=os.getenv(f"DBT_{n}_THREADS", 6),
@@ -234,3 +273,11 @@ def group_3(user):
     looker = create_looker_n(workspace, 1)
 
     return [bigquery, looker]
+
+
+def group_4(user):
+    workspace = create_workspace_n(user, "databricks", 1)
+    databricks = create_databricks_n(workspace, 1)
+    create_dbt_n(databricks, 5)
+
+    return [databricks]

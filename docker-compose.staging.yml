@@ -32,7 +32,7 @@ name: turntable-staging
 services:
   api:
     extends:
-      file: ../docker-compose.dev-internal.yml
+      file: docker-compose.dev-internal.yml
       service: api
     build:
       args:
@@ -47,15 +47,15 @@ services:
 
   web:
     extends:
-      file: ../docker-compose.dev-internal.yml
+      file: docker-compose.dev-internal.yml
       service: web
 
   worker:
     extends:
-      file: ../docker-compose.dev-internal.yml
+      file: docker-compose.dev-internal.yml
       service: worker
     environment:
-      <<: [*postgres-credentials, *storage-credentials, *hatchet-credentials, *dev-credentials]
+      <<: [*postgres-credentials, *storage-credentials, *hatchet-credentials]
     depends_on:
       api:
         condition: service_healthy
@@ -63,34 +63,34 @@ services:
   # use internal redis due to issues connecting to external redis
   redis:
     extends:
-      file: ../docker-compose.dev-internal.yml
+      file: docker-compose.dev-internal.yml
       service: redis
 
   # Test resources
   postgres_test_db:
     extends:
-      file: ../docker-compose.dev-internal.yml
+      file: docker-compose.dev-internal.yml
       service: postgres_test_db
 
   populate_postgres_test_db:
     extends:
-      file: ../docker-compose.dev.yml
+      file: docker-compose.dev-internal.yml
       service: populate_postgres_test_db
 
   ensure_populate_test_db:
     extends:
-      file: ../docker-compose.dev-internal.yml
+      file: docker-compose.dev-internal.yml
       service: ensure_populate_test_db
 
   metabase:
     extends:
-      file: ../docker-compose.dev-internal.yml
+      file: docker-compose.dev-internal.yml
       service: metabase
 
   # Disabled services -- needed because they are dependencies in upstream docker compose yml file.
   postgres:
     extends:
-      file: ../docker-compose.dev-internal.yml
+      file: docker-compose.dev-internal.yml
       service: postgres
     command: /bin/sh -c "echo 'Service postgres disabled' && sleep 240"
     restart: always
@@ -103,20 +103,20 @@ services:
 
   createbuckets:
     extends:
-      file: ../docker-compose.dev-internal.yml
+      file: docker-compose.dev-internal.yml
       service: createbuckets
     entrypoint: ["echo", "Service createbuckets disabled"]
   
   minio:
     extends:
-      file: ../docker-compose.dev-internal.yml
+      file: docker-compose.dev-internal.yml
       service: minio
     entrypoint: ["echo", "Service minio disabled"]
     restart: no
 
   hatchet-lite:
     extends:
-      file: ../docker-compose.dev-internal.yml
+      file: docker-compose.dev-internal.yml
       service: hatchet-lite
     command: /bin/sh -c "echo 'Service hatchet-lite disabled' && sleep 240"
     healthcheck:
@@ -128,7 +128,7 @@ services:
 
   setup-hatchet:
     extends:
-      file: ../docker-compose.dev-internal.yml
+      file: docker-compose.dev-internal.yml
       service: setup-hatchet
     entrypoint: ["echo", "Service setup-hatchet disabled"]
     restart: no
@@ -136,7 +136,7 @@ services:
   
   create_hatchet_db:
     extends:
-      file: ../docker-compose.dev-internal.yml
+      file: docker-compose.dev-internal.yml
       service: create_hatchet_db
     entrypoint: ["echo", "Service create_hatchet_db disabled"]
     restart: no
