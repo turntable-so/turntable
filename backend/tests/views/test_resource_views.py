@@ -316,3 +316,57 @@ class ResourceViewSetTestCases(TestCase):
         self.assertEqual(
             response.data["details"]["connect_uri"], "http://localhost:4000"
         )
+
+    def test_create_databricks_resource(self):
+        data = {
+            "resource": {
+                "name": "Test Databricks",
+                "type": "db",
+            },
+            "subtype": "databricks",
+            "config": {
+                "host": "test.cloud.databricks.com",
+                "http_path": "/sql/1.0/warehouses/test",
+                "token": "test",
+            },
+        }
+        response = self.client.post("/resources/", data, format="json")
+        self.assertContains(response, "id", status_code=201)
+
+        response = self.client.get(f"/resources/{response.data['id']}/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["details"]["host"], "test.cloud.databricks.com")
+
+    def test_update_databricks_resource(self):
+        data = {
+            "resource": {
+                "name": "Test Databricks",
+                "type": "db",
+            },
+            "subtype": "databricks",
+            "config": {
+                "host": "test.cloud.databricks.com",
+                "http_path": "/sql/1.0/warehouses/test",
+                "token": "test",
+            },
+        }
+        response = self.client.post("/resources/", data, format="json")
+        self.assertContains(response, "id", status_code=201)
+        data = {
+            "resource": {
+                "name": "Test Databricks",
+                "type": "db",
+            },
+            "config": {
+                "host": "test.cloud.databricks.com",
+                "http_path": "/sql/1.0/warehouses/test",
+                "token": "test 2",
+            },
+        }
+        response = self.client.patch(
+            f"/resources/{response.data['id']}/", data, format="json"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        resource = Resource.objects.get(id=response.data["id"])
+        self.assertEqual(resource.details.token, "test 2")

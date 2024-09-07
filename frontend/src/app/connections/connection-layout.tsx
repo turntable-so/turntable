@@ -1,6 +1,6 @@
 "use client";
 
-import { BigQueryLogo, SnowflakeLogo } from "@/components/connections/connection-options";
+import { BigQueryLogo, DatabricksLogo, SnowflakeLogo } from "@/components/connections/connection-options";
 import BigqueryForm from "@/components/connections/forms/bigquery-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,6 +40,7 @@ import { deleteResource, syncResource } from "../actions/actions";
 import React, { useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import SnowflakeForm from "@/components/connections/forms/snowflake-form";
+import DatabricksForm from "@/components/connections/forms/databricks-form";
 
 type DbtDetails = {
   git_repo_url: string;
@@ -98,6 +99,7 @@ export default function ConnectionLayout({
           {resource.subtype === "postgres" && <PostgresLogo />}
           {resource.subtype === "metabase" && <MetabaseIcon />}
           {resource.subtype === "snowflake" && <SnowflakeLogo />}
+          {resource.subtype === "databricks" && <DatabricksLogo />}
           <div>Edit {resource.name}</div>
         </div>
       </Button>
@@ -182,6 +184,9 @@ export default function ConnectionLayout({
               )}
               {resource.subtype === "snowflake" && (
                 <SnowflakeForm resource={resource} details={details} />
+              )}
+              {resource.subtype === "databricks" && (
+                <DatabricksForm resource={resource} details={details} />
               )}
             </CardContent>
           </Card>
