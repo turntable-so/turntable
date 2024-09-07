@@ -2,8 +2,9 @@ import tempfile
 
 from hatchet_sdk import Context
 
+from ai.documentation.asset import generate_ai_completions
 from app.core.e2e import DataHubDBParser
-from app.models import Resource
+from app.models import Asset, Resource
 from app.models.resources import ResourceSubtype
 from workflows.hatchet import hatchet
 from workflows.utils.log import inject_workflow_run_logging
@@ -49,3 +50,17 @@ class MetadataSyncWorkflow:
                 parser.parse()
 
         DataHubDBParser.combine_and_upload([parser], resource)
+
+    @hatchet.step(timeout="120m", parents=["process_metadata"])
+    def generate_ai_descriptions(self, context: Context):
+        resource = Resource.objects.get(id=context.workflow_input()["resource_id"])
+        assets = Asset.get_for_resource(resource)
+
+        # TODO: get AI provider from Workspace
+        for asset in assets:
+            if asset.type != 'model':
+                continue
+
+            print(f"Generating AI descriptions for {asset.name}")
+
+            generate_ai_completions(asset)
