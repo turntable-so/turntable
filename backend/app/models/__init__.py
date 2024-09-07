@@ -1,9 +1,8 @@
-from .auth import (
+from .user import (
     User,
     UserManager,
-    Workspace,
-    WorkspaceGroup,
 )
+from .workspace import Workspace, WorkspaceGroup
 from .git_connections import GithubInstallation, SSHKey
 from .metadata import (
     Asset,

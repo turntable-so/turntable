@@ -108,6 +108,27 @@ export async function getWorkspace() {
   return data;
 }
 
+export async function getWorkspaces() {
+  const response = await fetcher("/workspaces/", {
+    cookies,
+    method: "GET",
+  });
+  const data = await response.json();
+  return data;
+}
+
+export async function switchWorkspace(workspaceId: string) {
+  const response = await fetcher(`/workspaces/switch_workspace/`, {
+    cookies,
+    method: "POST",
+    body: {
+      workspace_id: workspaceId,
+    },
+  });
+  const data = await response.json();
+  return data;
+}
+
 
 export async function getGithubInstallations() {
   const response = await fetcher(`/github/`, {
