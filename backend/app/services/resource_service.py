@@ -4,6 +4,7 @@ from rest_framework.exceptions import ValidationError
 
 from api.serializers import (
     BigQueryDetailsSerializer,
+    DatabricksDetailsSerializer,
     DBTCoreDetailsSerializer,
     MetabaseDetailsSerializer,
     PostgresDetailsSerializer,
@@ -13,6 +14,7 @@ from api.serializers import (
 from app.models import DBTCoreDetails, Resource, Workspace
 from app.models.resources import (
     BigqueryDetails,
+    DatabricksDetails,
     DBTResource,
     MetabaseDetails,
     PostgresDetails,
@@ -116,6 +118,12 @@ class PostgresResourceService(ResourceServiceHelper):
     subtype = ResourceSubtype.POSTGRES
     serializer = PostgresDetailsSerializer
     details_obj = PostgresDetails
+
+
+class DatabricksResourceService(ResourceServiceHelper):
+    subtype = ResourceSubtype.DATABRICKS
+    serializer = DatabricksDetailsSerializer
+    details_obj = DatabricksDetails
 
 
 class MetabaseResourceService(ResourceServiceHelper):
@@ -257,6 +265,18 @@ class ResourceService:
             raise ValidationError("Resource not found.")
 
         resource.delete()
+
+    def test_resource(self, resource_id: int):
+        resource = Resource.objects.get(id=resource_id, workspace=self.workspace)
+
+        test_db = resource.details.test_db_connection()
+        test_datahub = resource.details.test_datahub_connection()
+
+        return {
+            "test_db": test_db,
+            "test_datahub": test_datahub,
+        }
+        
 
     async def sync_resource(self, resource_id: int):
         from workflows.hatchet import hatchet

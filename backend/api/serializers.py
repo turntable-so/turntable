@@ -11,6 +11,7 @@ from app.models import (
     Block,
     Column,
     ColumnLink,
+    DatabricksDetails,
     DBTCoreDetails,
     GithubInstallation,
     LookerDetails,
@@ -118,7 +119,7 @@ class GroupSerializer(serializers.HyperlinkedModelSerializer):
 class WorkspaceSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Workspace
-        fields = ["id", "name", "icon_url", "icon_file"]
+        fields = ["id", "name", "icon_url", "icon_file", "member_count"]
 
 
 class WorkspaceUserSerializer(serializers.ModelSerializer):
@@ -293,6 +294,12 @@ class PostgresDetailsSerializer(ResourceDetailsSerializer):
     class Meta:
         model = PostgresDetails
         fields = ["host", "username", "password", "database", "port"]
+
+
+class DatabricksDetailsSerializer(ResourceDetailsSerializer):
+    class Meta:
+        model = DatabricksDetails
+        fields = ["host", "token", "http_path"]
 
 
 class MetabaseDetailsSerializer(ResourceDetailsSerializer):

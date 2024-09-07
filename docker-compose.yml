@@ -53,8 +53,12 @@ x-dev-credentials: &dev-credentials
   DEV: "false"
   ENCRYPTION_KEY: ${ENCRYPTION_KEY}
   DJANGO_SETTINGS_MODULE: api.settings
-  LOCAL_DB: ${LOCAL_DB:-true}
-  LOCAL_HOST: ${LOCAL_HOST:-true}
+  LOCAL_DB: "true"
+  LOCAL_HOST: "true"
+  LOCAL_REDIS: "true"
+
+x-redis-credentials: &redis-credentials
+  REDIS_HOST: "redis"
 
 x-next-credentials: &next-credentials
   LOCAL_HOST: ${LOCAL_HOST:-true}
@@ -79,6 +83,7 @@ x-common-backend: &common-backend
         *storage-credentials,
         *hatchet-credentials,
         *ai-credentials,
+        *redis-credentials,
         *dev-credentials,
       ]
   depends_on:
@@ -95,20 +100,24 @@ x-common-backend: &common-backend
   volumes:
     - .hatchetconfig:/.hatchetconfig
 
+name: turntable
+
 # Define services
 services:
   api:
     <<: *common-backend
     ports:
       - "8000:8000"
-    entrypoint: ["/code/entrypoint.sh"]
-    command: ["uvicorn", "api.asgi:application", "--host", "0.0.0.0", "--port", "8000"]
+    command: >
+      /bin/sh -c "
+      python manage.py migrate &&
+      uvicorn api.asgi:application --host 0.0.0.0 --port 8000"    
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/healthcheck/health/"]
-      interval: 10s
-      timeout: 60s
-      retries: 20
-      start_period: 10s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   web:
     build:
@@ -140,9 +149,10 @@ services:
           "CMD-SHELL",
           "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -h $${POSTGRES_HOST} -p $${POSTGRES_PORT}",
         ]
-      interval: 2s
-      timeout: 5s
-      retries: 10
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   create_hatchet_db:
     build:
@@ -162,10 +172,10 @@ services:
       - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
+      interval: 30s
       timeout: 10s
-      retries: 5
-
+      retries: 3
+      start_period: 60s
   minio:
     image: minio/minio
     command: server --address 0.0.0.0:9000 /data --console-address ":9001"
@@ -206,9 +216,10 @@ services:
       DEV: "true"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://hatchet-lite:8733/ready"]
-      interval: 10s
+      interval: 30s
       timeout: 10s
-      retries: 5
+      retries: 3
+      start_period: 60s
     volumes:
       - "hatchet_lite_rabbitmq_data:/var/lib/rabbitmq"
       - ".hatchetconfig:/config"
@@ -229,6 +240,9 @@ services:
   worker:
     <<: *common-backend
     command: ["python", "workflows/main.py"]
+    depends_on:
+      api:
+        condition: service_healthy
 
   ready:
     image: busybox:latest

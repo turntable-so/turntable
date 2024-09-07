@@ -1,9 +1,8 @@
-from .auth import (
+from .user import (
     User,
     UserManager,
-    Workspace,
-    WorkspaceGroup,
 )
+from .workspace import Workspace, WorkspaceGroup
 from .git_connections import GithubInstallation, SSHKey
 from .metadata import (
     Asset,
@@ -16,6 +15,7 @@ from .metadata import (
 from .notebook import Block, Notebook
 from .resources import (
     BigqueryDetails,
+    DatabricksDetails,
     DataFileDetails,
     DBTCloudDetails,
     DBTCoreDetails,

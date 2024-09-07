@@ -5,7 +5,6 @@ import os
 import traceback
 from typing import Any, Callable, Literal
 
-import django
 import duckdb
 import ibis
 import networkx as nx
@@ -16,21 +15,25 @@ from datahub.metadata.com.linkedin.pegasus2avro.assertion import (
 )
 from datahub.metadata.urns import ChartUrn, DashboardUrn, DatasetUrn, SchemaFieldUrn
 from datahub.utilities.urns.error import InvalidUrnError
+from django.db import transaction
 from django.forms.models import model_to_dict
 from sqlglot import Expression, exp
 from sqlglot.errors import ParseError
 
-from app.models import Asset, Resource, ResourceType
-from app.utils.database import delete_and_upsert
+from app.models import (
+    Asset,
+    AssetError,
+    AssetLink,
+    Column,
+    ColumnLink,
+    Resource,
+    ResourceType,
+)
+from app.utils.database import pg_delete_and_upsert
 from vinyl.lib.errors import VinylError, VinylErrorType
 from vinyl.lib.schema import VinylSchema
 from vinyl.lib.sqlast import SQLAstNode
 from vinyl.lib.utils.graph import nx_remove_node_and_reconnect
-
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "api.settings")
-django.setup()
-
-from app.models import AssetError, AssetLink, Column, ColumnLink
 
 _STR_JOIN_HELPER = "_____"
 
@@ -368,7 +371,7 @@ class SchemaParser(DataHubDBParserBase):
         dbt_info, db_info = info_list
         workspace_id = list(self.asset_dict.values())[
             0
-        ].workspace_id  # all assets have the same tenant id
+        ].workspace_id  # all assets have the same workspace id
         for info in dbt_info:
             if "fields" in info:
                 for field in info["fields"]:
@@ -434,6 +437,7 @@ class LineageParser(DataHubDBParserBase):
                                     self.column_graph.add_edge(
                                         upstream_field,
                                         downstream_field,
+                                        key=0,  # ensures no duplicate edges
                                         confidence_score=confidence_score,
                                     )
 
@@ -812,6 +816,9 @@ class DataHubDBParser:
                 parser = cls(
                     row_dict=self.input_dict,
                     asset_dict=self.asset_dict,
+                    column_dict=self.column_dict,
+                    asset_graph=nx.DiGraph(),  # make sure to reset graph, not quite sure why this is necessary, but it is.
+                    column_graph=nx.MultiDiGraph(),  # make sure to reset graph
                     dialect=self.dialect,
                     is_db=self.is_db,
                 )
@@ -874,9 +881,32 @@ class DataHubDBParser:
 
         ### if explicit resource doesn't exist (e.g. is dbt), use the resource that was passed in
         resource_it = all_resource_dict.get(resource_name, resource)
-        return Asset(id=id, name=asset_name, type=asset_type, resource=resource_it)
+        return Asset(
+            id=id,
+            name=asset_name,
+            type=asset_type,
+            resource=resource_it,
+            workspace_id=resource_it.workspace.id,
+            is_indirect=True,
+        )
 
     @classmethod
+    def _delete_unused_indirect_instances(cls, type: Literal["asset", "column"]):
+        root_table = Asset if type == "asset" else Column
+        link_table = AssetLink if type == "asset" else ColumnLink
+        to_delete = []
+        source_ids = set()
+        target_ids = set()
+        for assetlink in link_table.objects.all():
+            source_ids.add(assetlink.source_id)
+            target_ids.add(assetlink.target_id)
+        for asset in root_table.objects.filter(is_indirect=True):
+            if asset.id not in source_ids and asset.id not in target_ids:
+                to_delete.append(asset.id)
+        root_table.objects.filter(id__in=to_delete).delete()
+
+    @classmethod
+    @transaction.atomic
     def combine_and_upload(cls, parsers: list[DataHubDBParser], resource: Resource):
         combined = cls.combine(parsers, resource)
         all_resource_dict = {
@@ -901,22 +931,33 @@ class DataHubDBParser:
             [v.source_id for v in combined["column_links"]]
             + [v.target_id for v in combined["column_links"]]
         ) - set([v.id for v in combined["columns"]])
+        asset_dict = {v.id: v for v in [*combined["assets"], *indirect_assets]}
         for column_id in columns_to_add:
             parsed = SchemaFieldUrn.from_string(column_id)
             asset_id = parsed.parent
-            if asset_id not in combined["assets"] and asset_id not in indirect_assets:
+            if asset_id not in asset_dict:
                 asset = cls._get_indirect_asset(asset_id, all_resource_dict, resource)
                 indirect_assets.append(asset)
+                asset_dict[asset_id] = asset
+            else:
+                asset = asset_dict[asset_id]
             column = Column(
                 id=column_id,
                 asset_id=asset_id,
                 name=parsed.field_path,
                 nullable=True,
+                workspace_id=asset.workspace.id,
+                is_indirect=True,
             )
             indirect_columns.append(column)
 
-        delete_and_upsert(combined["assets"], resource, indirect_assets)
-        delete_and_upsert(combined["asset_errors"], resource)
-        delete_and_upsert(combined["asset_links"], resource)
-        delete_and_upsert(combined["columns"], resource, indirect_columns)
-        delete_and_upsert(combined["column_links"], resource)
+        # upload the data to the db
+        pg_delete_and_upsert(combined["assets"], resource, indirect_assets)
+        pg_delete_and_upsert(combined["asset_errors"], resource)
+        pg_delete_and_upsert(combined["asset_links"], resource)
+        pg_delete_and_upsert(combined["columns"], resource, indirect_columns)
+        pg_delete_and_upsert(combined["column_links"], resource)
+
+        # cleanup unconnected indirects
+        cls._delete_unused_indirect_instances("asset")
+        cls._delete_unused_indirect_instances("column")

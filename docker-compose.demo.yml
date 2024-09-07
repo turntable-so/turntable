@@ -5,14 +5,18 @@ x-postgres-test-db-credentials: &postgres-test-db-credentials
   POSTGRES_HOST: postgres_test_db
   POSTGRES_PORT: 5432
 
-name: demo
+name: turntable-demo
 
 services:
   api:
     extends:
       file: docker-compose.yml
       service: api
-    entrypoint: ["/code/entrypoint-dev.sh"]
+    command: >
+      /bin/sh -c "
+      python manage.py migrate &&
+      python manage.py seed_data &&
+      uvicorn api.asgi:application --host 0.0.0.0 --port 8000"   
     depends_on:
       ensure_populate_test_db:
         condition: service_completed_successfully
@@ -85,14 +89,16 @@ services:
           "CMD-SHELL",
           "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -h $${POSTGRES_HOST} -p $${POSTGRES_PORT}",
         ]
-      interval: 2s
-      timeout: 5s
-      retries: 10
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   populate_postgres_test_db:
     build:
       context: backend/fixtures/test_resources/jaffle_shop
       dockerfile: Dockerfile
+    command: ["./populate_db.sh"]
     environment:
       <<: [*postgres-test-db-credentials]
     depends_on:
@@ -119,10 +125,11 @@ services:
       MB_JETTY_PORT: 4000 # prevents port conflict with other services
     healthcheck:
       test: curl --fail -I http://localhost:4000/api/health || exit 1
-      interval: 15s
-      timeout: 5s
-      retries: 10
-  
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
   ready:
     extends:
       file: docker-compose.yml
@@ -139,5 +146,5 @@ volumes:
 
 networks:
   default:
-    name: app_network
+    name: app_network_demo
     driver: bridge

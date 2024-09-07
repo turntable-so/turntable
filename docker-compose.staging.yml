@@ -1,0 +1,158 @@
+x-postgres-credentials: &postgres-credentials
+  DATABASE_URL: ${DATABASE_URL}
+  LOCAL_DB: "false"
+
+x-storage-credentials: &storage-credentials
+  AWS_S3_ACCESS_KEY_ID: 7da6b70347021428b74fa7620eee08ec
+  AWS_S3_SECRET_ACCESS_KEY: aef61d57ecf7dcf4de07d863d265bd23db8982265bcf13738c76b1ed5bd08d08
+  AWS_S3_ENDPOINT_URL: https://uknnswxmayalzancjxhg.supabase.co/storage/v1/s3
+  AWS_S3_REGION_NAME: us-west-1
+  AWS_STORAGE_BUCKET_NAME: artifacts-staging
+
+
+x-hatchet-credentials: &hatchet-credentials
+  SERVER_TASKQUEUE_RABBITMQ_URL: null
+  SERVER_AUTH_COOKIE_DOMAIN: null
+  SERVER_AUTH_COOKIE_INSECURE: null
+  SERVER_GRPC_BIND_ADDRESS: null
+  SERVER_GRPC_INSECURE: null
+  SERVER_GRPC_BROADCAST_ADDRESS: null
+  SERVER_GRPC_PORT: null
+  SERVER_URL: null
+  SERVER_AUTH_SET_EMAIL_VERIFIED: null
+  SERVER_LOGGER_LEVEL: null
+  SERVER_LOGGER_FORMAT: null
+  HATCHET_CLIENT_NAMESPACE: null
+  HATCHET_CLIENT_TLS_STRATEGY: null
+  HATCHET_CLIENT_TOKEN: ${HATCHET_CLIENT_TOKEN}
+
+name: turntable-staging
+
+# Define services
+services:
+  api:
+    extends:
+      file: docker-compose.dev-internal.yml
+      service: api
+    build:
+      args:
+        - ENV=staging
+    command: >
+      /bin/sh -c "
+      python manage.py migrate &&
+      python manage.py seed_data_staging &&
+      uvicorn api.asgi:application --host 0.0.0.0 --port 8000 --reload"
+    environment:
+      <<: [*postgres-credentials, *storage-credentials, *hatchet-credentials]
+
+  web:
+    extends:
+      file: docker-compose.dev-internal.yml
+      service: web
+
+  worker:
+    extends:
+      file: docker-compose.dev-internal.yml
+      service: worker
+    environment:
+      <<: [*postgres-credentials, *storage-credentials, *hatchet-credentials]
+    depends_on:
+      api:
+        condition: service_healthy
+
+  # use internal redis due to issues connecting to external redis
+  redis:
+    extends:
+      file: docker-compose.dev-internal.yml
+      service: redis
+
+  # Test resources
+  postgres_test_db:
+    extends:
+      file: docker-compose.dev-internal.yml
+      service: postgres_test_db
+
+  populate_postgres_test_db:
+    extends:
+      file: docker-compose.dev-internal.yml
+      service: populate_postgres_test_db
+
+  ensure_populate_test_db:
+    extends:
+      file: docker-compose.dev-internal.yml
+      service: ensure_populate_test_db
+
+  metabase:
+    extends:
+      file: docker-compose.dev-internal.yml
+      service: metabase
+
+  # Disabled services -- needed because they are dependencies in upstream docker compose yml file.
+  postgres:
+    extends:
+      file: docker-compose.dev-internal.yml
+      service: postgres
+    command: /bin/sh -c "echo 'Service postgres disabled' && sleep 240"
+    restart: always
+    healthcheck:
+      test: ["CMD", "true"]
+      interval: 10s
+      start_period: 20s
+      timeout: 5s
+      retries: 10
+
+  createbuckets:
+    extends:
+      file: docker-compose.dev-internal.yml
+      service: createbuckets
+    entrypoint: ["echo", "Service createbuckets disabled"]
+  
+  minio:
+    extends:
+      file: docker-compose.dev-internal.yml
+      service: minio
+    entrypoint: ["echo", "Service minio disabled"]
+    restart: no
+
+  hatchet-lite:
+    extends:
+      file: docker-compose.dev-internal.yml
+      service: hatchet-lite
+    command: /bin/sh -c "echo 'Service hatchet-lite disabled' && sleep 240"
+    healthcheck:
+      test: ["CMD", "true"]
+      interval: 10s
+      start_period: 20s
+      timeout: 5s
+      retries: 10
+
+  setup-hatchet:
+    extends:
+      file: docker-compose.dev-internal.yml
+      service: setup-hatchet
+    entrypoint: ["echo", "Service setup-hatchet disabled"]
+    restart: no
+
+  
+  create_hatchet_db:
+    extends:
+      file: docker-compose.dev-internal.yml
+      service: create_hatchet_db
+    entrypoint: ["echo", "Service create_hatchet_db disabled"]
+    restart: no
+
+
+volumes:
+  postgres_data:
+  minio_data:
+  hatchet_lite_rabbitmq_data:
+  hatchet_lite_config:
+  hatchet_credentials_handoff:
+  postgres_test_db_data:
+  frontend_data:
+
+
+networks:
+  default:
+    name: app_network_staging
+    driver: bridge

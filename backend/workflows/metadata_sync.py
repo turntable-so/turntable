@@ -3,7 +3,8 @@ import tempfile
 from hatchet_sdk import Context
 
 from app.core.e2e import DataHubDBParser
-from app.models import Resource, ResourceSubtype
+from app.models import Resource
+from app.models.resources import ResourceSubtype
 from workflows.hatchet import hatchet
 from workflows.utils.log import inject_workflow_run_logging
 
@@ -15,6 +16,7 @@ class MetadataSyncWorkflow:
     input structure:
         {
             resource_id: str,
+            workunits: Optional[int],
             use_ai: bool
         }
     """
@@ -29,7 +31,11 @@ class MetadataSyncWorkflow:
     @hatchet.step(timeout="120m", parents=["prepare_dbt_repos"])
     def ingest_metadata(self, context: Context):
         resource = Resource.objects.get(id=context.workflow_input()["resource_id"])
-        resource.details.run_datahub_ingest()
+        workunits = context.workflow_input().get("workunits")
+        workflow_run_id = context.workflow_run_id()
+        resource.details.run_datahub_ingest(
+            workflow_run_id=workflow_run_id, workunits=workunits
+        )
 
     @hatchet.step(timeout="120m", parents=["ingest_metadata"])
     def process_metadata(self, context: Context):

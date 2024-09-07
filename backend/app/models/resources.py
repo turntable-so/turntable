@@ -14,7 +14,7 @@ from django.core.files import File
 from django.db import models
 from polymorphic.models import PolymorphicModel
 
-from app.models.auth import Workspace
+from app.models.workspace import Workspace
 from app.models.git_connections import GithubInstallation
 from app.services.code_repo_service import CodeRepoService
 from app.services.github_service import GithubService
@@ -22,6 +22,7 @@ from app.utils.fields import encrypt
 from vinyl.lib.connect import (
     BigQueryConnector,
     DatabaseFileConnector,
+    DatabricksConnector,
     PostgresConnector,
     SnowflakeConnector,
 )
@@ -49,6 +50,7 @@ class ResourceSubtype(models.TextChoices):
     BIGQUERY = "bigquery", "BigQuery"
     SNOWFLAKE = "snowflake", "Snowflake"
     POSTGRES = "postgres", "Postgres"
+    DATABRICKS = "databricks", "Databricks"
     DUCKDB = "duckdb", "File"
     FILE = "file", "File"
     DBT = "dbt", "Dbt"
@@ -68,10 +70,10 @@ def get_sync_config(db_path):
 
 @contextmanager
 def repo_path(obj):
-    github_repo_id = getattr(obj, "github_repo_id")
-    github_installation_id = getattr(obj, "github_installation_id")
+    github_repo_id = getattr(obj, "github_repo_id", None)
+    github_installation_id = getattr(obj, "github_installation_id", None)
     project_path = getattr(obj, "project_path")
-    git_repo_url = getattr(obj, "git_repo_url")
+    git_repo_url = getattr(obj, "git_repo_url", None)
     if git_repo_url is not None:
         deploy_key = getattr(obj, "deploy_key")
         coderepo_service = CodeRepoService(obj.resource.workspace.id)
@@ -155,6 +157,26 @@ class Resource(models.Model):
         return dbt_resource
 
 
+class WorkflowRun(models.Model):
+    id = models.UUIDField(primary_key=True)
+    status = models.TextField(choices=WorkflowStatus.choices, null=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+    resource = models.ForeignKey(
+        "Resource", on_delete=models.CASCADE, null=True, related_name="workflow_runs"
+    )
+
+
+class IngestError(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    workflow_run = models.ForeignKey(
+        "WorkflowRun", on_delete=models.CASCADE, null=True, related_name="ingest_errors"
+    )
+    command = models.TextField(null=True)
+    error = models.JSONField(null=True)
+
+
 class ResourceDetails(PolymorphicModel):
     name = models.CharField(max_length=255, blank=False)
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
@@ -182,6 +204,15 @@ class ResourceDetails(PolymorphicModel):
     @property
     def test_number_of_entries(self) -> int:
         return 3
+
+    def db_config_paths(self, temp_dir: str):
+        db_path = os.path.join(
+            temp_dir, f"{self.resource.id}_{self.datahub_db_nickname}.duckdb"
+        )
+        config_path = os.path.join(
+            temp_dir, f"{self.resource.id}_{self.datahub_db_nickname}.yml"
+        )
+        return db_path, config_path
 
     def get_venv_python(self):
         # only works on unix
@@ -222,7 +253,12 @@ class ResourceDetails(PolymorphicModel):
         ]
         run_and_capture_subprocess(command, check=True)
 
-    def _run_datahub_ingest_base(self, test=False):
+    def _run_datahub_ingest_base(
+        self,
+        test: bool = False,
+        workunits: int | None = None,
+        tolerate_errors: bool = True,
+    ):
         self.create_venv_and_install_datahub()
 
         # run ingest test
@@ -246,12 +282,12 @@ class ResourceDetails(PolymorphicModel):
                         "-c",
                         path,
                     ]
-                    if test:
+                    if workunits is not None:
                         command.extend(
                             [
                                 "--preview",
                                 "--preview-workunits",
-                                str(self.test_number_of_entries),
+                                str(workunits),
                             ]
                         )
                     process = run_and_capture_subprocess(command)
@@ -273,34 +309,53 @@ class ResourceDetails(PolymorphicModel):
                                     "error_message": match.group("message"),
                                 }
                             )
-            if len(errors) > 0:
-                return {"success": False, "command": command, "errors": errors}
-            elif not test:
+            if not test and (len(errors) == 0 or tolerate_errors):
                 with open(db_path, "rb") as f:
                     self.resource.datahub_db.save(
                         os.path.basename(db_path), File(f), save=True
                     )
+        if len(errors) > 0:
+            return {"success": False, "command": command, "errors": errors}
         return {"success": True, "command": command}
 
-    def run_datahub_ingest(self):
-        result = self._run_datahub_ingest_base()
+    def run_datahub_ingest(
+        self,
+        workflow_run_id: str,
+        workunits: int | None = None,
+        tolerate_errors: bool = True,
+    ):
+        result = self._run_datahub_ingest_base(
+            workunits=workunits, tolerate_errors=tolerate_errors
+        )
         if not result["success"]:
-            raise Exception(
-                {
-                    "message": "Datahub ingest failed",
-                    "command": result["command"],
-                    "errors": result["errors"],
-                }
-            )
+            ingest_errors = [
+                IngestError(
+                    workflow_run_id=workflow_run_id,
+                    command=result["command"],
+                    error=error,
+                )
+                for error in result["errors"]
+            ]
+            IngestError.objects.bulk_create(ingest_errors)
+            if not tolerate_errors:
+                raise Exception(
+                    {
+                        "message": "Datahub ingest failed",
+                        "command": result["command"],
+                        "errors": result["errors"],
+                    }
+                )
+        return result
 
     def test_datahub_connection(self):
-        return self._run_datahub_ingest_base(test=True)
+        return self._run_datahub_ingest_base(
+            test=True, workunits=self.test_number_of_entries
+        )
 
     def test_db_connection(self):
         try:
             connector = self.get_connector()
-            conn = connector._connect()
-            query = conn.raw_sql("SELECT 1").fetchone()[0]
+            query = connector.sql_to_df("SELECT 1").iloc[0].iloc[0]
             if query != 1:
                 raise Exception("Query did not return expected value")
             return {"success": True}
@@ -317,8 +372,7 @@ class ResourceDetails(PolymorphicModel):
     @contextmanager
     def datahub_yaml_path(self):
         with tempfile.TemporaryDirectory() as temp_dir:
-            db_path = os.path.join(temp_dir, self.datahub_db_nickname + ".duckdb")
-            config_path = os.path.join(temp_dir, self.datahub_db_nickname + ".yml")
+            db_path, config_path = self.db_config_paths(temp_dir)
             # add in dbt configs to same ingest
             config = self.get_datahub_config(db_path)
             with open(config_path, "w") as f:
@@ -401,8 +455,7 @@ class LookerDetails(ResourceDetails):
     @contextmanager
     def datahub_yaml_path(self):
         with tempfile.TemporaryDirectory() as temp_dir:
-            db_path = os.path.join(temp_dir, self.datahub_db_nickname + ".duckdb")
-            config_path = os.path.join(temp_dir, self.datahub_db_nickname + ".yml")
+            db_path, config_path = self.db_config_paths(temp_dir)
             config = self.get_datahub_config(db_path)
             with open(config_path, "w") as f:
                 yaml.dump(config, f)
@@ -440,8 +493,7 @@ class MetabaseDetails(ResourceDetails):
     @contextmanager
     def datahub_yaml_path(self):
         with tempfile.TemporaryDirectory() as temp_dir:
-            db_path = os.path.join(temp_dir, self.datahub_extras[0] + ".duckdb")
-            config_path = os.path.join(temp_dir, self.datahub_extras[0] + ".yml")
+            db_path, config_path = self.db_config_paths(temp_dir)
             config = {
                 "source": {
                     "type": "metabase",
@@ -583,6 +635,10 @@ class DBDetails(ResourceDetails):
     def allows_db_exclusions(self):
         return False
 
+    @property
+    def schema_terminology(self):
+        return "schema"
+
     def get_dbt_profile_contents(self, dbt_core_resource: DBTCoreDetails):
         pass
 
@@ -630,8 +686,7 @@ class DBDetails(ResourceDetails):
     @contextmanager
     def datahub_yaml_path(self):
         with tempfile.TemporaryDirectory() as temp_dir:
-            db_path = os.path.join(temp_dir, self.datahub_db_nickname + ".duckdb")
-            config_path = os.path.join(temp_dir, self.datahub_db_nickname + ".yml")
+            db_path, config_path = self.db_config_paths(temp_dir)
             # add in dbt configs to same ingest, only supports dbt core for now
             dbt_resources: list[DBTCoreDetails] = list(
                 self.resource.dbtresource_set.all()
@@ -639,14 +694,28 @@ class DBDetails(ResourceDetails):
             with self.dbt_datahub_yml_paths(dbt_resources, db_path) as dbt_yaml_paths:
                 config = self.get_datahub_config(db_path)
                 self.add_patterns_to_datahub_config(config)
-                schema_pattern = config["source"]["config"].get("schema_pattern", {})
+                base_config = config["source"]["config"]
+                schema_pattern = base_config.get("schema_pattern", {})
                 allow_list = schema_pattern.get("allow")
                 # add dbt schemas to allow list if not pulling from all schemas
                 if allow_list is not None:
+                    schema_pattern.setdefault("allow", [])
                     for dbt in dbt_resources:
                         schema_pattern["allow"].append(dbt.schema)
                         if dbt.other_schemas is not None:
                             schema_pattern["allow"].extend(dbt.other_schemas)
+                        schema_pattern["allow"] = list(set(schema_pattern["allow"]))
+
+                # use dataset terminology if appropriate
+                if (
+                    self.schema_terminology != "schema"
+                    and "schema_pattern" in base_config
+                ):
+                    base_config[f"{self.schema_terminology}_pattern"] = base_config.pop(
+                        "schema_pattern"
+                    )
+
+                # save and yield the config file
                 with open(config_path, "w") as f:
                     yaml.dump(config, f)
                 yield [config_path, *dbt_yaml_paths], db_path
@@ -729,11 +798,9 @@ class BigqueryDetails(DBDetails):
                 raise ValidationError("Invalid JSON in service_account")
         return self.service_account
 
-    def save(self, *args, **kwargs):
-        # ensure service account is saved as a JSON string
-        if isinstance(self.service_account, dict):
-            self.service_account = json.dumps(self.service_account)
-        super().save(*args, **kwargs)
+    @property
+    def schema_terminology(self):
+        return "dataset"
 
     @property
     def venv_path(self):
@@ -744,9 +811,11 @@ class BigqueryDetails(DBDetails):
         return ["bigquery", "dbt"]
 
     def get_connector(self):
+        project_id = self.service_account_dict.get("project_id")
+        assert project_id, "project_id is required in service_account"
         return BigQueryConnector(
             service_account_info=self.service_account_dict,
-            tables=[f"{self.service_account_dict['project']}.*.*"],
+            tables=[f"{self.service_account_dict['project_id']}.*.*"],
         )
 
     def get_datahub_config(self, db_path):
@@ -852,6 +921,67 @@ class SnowflakeDetails(DBDetails):
         }
 
 
+class DatabricksDetails(DBDetails):
+    subtype = models.CharField(max_length=255, default=ResourceSubtype.DATABRICKS)
+    host = encrypt(models.CharField(max_length=255, blank=False))
+    token = encrypt(models.CharField(max_length=255, blank=False))
+    http_path = encrypt(models.CharField(max_length=255, blank=False))
+
+    @property
+    def venv_path(self):
+        return ".databricksvenv"
+
+    @property
+    def datahub_extras(self):
+        return ["databricks", "dbt"]
+
+    @property
+    def schema_terminology(self):
+        return "catalog"
+
+    def get_connector(self):
+        return DatabricksConnector(
+            host=self.host,
+            token=self.token,
+            http_path=self.http_path,
+            tables=["*.*.*"],
+        )
+
+    def get_datahub_config(self, db_path):
+        return {
+            "source": {
+                "type": "databricks",
+                "config": {
+                    "start_time": f"-{self.lookback_days}d",
+                    "workspace_url": f"https://{self.host}",
+                    "token": self.token,
+                    "warehouse_id": self.http_path.split("/")[-1],
+                    "include_table_lineage": False,
+                    "include_table_location_lineage": False,
+                    "include_view_lineage": False,
+                    "include_view_column_lineage": False,
+                    "include_usage_statistics": False,
+                },
+            },
+            "sink": get_sync_config(db_path),
+        }
+
+    def get_dbt_profile_contents(self, dbt_core_resource: DBTCoreDetails):
+        return {
+            "target": "prod",
+            "outputs": {
+                "prod": {
+                    "type": "databricks",
+                    "token": self.token,
+                    "host": self.host,
+                    "http_path": self.http_path,
+                    "catalog": dbt_core_resource.database,
+                    "schema": dbt_core_resource.schema,
+                }
+            },
+        }
+
+
 class DuckDBDetails(DBDetails):
     subtype = models.CharField(max_length=255, default=ResourceSubtype.DUCKDB)
     # NOTE: only works for duckdb files in the docker container for now, not S3
@@ -894,14 +1024,3 @@ class DuckDBDetails(DBDetails):
 class DataFileDetails(ResourceDetails):
     subtype = models.CharField(max_length=255, default=ResourceSubtype.FILE)
     path = models.TextField(blank=False)
-
-
-class WorkflowRun(models.Model):
-    id = models.UUIDField(primary_key=True)
-    status = models.TextField(choices=WorkflowStatus.choices, null=False)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True, null=True)
-    resource = models.ForeignKey(
-        "Resource", on_delete=models.CASCADE, null=True, related_name="workflow_runs"
-    )

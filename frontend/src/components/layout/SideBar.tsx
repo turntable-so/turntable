@@ -2,7 +2,7 @@
 import useSession from "@/app/hooks/use-session";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Boxes, DatabaseZap, LogOut, Network, Settings, Users } from 'lucide-react';
+import { BookOpen, Boxes, DatabaseZap, FileBarChart, LogOut, Network, Settings, Users } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -51,6 +51,7 @@ export default function SideBar({ collapsed }: { collapsed: boolean }) {
     const MenuItems = [
         { title: 'Connections', path: '/connections', Icon: () => <DatabaseZap className='size-5' /> },
         { title: 'Assets', path: '/assets', Icon: () => <Boxes className='size-5' /> },
+        { title: 'Reports', path: '/notebooks', Icon: () => <FileBarChart className='size-5' /> },
         { title: 'Lineage', path: '/lineage', Icon: () => <Network className='size-5' /> },
         { title: 'Workspace', path: '/team', Icon: () => <Users className='size-5' /> },
         { title: 'Settings', path: '/settings', Icon: () => <Settings className='size-5' /> },
@@ -61,7 +62,7 @@ export default function SideBar({ collapsed }: { collapsed: boolean }) {
             <SearchDialog open={searchDialogOpen} setOpen={setSearchDialogOpen} />
             {collapsed ? (
                 <nav className="text-[15px] flex flex-col items-center space-y-4 mt-4">
-                    <Link href='/team'>
+                    <Link href='/workspaces'>
                         <div className='opacity-80 hover:opacity-100 text-ellipsis hover:cursor-pointer hover:bg-[#ebebeb] py-2 rounded-lg truncate  text-muted-foreground font flex items-center space-x-2 px-2'>
                             <Avatar className='border h-8 w-8 flex items-center justify-center bg-gray-400 rounded-sm'>
                                 <AvatarImage src={workspace.icon_url} />
@@ -122,7 +123,7 @@ export default function SideBar({ collapsed }: { collapsed: boolean }) {
                 </nav>
             ) : (
                 <nav className="text-[15px] flex flex-col space-y-4 mt-4 p-0 px-6 mb-2   w-[275px]">
-                    <Link href='/team'>
+                    <Link href='/workspaces'>
                         <div className='opacity-80 hover:opacity-100 text-ellipsis hover:cursor-pointer hover:bg-[#ebebeb] py-2 rounded-lg truncate  text-muted-foreground font flex items-center space-x-2 px-2'>
                             <div className='mr-1'>
                                 <Avatar className='border h-8 w-8 flex items-center justify-center bg-gray-400 rounded-sm'>

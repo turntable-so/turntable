@@ -1,0 +1,174 @@
+x-internal-credentials: &internal-credentials
+  STAGING_ADMIN_EMAIL: ${STAGING_ADMIN_EMAIL}
+  STAGING_ADMIN_PASSWORD: ${STAGING_ADMIN_PASSWORD}
+
+  BIGQUERY_1_WORKSPACE_ID: ${BIGQUERY_1_WORKSPACE_ID}
+  BIGQUERY_1_WORKSPACE_NAME: ${BIGQUERY_1_WORKSPACE_NAME}
+  BIGQUERY_1_RESOURCE_NAME: ${BIGQUERY_1_RESOURCE_NAME}
+  BIGQUERY_1_GOOGLE_APPLICATION_CREDENTIALS: ${BIGQUERY_1_GOOGLE_APPLICATION_CREDENTIALS}
+  
+  BIGQUERY_2_WORKSPACE_ID: ${BIGQUERY_2_WORKSPACE_ID}
+  BIGQUERY_2_WORKSPACE_NAME: ${BIGQUERY_2_WORKSPACE_NAME}
+  BIGQUERY_2_RESOURCE_NAME: ${BIGQUERY_2_RESOURCE_NAME}
+  BIGQUERY_2_USER_INFO: ${BIGQUERY_2_USER_INFO}
+  BIGQUERY_2_GOOGLE_APPLICATION_CREDENTIALS: ${BIGQUERY_2_GOOGLE_APPLICATION_CREDENTIALS}
+  BIGQUERY_2_SCHEMA_INCLUDE: ${BIGQUERY_2_SCHEMA_INCLUDE}
+
+  SNOWFLAKE_1_WORKSPACE_ID: ${SNOWFLAKE_1_WORKSPACE_ID}
+  SNOWFLAKE_1_WORKSPACE_NAME: ${SNOWFLAKE_1_WORKSPACE_NAME}
+  SNOWFLAKE_1_RESOURCE_NAME: ${SNOWFLAKE_1_RESOURCE_NAME}
+  SNOWFLAKE_1_ACCOUNT: ${SNOWFLAKE_1_ACCOUNT}
+  SNOWFLAKE_1_USER: ${SNOWFLAKE_1_USER}
+  SNOWFLAKE_1_PASSWORD: ${SNOWFLAKE_1_PASSWORD}
+  SNOWFLAKE_1_WAREHOUSE: ${SNOWFLAKE_1_WAREHOUSE}
+  SNOWFLAKE_1_ROLE: ${SNOWFLAKE_1_ROLE}
+
+  DATABRICKS_1_WORKSPACE_ID: ${DATABRICKS_1_WORKSPACE_ID}
+  DATABRICKS_1_WORKSPACE_NAME: ${DATABRICKS_1_WORKSPACE_NAME}
+  DATABRICKS_1_RESOURCE_NAME: ${DATABRICKS_1_RESOURCE_NAME}
+  DATABRICKS_1_HOST: ${DATABRICKS_1_HOST}
+  DATABRICKS_1_TOKEN: ${DATABRICKS_1_TOKEN}
+  DATABRICKS_1_HTTP_PATH: ${DATABRICKS_1_HTTP_PATH}
+
+  LOOKER_1_RESOURCE_NAME: ${LOOKER_1_RESOURCE_NAME}
+  LOOKER_1_GITHUB_INSTALLATION_ID: ${LOOKER_1_GITHUB_INSTALLATION_ID}
+  LOOKER_1_GITHUB_REPO_ID: ${LOOKER_1_GITHUB_REPO_ID}
+  LOOKER_1_URL: ${LOOKER_1_URL}
+  LOOKER_1_SECRET: ${LOOKER_1_SECRET}
+
+  DBT_1_GITHUB_INSTALLATION_ID: ${DBT_1_GITHUB_INSTALLATION_ID}
+  DBT_1_GITHUB_REPO_ID: ${DBT_1_GITHUB_REPO_ID}
+  DBT_1_DATABASE: ${DBT_1_DATABASE}
+  DBT_1_SCHEMA: ${DBT_1_SCHEMA}
+  DBT_1_VERSION: ${DBT_1_VERSION}
+
+  DBT_2_GITHUB_INSTALLATION_ID: ${DBT_2_GITHUB_INSTALLATION_ID}
+  DBT_2_GITHUB_REPO_ID: ${DBT_2_GITHUB_REPO_ID}
+  DBT_2_DATABASE: ${DBT_2_DATABASE}
+  DBT_2_SCHEMA: ${DBT_2_SCHEMA}
+  DBT_2_VERSION: ${DBT_2_VERSION}
+
+  DBT_3_GITHUB_INSTALLATION_ID: ${DBT_3_GITHUB_INSTALLATION_ID}
+  DBT_3_GITHUB_REPO_ID: ${DBT_3_GITHUB_REPO_ID}
+  DBT_3_DATABASE: ${DBT_3_DATABASE}
+  DBT_3_SCHEMA: ${DBT_3_SCHEMA}
+  DBT_3_VERSION: ${DBT_3_VERSION}
+
+  DBT_4_GITHUB_INSTALLATION_ID: ${DBT_4_GITHUB_INSTALLATION_ID}
+  DBT_4_GITHUB_REPO_ID: ${DBT_4_GITHUB_REPO_ID}
+  DBT_4_DATABASE: ${DBT_4_DATABASE}
+  DBT_4_SCHEMA: ${DBT_4_SCHEMA}
+  DBT_4_THREADS: ${DBT_4_THREADS}
+  DBT_4_VERSION: ${DBT_4_VERSION}
+  DBT_4_PROJECT_PATH: ${DBT_4_PROJECT_PATH}
+
+  DBT_5_DATABASE: ${DBT_5_DATABASE}
+  DBT_5_SCHEMA: ${DBT_5_SCHEMA}
+  DBT_5_VERSION: ${DBT_5_VERSION}
+  DBT_5_PROJECT_PATH: ${DBT_5_PROJECT_PATH}
+
+name: turntable-dev-internal
+
+services:
+  api:
+    extends:
+      file: docker-compose.dev.yml
+      service: api
+    build:
+      args:
+        - ENV=dev-internal
+    command: >
+      /bin/sh -c "
+      python manage.py migrate &&
+      python manage.py seed_data &&
+      python manage.py seed_data_staging &&
+      uvicorn api.asgi:application --host 0.0.0.0 --port 8000 --reload"
+    environment:
+      <<: *internal-credentials
+
+  web:
+    extends:
+      file: docker-compose.dev.yml
+      service: web
+
+  redis:
+    extends:
+      file: docker-compose.dev.yml
+      service: redis
+
+  postgres:
+    extends:
+      file: docker-compose.dev.yml
+      service: postgres
+
+  create_hatchet_db:
+    extends:
+      file: docker-compose.dev.yml
+      service: create_hatchet_db
+
+  minio:
+    extends:
+      file: docker-compose.dev.yml
+      service: minio
+
+  createbuckets:
+    extends:
+      file: docker-compose.dev.yml
+      service: createbuckets
+
+  hatchet-lite:
+    extends:
+      file: docker-compose.dev.yml
+      service: hatchet-lite
+
+  setup-hatchet:
+    extends:
+      file: docker-compose.dev.yml
+      service: setup-hatchet
+
+  worker:
+    extends:
+      file: docker-compose.dev.yml
+      service: worker
+    environment:
+      <<: *internal-credentials
+      
+  ## Test resources
+  postgres_test_db:
+    extends:
+      file: docker-compose.dev.yml
+      service: postgres_test_db
+
+  populate_postgres_test_db:
+    extends:
+      file: docker-compose.dev.yml
+      service: populate_postgres_test_db
+
+  ensure_populate_test_db:
+    extends:
+      file: docker-compose.dev.yml
+      service: ensure_populate_test_db
+
+  metabase:
+    extends:
+      file: docker-compose.dev.yml
+      service: metabase
+
+  ready:
+    extends:
+      file: docker-compose.dev.yml
+      service: ready
+
+volumes:
+  postgres_data:
+  minio_data:
+  hatchet_lite_rabbitmq_data:
+  hatchet_lite_config:
+  hatchet_credentials_handoff:
+  postgres_test_db_data:
+  frontend_data:
+
+networks:
+  default:
+    name: app_network_dev_internal
+    driver: bridge
