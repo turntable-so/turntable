@@ -20,7 +20,7 @@ export default function DatabricksPage() {
             }}>
                 <ChevronLeft className='size-5' />
                 <div className='flex items-center space-x-2'>
-                    <DatabricksLogo />
+                    <DatabricksLogo width={24} height={24} />
                     <div>Create a Databricks connection</div>
                 </div>
             </Button>
