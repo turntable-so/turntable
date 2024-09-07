@@ -6,7 +6,7 @@ from .invitation_views import InvitationViewSet
 from .lineage_views import LineageViewSet
 from .notebook_views import NotebookViewSet
 from .query_views import ExecuteQueryView
-from .resource_views import ResourceViewSet, SyncResourceView
+from .resource_views import ResourceViewSet, SyncResourceView, TestResourceView
 from .ssh_views import SSHViewSet
 from .workflow_views import WorkflowViews
 from .workspace_group_views import WorkspaceGroupViewSet
