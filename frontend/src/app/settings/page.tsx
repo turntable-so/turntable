@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import FullWidthPageLayout from "../../components/layout/FullWidthPageLayout";
 
 export default async function SettingsPage() {
