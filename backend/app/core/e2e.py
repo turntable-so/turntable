@@ -22,6 +22,7 @@ from sqlglot.errors import ParseError
 
 from app.models import (
     Asset,
+    AssetContainer,
     AssetError,
     AssetLink,
     Column,
@@ -86,6 +87,7 @@ class DataHubDBParserBase:
         self,
         row_dict: dict[str, dict[str, Any]] = {},
         asset_dict: dict[str, Asset] = {},
+        container_dict: dict[str, AssetContainer] = {},
         column_dict: dict[str, Column] = {},
         asset_graph: nx.DiGraph = nx.DiGraph(),
         column_graph: nx.MultiDiGraph = nx.MultiDiGraph(),
@@ -94,6 +96,7 @@ class DataHubDBParserBase:
     ):
         self.row_dict = row_dict
         self.asset_dict = asset_dict
+        self.container_dict = container_dict
         self.column_dict = column_dict
         self.asset_graph = asset_graph
         self.column_graph = column_graph
@@ -114,6 +117,7 @@ class DataHubDBParserBase:
         return {
             "row_dict": self.row_dict,
             "asset_dict": self.asset_dict,
+            "container_dict": self.container_dict,
             "column_dict": self.column_dict,
             "asset_graph": self.asset_graph,
             "column_graph": self.column_graph,
@@ -124,6 +128,56 @@ class DataHubDBParserBase:
     def assets_as_dict(self):
         for asset in self.asset_dict.values():
             yield model_to_dict(asset)
+
+
+class ContainerParser(DataHubDBParserBase):
+    def parse(self):
+        # get core info
+        for k, v in self.row_dict.items():
+            if "containerProperties" in v:
+                info = v.get("containerProperties", [{}])[0]
+                custom_info = info.get("customProperties", {})
+                type = v.get("subTypes", [{}])[0].get("typeNames", [None])[
+                    0
+                ]  # assume first type is the most important
+                type = self.correct_type(type)
+                # adjust type to be more uniform
+                self.container_dict[k] = AssetContainer(
+                    id=k,
+                    name=info.get("name") or custom_info.get("name"),
+                    type=type,
+                    description=custom_info.get("description"),
+                )
+
+    def correct_type(self, type):
+        type = type.lower()
+        if self.dialect == "databricks":
+            if type == "catalog":
+                return AssetContainer.AssetContainerType.DATABASE
+        elif self.dialect == "bigquery":
+            if type == "project":
+                return AssetContainer.AssetContainerType.DATABASE
+            elif type == "dataset":
+                return AssetContainer.AssetContainerType.SCHEMA
+
+        return AssetContainer.AssetContainerType[type.upper()]
+
+
+class ContainerMembershipParser(DataHubDBParserBase):
+    def parse(self):
+        # get parent graph
+        container_graph = nx.DiGraph()
+        for k, v in self.row_dict.items():
+            if "container" in v and k in self.container_dict:
+                container = v["container"][0]["container"]
+                container_graph.add_edge(container, k)
+
+        for k, v in self.row_dict.items():
+            if "container" in v and k in self.asset_dict:
+                container = v["container"][0]["container"]
+                self.asset_dict[k].containers.add(
+                    container, *nx.ancestors(container_graph, container)
+                )
 
 
 # order of these parsers is important, do not reorder.
@@ -488,6 +542,7 @@ class DataHubDBParser:
     query: str = "select * from metadata_aspect_v2 where version = 1"
     input_dict: dict[str, Any]
     asset_dict: dict[str, Asset]
+    container_dict: dict[str, AssetContainer]
     column_dict: dict[str, Column]
     asset_graph: nx.DiGraph
     column_graph: nx.MultiDiGraph
@@ -509,6 +564,7 @@ class DataHubDBParser:
         # initialize outputs
         self.input_dict = {}
         self.asset_dict = {}
+        self.container_dict = {}
         self.column_dict = {}
         self.asset_graph = nx.DiGraph()
         self.column_graph = nx.MultiDiGraph()
@@ -526,11 +582,13 @@ class DataHubDBParser:
         base_asset_dict = {}
         for row in self.get_data():
             id = row[0]
-            if self.exclude_node(id):
+            if self.exclude_node(id, full_exclusion=False):
                 continue
             self.input_dict.setdefault(id, {}).setdefault(row[1], []).append(
                 orjson.loads(row[3])
             )
+            if self.exclude_node(id):
+                continue
             base_asset_dict.setdefault(
                 id,
                 Asset(
@@ -550,8 +608,10 @@ class DataHubDBParser:
             self.asset_dict = base_asset_dict
 
     @classmethod
-    def exclude_node(cls, id: str):
-        if "urn:li:container" in id or "urn:li:tag" in id or "urn:li:assertion" in id:
+    def exclude_node(cls, id: str, full_exclusion: bool = True):
+        if "urn:li:tag" in id or "urn:li:assertion" in id:
+            return True
+        elif "urn:li:container" in id and full_exclusion:
             return True
         return False
 
@@ -649,6 +709,7 @@ class DataHubDBParser:
     def get_outputs(self):
         return {
             "assets": list(self.asset_dict.values()),
+            "asset_containers": list(self.container_dict.values()),
             "columns": list(self.column_dict.values()),
             "asset_links": self.asset_links,
             "column_links": self.column_links,
@@ -828,6 +889,7 @@ class DataHubDBParser:
 
         outputs = parser.get_outputs()
         self.asset_dict = outputs["asset_dict"]
+        self.container_dict = outputs["container_dict"]
         self.column_dict = outputs["column_dict"]
         self.asset_graph = outputs["asset_graph"]
         self.column_graph = outputs["column_graph"]
@@ -842,6 +904,7 @@ class DataHubDBParser:
         combined = DataHubDBParser(resource=resource)  # dummy resource
         for i, parser in enumerate(parsers):
             combined.asset_dict.update(parser.asset_dict)
+            combined.container_dict.update(parser.container_dict)
             combined.column_dict.update(parser.column_dict)
             combined.asset_graph = nx.compose(combined.asset_graph, parser.asset_graph)
             combined.column_graph = nx.compose(
@@ -952,11 +1015,15 @@ class DataHubDBParser:
             indirect_columns.append(column)
 
         # upload the data to the db
+        pg_delete_and_upsert(combined["asset_containers"], resource)
         pg_delete_and_upsert(combined["assets"], resource, indirect_assets)
         pg_delete_and_upsert(combined["asset_errors"], resource)
         pg_delete_and_upsert(combined["asset_links"], resource)
         pg_delete_and_upsert(combined["columns"], resource, indirect_columns)
         pg_delete_and_upsert(combined["column_links"], resource)
+
+        # cleanup unconnected asset containers
+        AssetContainer.objects.filter(assets=None).delete()
 
         # cleanup unconnected indirects
         cls._delete_unused_indirect_instances("asset")

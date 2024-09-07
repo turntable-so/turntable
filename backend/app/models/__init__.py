@@ -7,6 +7,7 @@ from .auth import (
 from .git_connections import GithubInstallation, SSHKey
 from .metadata import (
     Asset,
+    AssetContainer,
     AssetEmbedding,
     AssetError,
     AssetLink,

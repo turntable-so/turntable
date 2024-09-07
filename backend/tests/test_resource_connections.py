@@ -4,27 +4,6 @@ from app.models import Resource
 from app.utils.test_utils import require_env_vars
 
 
-@pytest.mark.django_db
-def test_datahub_connection(local_postgres: Resource, local_metabase: Resource):
-    mb = local_metabase.details.test_datahub_connection()
-    assert mb["success"], mb
-    lp = local_postgres.details.test_datahub_connection()
-    assert lp["success"], lp
-
-
-@pytest.mark.django_db
-def test_db_connection(local_postgres: Resource):
-    lp = local_postgres.details.test_db_connection()
-    assert lp["success"], lp
-
-
-DIALECT_DICT = {
-    "BIGQUERY_1_WORKSPACE_ID": {"fixture": "remote_bigquery", "db": True},
-    "SNOWFLAKE_1_WORKSPACE_ID": {"fixture": "remote_snowflake", "db": True},
-    "DATABRICKS_1_WORKSPACE_ID": {"fixture": "remote_databricks", "db": True},
-}
-
-
 def dialect_test_contents(resource: Resource, is_db: bool = True):
     dh = resource.details.test_datahub_connection()
     assert dh["success"], dh
@@ -34,6 +13,16 @@ def dialect_test_contents(resource: Resource, is_db: bool = True):
         assert db["success"], db
 
     return True
+
+
+@pytest.mark.django_db
+def test_postgres_connection(local_postgres: Resource):
+    assert dialect_test_contents(local_postgres)
+
+
+@pytest.mark.django_db
+def test_metabase_connection(local_metabase: Resource):
+    assert dialect_test_contents(local_metabase, is_db=False)
 
 
 @pytest.mark.django_db
