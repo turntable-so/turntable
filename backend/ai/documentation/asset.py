@@ -25,7 +25,7 @@ Rules:
 - Explain the purpose of the model and how it can be used in real-world applications.
 - Highlight the significant patterns and correlations that can be discovered in the data, as well as any key features.
 - Avoid first-person language like "we" and "us".
-- Where applicable, usse analogies or examples to clarify any technical terms or concepts.
+- Where applicable, use analogies or examples to clarify any technical terms or concepts.
 """
 
 COLUMN_SYSTEM_PROMPT = """
