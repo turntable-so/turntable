@@ -55,7 +55,7 @@ const FormSchema = z.discriminatedUnion("aiProvider", [
 export default function AICredentialsConfiguration() {
   const { user } = useSession();
   const role = user.workspace_groups.find(
-    (workspace) => workspace.workspace_id === user.current_workspace.id
+    (workspace: any) => workspace.workspace_id === user.current_workspace.id
   )?.name;
 
   const form = useForm<z.infer<typeof FormSchema>>({
