@@ -10,6 +10,10 @@ from django.db import models
 
 from app.services.storage_backends import PublicMediaStorage
 from app.models.user import User
+from app.utils.fields import encrypt
+
+def default_workspace_config():
+    return {'ai_provider': 'none'}
 
 
 class Workspace(models.Model):
@@ -21,6 +25,7 @@ class Workspace(models.Model):
     icon_file = models.ImageField(
         storage=PublicMediaStorage(), upload_to="assets/icons/", blank=True, null=True
     )
+    config = models.JSONField(default=default_workspace_config)
     users = models.ManyToManyField(User, related_name="workspaces")
 
     class Meta:
@@ -74,6 +79,11 @@ class Workspace(models.Model):
     def __str__(self) -> str:
         return self.name
 
+class WorkspaceSettings(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    workspace = models.OneToOneField(Workspace, on_delete=models.CASCADE, null=True, related_name="settings")
+    openai_api_key = encrypt(models.TextField(null=True))
+    anthropic_api_key = encrypt(models.TextField(null=True))
 
 class WorkspaceGroup(models.Model):
     name = models.CharField(max_length=255)

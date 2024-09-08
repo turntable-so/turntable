@@ -129,6 +129,18 @@ export async function switchWorkspace(workspaceId: string) {
   return data;
 }
 
+export async function updateWorkspaceSettings(workspaceId: string, payload: any) {
+  const response = await fetcher(`/workspaces/update_settings/`, {
+    cookies,
+    method: "PUT",
+    body: {
+      ...payload,
+      workspace_id: workspaceId
+    }
+  });
+  const data = await response.json();
+  return data;
+}
 
 export async function getGithubInstallations() {
   const response = await fetcher(`/github/`, {

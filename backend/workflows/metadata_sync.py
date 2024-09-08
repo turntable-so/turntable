@@ -54,13 +54,16 @@ class MetadataSyncWorkflow:
     @hatchet.step(timeout="120m", parents=["process_metadata"])
     def generate_ai_descriptions(self, context: Context):
         resource = Resource.objects.get(id=context.workflow_input()["resource_id"])
+        ai_provider = resource.workspace.config['ai_provider']
+        if ai_provider == 'none':
+            return
+
+        api_key = resource.workspace.settings.anthropic_api_key if ai_provider == 'anthropic' else resource.workspace.settings.openai_api_key
+
         assets = Asset.get_for_resource(resource)
 
-        # TODO: get AI provider from Workspace
         for asset in assets:
             if asset.type != 'model':
                 continue
 
-            print(f"Generating AI descriptions for {asset.name}")
-
-            generate_ai_completions(asset)
+            generate_ai_completions(asset, ai_provider, api_key)

@@ -2,7 +2,7 @@ from .user import (
     User,
     UserManager,
 )
-from .workspace import Workspace, WorkspaceGroup
+from .workspace import Workspace, WorkspaceGroup, WorkspaceSettings
 from .git_connections import GithubInstallation, SSHKey
 from .metadata import (
     Asset,

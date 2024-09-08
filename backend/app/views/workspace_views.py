@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 
 from api.serializers import WorkspaceDetailSerializer, WorkspaceSerializer
-from app.models import Workspace
+from app.models import Workspace, WorkspaceSettings
 import os
 
 minio_host = os.getenv("MINIO_HOST")
@@ -24,6 +24,7 @@ class WorkspaceViewSet(viewsets.ModelViewSet):
         user = request.user
         workspace = Workspace.objects.create(name=request.data["name"])
         workspace.add_admin(user)
+        workspace.settings = WorkspaceSettings.objects.create(workspace=workspace)
 
         workspace.save()
         if "icon_file" in request.data:
@@ -77,3 +78,22 @@ class WorkspaceViewSet(viewsets.ModelViewSet):
         user.switch_workspace(workspace)
         serializer = WorkspaceSerializer(workspace)
         return Response(serializer.data)
+
+
+    @action(detail=False, methods=["put"])
+    def update_settings(self, request):
+        workspace = Workspace.objects.get(id=request.data.get("workspace_id"))
+        ai_provider = request.data.get("ai_provider")
+        api_key = request.data.get("api_key")
+
+        workspace.config['ai_provider'] = ai_provider
+
+        if ai_provider == 'openai':
+            workspace.settings.openai_api_key = api_key
+        elif ai_provider == 'anthropic':
+            workspace.settings.anthropic_api_key = api_key
+
+        workspace.save()
+        workspace.settings.save()
+
+        return Response({})

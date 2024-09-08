@@ -30,7 +30,9 @@ import {
   CardHeader,
   CardTitle,
 } from "../../components/ui/card";
+import { updateWorkspaceSettings } from "../actions/actions";
 import useSession from "../hooks/use-session";
+import { toast } from "sonner";
 
 const NoAIProviderFormSchema = z.object({
   aiProvider: z.literal("none"),
@@ -54,20 +56,37 @@ const FormSchema = z.discriminatedUnion("aiProvider", [
 
 export default function AICredentialsConfiguration() {
   const { user } = useSession();
+
+  const currentWorkspace = user.current_workspace;
   const role = user.workspace_groups.find(
-    (workspace: { workspace_id: string }) => workspace.workspace_id === user.current_workspace.id
+    (workspace: { workspace_id: string }) =>
+      workspace.workspace_id === currentWorkspace.id
   )?.name;
+
+  console.log(user)
+  const currentAIProvider = z.union([
+    z.literal("none"),
+    z.literal("openai"),
+    z.literal("anthropic"),
+  ]).parse(currentWorkspace.config.ai_provider);
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      aiProvider: "none",
+      aiProvider: currentAIProvider,
+       apiKey:""
     },
   });
 
   const selectedAIProvider = form.watch("aiProvider");
-  function onSubmit(data: z.infer<typeof FormSchema>) {
-    console.log(data);
+  async function onSubmit(data: z.infer<typeof FormSchema>) {
+    await updateWorkspaceSettings(currentWorkspace.id, {
+      ai_provider: data.aiProvider,
+      api_key: 'apiKey' in data ? data.apiKey: null,
+    })
+
+    toast.success("AI credentials updated successfully");
+    form.reset();
   }
 
   return (
@@ -143,6 +162,8 @@ export default function AICredentialsConfiguration() {
                                 autoComplete="off"
                                 type="password"
                                 placeholder={
+                                  selectedAIProvider === currentAIProvider ? "*********"
+                                  :
                                   selectedAIProvider === "openai"
                                     ? "OpenAI Key"
                                     : "Anthropic Key"
@@ -164,7 +185,8 @@ export default function AICredentialsConfiguration() {
                   type="submit"
                   disabled={
                     form.formState.isSubmitting ||
-                    (form.formState.isDirty && !form.formState.isValid)
+                    (form.formState.isDirty && !form.formState.isValid) ||
+                    (!form.formState.isDirty )
                   }
                 >
                   Save

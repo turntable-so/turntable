@@ -42,12 +42,12 @@ Rules:
 - Use analogies or examples where necessary to clarify technical terms or concepts.
 """
 
-def get_ai_client(ai_provider):
+def get_ai_client(ai_provider, api_key):
     if ai_provider == 'openai':
-        return instructor.from_openai(OpenAI(api_key=os.environ.get("OPENAI_API_KEY")))
+        return instructor.from_openai(OpenAI(api_key=api_key))
 
     if ai_provider == 'anthropic':
-        return instructor.from_anthropic(Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY")))
+        return instructor.from_anthropic(Anthropic(api_key=api_key))
 
     raise Exception(f"Unknown AI provider: {ai_provider}")
 
@@ -59,8 +59,8 @@ def get_ai_model(ai_provider):
     raise Exception(f"Unknown AI provider: {ai_provider}")
 
 
-def generate_ai_completions(asset: Asset, ai_provider='openai'):
-    client = get_ai_client(ai_provider)
+def generate_ai_completions(asset: Asset, ai_provider='openai', api_key=None):
+    client = get_ai_client(ai_provider, api_key)
     ai_model = get_ai_model(ai_provider)
     columns = asset.columns.all()
 
@@ -69,11 +69,19 @@ def generate_ai_completions(asset: Asset, ai_provider='openai'):
 
 
 def generate_asset_completion(client, ai_model: str, asset: Asset, columns: List[Column]):
+    # FIXME: For some reason asset.ai_description is always None
+    # so this if statement is always false, and descriptions get regenerated every time
+    if asset.ai_description is not None:
+        print("Asset completion already exists")
+        return
+
     content = f"model name: {asset.name}\n\n"
     content += "schema:\n" + "\n".join([f"- {name}: {type}" for name, type in columns.values_list("name", "type")])
     content += f"\n\nsql:\n{asset.sql}"
 
     resp = client.chat.completions.create(
+        # max_tokens is required when using Anthropic
+        max_tokens=1024,
         model=ai_model,
         messages=[
             {
@@ -90,6 +98,12 @@ def generate_asset_completion(client, ai_model: str, asset: Asset, columns: List
 
 def generate_column_descriptions(client, ai_model: str, columns: List[Column]):
     for column in columns:
+        # FIXME: For some reason column.ai_description is always None
+        # so this if statement is always false, and descriptions get regenerated every time
+        if column.ai_description is not None:
+            print("Column completion already exists")
+            continue
+
         content = f"model name: {column.asset.name}\n\n"
         content += f"column name: {column.name}\n\n"
         content += f"column type: {column.type}\n\n"
