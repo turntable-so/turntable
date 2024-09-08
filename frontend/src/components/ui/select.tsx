@@ -118,8 +118,10 @@ SelectLabel.displayName = SelectPrimitive.Label.displayName
 
 const SelectItem = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Item>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
->(({ className, children, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item> & {
+    caption?: string;
+  }
+>(({ className, children, caption, ...props }, ref) => (
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
@@ -133,7 +135,10 @@ const SelectItem = React.forwardRef<
         <CheckIcon className="h-4 w-4" />
       </SelectPrimitive.ItemIndicator>
     </span>
-    <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+    <SelectPrimitive.ItemText>
+      {children}
+      {caption && <span className="pl-2 text-zinc-600 text-xs">{caption}</span>}
+    </SelectPrimitive.ItemText>
   </SelectPrimitive.Item>
 ))
 SelectItem.displayName = SelectPrimitive.Item.displayName
