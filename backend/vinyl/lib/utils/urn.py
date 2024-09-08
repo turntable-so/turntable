@@ -41,7 +41,7 @@ def parse_nested_urn(urn):
 
 
 # Example URN with nested URN
-urn = "urn:li:dataset:(urn:li:dataPlatform:bigquery,capchase.analytics.parameters,PROD)"
+urn = "urn:li:dataset:(urn:li:dataPlatform:bigquery,test.analytics.parameters,PROD)"
 
 parsed_urn = parse_urn(urn)
 
