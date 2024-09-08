@@ -90,7 +90,7 @@ def generate_asset_completion(client, ai_model: str, asset: Asset, columns: List
 
 def generate_column_descriptions(client, ai_model: str, columns: List[Column]):
     for column in columns:
-        content = f"model name: {column.asset.name,}\n\n"
+        content = f"model name: {column.asset.name}\n\n"
         content += f"column name: {column.name}\n\n"
         content += f"column type: {column.type}\n\n"
         content += f"\n\nsql:\n{column.asset.sql}"
