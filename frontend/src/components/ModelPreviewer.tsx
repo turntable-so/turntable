@@ -1,15 +1,13 @@
 'use client'
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "./ui/accordion";
-import { Button } from './ui/button'
-import { Scroll, Sparkles, SquareArrowOutUpRight, Wand2, WandSparkles, X } from "lucide-react";
-import { ScrollArea } from "./ui/scroll-area";
+import { SquareArrowOutUpRight, WandSparkles, X } from "lucide-react";
+import { Fragment } from "react";
+import { useAppContext } from "../contexts/AppContext";
 import { ColumnTypeIcon } from "./ColumnTypeIcon";
 import { Badge } from "./ui/badge";
-import { Separator } from "./ui/separator"
-import { Fragment, useEffect } from "react";
+import { Button } from './ui/button';
+import { ScrollArea } from "./ui/scroll-area";
+import { Separator } from "./ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
-import { useAppContext } from "../contexts/AppContext";
-import { LightningBoltIcon } from "@radix-ui/react-icons";
 
 
 export default function ModelPreviewer({ asset, context, clearAsset }: { context?: 'NOTEBOOK' | 'LINEAGE', asset: any, clearAsset: () => void }) {
