@@ -1,11 +1,10 @@
 # File: api/views/execute_query.py
 
-import asyncio
 import json
 
 from adrf.views import APIView
 from asgiref.sync import sync_to_async
-from django.http import JsonResponse, StreamingHttpResponse
+from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.response import Response
 
@@ -15,7 +14,7 @@ from app.models import Block, Notebook
 class ExecuteQueryView(APIView):
     @sync_to_async
     def get_current_workspace(self, user):
-        return user.workspaces.first()
+        return user.current_workspace()
 
     async def post(self, request, notebook_id, block_id):
         from workflows.hatchet import hatchet
@@ -68,6 +67,8 @@ class ExecuteQueryView(APIView):
         )
 
     async def get(self, request, workflow_run_id):
+        from workflows.hatchet import hatchet
+
         workflow_run = hatchet.client.admin.get_workflow_run(workflow_run_id)
         result = await workflow_run.result()
         return JsonResponse(result, status=status.HTTP_200_OK)
