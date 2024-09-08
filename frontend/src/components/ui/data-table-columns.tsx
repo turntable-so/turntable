@@ -3,28 +3,10 @@
 import { ColumnDef } from "@tanstack/react-table"
 
 import { Badge } from "@/components/ui/badge"
-import { Checkbox } from "@/components/ui/checkbox"
 
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header"
-import { DataTableRowActions } from "@/components/ui/data-table-row-actions"
 import { Asset } from "./schema"
-import { priorities, statuses } from "./data-table-toolbar"
 import { getResourceIcon } from "@/lib/utils"
-
-export const labels = [
-    {
-        value: "bug",
-        label: "Bug",
-    },
-    {
-        value: "feature",
-        label: "Feature",
-    },
-    {
-        value: "documentation",
-        label: "Documentation",
-    },
-]
 
 
 
@@ -58,8 +40,12 @@ export const columns: ColumnDef<Asset>[] = [
         accessorFn: (row) => ({
             resource_subtype: row.resource_subtype,
             resource_has_dbt: row.resource_has_dbt,
-            resource_name: row.resource_name
+            resource_name: row.resource_name,
+            resource_id: row.resource_id
         }),
+        filterFn: (row, id, value) => {
+            return value.includes(row.getValue(id).resource_id)
+        },
         enableSorting: false,
         header: ({ column }) => (
             <DataTableColumnHeader column={column} title="Source" />
@@ -90,6 +76,9 @@ export const columns: ColumnDef<Asset>[] = [
     {
         accessorKey: "type",
         enableSorting: false,
+        filterFn: (row, id, value) => {
+            return value.includes(row.getValue(id))
+        },
         header: ({ column }) => (
             <DataTableColumnHeader column={column} title="Type" />
         ),
@@ -106,15 +95,12 @@ export const columns: ColumnDef<Asset>[] = [
         header: ({ column }) => (
             <DataTableColumnHeader column={column} title="Description" />
         ),
-        cell: ({ row }) => <div className="w-[300px]">{row.getValue("description").length > 250 ? row.getValue("description").slice(0, 250) + "..." : row.getValue("description")}</div>,
+        cell: ({ row }) => <div className="w-[300px]">{row.getValue("description")}</div>,
         enableSorting: false,
         enableHiding: true,
     },
     {
-        id: 'Num Columns',
-        accessorFn: (row) => ({
-            num_columns: row.num_columns
-        }),
+        accessorKey: "num_columns",
         header: ({ column }) => (
             <DataTableColumnHeader column={column} title="Num Columns" />
         ),
