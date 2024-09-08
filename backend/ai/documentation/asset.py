@@ -75,6 +75,7 @@ def generate_asset_completion(client, ai_model: str, asset: Asset, columns: List
         print("Asset completion already exists")
         return
 
+    print(f"Generating asset completion for {asset.name}")
     content = f"model name: {asset.name}\n\n"
     content += "schema:\n" + "\n".join([f"- {name}: {type}" for name, type in columns.values_list("name", "type")])
     content += f"\n\nsql:\n{asset.sql}"
@@ -104,6 +105,7 @@ def generate_column_descriptions(client, ai_model: str, columns: List[Column]):
             print("Column completion already exists")
             continue
 
+        print(f"Generating column completion for {column.name}")
         content = f"model name: {column.asset.name}\n\n"
         content += f"column name: {column.name}\n\n"
         content += f"column type: {column.type}\n\n"
