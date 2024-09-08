@@ -90,31 +90,29 @@ class UrnAdjuster:
     def __init__(self, workspace_id: str):
         self.workspace_id = workspace_id
 
-    def is_adjusted(self):
-        return not self.urn.startswith("urn:li:")
+    def is_adjusted(self, urn: str):
+        return not urn.startswith("urn:li:")
 
     def adjust(self, urn: str):
-        if self.is_adjusted():
+        if self.is_adjusted(urn):
             return urn
         return f"{self.workspace_id}{self.JOIN_KEY}{urn}"
 
     def revert(self, urn: str):
         index = urn.find("urn:li:")
-        if not self.is_adjusted():
+        if not self.is_adjusted(urn):
             return urn
         return urn[index:]
 
     def adjust_obj(self, obj: Model):
-        if not hasattr(obj, "urn_adjust_fields_dict"):
+        if not hasattr(obj, "urn_adjust_fields"):
             raise ValueError(
-                f"Model {obj.__class__.__name__} must have a urn_adjust_fields_dict attribute"
+                f"Model {obj.__class__.__name__} must have a urn_adjust_fields attribute"
             )
-        for k, v in obj.urn_adjust_fields_dict.items():
+        for k in obj.urn_adjust_fields:
             cur_k = getattr(obj, k)
             new_k = self.adjust(cur_k)
             setattr(obj, k, new_k)
-            for field in v:
-                setattr(obj, field, cur_k)
 
 
 class DataHubDBParserBase:
@@ -944,10 +942,12 @@ class DataHubDBParser:
     @classmethod
     def adjust_urns(cls, instances: list[Model], workspace_id: str):
         urn_adjuster = UrnAdjuster(workspace_id)
+        if len(instances) == 0:
+            return instances
         instance_type = instances[0].__class__
-        if not hasattr(instance_type, "urn_adjust_fields_dict"):
+        if not hasattr(instance_type, "urn_adjust_fields"):
             raise ValueError(
-                f"Model {instance_type.__name__} must have a urn_adjust_fields_dict attribute"
+                f"Model {instance_type.__name__} must have a urn_adjust_fields attribute"
             )
         out = []
         for instance in instances:
