@@ -199,7 +199,7 @@ Unlike the production environemnt, this supports hot reload. It also includes th
 Once everything starts (several minutes), run the command below to access a shell inside the container:
 
 ```bash
-(source .env && docker compose exec worker bash)
+docker compose -f docker-compose.dev.yml exec worker bash
 ```
 
 From here, backend tests can be run with `pytest`.
