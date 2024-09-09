@@ -80,6 +80,10 @@ class Asset(models.Model):
     containers = models.ManyToManyField(AssetContainer, related_name="assets")
 
     @property
+    def urn_adjust_fields(self):
+        return ["id"]
+
+    @property
     def dataset(self) -> str:
         if self.db_location and len(self.db_location) > 0:
             return self.db_location[0]
@@ -164,6 +168,10 @@ class Column(models.Model):
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="columns")
 
+    @property
+    def urn_adjust_fields(self):
+        return ["id", "asset_id"]
+
     def get_resource_ids(self) -> set[str]:
         return {self.asset.resource.id}
 
@@ -242,6 +250,10 @@ FROM traversed
     target = models.ForeignKey(
         Asset, on_delete=models.CASCADE, related_name="target_links"
     )
+
+    @property
+    def urn_adjust_fields(self):
+        return ["id", "source_id", "target_id"]
 
     @classmethod
     def successors(cls, workspace_id: str, asset_id: str, depth: int = 1):
@@ -359,6 +371,10 @@ class ColumnLink(models.Model):
         Column, on_delete=models.CASCADE, related_name="target_links"
     )
 
+    @property
+    def urn_adjust_fields(self):
+        return ["id", "source_id", "target_id"]
+
     @classmethod
     def get_for_resource(cls, resource_id: str, inclusive: bool = True):
         conditions = (
@@ -390,6 +406,10 @@ class AssetError(models.Model):
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
 
+    @property
+    def urn_adjust_fields(self):
+        return ["id", "asset_id"]
+
     @classmethod
     def get_for_resource(cls, resource_id: str, inclusive: bool = True):
         # return is the same for inclusive and exclusive
@@ -412,6 +432,10 @@ class AssetEmbedding(models.Model):
     # relationships
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
+
+    @property
+    def urn_adjust_fields(self):
+        return ["asset_id"]
 
     class Meta:
         indexes = [

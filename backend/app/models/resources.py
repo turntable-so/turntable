@@ -14,8 +14,8 @@ from django.core.files import File
 from django.db import models
 from polymorphic.models import PolymorphicModel
 
-from app.models.workspace import Workspace
 from app.models.git_connections import GithubInstallation
+from app.models.workspace import Workspace
 from app.services.code_repo_service import CodeRepoService
 from app.services.github_service import GithubService
 from app.utils.fields import encrypt

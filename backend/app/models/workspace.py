@@ -1,21 +1,14 @@
-import uuid
-
 from django.contrib.auth.models import (
-    AbstractBaseUser,
-    BaseUserManager,
     Permission,
-    PermissionsMixin,
 )
 from django.db import models
 
-from app.services.storage_backends import PublicMediaStorage
 from app.models.user import User
+from app.services.storage_backends import PublicMediaStorage
 
 
 class Workspace(models.Model):
-    id = models.CharField(
-        primary_key=True, default=uuid.uuid4, editable=False, max_length=255
-    )
+    id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=1000)
     icon_url = models.URLField(blank=True, null=True)
     icon_file = models.ImageField(
