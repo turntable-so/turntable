@@ -30,7 +30,7 @@
 
 <!-- ABOUT THE PROJECT -->
 
-## A unified data stack
+## Open Source Analytics Development Platform
 
 <video src="https://github.com/user-attachments/assets/d0bb1be5-6b6c-4ab1-b949-ce5ec4c18c5e.mp4" width="320" height="240" controls autoplay></video>
 
