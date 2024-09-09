@@ -1,3 +1,4 @@
+import { DatabricksLogo } from "@/components/connections/connection-options";
 import { DbtLogo } from "../components/ActionBar";
 import { type ClassValue, clsx } from "clsx"
 import { BarChartBig, Database, File, FileIcon, History, LayoutDashboard, PanelsTopLeft } from "lucide-react";
@@ -413,6 +414,8 @@ export function getResourceIcon(subtype: string) {
     return <PostgresLogo />
   } else if (subtype === 'snowflake') {
     return <SnowflakeLogo />
+  } else if (subtype === 'databricks') {
+    return <DatabricksLogo width={18} height={18} />
   } else {
     return <File className='size-5' />
   }

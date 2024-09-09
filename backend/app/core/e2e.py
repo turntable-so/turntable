@@ -16,6 +16,7 @@ from datahub.metadata.com.linkedin.pegasus2avro.assertion import (
 from datahub.metadata.urns import ChartUrn, DashboardUrn, DatasetUrn, SchemaFieldUrn
 from datahub.utilities.urns.error import InvalidUrnError
 from django.db import transaction
+from django.db.models import Model
 from django.forms.models import model_to_dict
 from sqlglot import Expression, exp
 from sqlglot.errors import ParseError
@@ -80,6 +81,31 @@ def get_duplicate_nodes_helper(
             duplicate_helper.setdefault(key, []).append(id)
 
     return duplicate_helper
+
+
+class UrnAdjuster:
+    JOIN_KEY = ":"
+
+    def __init__(self, workspace_id: str):
+        self.workspace_id = workspace_id
+
+    def is_adjusted(self, urn: str):
+        return not urn.startswith("urn:li:")
+
+    def adjust(self, urn: str):
+        if self.is_adjusted(urn):
+            return urn
+        return f"{self.workspace_id}{self.JOIN_KEY}{urn}"
+
+    def adjust_obj(self, obj: Model):
+        if not hasattr(obj, "urn_adjust_fields"):
+            raise ValueError(
+                f"Model {obj.__class__.__name__} must have a urn_adjust_fields attribute"
+            )
+        for k in obj.urn_adjust_fields:
+            cur_k = getattr(obj, k)
+            new_k = self.adjust(cur_k)
+            setattr(obj, k, new_k)
 
 
 class DataHubDBParserBase:
@@ -972,6 +998,22 @@ class DataHubDBParser:
         root_table.objects.filter(id__in=to_delete).delete()
 
     @classmethod
+    def adjust_urns(cls, instances: list[Model], workspace_id: str):
+        urn_adjuster = UrnAdjuster(workspace_id)
+        if len(instances) == 0:
+            return instances
+        instance_type = instances[0].__class__
+        if not hasattr(instance_type, "urn_adjust_fields"):
+            raise ValueError(
+                f"Model {instance_type.__name__} must have a urn_adjust_fields attribute"
+            )
+        out = []
+        for instance in instances:
+            urn_adjuster.adjust_obj(instance)
+            out.append(instance)
+        return out
+
+    @classmethod
     @transaction.atomic
     def combine_and_upload(cls, parsers: list[DataHubDBParser], resource: Resource):
         combined = cls.combine(parsers, resource)
@@ -1016,6 +1058,12 @@ class DataHubDBParser:
                 is_indirect=True,
             )
             indirect_columns.append(column)
+
+        # adjust urns
+        for key in combined:
+            combined[key] = cls.adjust_urns(combined[key], resource.workspace.id)
+        indirect_assets = cls.adjust_urns(indirect_assets, resource.workspace.id)
+        indirect_columns = cls.adjust_urns(indirect_columns, resource.workspace.id)
 
         # upload the data to the db
         pg_delete_and_upsert(combined["asset_containers"], resource)

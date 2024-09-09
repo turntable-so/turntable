@@ -98,7 +98,7 @@ services:
     build:
       context: backend/fixtures/test_resources/jaffle_shop
       dockerfile: Dockerfile
-    command: ["./populate_db.sh"]
+    command: ["bash", "./populate_db.sh"]
     environment:
       <<: [*postgres-test-db-credentials]
     depends_on:
