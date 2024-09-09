@@ -84,8 +84,6 @@ def get_duplicate_nodes_helper(
 
 class UrnAdjuster:
     JOIN_KEY = ":"
-    JOIN_KEY_LENGTH = len(JOIN_KEY)
-    URN_LENGTH = 36
 
     def __init__(self, workspace_id: str):
         self.workspace_id = workspace_id
@@ -97,12 +95,6 @@ class UrnAdjuster:
         if self.is_adjusted(urn):
             return urn
         return f"{self.workspace_id}{self.JOIN_KEY}{urn}"
-
-    def revert(self, urn: str):
-        index = urn.find("urn:li:")
-        if not self.is_adjusted(urn):
-            return urn
-        return urn[index:]
 
     def adjust_obj(self, obj: Model):
         if not hasattr(obj, "urn_adjust_fields"):
