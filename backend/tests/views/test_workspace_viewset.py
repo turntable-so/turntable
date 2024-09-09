@@ -1,12 +1,11 @@
 from django.test import TestCase
 from rest_framework.test import APIClient
-from app.models import User
-from app.models import Workspace
-from api.serializers import WorkspaceSerializer, WorkspaceDetailSerializer
+
+from api.serializers import WorkspaceDetailSerializer, WorkspaceSerializer
+from app.models import User, Workspace
 
 
 class WorkspaceViewSetTestCase(TestCase):
-
     def setUp(self):
         # Set up initial data
         self.user = User.objects.create_user(
@@ -47,7 +46,7 @@ class WorkspaceViewSetTestCase(TestCase):
 
     def test_retrieve_workspace(self):
         self.user.switch_workspace(self.workspace1)
-        response = self.client.get(f"/workspaces/me/")
+        response = self.client.get("/workspaces/me/")
         self.assertEqual(response.status_code, 200)
         serializer = WorkspaceDetailSerializer(self.workspace1)
 
@@ -57,7 +56,7 @@ class WorkspaceViewSetTestCase(TestCase):
         self.user.switch_workspace(self.workspace1)
 
         response = self.client.get("/workspaces/me/")
-        self.assertEqual(response.data["id"], str(self.workspace1.id))
+        self.assertEqual(response.data["id"], self.workspace1.id)
 
         data = {
             "workspace_id": self.workspace2.id,
@@ -68,4 +67,4 @@ class WorkspaceViewSetTestCase(TestCase):
         )
 
         response = self.client.get("/workspaces/me/")
-        self.assertEqual(response.data["id"], str(self.workspace2.id))
+        self.assertEqual(response.data["id"], self.workspace2.id)
