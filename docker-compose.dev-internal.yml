@@ -67,6 +67,13 @@ x-internal-credentials: &internal-credentials
   DBT_4_VERSION: ${DBT_4_VERSION}
   DBT_4_PROJECT_PATH: ${DBT_4_PROJECT_PATH}
 
+# hardcode local storage credentials to override remote ones in `.env.staging`
+x-storage-credentials: &storage-credentials
+  AWS_S3_ACCESS_KEY_ID: minio_admin
+  AWS_S3_SECRET_ACCESS_KEY: minio_password
+  AWS_S3_ENDPOINT_URL: http://minio:9000
+  AWS_S3_STORAGE_BUCKET_NAME: artifacts
+
 name: turntable-dev-internal
 
 services:
@@ -84,7 +91,7 @@ services:
       python manage.py seed_data_staging &&
       uvicorn api.asgi:application --host 0.0.0.0 --port 8000 --reload"
     environment:
-      <<: *internal-credentials
+      <<: [*internal-credentials, *storage-credentials]
 
   web:
     extends:
@@ -110,11 +117,15 @@ services:
     extends:
       file: docker-compose.dev.yml
       service: minio
+    envrionment:
+      <<: *storage-credentials
 
   createbuckets:
     extends:
       file: docker-compose.dev.yml
       service: createbuckets
+    environment:
+      <<: *storage-credentials
 
   hatchet-lite:
     extends:
@@ -131,7 +142,7 @@ services:
       file: docker-compose.dev.yml
       service: worker
     environment:
-      <<: *internal-credentials
+      <<: [*internal-credentials, *storage-credentials]
       
   ## Test resources
   postgres_test_db:
