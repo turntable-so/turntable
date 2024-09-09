@@ -3,11 +3,7 @@ x-postgres-credentials: &postgres-credentials
   LOCAL_DB: "false"
 
 x-storage-credentials: &storage-credentials
-  AWS_S3_ACCESS_KEY_ID: 7da6b70347021428b74fa7620eee08ec
-  AWS_S3_SECRET_ACCESS_KEY: aef61d57ecf7dcf4de07d863d265bd23db8982265bcf13738c76b1ed5bd08d08
-  AWS_S3_ENDPOINT_URL: https://uknnswxmayalzancjxhg.supabase.co/storage/v1/s3
-  AWS_S3_REGION_NAME: us-west-1
-  AWS_STORAGE_BUCKET_NAME: artifacts-staging
+  AWS_S3_REGION_NAME: ${AWS_S3_REGION_NAME}
 
 
 x-hatchet-credentials: &hatchet-credentials
