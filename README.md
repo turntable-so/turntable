@@ -4,7 +4,7 @@
 </p>
 
   <p align="center">
-     <span style="font-size: 24px;">Open-Source Data Platform</span>
+     <span style="font-size: 24px;">The Open-Source Analytics Development Platform</span>
     <br />
     <br />
      <span style="font-size: 16px;">Metrics, Models, Jobs, Notebooks, End-to-end Column Lineage, and More!</span>
