@@ -261,7 +261,7 @@ class DatasetInfoParser(DataHubDBParserBase):
                 urn = DatasetUrn.from_string(k)
                 info_list = self.get_info(k)
                 config = self.get_config(k)
-                v.name = self.get_name(info_list)
+                v.name = self.get_name(info_list, k)
                 v.description = self.get_description(info_list)
                 v.type = self.get_type(info_list)
                 v.unique_name = self.get_unique_name(info_list) or urn.name
@@ -293,12 +293,15 @@ class DatasetInfoParser(DataHubDBParserBase):
             dbt_view_info = self.row_dict.get(dbt_urn_str, {}).get("viewProperties", [])
         return dbt_info, db_info, dbt_view_info, db_view_info
 
-    def get_name(self, info_list: list[dict[str, Any]]):
+    def get_name(self, info_list: list[dict[str, Any]], id: str):
         dbt_info, db_info, _, _ = info_list
         for info in [*dbt_info, *db_info]:
             if "name" in info:
                 return info["name"]
-        return None
+
+        # add name if there's no title
+        parsed = DatasetUrn.from_string(id)
+        return parsed.name
 
     def get_description(self, info_list: list[dict[str, Any]]):
         dbt_info, db_info, _, _ = info_list

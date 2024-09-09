@@ -56,7 +56,7 @@ class Asset(models.Model):
         EPHEMERAL = "ephemeral"
 
     # pk
-    id = models.CharField(max_length=255, primary_key=True, editable=False)
+    id = models.TextField(primary_key=True, editable=False)
 
     # fields
     type = models.CharField(max_length=20, choices=AssetType.choices)
@@ -147,7 +147,7 @@ class Asset(models.Model):
 
 class Column(models.Model):
     # pk
-    id = models.CharField(max_length=255, primary_key=True, editable=False)
+    id = models.TextField(primary_key=True, editable=False)
 
     # fields
     name = models.TextField()
@@ -232,7 +232,7 @@ FROM traversed
 """
 
     # pk
-    id = models.CharField(max_length=255, primary_key=True, editable=False)
+    id = models.TextField(primary_key=True, editable=False)
 
     # relationships
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
@@ -339,7 +339,7 @@ class ColumnLink(models.Model):
             return ["as_is", "transform"]
 
     # pk
-    id = models.CharField(max_length=255, primary_key=True, editable=False)
+    id = models.TextField(primary_key=True, editable=False)
 
     # fields
     lineage_type = models.CharField(
