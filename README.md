@@ -149,7 +149,7 @@ To start the app you have two choices:
 Run the following command:
 
 ```bash
-docker compose --env-file .env up
+(source .env && docker compose up --build)
 ```
 
 Once the docker build is complete (a few minutes), you will see a line in the terminal like this: 'The app is ready! Visit http://localhost:3000/ to get started'. Once you do, open your browser and go to http://localhost:3000 to see the app running. Signup with a username and password to start using the app.
@@ -159,7 +159,7 @@ Once the docker build is complete (a few minutes), you will see a line in the te
 If you'd like to also see the product with a demo postgres, dbt project, and metabase already connected, run:
 
 ```bash
-docker compose --env-file .env -f docker-compose.demo.yml up --build
+(source .env && docker compose -f docker-compose.demo.yml up --build)
 ```
 
 Once the docker build is complete (longer than above, usually 5+ minutes), you will see a line in the terminal like this: 'The app is ready! Visit http://localhost:3000/ to get started'. Once you do, open your browser and go to http://localhost:3000 to see the app running. The demo resources can be found in an account with user `dev@turntable.so` and password `mypassword`. Login with these credentials to see the demo resources, with associated lineage and asset viewer. If you'd like to start from a blank slate on this instance, simply sign up with a different email.
@@ -191,7 +191,7 @@ For now, we are not accepting pull requests from the community, but We are worki
 To start the development environment, simply follow the instructions above to start the app, but change the final commmand to:
 
 ```bash
-docker compose -f docker-compose.dev.yml --env-file .env up --build
+(source .env && docker compose -f docker-compose.dev.yml up --build)
 ```
 
 Unlike the production environemnt, this supports hot reload. It also includes the demo resources described above.
@@ -199,7 +199,7 @@ Unlike the production environemnt, this supports hot reload. It also includes th
 Once everything starts (several minutes), run the command below to access a shell inside the container:
 
 ```bash
-docker compose exec worker bash
+docker compose -f docker-compose.dev.yml exec worker bash
 ```
 
 From here, backend tests can be run with `pytest`.
