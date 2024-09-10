@@ -156,7 +156,7 @@ export default function ActionBar({
 
     return Object.entries(assets).reduce((acc, [resourceId, entry]) => {
       const filteredAssetsFromQuery = entry.assets.filter((asset: Model) =>
-      asset.name.toLowerCase().includes(searchQuery.toLowerCase())
+        asset.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
 
       const filteredAssetsFromTags =
