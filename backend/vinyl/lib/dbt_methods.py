@@ -10,6 +10,7 @@ class DBTVersion(Enum):
     V1_5 = "1.5"
     V1_6 = "1.6"
     V1_7 = "1.7"
+    V1_8 = "1.8"
 
 
 class DBTDialect(Enum):
@@ -49,7 +50,8 @@ MAX_DIALECT_VERSION = {
         DBTVersion.V1_4.value: "1.4.5",
         DBTVersion.V1_5.value: "1.5.9",
         DBTVersion.V1_6.value: "1.6.12",
-        DBTVersion.V1_7.value: "1.7.7",
+        DBTVersion.V1_7.value: "1.7.9",
+        DBTVersion.V1_8.value: "1.8.2",
     },
     DBTDialect.SNOWFLAKE.value: {
         DBTVersion.V1_3.value: "1.3.3",
@@ -57,13 +59,15 @@ MAX_DIALECT_VERSION = {
         DBTVersion.V1_5.value: "1.5.7",
         DBTVersion.V1_6.value: "1.6.8",
         DBTVersion.V1_7.value: "1.7.5",
+        DBTVersion.V1_8.value: "1.8.3",
     },
     DBTDialect.POSTGRES.value: {
         DBTVersion.V1_3.value: "1.3.7",
         DBTVersion.V1_4.value: "1.4.9",
         DBTVersion.V1_5.value: "1.5.11",
         DBTVersion.V1_6.value: "1.6.11",
-        DBTVersion.V1_7.value: "1.7.11",
+        DBTVersion.V1_7.value: "1.7.18",
+        DBTVersion.V1_8.value: "1.8.2",
     },
     DBTDialect.DATABRICKS.value: {
         DBTVersion.V1_3.value: "1.3.2",
@@ -71,13 +75,15 @@ MAX_DIALECT_VERSION = {
         DBTVersion.V1_5.value: "1.5.7",
         DBTVersion.V1_6.value: "1.6.9",
         DBTVersion.V1_7.value: "1.7.17",
+        DBTVersion.V1_8.value: "1.8.5",
     },
     DBTDialect.DUCKDB.value: {
         DBTVersion.V1_3.value: "1.3.4",
         DBTVersion.V1_4.value: "1.4.2",
         DBTVersion.V1_5.value: "1.5.2",
         DBTVersion.V1_6.value: "1.6.2",
-        DBTVersion.V1_7.value: "1.7.3",
+        DBTVersion.V1_7.value: "1.7.5",
+        DBTVersion.V1_8.value: "1.8.3",
     },
 }
 
