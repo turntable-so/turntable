@@ -10,6 +10,7 @@ from app.models import (
     Resource,
     ResourceType,
     SnowflakeDetails,
+    TableauDetails,
     User,
     Workspace,
 )
@@ -159,7 +160,7 @@ def create_databricks_n(workspace, n):
     return resource
 
 
-def create_dbt_n(resource: Resource, n):
+def create_dbt_n(resource: Resource, n, force_db: bool = False):
     database = os.getenv(f"DBT_{n}_DATABASE")
     schema = os.getenv(f"DBT_{n}_SCHEMA")
     dbt_version = os.getenv(f"DBT_{n}_VERSION")
@@ -170,6 +171,12 @@ def create_dbt_n(resource: Resource, n):
     github_installation_id = os.getenv(f"DBT_{n}_GITHUB_INSTALLATION_ID")
     github_repo_id = os.getenv(f"DBT_{n}_GITHUB_REPO_ID")
     project_path = os.getenv(f"DBT_{n}_PROJECT_PATH", ".")
+
+    if force_db:
+        if isinstance(resource.details, BigqueryDetails):
+            database = resource.details.service_account_dict.get("project_id", database)
+        else:
+            raise ValueError("force_db is only supported for BigQuery resources")
 
     if github_installation_id:
         try:
@@ -249,6 +256,38 @@ def create_looker_n(workspace, n):
     return looker
 
 
+def create_tableau_n(workspace, n):
+    connect_uri = os.getenv(f"TABLEAU_{n}_CONNECT_URI")
+    username = os.getenv(f"TABLEAU_{n}_USERNAME")
+    password = os.getenv(f"TABLEAU_{n}_PASSWORD")
+    resource_name = os.getenv(f"TABLEAU_{n}_RESOURCE_NAME")
+
+    assert connect_uri, f"must provide TABLEAU_{n}_CONNECT_URI to use this test"
+    assert username, f"must provide TABLEAU_{n}_USERNAME to use this test"
+    assert password, f"must provide TABLEAU_{n}_PASSWORD to use this test"
+    assert resource_name, f"must provide TABLEAU_{n}_RESOURCE_NAME to use this test"
+
+    try:
+        resource = Resource.objects.get(workspace=workspace, type=ResourceType.BI)
+    except Resource.DoesNotExist:
+        resource = Resource.objects.create(
+            workspace=workspace, type=ResourceType.BI, name=resource_name
+        )
+
+    if not hasattr(resource, "details") or not isinstance(
+        resource.details, TableauDetails
+    ):
+        TableauDetails(
+            resource=resource,
+            connect_uri=connect_uri,
+            site=os.getenv(f"TABLEAU_{n}_SITE", ""),
+            username=username,
+            password=password,
+        ).save()
+
+    return resource
+
+
 ### GROUPS
 def group_1(user):
     workspace = create_workspace_n(user, "bigquery", 1)
@@ -276,8 +315,19 @@ def group_3(user):
 
 
 def group_4(user):
-    workspace = create_workspace_n(user, "databricks", 1)
-    databricks = create_databricks_n(workspace, 1)
-    create_dbt_n(databricks, 5)
+    workspace = create_workspace_n(user, "databricks", 0)
+    databricks = create_databricks_n(workspace, 0)
+    tableau = create_tableau_n(workspace, 0)
+    create_dbt_n(databricks, 0)
 
-    return [databricks]
+    return [databricks, tableau]
+
+
+def group_5(user):
+    workspace = create_workspace_n(user, "bigquery", 0)
+    bigquery = create_bigquery_n(workspace, 0)
+    create_dbt_n(
+        bigquery, 0, force_db=True
+    )  # force_db=True to use the same project_id as the bigquery resource. Can't use mydb because it is reserved.
+
+    return [bigquery]

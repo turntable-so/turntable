@@ -2,7 +2,14 @@ import os
 
 import pytest
 
-from app.models import Asset, AssetLink, Column, ColumnLink, ResourceType
+from app.models import (
+    Asset,
+    AssetContainer,
+    AssetLink,
+    Column,
+    ColumnLink,
+    ResourceType,
+)
 from app.models.resources import DBDetails
 
 
@@ -26,6 +33,7 @@ def require_env_vars(*required_vars):
 def assert_ingest_output(resources):
     ## all tables have records
     assert Asset.objects.count() > 0
+    assert AssetContainer.objects.count() > 0
     assert AssetLink.objects.count() > 0
     assert Column.objects.count() > 0
     assert ColumnLink.objects.count() > 0
@@ -76,3 +84,6 @@ def assert_ingest_output(resources):
     assert AssetLink.objects.filter(workspace_id=None).count() == 0
     assert Column.objects.filter(workspace_id=None).count() == 0
     assert ColumnLink.objects.filter(workspace_id=None).count() == 0
+
+    ## at least one asset has a container
+    assert Asset.objects.filter(containermembership__isnull=False).count() > 0
