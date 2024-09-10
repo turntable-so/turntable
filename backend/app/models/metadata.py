@@ -4,8 +4,7 @@ import uuid
 
 from django.contrib.postgres.fields import ArrayField
 from django.db import connection, models
-from django.db.models import Q, signals
-from django.dispatch import receiver
+from django.db.models import Q
 from pgvector.django import VectorField
 
 from app.models.resources import Resource
@@ -13,44 +12,6 @@ from app.models.workspace import Workspace
 from app.utils.urns import UrnAdjuster
 
 
-def multitenant_urns(cls):
-    def connect_signals(sender, **kwargs):
-        @receiver(signals.pre_save, sender=sender)
-        def pre_save_handler(sender, instance, **kwargs):
-            if hasattr(instance, "adjust_urns"):
-                instance.adjust_urns()
-
-    signals.class_prepared.connect(connect_signals, sender=cls)
-    return cls
-
-
-@multitenant_urns
-class AssetContainerMembership(models.Model):
-    # pk
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
-    # relationships
-    asset = models.ForeignKey("Asset", on_delete=models.CASCADE)
-    container = models.ForeignKey("AssetContainer", on_delete=models.CASCADE)
-    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
-
-    def adjust_urns(self):
-        adjuster = UrnAdjuster(self.workspace.id)
-        self.asset_id = adjuster.adjust(self.asset_id)
-        self.container_id = adjuster.adjust(self.container_id)
-
-        return self
-
-    @classmethod
-    def get_for_resource(cls, resource_id: str, inclusive: bool = True):
-        # return is the same for inclusive and exclusive
-        # replace across resources, don't delete any
-        if inclusive:
-            return cls.objects.all()
-        return cls.objects.none()
-
-
-@multitenant_urns
 class AssetContainer(models.Model):
     class AssetContainerType(models.TextChoices):
         WORKBOOK = "workbook"
@@ -65,19 +26,17 @@ class AssetContainer(models.Model):
     description = models.TextField(null=True)
 
     # relationships
-    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
+    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
+
+    @property
+    def assets(self):
+        return Asset.objects.filter(containermembership__container_id=self.id)
 
     def adjust_urns(self):
         adjuster = UrnAdjuster(self.workspace.id)
         self.id = adjuster.adjust(self.id)
 
         return self
-
-    def adjust_urns_m2m(self, field_name: str, pk_set: set, model: models.Model):
-        if field_name == "id":
-            adjuster = UrnAdjuster(self.workspace.id)
-            return {adjuster.adjust(pk) for pk in pk_set}
-        return pk_set
 
     @classmethod
     def get_for_resource(cls, resource_id: str, inclusive: bool = True):
@@ -88,7 +47,6 @@ class AssetContainer(models.Model):
         return cls.objects.none()
 
 
-@multitenant_urns
 class Asset(models.Model):
     class AssetType(models.TextChoices):
         MODEL = "model"
@@ -128,11 +86,12 @@ class Asset(models.Model):
     is_indirect = models.BooleanField(default=False)
 
     # relationships
-    resource = models.ForeignKey(Resource, on_delete=models.CASCADE, null=True)
-    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
-    containers = models.ManyToManyField(
-        AssetContainer, related_name="assets", through=AssetContainerMembership
-    )
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
+    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
+
+    @property
+    def containers(self):
+        return AssetContainer.objects.filter(containermembership__asset_id=self.id)
 
     @property
     def dataset(self) -> str:
@@ -192,12 +151,6 @@ class Asset(models.Model):
 
         return self
 
-    def adjust_urns_m2m(self, field_name: str, pk_set: set, model: models.Model):
-        if field_name == "id":
-            adjuster = UrnAdjuster(self.workspace.id)
-            return {adjuster.adjust(pk) for pk in pk_set}
-        return pk_set
-
     def get_resource_ids(self) -> set[str]:
         return {self.resource.id}
 
@@ -210,6 +163,31 @@ class Asset(models.Model):
         indexes = [
             models.Index(fields=["workspace_id"]),
         ]
+
+
+class ContainerMembership(models.Model):
+    # pk
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    # relationships
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
+    container = models.ForeignKey(AssetContainer, on_delete=models.CASCADE)
+    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
+
+    def adjust_urns(self):
+        adjuster = UrnAdjuster(self.workspace.id)
+        self.asset_id = adjuster.adjust(self.asset_id)
+        self.container_id = adjuster.adjust(self.container_id)
+
+        return self
+
+    @classmethod
+    def get_for_resource(cls, resource_id: str, inclusive: bool = True):
+        # return is the same for inclusive and exclusive
+        # replace across resources, don't delete any
+        if inclusive:
+            return cls.objects.all()
+        return cls.objects.none()
 
 
 class Column(models.Model):
@@ -228,7 +206,7 @@ class Column(models.Model):
     is_indirect = models.BooleanField(default=False)
 
     # relationships
-    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
+    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="columns")
 
     def adjust_urns(self):
@@ -253,7 +231,6 @@ class Column(models.Model):
         ]
 
 
-@multitenant_urns
 class AssetLink(models.Model):
     class LineageQuery:
         PREDECESSOR_QUERY = """
@@ -310,7 +287,7 @@ FROM traversed
     id = models.TextField(primary_key=True, editable=False)
 
     # relationships
-    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
+    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
     source = models.ForeignKey(
         Asset, on_delete=models.CASCADE, related_name="source_links"
     )
@@ -411,7 +388,6 @@ FROM traversed
         ]
 
 
-@multitenant_urns
 class ColumnLink(models.Model):
     class LineageType(models.TextChoices):
         ALL = "all"
@@ -435,7 +411,7 @@ class ColumnLink(models.Model):
     confidence = models.FloatField(null=True)
 
     # relationships
-    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
+    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
     source = models.ForeignKey(
         Column, on_delete=models.CASCADE, related_name="source_links"
     )
@@ -479,7 +455,7 @@ class AssetError(models.Model):
     lineage_type = models.TextField(null=True)
 
     # relationships
-    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
+    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
 
     def adjust_urns(self):
@@ -508,12 +484,14 @@ class AssetEmbedding(models.Model):
     search_vector = VectorField(dimensions=1536, null=True)
 
     # relationships
-    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
+    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
 
-    @property
-    def urn_adjust_fields(self):
-        return ["asset_id"]
+    def adjust_urns(self):
+        adjuster = UrnAdjuster(self.workspace.id)
+        self.asset_id = adjuster.adjust(self.asset_id)
+
+        return self
 
     class Meta:
         indexes = [
