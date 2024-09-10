@@ -24,6 +24,7 @@ from sqlglot.errors import ParseError
 from app.models import (
     Asset,
     AssetContainer,
+    AssetContainerMembership,
     AssetError,
     AssetLink,
     Column,
@@ -83,49 +84,30 @@ def get_duplicate_nodes_helper(
     return duplicate_helper
 
 
-class UrnAdjuster:
-    JOIN_KEY = ":"
-
-    def __init__(self, workspace_id: str):
-        self.workspace_id = workspace_id
-
-    def is_adjusted(self, urn: str):
-        return not urn.startswith("urn:li:")
-
-    def adjust(self, urn: str):
-        if self.is_adjusted(urn):
-            return urn
-        return f"{self.workspace_id}{self.JOIN_KEY}{urn}"
-
-    def adjust_obj(self, obj: Model):
-        if not hasattr(obj, "urn_adjust_fields"):
-            raise ValueError(
-                f"Model {obj.__class__.__name__} must have a urn_adjust_fields attribute"
-            )
-        for k in obj.urn_adjust_fields:
-            cur_k = getattr(obj, k)
-            new_k = self.adjust(cur_k)
-            setattr(obj, k, new_k)
-
-
 class DataHubDBParserBase:
     def __init__(
         self,
+        resource_id: str,
+        workspace_id: str,
         row_dict: dict[str, dict[str, Any]] = {},
         asset_dict: dict[str, Asset] = {},
         container_dict: dict[str, AssetContainer] = {},
         column_dict: dict[str, Column] = {},
         asset_graph: nx.DiGraph = nx.DiGraph(),
         column_graph: nx.MultiDiGraph = nx.MultiDiGraph(),
+        container_membership: list[AssetContainerMembership] = [],
         is_db: bool = False,
         dialect: str = "postgres",
     ):
+        self.resource_id = resource_id
+        self.workspace_id = workspace_id
         self.row_dict = row_dict
         self.asset_dict = asset_dict
         self.container_dict = container_dict
         self.column_dict = column_dict
         self.asset_graph = asset_graph
         self.column_graph = column_graph
+        self.container_membership = container_membership
         self.is_db = is_db
         self.dialect = dialect
 
@@ -141,12 +123,15 @@ class DataHubDBParserBase:
 
     def get_outputs(self):
         return {
+            "resource_id": self.resource_id,
+            "workspace_id": self.workspace_id,
             "row_dict": self.row_dict,
             "asset_dict": self.asset_dict,
             "container_dict": self.container_dict,
             "column_dict": self.column_dict,
             "asset_graph": self.asset_graph,
             "column_graph": self.column_graph,
+            "container_membership": self.container_membership,
             "is_db": self.is_db,
             "dialect": self.dialect,
         }
@@ -173,6 +158,7 @@ class ContainerParser(DataHubDBParserBase):
                     name=info.get("name") or custom_info.get("name"),
                     type=type,
                     description=custom_info.get("description"),
+                    workspace_id=self.workspace_id,
                 )
 
     def correct_type(self, type):
@@ -201,8 +187,12 @@ class ContainerMembershipParser(DataHubDBParserBase):
         for k, v in self.row_dict.items():
             if "container" in v and k in self.asset_dict:
                 container = v["container"][0]["container"]
-                self.asset_dict[k].containers.add(
-                    container, *nx.ancestors(container_graph, container)
+                self.container_membership.append(
+                    AssetContainerMembership(
+                        asset_id=k,
+                        container_id=container,
+                        workspace_id=self.workspace_id,
+                    )
                 )
 
 
@@ -575,6 +565,7 @@ class DataHubDBParser:
     column_dict: dict[str, Column]
     asset_graph: nx.DiGraph
     column_graph: nx.MultiDiGraph
+    container_membership: list[AssetContainerMembership]
     asset_links: list[AssetLink]
     asset_errors: list[AssetError]
     column_links: list[ColumnLink]
@@ -597,6 +588,7 @@ class DataHubDBParser:
         self.column_dict = {}
         self.asset_graph = nx.DiGraph()
         self.column_graph = nx.MultiDiGraph()
+        self.container_membership = []
         self.asset_links = []
         self.asset_errors = []
         self.column_links = []
@@ -739,6 +731,7 @@ class DataHubDBParser:
         return {
             "assets": list(self.asset_dict.values()),
             "asset_containers": list(self.container_dict.values()),
+            "container_membership": self.container_membership,
             "columns": list(self.column_dict.values()),
             "asset_links": self.asset_links,
             "column_links": self.column_links,
@@ -851,7 +844,11 @@ class DataHubDBParser:
             for i, node in enumerate(nodes):
                 if node.errors:
                     for error in node.errors:
-                        error = AssetError(asset=asset, error=error.to_dict())
+                        error = AssetError(
+                            asset=asset,
+                            error=error.to_dict(),
+                            workspace_id=self.workspace_id,
+                        )
                         if error not in self.asset_errors:
                             print("error", error)
                             print(error.error)
@@ -882,7 +879,11 @@ class DataHubDBParser:
                         dialect=self.dialect,
                         context=node.original_ast.sql(dialect=self.dialect),
                     )
-                    error = AssetError(asset=asset, error=vinylerror.to_dict())
+                    error = AssetError(
+                        asset=asset,
+                        error=vinylerror.to_dict(),
+                        workspace_id=self.workspace_id,
+                    )
                     if error not in self.asset_errors:
                         self.asset_errors.append(error)
                         print("uncaught error", error)
@@ -904,6 +905,8 @@ class DataHubDBParser:
         for i, cls in enumerate(DataHubDBParserBase.__subclasses__()):
             if i == 0:
                 parser = cls(
+                    resource_id=self.resource_id,
+                    workspace_id=self.workspace_id,
                     row_dict=self.input_dict,
                     asset_dict=self.asset_dict,
                     column_dict=self.column_dict,
@@ -919,6 +922,7 @@ class DataHubDBParser:
         outputs = parser.get_outputs()
         self.asset_dict = outputs["asset_dict"]
         self.container_dict = outputs["container_dict"]
+        self.container_membership = outputs["container_membership"]
         self.column_dict = outputs["column_dict"]
         self.asset_graph = outputs["asset_graph"]
         self.column_graph = outputs["column_graph"]
@@ -934,6 +938,7 @@ class DataHubDBParser:
         for i, parser in enumerate(parsers):
             combined.asset_dict.update(parser.asset_dict)
             combined.container_dict.update(parser.container_dict)
+            combined.container_membership.extend(parser.container_membership)
             combined.column_dict.update(parser.column_dict)
             combined.asset_graph = nx.compose(combined.asset_graph, parser.asset_graph)
             combined.column_graph = nx.compose(
@@ -999,19 +1004,13 @@ class DataHubDBParser:
 
     @classmethod
     def adjust_urns(cls, instances: list[Model], workspace_id: str):
-        urn_adjuster = UrnAdjuster(workspace_id)
         if len(instances) == 0:
             return instances
-        instance_type = instances[0].__class__
-        if not hasattr(instance_type, "urn_adjust_fields"):
-            raise ValueError(
-                f"Model {instance_type.__name__} must have a urn_adjust_fields attribute"
-            )
-        out = []
-        for instance in instances:
-            urn_adjuster.adjust_obj(instance)
-            out.append(instance)
-        return out
+        # if not isinstance(instances[0], MetadataModel):
+        #     raise ValueError(
+        #         f"Models of type {instances[0].__class__.__name__} must be a MetadataModel"
+        #     )
+        return [instance.adjust_urns() for instance in instances]
 
     @classmethod
     @transaction.atomic
@@ -1060,14 +1059,15 @@ class DataHubDBParser:
             indirect_columns.append(column)
 
         # adjust urns
-        for key in combined:
-            combined[key] = cls.adjust_urns(combined[key], resource.workspace.id)
-        indirect_assets = cls.adjust_urns(indirect_assets, resource.workspace.id)
-        indirect_columns = cls.adjust_urns(indirect_columns, resource.workspace.id)
+        # for key in combined:
+        #     combined[key] = cls.adjust_urns(combined[key], resource.workspace.id)
+        # indirect_assets = cls.adjust_urns(indirect_assets, resource.workspace.id)
+        # indirect_columns = cls.adjust_urns(indirect_columns, resource.workspace.id)
 
         # upload the data to the db
         pg_delete_and_upsert(combined["asset_containers"], resource)
         pg_delete_and_upsert(combined["assets"], resource, indirect_assets)
+        pg_delete_and_upsert(combined["container_membership"], resource)
         pg_delete_and_upsert(combined["asset_errors"], resource)
         pg_delete_and_upsert(combined["asset_links"], resource)
         pg_delete_and_upsert(combined["columns"], resource, indirect_columns)
