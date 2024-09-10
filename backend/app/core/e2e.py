@@ -237,6 +237,7 @@ class DatasetInfoParser(DataHubDBParserBase):
                 v.description = self.get_description(info_list)
                 v.type = self.get_type(info_list)
                 v.unique_name = self.get_unique_name(info_list) or urn.name
+                v.tags = self.get_tags(info_list)
                 if self.is_db:
                     v.db_location = urn.name.split(".")
                     v.materialization, incremental = self.get_materialization(info_list)
@@ -298,10 +299,12 @@ class DatasetInfoParser(DataHubDBParserBase):
     def get_tags(self, info_list: list[dict[str, Any]]):
         dbt_info, db_info, _, _ = info_list
         tags = []
+        null_tags = True
         for info in [*dbt_info, *db_info]:
             if "tags" in info:
+                null_tags = False
                 tags.extend(info["tags"])
-        return list(set(tags))
+        return list(set(tags)) if not null_tags else None
 
     def get_materialization(self, info_list: list[dict[str, Any]]):
         dbt_info, db_info, _, db_view_info = info_list
