@@ -1,12 +1,8 @@
-from .user import (
-    User,
-    UserManager,
-)
-from .workspace import Workspace, WorkspaceGroup
 from .git_connections import GithubInstallation, SSHKey
 from .metadata import (
     Asset,
     AssetContainer,
+    AssetContainerMembership,
     AssetEmbedding,
     AssetError,
     AssetLink,
@@ -31,3 +27,8 @@ from .resources import (
     TableauDetails,
     WorkflowRun,
 )
+from .user import (
+    User,
+    UserManager,
+)
+from .workspace import Workspace, WorkspaceGroup

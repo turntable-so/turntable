@@ -78,7 +78,7 @@ class EncryptedMixin(models.Field):
         self.key: bytes | str = kwargs.pop("key", None)
         self.ttl: int = kwargs.pop("ttl", None)
 
-        self._fernet = Fernet(settings.ENCRYPTION_KEY)
+        self._fernet = Fernet(settings.ENCRYPTION_KEY or Fernet.generate_key())
         super().__init__(*args, **kwargs)
 
     def _description(self) -> str:

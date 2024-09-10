@@ -32,6 +32,7 @@ def pg_delete_and_upsert(
     resource: Resource,
     indirect_instances: list[Model] | None = None,
 ):
+    # ensure request is valid
     if resource is None or resource.id is None:
         raise ValueError(
             "Resource must have an id to use the `delete_and_upsert` function"
@@ -42,12 +43,16 @@ def pg_delete_and_upsert(
     if len(model_types) > 1:
         raise ValueError("All instances must be of the same model type")
 
+    # adjust urns
+    instances = [i.adjust_urns() for i in instances]
+    if indirect_instances is not None:
+        indirect_instances = [i.adjust_urns() for i in indirect_instances]
+
+    # delete instances that are no longer in the new list
     model_type = model_types.pop()
     pk_name = model_type._meta.pk.name
     cur_ids_inclusive, cur_ids_exclusive = get_pg_instance_ids(model_type, resource)
     new_primary_keys = [str(getattr(i, pk_name)) for i in instances]
-
-    # delete instances that are no longer in the new list
     to_delete = list(set(cur_ids_exclusive) - set(new_primary_keys))
     base_delete = model_type.objects.filter(id__in=to_delete)
     model_field_names = [f.name for f in model_type._meta.get_fields()]
@@ -83,7 +88,7 @@ def pg_delete_and_upsert(
             str(id) for id in model_type.objects.all().values_list(pk_name, flat=True)
         ]
         new_indirect_instances = [
-            i for i in indirect_instances if str(i.id) not in cur_ids
+            i.adjust_urns() for i in indirect_instances if str(i.id) not in cur_ids
         ]
 
         pgbulk.copy(

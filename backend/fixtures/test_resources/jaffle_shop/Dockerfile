@@ -6,4 +6,4 @@ WORKDIR /code
 ADD --chmod=755 https://astral.sh/uv/0.2.18/install.sh /install.sh
 RUN bash /install.sh && rm /install.sh
 
-COPY ./populate_db.sh /code/populate_db.sh
+COPY . .
