@@ -88,8 +88,8 @@ export async function getNotebook(id: string) {
 }
 
 
-export async function getAssets(resourceId: string) {
-  const response = await fetcher(`/assets/?resource_id=${resourceId}`, {
+export async function getAssets() {
+  const response = await fetcher(`/assets/`, {
     cookies,
     method: "GET",
     next: {

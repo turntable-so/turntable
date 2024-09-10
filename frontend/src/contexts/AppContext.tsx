@@ -123,9 +123,9 @@ export default function AppContextProvider({
         }
     };
 
-    useEffect(() => {
-        fetchResources();
-    }, []);
+    // useEffect(() => {
+    //     fetchResources();
+    // }, []);
 
 
     useEffect(() => {

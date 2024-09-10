@@ -9,11 +9,12 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **kwargs):
-        user = create_user()
-        group_1(user)
-        group_2(user)
-        group_3(user)
-        group_4(user)
-        self.stdout.write(
-            self.style.SUCCESS("Successfully seeded the database with staging data")
-        )
+        pass
+        # user = create_user()
+        # group_1(user)
+        # group_2(user)
+        # group_3(user)
+        # group_4(user)
+        # self.stdout.write(
+        #     self.style.SUCCESS("Successfully seeded the database with staging data")
+        # )

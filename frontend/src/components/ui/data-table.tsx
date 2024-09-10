@@ -28,16 +28,9 @@ import {
 import { DataTablePagination } from "@/components/ui/data-table-pagination"
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar"
 import { useRouter } from "next/navigation"
+import { useAppContext } from "@/contexts/AppContext"
 
-interface DataTableProps<TData, TValue> {
-    columns: ColumnDef<TData, TValue>[]
-    data: TData[]
-}
-
-export function DataTable<TData, TValue>({
-    columns,
-    data,
-}: DataTableProps<TData, TValue>) {
+export default function AssetViewDataTable() {
     const [rowSelection, setRowSelection] = React.useState({})
     const [columnVisibility, setColumnVisibility] =
         React.useState<VisibilityState>({})
@@ -47,9 +40,11 @@ export function DataTable<TData, TValue>({
     const [sorting, setSorting] = React.useState<SortingState>([])
     const router = useRouter()
 
+    const { assets, loading, error, fetchAssets } = useAppContext();
+
 
     const table = useReactTable({
-        data,
+        data: assets.results,
         columns,
         state: {
             sorting,
@@ -64,21 +59,17 @@ export function DataTable<TData, TValue>({
         onColumnVisibilityChange: setColumnVisibility,
         getCoreRowModel: getCoreRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-        initialState: {
-            pagination: {
-                pageSize: 20,
-                pageIndex: 0
-            }
-        },
+        // getPaginationRowModel: getPaginationRowModel(),
         getSortedRowModel: getSortedRowModel(),
+        manualPagination: true,
+        rowCount: data?.length,
         getFacetedRowModel: getFacetedRowModel(),
         getFacetedUniqueValues: getFacetedUniqueValues(),
     })
 
     return (
         <div className="space-y-4">
-            <DataTableToolbar table={table} />
+            <DataTableToolbar numResults={numResults} table={table} />
             <div className="rounded-md border">
                 <Table>
                     <TableHeader>

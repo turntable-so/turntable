@@ -40,6 +40,7 @@ import {
     DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { DataTableFacetedFilter } from "./DataTableFacetedFilter"
+import { useState } from "react"
 
 interface DataTableViewOptionsProps<TData> {
     table: Table<TData>
@@ -53,7 +54,7 @@ export function DataTableViewOptions<TData>({
             <DropdownMenuTrigger asChild>
                 <Button
                     variant="outline"
-                    size="lg"
+                    size="sm"
                     className="ml-auto hidden h-8 lg:flex"
                 >
                     <MixerHorizontalIcon className="mr-2 h-4 w-4" />
@@ -90,10 +91,12 @@ export function DataTableViewOptions<TData>({
 
 interface DataTableToolbarProps<TData> {
     table: Table<TData>
+    numResults: number
 }
 
 export function DataTableToolbar<TData>({
     table,
+    numResults
 }: DataTableToolbarProps<TData>) {
     const isFiltered = table.getState().columnFilters.length > 0
     // Calculate unique sources, types, and tags directly
@@ -110,6 +113,8 @@ export function DataTableToolbar<TData>({
             value,
         }));
     })();
+
+    const [searchValue, setSearchValue] = useState<string>("")
 
     const uniqueTypes = (() => {
         const types = new Set<string>();
@@ -135,57 +140,80 @@ export function DataTableToolbar<TData>({
         }));
     })();
 
-    console.log({ uniqueSources, uniqueTypes, uniqueTags })
+    const onSubmit = () => {
+        console.log("Submit command fired");
+        // Add your submit logic here
+    };
+
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === 'Enter') {
+            onSubmit();
+        }
+    };
 
     return (
-        <div className="flex items-center justify-between">
-            <div className="flex flex-1 items-center space-x-2">
-                <div className="space-y-4">
-                    <Input
-                        autoFocus
-                        placeholder="Search assets"
-                        value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-                        onChange={(event) =>
-                            table.getColumn("name")?.setFilterValue(event.target.value)
-                        }
-                        className="h-10 w-[500px]"
-                    />
-                    <div className="flex space-x-2">
-                        {table.getColumn("resource") && (
-                            <DataTableFacetedFilter
-                                column={table.getColumn("resource")}
-                                title="Source"
-                                options={uniqueSources}
-                            />
-                        )}
-                        {table.getColumn("type") && (
-                            <DataTableFacetedFilter
-                                column={table.getColumn("type")}
-                                title="Type"
-                                options={uniqueTypes}
-                            />
-                        )}
-                        {table.getColumn("tags") && (
-                            <DataTableFacetedFilter
-                                column={table.getColumn("tags")}
-                                title="Tags"
-                                options={uniqueTags}
-                            />
-                        )}
-                        {isFiltered && (
-                            <Button
-                                variant="ghost"
-                                onClick={() => table.resetColumnFilters()}
-                                className="h-8 px-2 lg:px-3"
-                            >
-                                Reset
-                                <Cross2Icon className="ml-2 h-4 w-4" />
-                            </Button>
-                        )}
+        <div>
+            <div className="w-full">
+                <div>
+                    <div className="space-y-2 w-full">
+                        <Input
+                            autoFocus
+                            placeholder="Search assets"
+                            value={searchValue}
+                            onChange={(event) =>
+                                setSearchValue(event.target.value)
+                            }
+                            onKeyDown={handleKeyDown}
+                            className="h-10 w-full"
+                        />
+                        <div className="flex items-center justify-between">
+                            <div className="flex space-x-2 items-center">
+                                <div>
+                                    <div className="ml-1 text-sm text-muted-foreground w-24">
+                                        {numResults} results
+                                    </div>
+                                </div>
+                                {table.getColumn("resource") && (
+                                    <DataTableFacetedFilter
+                                        column={table.getColumn("resource")}
+                                        title="Source"
+                                        options={uniqueSources}
+                                    />
+                                )}
+                                {table.getColumn("type") && (
+                                    <DataTableFacetedFilter
+                                        column={table.getColumn("type")}
+                                        title="Type"
+                                        options={uniqueTypes}
+                                    />
+                                )}
+                                {table.getColumn("tags") && (
+                                    <DataTableFacetedFilter
+                                        column={table.getColumn("tags")}
+                                        title="Tags"
+                                        options={uniqueTags}
+                                    />
+                                )}
+                                {isFiltered && (
+                                    <Button
+                                        variant="ghost"
+                                        onClick={() => table.resetColumnFilters()}
+                                        className="h-8 px-2 lg:px-3"
+                                    >
+                                        Reset
+                                        <Cross2Icon className="ml-2 h-4 w-4" />
+                                    </Button>
+                                )}
+                            </div>
+                            <div className="bg-red-100">
+                                <DataTableViewOptions table={table} />
+                            </div>
+                        </div>
                     </div>
                 </div>
+
             </div>
-            <DataTableViewOptions table={table} />
+
         </div>
     )
 }

@@ -168,7 +168,7 @@ class AssetIndexSerializer(serializers.ModelSerializer):
 
 
 class AssetSerializer(serializers.ModelSerializer):
-    columns = ColumnSerializer(many=True, read_only=True)
+    # columns = ColumnSerializer(many=True, read_only=True)
     dataset = serializers.SerializerMethodField()
     schema = serializers.SerializerMethodField()
     table_name = serializers.SerializerMethodField()
@@ -186,7 +186,7 @@ class AssetSerializer(serializers.ModelSerializer):
             "dataset",
             "table_name",
             "name",
-            "columns",
+            # "columns",
             "description",
             "url",
             "type",
