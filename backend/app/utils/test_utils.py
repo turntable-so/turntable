@@ -77,4 +77,4 @@ def assert_ingest_output(resources):
     assert ColumnLink.objects.filter(workspace_id=None).count() == 0
 
     ## at least one asset has a container
-    assert Asset.objects.exclude(containers=None).count() > 0
+    assert Asset.objects.filter(containermembership__isnull=False).count() > 0
