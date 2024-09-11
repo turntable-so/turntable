@@ -52,7 +52,7 @@ class ResourceViewSet(viewsets.ModelViewSet):
 class SyncResourceView(APIView):
     @sync_to_async
     def get_current_workspace(self, user):
-        return user.workspaces.first()
+        return user.current_workspace()
 
     async def post(self, request, resource_id):
         workspace = await self.get_current_workspace(request.user)
@@ -63,12 +63,10 @@ class SyncResourceView(APIView):
                 {"detail": "Sync task started."}, status=status.HTTP_202_ACCEPTED
             )
 
-class TestResourceView(APIView):
 
+class TestResourceView(APIView):
     def post(self, request, resource_id):
-        workspace = request.user.workspaces.first()
+        workspace = request.user.current_workspace()
         resource_service = ResourceService(workspace=workspace)
         test = resource_service.test_resource(resource_id=resource_id)
-        return Response(
-            test
-        )
+        return Response(test)
