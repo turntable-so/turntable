@@ -1,4 +1,4 @@
-from api.serializers import AssetIndexSerializer, AssetSerializer
+from api.serializers import AssetIndexSerializer, AssetSerializer, ResourceSerializer
 from app.models import Asset, Resource
 from rest_framework import viewsets, status
 from rest_framework.pagination import PageNumberPagination
@@ -74,6 +74,10 @@ class AssetViewSet(viewsets.ModelViewSet):
             base_queryset.values("tags").annotate(count=Count("tags")).order_by("tags")
         )
 
+        # Get all resources for the workspace
+        resources = Resource.objects.filter(workspace=workspace)
+        resources_serializer = ResourceSerializer(resources, many=True)
+
         # Paginate the filtered assets
         page = self.paginate_queryset(filtered_assets)
         if page is not None:
@@ -86,6 +90,7 @@ class AssetViewSet(viewsets.ModelViewSet):
                 "sources": list(sources) if len(sources) > 0 else [],
                 "tags": list(tags) if len(tags) > 0 else [],
             }
+            response.data["resources"] = resources_serializer.data
             return response
 
         serializer = AssetIndexSerializer(
@@ -100,6 +105,7 @@ class AssetViewSet(viewsets.ModelViewSet):
                     "sources": list(sources),
                     "tags": list(tags),
                 },
+                "resources": resources_serializer.data,
             }
         )
 
