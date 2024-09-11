@@ -10,6 +10,7 @@ from api.serializers import (
     PostgresDetailsSerializer,
     ResourceSerializer,
     SnowflakeDetailsSerializer,
+    TableauDetailsSerializer,
 )
 from app.models import DBTCoreDetails, Resource, Workspace
 from app.models.resources import (
@@ -21,6 +22,7 @@ from app.models.resources import (
     ResourceDetails,
     ResourceSubtype,
     SnowflakeDetails,
+    TableauDetails,
 )
 
 
@@ -130,6 +132,12 @@ class MetabaseResourceService(ResourceServiceHelper):
     subtype = ResourceSubtype.METABASE
     serializer = MetabaseDetailsSerializer
     details_obj = MetabaseDetails
+
+
+class TableauResourceService(ResourceServiceHelper):
+    subtype = ResourceSubtype.TABLEAU
+    serializer = TableauDetailsSerializer
+    details_obj = TableauDetails
 
 
 class DBTResourceService(ResourceServiceHelper):
@@ -276,7 +284,6 @@ class ResourceService:
             "test_db": test_db,
             "test_datahub": test_datahub,
         }
-        
 
     async def sync_resource(self, resource_id: int):
         from workflows.hatchet import hatchet
