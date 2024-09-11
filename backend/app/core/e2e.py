@@ -505,13 +505,59 @@ class LineageParser(DataHubDBParserBase):
                         for field_info in lineage["fineGrainedLineages"]:
                             confidence_score = field_info["confidenceScore"]
                             for upstream_field in field_info["upstreams"]:
+                                upstream_dataset = SchemaFieldUrn.from_string(
+                                    upstream_field
+                                ).parent
+                                self.column_graph.add_node(
+                                    upstream_field,
+                                    dataset=upstream_dataset,
+                                )
                                 for downstream_field in field_info["downstreams"]:
+                                    downstream_dataset = SchemaFieldUrn.from_string(
+                                        downstream_field
+                                    ).parent
+                                    self.column_graph.add_node(
+                                        downstream_field, dataset=downstream_dataset
+                                    )
                                     self.column_graph.add_edge(
                                         upstream_field,
                                         downstream_field,
                                         key=0,  # ensures no duplicate edges
                                         confidence_score=confidence_score,
                                     )
+
+        self.remove_col_links_within_assets()
+
+    def remove_col_links_within_assets(self):
+        # adjust column lineage so that any links to upstream table are shared within all links within downstream table, and then remove all within-table links
+        col_graph = self.column_graph.copy()
+        datasets_with_duplicates = set()
+        for u, v in col_graph.edges():
+            u_dataset = col_graph.nodes[u]["dataset"]
+            v_dataset = col_graph.nodes[v]["dataset"]
+            if u_dataset == v_dataset:
+                datasets_with_duplicates.add(u_dataset)
+
+        parents_of_duplicates = {
+            d: list(self.asset_graph.predecessors(d)) for d in datasets_with_duplicates
+        }
+        tcs = []
+        for dataset, parents in parents_of_duplicates.items():
+            fields_for_subgraph = [
+                n
+                for n, data in col_graph.nodes(data=True)
+                if data["dataset"] in [dataset, *parents]
+            ]
+            subgraph = col_graph.subgraph(fields_for_subgraph)
+            tc = nx.transitive_closure_dag(subgraph)
+            tcs.append(tc)
+        col_graph = nx.compose_all([col_graph, *tcs])
+        for u, v in col_graph.copy().edges():
+            u_dataset = col_graph.nodes[u]["dataset"]
+            v_dataset = col_graph.nodes[v]["dataset"]
+            if u_dataset == v_dataset:
+                col_graph.remove_edge(u, v)
+        self.column_graph = col_graph
 
 
 class AssertionParser(DataHubDBParserBase):
