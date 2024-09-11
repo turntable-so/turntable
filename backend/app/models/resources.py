@@ -24,6 +24,7 @@ from vinyl.lib.connect import (
     DatabaseFileConnector,
     DatabricksConnector,
     PostgresConnector,
+    RedshiftConnector,
     SnowflakeConnector,
 )
 from vinyl.lib.dbt import DBTProject
@@ -51,6 +52,7 @@ class ResourceSubtype(models.TextChoices):
     BIGQUERY = "bigquery", "BigQuery"
     SNOWFLAKE = "snowflake", "Snowflake"
     POSTGRES = "postgres", "Postgres"
+    REDSHIFT = "redshift", "Redshift"
     DATABRICKS = "databricks", "Databricks"
     DUCKDB = "duckdb", "File"
     FILE = "file", "File"
@@ -811,6 +813,79 @@ class PostgresDetails(DBDetails):
             "outputs": {
                 "prod": {
                     "type": "postgres",
+                    "host": self.host,
+                    "port": self.port,
+                    "dbname": self.database,
+                    "schema": dbt_core_resource.schema,
+                    "user": self.username,
+                    "password": self.password,
+                }
+            },
+        }
+
+
+class RedshiftDetails(DBDetails):
+    subtype = models.CharField(max_length=255, default=ResourceSubtype.REDSHIFT)
+    host = encrypt(models.CharField(max_length=255, blank=False))
+    port = models.IntegerField(blank=False)
+    database = encrypt(models.CharField(max_length=255, blank=False))
+    username = encrypt(models.CharField(max_length=255, blank=False))
+    password = encrypt(models.CharField(max_length=255, blank=False))
+    serverless = models.BooleanField(null=False)
+
+    @property
+    def requires_start_date(self):
+        return False
+
+    @property
+    def venv_path(self):
+        return ".redshiftvenv"
+
+    @property
+    def datahub_extras(self):
+        return ["redshift", "dbt"]
+
+    def get_connector(self):
+        return RedshiftConnector(
+            host=self.host,
+            port=self.port,
+            user=self.username,
+            password=self.password,
+            tables=[f"{self.database}.*.*"],
+        )
+
+    def get_datahub_config(self, db_path) -> dict[str, Any]:
+        return {
+            "source": {
+                "type": "redshift",
+                "config": {
+                    "host_port": f"{self.host}:{self.port}",
+                    "database": self.database,
+                    "username": self.username,
+                    "password": self.password,
+                    "is_serverless": self.serverless,
+                    "include_table_lineage": False,
+                    "include_table_location_lineage": False,
+                    "include_table_rename_lineage": False,
+                    "include_unload_lineage": False,
+                    "include_view_lineage": False,
+                    "include_view_column_lineage": False,
+                    "include_usage_statistics": False,
+                },
+            },
+            "sink": get_sync_config(db_path),
+        }
+
+    def get_dbt_profile_contents(self, dbt_core_resource: DBTCoreDetails):
+        if dbt_core_resource.database != self.database:
+            raise Exception(
+                f"DBT database {dbt_core_resource.database} does not match Postgres database {self.database}"
+            )
+        return {
+            "target": "prod",
+            "outputs": {
+                "prod": {
+                    "type": "redshift",
                     "host": self.host,
                     "port": self.port,
                     "dbname": self.database,

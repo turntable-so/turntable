@@ -19,6 +19,7 @@ from .resources import (
     LookerDetails,
     MetabaseDetails,
     PostgresDetails,
+    RedshiftDetails,
     Resource,
     ResourceDetails,
     ResourceSubtype,

@@ -639,6 +639,11 @@ class PostgresConnector(_DatabaseConnector):
         )
 
 
+class RedshiftConnector(_DatabaseConnector):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
 class SnowflakeConnector(_DatabaseConnector):
     _account: str
     _user: str

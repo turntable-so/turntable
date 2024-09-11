@@ -19,6 +19,7 @@ class DBTDialect(Enum):
     POSTGRES = "postgres"
     DATABRICKS = "databricks"
     DUCKDB = "duckdb"
+    REDSHIFT = "redshift"
 
 
 class DBTError:
@@ -84,6 +85,14 @@ MAX_DIALECT_VERSION = {
         DBTVersion.V1_6.value: "1.6.2",
         DBTVersion.V1_7.value: "1.7.5",
         DBTVersion.V1_8.value: "1.8.3",
+    },
+    DBTDialect.REDSHIFT.value: {
+        DBTVersion.V1_3.value: "1.3.1",
+        DBTVersion.V1_4.value: "1.4.1",
+        DBTVersion.V1_5.value: "1.5.12",
+        DBTVersion.V1_6.value: "1.6.7",
+        DBTVersion.V1_7.value: "1.7.7",
+        DBTVersion.V1_8.value: "1.8.1",
     },
 }
 

@@ -44,6 +44,12 @@ def test_databricks_connection(remote_databricks: Resource):
 
 
 @pytest.mark.django_db
+@require_env_vars("REDSHIFT_0_WORKSPACE_ID")
+def test_redshift_connection(remote_redshift: Resource):
+    assert dialect_test_contents(remote_redshift)
+
+
+@pytest.mark.django_db
 @require_env_vars("TABLEAU_0_USERNAME")
 def test_tableau_connection(remote_tableau: Resource):
     assert dialect_test_contents(remote_tableau, is_db=False)
