@@ -357,6 +357,13 @@ export const BIToolOptions = [
         logo: <MetabaseLogo />
     },
     {
+        'name': 'tableau',
+        'type': 'BI_TOOL',
+        'label': 'Tableau',
+        'url': '/connections/new/tableau',
+        logo: <TableauLogo />
+    },
+    {
         'name': 'powerbi',
         'type': 'BI_TOOL',
         'label': 'PowerBI',
@@ -368,11 +375,6 @@ export const BIToolOptions = [
         'label': 'Looker',
         logo: <LookerLogo />
     },
-    {
-        'name': 'tableau',
-        'type': 'BI_TOOL',
-        'label': 'Tableau',
-        logo: <TableauLogo />
-    },
+
 
 ]
