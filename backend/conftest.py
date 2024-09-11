@@ -12,7 +12,7 @@ from fixtures.local_env import (
     create_local_user,
     create_local_workspace,
 )
-from fixtures.staging_env import group_1, group_2, group_4
+from fixtures.staging_env import group_2, group_4, group_5
 from workflows.metadata_sync import MetadataSyncWorkflow
 from workflows.utils.debug import ContextDebugger
 
@@ -25,6 +25,9 @@ def pytest_addoption(parser):
     )
     parser.addoption(
         "--recache", action="store_true", default=False, help="Recache fixtures"
+    )
+    parser.addoption(
+        "--use_cache", action="store_true", default=False, help="Use cached fixtures"
     )
 
 
@@ -75,11 +78,6 @@ def local_metabase(user):
 
 
 @pytest.fixture
-def remote_bigquery(user):
-    return group_1(user)[0]
-
-
-@pytest.fixture
 def remote_snowflake(user):
     return group_2(user)[0]
 
@@ -87,6 +85,16 @@ def remote_snowflake(user):
 @pytest.fixture
 def remote_databricks(user):
     return group_4(user)[0]
+
+
+@pytest.fixture
+def remote_tableau(user):
+    return group_4(user)[1]
+
+
+@pytest.fixture
+def remote_bigquery(user):
+    return group_5(user)[0]
 
 
 @pytest.fixture()
@@ -116,3 +124,8 @@ def prepopulated_dev_db(local_metabase, local_postgres):
 @pytest.fixture
 def recache(request):
     return request.config.getoption("--recache")
+
+
+@pytest.fixture
+def use_cache(request):
+    return request.config.getoption("--use_cache")
