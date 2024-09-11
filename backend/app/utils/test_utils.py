@@ -10,6 +10,7 @@ from app.models import (
     ColumnLink,
     ResourceType,
 )
+from app.models.resources import DBDetails
 
 
 def require_env_vars(*required_vars):
@@ -69,6 +70,14 @@ def assert_ingest_output(resources):
             if id in db_assets:
                 db_assets_with_column_links.add(id)
     assert db_assets_with_asset_links == db_assets_with_column_links
+
+    ## check at least one db asset has a tag/descriptoin
+    if any([isinstance(r.details, DBDetails) for r in resources]):
+        assert Asset.objects.filter(tags__isnull=False).count() > 0
+        assert Asset.objects.filter(description__isnull=False).count() > 0
+
+    ## all assets have a name
+    assert Asset.objects.filter(name__isnull=True).count() == 0
 
     ## all instances have workspace_ids
     assert Asset.objects.filter(workspace_id=None).count() == 0
