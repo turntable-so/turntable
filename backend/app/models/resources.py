@@ -14,8 +14,8 @@ from django.core.files import File
 from django.db import models
 from polymorphic.models import PolymorphicModel
 
-from app.models.workspace import Workspace
 from app.models.git_connections import GithubInstallation
+from app.models.workspace import Workspace
 from app.services.code_repo_service import CodeRepoService
 from app.services.github_service import GithubService
 from app.utils.fields import encrypt
@@ -46,6 +46,7 @@ class ResourceType(models.TextChoices):
 
 class ResourceSubtype(models.TextChoices):
     LOOKER = "looker", "Looker"
+    TABLEAU = "tableau", "Tableau"
     METABASE = "metabase", "Metabase"
     BIGQUERY = "bigquery", "BigQuery"
     SNOWFLAKE = "snowflake", "Snowflake"
@@ -474,6 +475,42 @@ class LookerDetails(ResourceDetails):
                         yaml.dump(config_lookml, f)
 
                     yield [config_path, config_path_lookml], db_path
+
+
+class TableauDetails(ResourceDetails):
+    subtype = models.CharField(max_length=255, default=ResourceSubtype.TABLEAU)
+    connect_uri = encrypt(models.CharField(max_length=255, blank=False))
+    site = encrypt(models.CharField(max_length=255, default="", blank=True))
+    username = encrypt(models.CharField(max_length=255, blank=False))
+    password = encrypt(models.CharField(max_length=255, blank=False))
+
+    @property
+    def venv_path(self):
+        return ".tableauvenv"
+
+    @property
+    def datahub_extras(self):
+        return ["tableau"]
+
+    @contextmanager
+    def datahub_yaml_path(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            db_path, config_path = self.db_config_paths(temp_dir)
+            config = {
+                "source": {
+                    "type": "tableau",
+                    "config": {
+                        "connect_uri": self.connect_uri,
+                        "site": self.site or "",
+                        "username": self.username,
+                        "password": self.password,
+                    },
+                },
+                "sink": get_sync_config(db_path),
+            }
+            with open(config_path, "w") as f:
+                yaml.dump(config, f)
+            yield [config_path], db_path
 
 
 class MetabaseDetails(ResourceDetails):

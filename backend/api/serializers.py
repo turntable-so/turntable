@@ -20,6 +20,7 @@ from app.models import (
     Resource,
     ResourceDetails,
     SnowflakeDetails,
+    TableauDetails,
     User,
     Workspace,
     WorkspaceGroup,
@@ -300,6 +301,12 @@ class DatabricksDetailsSerializer(ResourceDetailsSerializer):
     class Meta:
         model = DatabricksDetails
         fields = ["host", "token", "http_path"]
+
+
+class TableauDetailsSerializer(ResourceDetailsSerializer):
+    class Meta:
+        model = TableauDetails
+        fields = ["username", "password", "site", "connect_uri"]
 
 
 class MetabaseDetailsSerializer(ResourceDetailsSerializer):

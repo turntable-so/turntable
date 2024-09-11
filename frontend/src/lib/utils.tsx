@@ -1,4 +1,4 @@
-import { DatabricksLogo } from "@/components/connections/connection-options";
+import { DatabricksLogo, TableauLogo } from "@/components/connections/connection-options";
 import { DbtLogo } from "../components/ActionBar";
 import { type ClassValue, clsx } from "clsx"
 import { BarChartBig, Database, File, FileIcon, History, LayoutDashboard, PanelsTopLeft } from "lucide-react";
@@ -384,14 +384,29 @@ export function getAssetIcon(type: string, resourceType?: string) {
   if (resourceType === 'metabase') {
     return <MetabaseIcon />
   }
+  if (resourceType === 'databricks') {
+    return (
+      <div className='mr-1'>
+        <DatabricksLogo height={14} width={14} />
+      </div>
+    )
+  }
+  if (resourceType === 'tableau') {
+    return (
+      <div className='mr-1'>
+        <TableauLogo height={14} width={14} />
+      </div>
+    )
+  }
   if (type === 'source') {
     return <div className='mr-1 flex flex-col'><BigQueryLogo />  <DbtLogo /></div>
   } else {
-    return (
-      <div className="mr-1">
-        <DbtLogo />
-      </div>
-    )
+    if (type === 'databricks')
+      return (
+        <div className="mr-1">
+          <FileIcon className='w-4 h-4' />
+        </div>
+      )
   }
 }
 

@@ -9,6 +9,42 @@ from pgvector.django import VectorField
 
 from app.models.resources import Resource
 from app.models.workspace import Workspace
+from app.utils.urns import UrnAdjuster
+
+
+class AssetContainer(models.Model):
+    class AssetContainerType(models.TextChoices):
+        WORKBOOK = "workbook"
+        PROJECT = "project"
+        DATABASE = "database"
+        SCHEMA = "schema"
+
+    # pk
+    id = models.CharField(max_length=255, primary_key=True, editable=False)
+    type = models.CharField(max_length=255, choices=AssetContainerType.choices)
+    name = models.TextField()
+    description = models.TextField(null=True)
+
+    # relationships
+    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
+
+    @property
+    def assets(self):
+        return Asset.objects.filter(containermembership__container_id=self.id)
+
+    def adjust_urns(self):
+        adjuster = UrnAdjuster(self.workspace.id)
+        self.id = adjuster.adjust(self.id)
+
+        return self
+
+    @classmethod
+    def get_for_resource(cls, resource_id: str, inclusive: bool = True):
+        # return is the same for inclusive and exclusive
+        # replace across resources, don't delete any
+        if inclusive:
+            return cls.objects.all()
+        return cls.objects.none()
 
 
 class Asset(models.Model):
@@ -50,8 +86,12 @@ class Asset(models.Model):
     is_indirect = models.BooleanField(default=False)
 
     # relationships
-    resource = models.ForeignKey(Resource, on_delete=models.CASCADE, null=True)
-    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
+    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
+
+    @property
+    def containers(self):
+        return AssetContainer.objects.filter(containermembership__asset_id=self.id)
 
     @property
     def dataset(self) -> str:
@@ -95,14 +135,6 @@ class Asset(models.Model):
         if self.resource:
             return self.resource.subtype
 
-    def get_resource_ids(self) -> set[str]:
-        return {self.resource.id}
-
-    @classmethod
-    def get_for_resource(cls, resource_id: str, inclusive: bool = True):
-        # return is the same for inclusive and exclusive
-        return cls.objects.filter(resource_id=resource_id)
-
     @property
     def num_columns(self) -> int:
         return self.columns.count()
@@ -113,10 +145,49 @@ class Asset(models.Model):
             return self.resource.name
         return ""
 
+    def adjust_urns(self):
+        adjuster = UrnAdjuster(self.workspace.id)
+        self.id = adjuster.adjust(self.id)
+
+        return self
+
+    def get_resource_ids(self) -> set[str]:
+        return {self.resource.id}
+
+    @classmethod
+    def get_for_resource(cls, resource_id: str, inclusive: bool = True):
+        # return is the same for inclusive and exclusive
+        return cls.objects.filter(resource_id=resource_id)
+
     class Meta:
         indexes = [
             models.Index(fields=["workspace_id"]),
         ]
+
+
+class ContainerMembership(models.Model):
+    # pk
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    # relationships
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
+    container = models.ForeignKey(AssetContainer, on_delete=models.CASCADE)
+    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
+
+    def adjust_urns(self):
+        adjuster = UrnAdjuster(self.workspace.id)
+        self.asset_id = adjuster.adjust(self.asset_id)
+        self.container_id = adjuster.adjust(self.container_id)
+
+        return self
+
+    @classmethod
+    def get_for_resource(cls, resource_id: str, inclusive: bool = True):
+        # return is the same for inclusive and exclusive
+        # replace across resources, don't delete any
+        if inclusive:
+            return cls.objects.all()
+        return cls.objects.none()
 
 
 class Column(models.Model):
@@ -135,8 +206,15 @@ class Column(models.Model):
     is_indirect = models.BooleanField(default=False)
 
     # relationships
-    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
+    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="columns")
+
+    def adjust_urns(self):
+        adjuster = UrnAdjuster(self.workspace.id)
+        self.id = adjuster.adjust(self.id)
+        self.asset_id = adjuster.adjust(self.asset_id)
+
+        return self
 
     def get_resource_ids(self) -> set[str]:
         return {self.asset.resource.id}
@@ -209,13 +287,21 @@ FROM traversed
     id = models.TextField(primary_key=True, editable=False)
 
     # relationships
-    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
+    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
     source = models.ForeignKey(
         Asset, on_delete=models.CASCADE, related_name="source_links"
     )
     target = models.ForeignKey(
         Asset, on_delete=models.CASCADE, related_name="target_links"
     )
+
+    def adjust_urns(self):
+        adjuster = UrnAdjuster(self.workspace.id)
+        self.id = adjuster.adjust(self.id)
+        self.source_id = adjuster.adjust(self.source_id)
+        self.target_id = adjuster.adjust(self.target_id)
+
+        return self
 
     @classmethod
     def successors(cls, workspace_id: str, asset_id: str, depth: int = 1):
@@ -325,13 +411,21 @@ class ColumnLink(models.Model):
     confidence = models.FloatField(null=True)
 
     # relationships
-    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
+    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
     source = models.ForeignKey(
         Column, on_delete=models.CASCADE, related_name="source_links"
     )
     target = models.ForeignKey(
         Column, on_delete=models.CASCADE, related_name="target_links"
     )
+
+    def adjust_urns(self):
+        adjuster = UrnAdjuster(self.workspace.id)
+        self.id = adjuster.adjust(self.id)
+        self.source_id = adjuster.adjust(self.source_id)
+        self.target_id = adjuster.adjust(self.target_id)
+
+        return self
 
     @classmethod
     def get_for_resource(cls, resource_id: str, inclusive: bool = True):
@@ -361,8 +455,14 @@ class AssetError(models.Model):
     lineage_type = models.TextField(null=True)
 
     # relationships
-    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
+    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
+
+    def adjust_urns(self):
+        adjuster = UrnAdjuster(self.workspace.id)
+        self.asset_id = adjuster.adjust(self.asset_id)
+
+        return self
 
     @classmethod
     def get_for_resource(cls, resource_id: str, inclusive: bool = True):
@@ -384,8 +484,14 @@ class AssetEmbedding(models.Model):
     search_vector = VectorField(dimensions=1536, null=True)
 
     # relationships
-    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
+    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
+
+    def adjust_urns(self):
+        adjuster = UrnAdjuster(self.workspace.id)
+        self.asset_id = adjuster.adjust(self.asset_id)
+
+        return self
 
     class Meta:
         indexes = [
