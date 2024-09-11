@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { Asset } from '../types/Asset'; // Assuming you have an Asset type defined
+import { getAssets } from '@/app/actions/actions';
 
 interface AssetViewerContextType {
-    assets: Asset[];
+    assets: AssetView;
     loading: boolean;
     error: string | null;
     fetchAssets: (params?: {
@@ -10,15 +11,28 @@ interface AssetViewerContextType {
         source?: string;
         type?: string;
         tags?: string[];
+        page?: number;
+        pageSize?: number;
     }) => Promise<void>;
+    currentPage: number;
+    setCurrentPage: (page: number) => void;
+    query: string;
+    setQuery: (query: string) => void;
+    pageSize: number;
+    setPageSize: (size: number) => void;
+    filters: {
+        sources: Set<string>;
+        tags: Set<string>;
+        types: Set<string>;
+    }
 }
 
 const AssetViewerContext = createContext<AssetViewerContextType | undefined>(undefined);
 
-export const useAssetViewer = () => {
+export const useAssets = () => {
     const context = useContext(AssetViewerContext);
     if (!context) {
-        throw new Error('useAssetViewer must be used within an AssetViewerProvider');
+        throw new Error('useAssets must be used within an AssetViewerProvider');
     }
     return context;
 };
@@ -27,45 +41,60 @@ interface AssetViewerProviderProps {
     children: ReactNode;
 }
 
+
 export const AssetViewerProvider: React.FC<AssetViewerProviderProps> = ({ children }) => {
-    const [assets, setAssets] = useState<Asset[]>([]);
+    const [assets, setAssets] = useState<AssetView>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
-    const fetchAssets = useCallback(async (params?: {
-        query?: string;
-        source?: string;
-        type?: string;
-        tags?: string[];
-    }) => {
+    const [query, setQuery] = useState<string>("")
+    const [currentPage, setCurrentPage] = useState(1);
+    const [filters, setFilters] = useState({
+        sources: [],
+        tags: [],
+        types: []
+    });
+    async function fetchAssets() {
         setLoading(true);
         setError(null);
         try {
-            // Replace this with your actual API call
-            const response = await fetch('/api/assets', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(params),
+            const data = await getAssets({
+                query,
+                page: currentPage,
+                sources: filters.sources,
+                tags: filters.tags,
+                types: filters.types
             });
-            if (!response.ok) {
-                throw new Error('Failed to fetch assets');
-            }
-            const data = await response.json();
             setAssets(data);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An unknown error occurred');
         } finally {
             setLoading(false);
         }
-    }, []);
+    }
+
+    useEffect(() => {
+        fetchAssets();
+    }, [currentPage]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filters, query])
+
+    useEffect(() => {
+        fetchAssets()
+    }, [filters])
 
     const value = {
         assets,
         loading,
         error,
+        // query,
+        setQuery,
         fetchAssets,
+        currentPage,
+        setCurrentPage,
+        filters,
+        setFilters
     };
 
     return (

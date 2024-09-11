@@ -29,6 +29,8 @@ import { DataTablePagination } from "@/components/ui/data-table-pagination"
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar"
 import { useRouter } from "next/navigation"
 import { useAppContext } from "@/contexts/AppContext"
+import { columns } from "./data-table-columns"
+import { useAssets } from "@/contexts/AssetViewerContext"
 
 export default function AssetViewDataTable() {
     const [rowSelection, setRowSelection] = React.useState({})
@@ -38,38 +40,46 @@ export default function AssetViewDataTable() {
         []
     )
     const [sorting, setSorting] = React.useState<SortingState>([])
+    const [pagination, setPagination] = React.useState({
+        pageIndex: 0,
+        pageSize: 10,
+    })
     const router = useRouter()
 
-    const { assets, loading, error, fetchAssets } = useAppContext();
+    const { assets } = useAssets()
 
+    console.log({ assets })
 
     const table = useReactTable({
-        data: assets.results,
+        data: assets.results || [],
         columns,
         state: {
             sorting,
             columnVisibility,
             rowSelection,
             columnFilters,
+            pagination,
         },
         enableRowSelection: true,
         onRowSelectionChange: setRowSelection,
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
         onColumnVisibilityChange: setColumnVisibility,
+        onPaginationChange: setPagination,
         getCoreRowModel: getCoreRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
-        // getPaginationRowModel: getPaginationRowModel(),
         getSortedRowModel: getSortedRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
         manualPagination: true,
-        rowCount: data?.length,
+        pageCount: assets.total_pages || -1,
+        rowCount: assets.count || 0,
         getFacetedRowModel: getFacetedRowModel(),
         getFacetedUniqueValues: getFacetedUniqueValues(),
     })
 
     return (
         <div className="space-y-4">
-            <DataTableToolbar numResults={numResults} table={table} />
+            <DataTableToolbar numResults={assets.count || 0} table={table} />
             <div className="rounded-md border">
                 <Table>
                     <TableHeader>

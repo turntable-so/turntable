@@ -38,35 +38,58 @@ class AssetViewSet(viewsets.ModelViewSet):
 
     def list(self, request):
         query = request.query_params.get("q", None)
-        if query:
-            # TODO: add ranking to this for name, description, tags, etc.
-            assets = Asset.objects.filter(name__icontains=query)
-        else:
-            assets = Asset.objects.all()
+        resources_filter = request.query_params.get("resources", None)
+        tags_filter = request.query_params.get("tags", None)
+        types_filter = request.query_params.get("types", None)
+        workspace = request.user.current_workspace()
+        if not workspace:
+            return Response(
+                {"detail": "Workspace not found."}, status=status.HTTP_403_FORBIDDEN
+            )
 
-        types = assets.values("type").annotate(count=Count("type")).order_by("type")
+        # Base queryset
+        base_queryset = Asset.objects.filter(workspace=workspace)
+
+        # Apply search filter if query exists
+        if query and len(query) > 0:
+            # TODO: add ranking to this for name, description, tags, etc.
+            filtered_assets = base_queryset.filter(name__icontains=query)
+        else:
+            filtered_assets = base_queryset
+
+        if types_filter and len(types_filter) > 0:
+            print(types_filter, flush=True)
+            filtered_assets = filtered_assets.filter(type__in=types_filter.split(","))
+
+        # Calculate filters using the base queryset
+        types = (
+            base_queryset.values("type").annotate(count=Count("type")).order_by("type")
+        )
         sources = (
-            assets.values("resource__id")
+            base_queryset.values("resource__id")
             .annotate(count=Count("resource__id"))
             .order_by("resource__name")
         )
-        tags = assets.values("tags").annotate(count=Count("tags")).order_by("tags")
+        tags = (
+            base_queryset.values("tags").annotate(count=Count("tags")).order_by("tags")
+        )
 
-        page = self.paginate_queryset(assets)
+        # Paginate the filtered assets
+        page = self.paginate_queryset(filtered_assets)
         if page is not None:
             serializer = AssetIndexSerializer(
                 page, many=True, context={"request": request}
             )
             response = self.get_paginated_response(serializer.data)
             response.data["filters"] = {
-                "types": list(types),
-                "sources": list(sources),
-                "tags": list(tags),
+                "types": list(types) if len(types) > 0 else [],
+                "sources": list(sources) if len(sources) > 0 else [],
+                "tags": list(tags) if len(tags) > 0 else [],
             }
             return response
 
         serializer = AssetIndexSerializer(
-            assets, many=True, context={"request": request}
+            filtered_assets, many=True, context={"request": request}
         )
 
         return Response(

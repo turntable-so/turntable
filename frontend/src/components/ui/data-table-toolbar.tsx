@@ -41,10 +41,13 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { DataTableFacetedFilter } from "./DataTableFacetedFilter"
 import { useState } from "react"
+import { useAssets } from "@/contexts/AssetViewerContext"
+import { AsteriskSquare } from "lucide-react"
 
 interface DataTableViewOptionsProps<TData> {
     table: Table<TData>
 }
+
 
 export function DataTableViewOptions<TData>({
     table,
@@ -91,58 +94,18 @@ export function DataTableViewOptions<TData>({
 
 interface DataTableToolbarProps<TData> {
     table: Table<TData>
-    numResults: number
 }
 
 export function DataTableToolbar<TData>({
     table,
-    numResults
+
 }: DataTableToolbarProps<TData>) {
     const isFiltered = table.getState().columnFilters.length > 0
-    // Calculate unique sources, types, and tags directly
-    const uniqueSources = (() => {
-        const sources: Record<string, string> = {}
-        table.getCoreRowModel().rows.forEach((row) => {
-            const resource = row.getValue("resource") as { resource_name: string, resource_id: string } | undefined;
-            if (resource) {
-                sources[resource.resource_id] = resource.resource_name
-            }
-        });
-        return Object.entries(sources).map(([value, label]) => ({
-            label,
-            value,
-        }));
-    })();
-
-    const [searchValue, setSearchValue] = useState<string>("")
-
-    const uniqueTypes = (() => {
-        const types = new Set<string>();
-        table.getCoreRowModel().rows.forEach((row) => {
-            const type = row.getValue("type") as string | undefined;
-            if (type) types.add(type);
-        });
-        return Array.from(types).map(type => ({
-            label: type,
-            value: type,
-        }));
-    })();
-
-    const uniqueTags = (() => {
-        const tags = new Set<string>();
-        table.getCoreRowModel().rows.forEach((row) => {
-            const rowTags = row.getValue("tags") as string[] | undefined;
-            if (rowTags) rowTags.forEach(tag => tags.add(tag));
-        });
-        return Array.from(tags).map(tag => ({
-            label: tag,
-            value: tag,
-        }));
-    })();
+    const { query, setQuery, assets, fetchAssets, filters, setFilters } = useAssets();
+    console.log({ assets })
 
     const onSubmit = () => {
-        console.log("Submit command fired");
-        // Add your submit logic here
+        fetchAssets();
     };
 
     const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -150,6 +113,8 @@ export function DataTableToolbar<TData>({
             onSubmit();
         }
     };
+
+
 
     return (
         <div>
@@ -159,39 +124,67 @@ export function DataTableToolbar<TData>({
                         <Input
                             autoFocus
                             placeholder="Search assets"
-                            value={searchValue}
+                            value={query}
                             onChange={(event) =>
-                                setSearchValue(event.target.value)
+                                setQuery(event.target.value)
                             }
                             onKeyDown={handleKeyDown}
                             className="h-10 w-full"
                         />
                         <div className="flex items-center justify-between">
                             <div className="flex space-x-2 items-center">
-                                <div>
-                                    <div className="ml-1 text-sm text-muted-foreground w-24">
-                                        {numResults} results
+                                {assets?.count && (
+                                    <div>
+                                        <div className="ml-1 text-sm text-muted-foreground w-24">
+                                            {assets?.count} results
+                                        </div>
                                     </div>
-                                </div>
-                                {table.getColumn("resource") && (
+                                )}
+                                {/* {table.getColumn("resource") && assets?.filters?.sources && (
                                     <DataTableFacetedFilter
-                                        column={table.getColumn("resource")}
                                         title="Source"
-                                        options={uniqueSources}
+                                        selectedValues={filters.sources}
+                                        setSelectedValues={(source) => setFilters({
+                                            ...filters,
+                                            sources: source
+                                        })}
+                                        options={assets.filters.sources.map((resource: any) => (
+                                            {
+                                                label: resource.resource__id,
+                                                value: resource.resource__id,
+                                                count: resource.count
+                                            }
+                                        ))}
                                     />
-                                )}
-                                {table.getColumn("type") && (
+                                )} */}
+                                {table.getColumn("type") && assets?.filters?.types && (
                                     <DataTableFacetedFilter
-                                        column={table.getColumn("type")}
+                                        selectedValues={filters.types}
+                                        setSelectedValues={(types) => setFilters({
+                                            ...filters,
+                                            types,
+                                        })}
                                         title="Type"
-                                        options={uniqueTypes}
+                                        options={assets.filters.types.map((type: any) => (
+                                            {
+                                                label: type.type,
+                                                value: type.type,
+                                                count: type.count
+                                            }
+                                        ))}
                                     />
                                 )}
-                                {table.getColumn("tags") && (
+                                {/* {table.getColumn("tags") && assets?.filters?.tags && (
                                     <DataTableFacetedFilter
                                         column={table.getColumn("tags")}
                                         title="Tags"
-                                        options={uniqueTags}
+                                        options={assets.filters.tags.length > 0 ? assets.filters.tags.map((tag: any) => (
+                                            {
+                                                label: tag.tags,
+                                                value: tag.tags,
+                                                count: tag.count
+                                            }
+                                        )) : []}
                                     />
                                 )}
                                 {isFiltered && (
@@ -203,9 +196,9 @@ export function DataTableToolbar<TData>({
                                         Reset
                                         <Cross2Icon className="ml-2 h-4 w-4" />
                                     </Button>
-                                )}
+                                )} */}
                             </div>
-                            <div className="bg-red-100">
+                            <div>
                                 <DataTableViewOptions table={table} />
                             </div>
                         </div>
