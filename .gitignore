@@ -54,3 +54,5 @@ backend/.env
 **/node_modules/**
 **/.next/**
 .env.staging
+.env.local
+.env
