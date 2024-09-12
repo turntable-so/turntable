@@ -165,6 +165,10 @@ class AssetIndexSerializer(serializers.ModelSerializer):
             "name",
             "type",
             "tags",
+            "tests",
+            "materialization",
+            "description",
+            "resource_id",
         ]
 
 

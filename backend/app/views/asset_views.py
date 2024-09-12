@@ -31,7 +31,6 @@ class AssetPagination(PageNumberPagination):
 
 class AssetViewSet(viewsets.ModelViewSet):
     queryset = Asset.objects.all()
-    serializer_class = AssetSerializer
     pagination_class = AssetPagination
 
     permission_classes = [AllowAny]
@@ -58,8 +57,12 @@ class AssetViewSet(viewsets.ModelViewSet):
             filtered_assets = base_queryset
 
         if types_filter and len(types_filter) > 0:
-            print(types_filter, flush=True)
             filtered_assets = filtered_assets.filter(type__in=types_filter.split(","))
+
+        if resources_filter and len(resources_filter) > 0:
+            filtered_assets = filtered_assets.filter(
+                resource__in=resources_filter.split(",")
+            )
 
         # Calculate filters using the base queryset
         types = (

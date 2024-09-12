@@ -92,7 +92,7 @@ export async function getAssets({ query, page, sources, tags, types }: { query: 
   let url = `/assets/?q=${encodeURIComponent(query)}&page=${page}`;
 
   if (sources && sources.length > 0) {
-    url += `&resouces=${sources.map(encodeURIComponent).join(',')}`;
+    url += `&resources=${sources.map(encodeURIComponent).join(',')}`;
   }
 
   if (tags && tags.length > 0) {

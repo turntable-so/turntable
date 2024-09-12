@@ -140,23 +140,23 @@ export function DataTableToolbar<TData>({
                                         </div>
                                     </div>
                                 )}
-                                {/* {table.getColumn("resource") && assets?.filters?.sources && (
+                                {table.getColumn("resource") && assets?.filters?.sources && (
                                     <DataTableFacetedFilter
                                         title="Source"
                                         selectedValues={filters.sources}
-                                        setSelectedValues={(source) => setFilters({
+                                        setSelectedValues={(sources) => setFilters({
                                             ...filters,
-                                            sources: source
+                                            sources
                                         })}
                                         options={assets.filters.sources.map((resource: any) => (
                                             {
-                                                label: resource.resource__id,
+                                                label: assets.resources.find((r: any) => r.id === resource.resource__id)?.name,
                                                 value: resource.resource__id,
                                                 count: resource.count
                                             }
                                         ))}
                                     />
-                                )} */}
+                                )}
                                 {table.getColumn("type") && assets?.filters?.types && (
                                     <DataTableFacetedFilter
                                         selectedValues={filters.types}
@@ -174,17 +174,21 @@ export function DataTableToolbar<TData>({
                                         ))}
                                     />
                                 )}
-                                {/* {table.getColumn("tags") && assets?.filters?.tags && (
+                                {table.getColumn("tags") && assets?.filters?.tags && (
                                     <DataTableFacetedFilter
-                                        column={table.getColumn("tags")}
+                                        selectedValues={filters.tags}
+                                        setSelectedValues={(tags) => setFilters({
+                                            ...filters,
+                                            tags,
+                                        })}
                                         title="Tags"
-                                        options={assets.filters.tags.length > 0 ? assets.filters.tags.map((tag: any) => (
+                                        options={assets.filters.tags.map((tag: any) => (
                                             {
                                                 label: tag.tags,
                                                 value: tag.tags,
                                                 count: tag.count
                                             }
-                                        )) : []}
+                                        ))}
                                     />
                                 )}
                                 {isFiltered && (
@@ -196,7 +200,7 @@ export function DataTableToolbar<TData>({
                                         Reset
                                         <Cross2Icon className="ml-2 h-4 w-4" />
                                     </Button>
-                                )} */}
+                                )}
                             </div>
                             <div>
                                 <DataTableViewOptions table={table} />

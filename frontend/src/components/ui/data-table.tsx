@@ -79,7 +79,7 @@ export default function AssetViewDataTable() {
 
     return (
         <div className="space-y-4">
-            <DataTableToolbar numResults={assets.count || 0} table={table} />
+            <DataTableToolbar table={table} />
             <div className="rounded-md border">
                 <Table>
                     <TableHeader>
