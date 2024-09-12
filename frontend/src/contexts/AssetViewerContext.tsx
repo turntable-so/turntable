@@ -19,6 +19,7 @@ interface AssetViewerContextType {
     query: string;
     setQuery: (query: string) => void;
     pageSize: number;
+    isLoading: boolean;
     setPageSize: (size: number) => void;
     filters: {
         sources: Set<string>;
@@ -44,7 +45,7 @@ interface AssetViewerProviderProps {
 
 export const AssetViewerProvider: React.FC<AssetViewerProviderProps> = ({ children }) => {
     const [assets, setAssets] = useState<AssetView>([]);
-    const [loading, setLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [query, setQuery] = useState<string>("")
     const [currentPage, setCurrentPage] = useState(1);
@@ -54,7 +55,7 @@ export const AssetViewerProvider: React.FC<AssetViewerProviderProps> = ({ childr
         types: []
     });
     async function fetchAssets() {
-        setLoading(true);
+        setIsLoading(true);
         setError(null);
         try {
             const data = await getAssets({
@@ -68,7 +69,7 @@ export const AssetViewerProvider: React.FC<AssetViewerProviderProps> = ({ childr
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An unknown error occurred');
         } finally {
-            setLoading(false);
+            setIsLoading(false);
         }
     }
 
@@ -86,7 +87,7 @@ export const AssetViewerProvider: React.FC<AssetViewerProviderProps> = ({ childr
 
     const value = {
         assets,
-        loading,
+        isLoading,
         error,
         // query,
         setQuery,

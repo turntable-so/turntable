@@ -46,12 +46,28 @@ export default function AssetViewDataTable() {
     })
     const router = useRouter()
 
-    const { assets } = useAssets()
+    const { assets, isLoading } = useAssets()
 
-    console.log({ assets })
+    console.log({ assets, isLoading })
+
+    const data = React.useMemo(() => {
+        const resources = assets.resources
+        if (!assets || !assets.results) return []
+
+        return assets.results.map((asset: any) => {
+            const resource = resources.find((r: any) => r.id === asset.resource_id)
+            return {
+                ...asset,
+                resource_name: resource?.name,
+                resource_subtype: resource?.subtype,
+                resource_has_dbt: resource?.has_dbt,
+            }
+        })
+    }, [assets])
+
 
     const table = useReactTable({
-        data: assets.results || [],
+        data,
         columns,
         state: {
             sorting,
@@ -104,7 +120,7 @@ export default function AssetViewDataTable() {
                         {table.getRowModel().rows?.length ? (
                             table.getRowModel().rows.map((row) => (
                                 <TableRow
-                                    className='cursor-pointer'
+                                    className={`cursor-pointer ${isLoading ? 'bg-gray-50 animate-pulse' : ''}`}
                                     key={row.id}
                                     data-state={row.getIsSelected() && "selected"}
                                     onClick={() => {

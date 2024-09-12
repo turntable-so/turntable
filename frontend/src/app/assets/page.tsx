@@ -19,7 +19,7 @@ export default function AssetsPage() {
 
     return (
         <AssetViewerProvider>
-            <div className='max-w-7xl w-full px-8 py-4 mt-4 mb-8'>
+            <div className='w-full px-8 py-4 mt-4 mb-8'>
                 <AssetViewDataTable />
             </div>
         </AssetViewerProvider>
