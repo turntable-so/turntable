@@ -7,6 +7,7 @@ from app.models import (
     DBTCoreDetails,
     GithubInstallation,
     LookerDetails,
+    RedshiftDetails,
     Resource,
     ResourceType,
     SnowflakeDetails,
@@ -139,6 +140,7 @@ def create_databricks_n(workspace, n):
     assert host, f"must provide DATABRICKS_{n}_HOST to use this test"
     assert token, f"must provide DATABRICKS_{n}_TOKEN to use this test"
     assert http_path, f"must provide DATABRICKS_{n}_HTTP_PATH to use this test"
+    assert resource_name, f"must provide DATABRICKS_{n}_RESOURCE_NAME to use this test"
 
     try:
         resource = Resource.objects.get(workspace=workspace, type=ResourceType.DB)
@@ -155,6 +157,46 @@ def create_databricks_n(workspace, n):
             host=host,
             token=token,
             http_path=http_path,
+        ).save()
+
+    return resource
+
+
+def create_redshift_n(workspace: Workspace, n):
+    host = os.getenv(f"REDSHIFT_{n}_HOST")
+    port = os.getenv(f"REDSHIFT_{n}_PORT")
+    database = os.getenv(f"REDSHIFT_{n}_DATABASE")
+    username = os.getenv(f"REDSHIFT_{n}_USER")
+    password = os.getenv(f"REDSHIFT_{n}_PASSWORD")
+    serverless = os.getenv(f"REDSHIFT_{n}_SERVERLESS", "false") == "true"
+    resource_name = os.getenv(f"REDSHIFT_{n}_RESOURCE_NAME")
+
+    assert host, f"must provide REDSHIFT_{n}_HOST to use this test"
+    assert port, f"must provide REDSHIFT_{n}_PORT to use this test"
+    assert database, f"must provide REDSHIFT_{n}_DATABASE to use this test"
+    assert username, f"must provide REDSHIFT_{n}_USER to use this test"
+    assert password, f"must provide REDSHIFT_{n}_PASSWORD to use this test"
+    assert serverless, f"must provide REDSHIFT_{n}_SERVERLESS to use this test"
+    assert resource_name, f"must provide REDSHIFT_{n}_RESOURCE_NAME to use this test"
+
+    try:
+        resource = Resource.objects.get(workspace=workspace, type=ResourceType.DB)
+    except Resource.DoesNotExist:
+        resource = Resource.objects.create(
+            workspace=workspace, type=ResourceType.DB, name=resource_name
+        )
+
+    if not hasattr(resource, "details") or not isinstance(
+        resource.details, RedshiftDetails
+    ):
+        RedshiftDetails(
+            resource=resource,
+            host=host,
+            port=port,
+            database=database,
+            username=username,
+            password=password,
+            serverless=serverless,
         ).save()
 
     return resource
@@ -331,3 +373,11 @@ def group_5(user):
     )  # force_db=True to use the same project_id as the bigquery resource. Can't use mydb because it is reserved.
 
     return [bigquery]
+
+
+def group_6(user):
+    workspace = create_workspace_n(user, "redshift", 0)
+    redshift = create_redshift_n(workspace, 0)
+    create_dbt_n(redshift, 0)
+
+    return [redshift]

@@ -8,6 +8,7 @@ from api.serializers import (
     DBTCoreDetailsSerializer,
     MetabaseDetailsSerializer,
     PostgresDetailsSerializer,
+    RedshiftDetailsSerializer,
     ResourceSerializer,
     SnowflakeDetailsSerializer,
     TableauDetailsSerializer,
@@ -19,6 +20,7 @@ from app.models.resources import (
     DBTResource,
     MetabaseDetails,
     PostgresDetails,
+    RedshiftDetails,
     ResourceDetails,
     ResourceSubtype,
     SnowflakeDetails,
@@ -120,6 +122,12 @@ class PostgresResourceService(ResourceServiceHelper):
     subtype = ResourceSubtype.POSTGRES
     serializer = PostgresDetailsSerializer
     details_obj = PostgresDetails
+
+
+class RedshiftResourceService(ResourceServiceHelper):
+    subtype = ResourceSubtype.REDSHIFT
+    serializer = RedshiftDetailsSerializer
+    details_obj = RedshiftDetails
 
 
 class DatabricksResourceService(ResourceServiceHelper):

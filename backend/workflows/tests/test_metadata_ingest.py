@@ -55,6 +55,12 @@ def test_databricks_sync(remote_databricks, recache: bool, use_cache: bool):
 
 
 @pytest.mark.django_db
+@require_env_vars("REDSHIFT_0_WORKSPACE_ID")
+def test_redshift_sync(remote_redshift, recache: bool, use_cache: bool):
+    run_test_sync([remote_redshift], recache, use_cache)
+
+
+@pytest.mark.django_db
 @require_env_vars("TABLEAU_0_USERNAME")
 def test_tableau_sync(remote_tableau, recache: bool, use_cache: bool):
     run_test_sync([remote_tableau], recache, use_cache)

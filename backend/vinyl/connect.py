@@ -6,5 +6,6 @@ from vinyl.lib.connect import (  # noqa: F401
     DBTConnectorFull,
     FileConnector,
     PostgresConnector,
+    RedshiftConnector,
     SnowflakeConnector,
 )

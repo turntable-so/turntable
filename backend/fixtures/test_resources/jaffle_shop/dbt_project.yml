@@ -7,7 +7,7 @@ config-version: 2
 
 # This setting configures which "profile" dbt uses for this project.
 profile: "jaffle_shop"
-require-dbt-version: ">=1.6.0rc2"
+require-dbt-version: [">=1.7.0", "<1.8.0"]
 
 # These configurations specify where dbt should look for different types of files.
 # The `model-paths` config, for example, states that models in this project can be

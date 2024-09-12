@@ -12,7 +12,7 @@ from fixtures.local_env import (
     create_local_user,
     create_local_workspace,
 )
-from fixtures.staging_env import group_2, group_4, group_5
+from fixtures.staging_env import group_2, group_4, group_5, group_6
 from workflows.metadata_sync import MetadataSyncWorkflow
 from workflows.utils.debug import ContextDebugger
 
@@ -95,6 +95,11 @@ def remote_tableau(user):
 @pytest.fixture
 def remote_bigquery(user):
     return group_5(user)[0]
+
+
+@pytest.fixture
+def remote_redshift(user):
+    return group_6(user)[0]
 
 
 @pytest.fixture()

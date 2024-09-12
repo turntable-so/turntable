@@ -7,6 +7,7 @@ import secrets
 import traceback
 from abc import ABC, abstractmethod
 from argparse import Namespace
+from contextlib import closing
 from dataclasses import asdict, dataclass, field
 from functools import lru_cache
 from pathlib import Path
@@ -637,6 +638,22 @@ class PostgresConnector(_DatabaseConnector):
         return ibis.postgres.connect(
             host=host, port=port, user=user, password=password, database=database
         )
+
+
+class RedshiftConnector(PostgresConnector):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def sql_to_df(self, query: str, limit: int | None = _QUERY_LIMIT) -> pd.DataFrame:
+        conn = self._connect()
+        query = self._sql_to_df_query_helper(query, limit)
+        # conn.sql doesn't work for redshift, using a workaround for now while wait for issue resoluation
+        # issue link here: https://ibis-project.zulipchat.com/#narrow/stream/431387-postgres/topic/Bug.20with.20conn.2Esql.28.29.20for.20Reshift
+        with closing(conn.raw_sql(query)) as cursor:
+            rows = cursor.fetchall()
+            col_names = [desc[0] for desc in cursor.description]
+            df = pd.DataFrame(rows, columns=col_names)
+        return df
 
 
 class SnowflakeConnector(_DatabaseConnector):
