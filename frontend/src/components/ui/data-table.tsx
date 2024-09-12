@@ -31,6 +31,7 @@ import { useRouter } from "next/navigation"
 import { useAppContext } from "@/contexts/AppContext"
 import { columns } from "./data-table-columns"
 import { useAssets } from "@/contexts/AssetViewerContext"
+import { Loader2 } from "lucide-react"
 
 export default function AssetViewDataTable() {
     const [rowSelection, setRowSelection] = React.useState({})
@@ -140,19 +141,32 @@ export default function AssetViewDataTable() {
                                 </TableRow>
                             ))
                         ) : (
-                            <TableRow>
-                                <TableCell
-                                    colSpan={columns.length}
-                                    className="h-24 text-center"
-                                >
-                                    No results.
-                                </TableCell>
-                            </TableRow>
+                            <>
+                                {isLoading ? (
+                                    <TableRow>
+                                        <TableCell
+                                            colSpan={columns.length}
+                                            className="w-full text-center flex items-center justify-center"
+                                        >
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    <TableRow>
+                                        <TableCell
+                                            colSpan={columns.length}
+                                            className="h-24 text-center"
+                                        >
+                                            No results.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </>
                         )}
                     </TableBody>
                 </Table>
             </div>
             <DataTablePagination table={table} />
-        </div>
+        </div >
     )
 }
