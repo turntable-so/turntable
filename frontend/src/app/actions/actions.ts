@@ -265,6 +265,7 @@ export async function createResource(payload: CreateResourcePayload) {
   if (response.ok) {
     revalidateTag("resources");
     const data = await response.json();
+
     return data
   } else {
     return false

@@ -1,6 +1,6 @@
 "use client";
 
-import { BigQueryLogo, DatabricksLogo, SnowflakeLogo, TableauLogo } from "@/components/connections/connection-options";
+import { BigQueryLogo, DatabricksLogo, RedshiftLogo, SnowflakeLogo, TableauLogo } from "@/components/connections/connection-options";
 import BigqueryForm from "@/components/connections/forms/bigquery-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,6 +42,7 @@ import { Badge } from "@/components/ui/badge";
 import SnowflakeForm from "@/components/connections/forms/snowflake-form";
 import DatabricksForm from "@/components/connections/forms/databricks-form";
 import TableauForm from "@/components/connections/forms/tableau-form";
+import RedshiftForm from "@/components/connections/forms/redshift-form";
 
 type DbtDetails = {
   git_repo_url: string;
@@ -102,6 +103,7 @@ export default function ConnectionLayout({
           {resource.subtype === "snowflake" && <SnowflakeLogo />}
           {resource.subtype === "databricks" && <DatabricksLogo height={24} width={24} />}
           {resource.subtype === "tableau" && <TableauLogo />}
+          {resource.subtype === "redshift" && <RedshiftLogo />}
           <div>Edit {resource.name}</div>
         </div>
       </Button>
@@ -192,6 +194,9 @@ export default function ConnectionLayout({
               )}
               {resource.subtype === "tableau" && (
                 <TableauForm resource={resource} details={details} />
+              )}
+              {resource.subtype === "redshift" && (
+                <RedshiftForm resource={resource} details={details} />
               )}
             </CardContent>
           </Card>
