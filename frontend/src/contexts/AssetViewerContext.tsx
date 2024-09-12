@@ -1,10 +1,8 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { Asset } from '../types/Asset'; // Assuming you have an Asset type defined
+import React, { createContext, useContext, useState, ReactNode, useEffect, Dispatch, SetStateAction } from 'react';
 import { getAssets } from '@/app/actions/actions';
 
 interface AssetViewerContextType {
-    assets: AssetView;
-    loading: boolean;
+    assets: any;
     error: string | null;
     fetchAssets: (params?: {
         query?: string;
@@ -12,20 +10,23 @@ interface AssetViewerContextType {
         type?: string;
         tags?: string[];
         page?: number;
-        pageSize?: number;
     }) => Promise<void>;
     currentPage: number;
     setCurrentPage: (page: number) => void;
     query: string;
     setQuery: (query: string) => void;
-    pageSize: number;
     isLoading: boolean;
-    setPageSize: (size: number) => void;
+    pageSize: number;
     filters: {
-        sources: Set<string>;
-        tags: Set<string>;
-        types: Set<string>;
+        sources: string[];
+        tags: string[];
+        types: string[];
     }
+    setFilters: Dispatch<SetStateAction<{
+        sources: string[];
+        tags: string[];
+        types: string[];
+    }>>;
 }
 
 const AssetViewerContext = createContext<AssetViewerContextType | undefined>(undefined);
@@ -44,12 +45,17 @@ interface AssetViewerProviderProps {
 
 
 export const AssetViewerProvider: React.FC<AssetViewerProviderProps> = ({ children }) => {
-    const [assets, setAssets] = useState<AssetView>([]);
+    const pageSize = 50;
+    const [assets, setAssets] = useState<any>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [query, setQuery] = useState<string>("")
     const [currentPage, setCurrentPage] = useState(1);
-    const [filters, setFilters] = useState({
+    const [filters, setFilters] = useState<{
+        sources: string[];
+        tags: string[];
+        types: string[];
+    }>({
         sources: [],
         tags: [],
         types: []
@@ -85,17 +91,18 @@ export const AssetViewerProvider: React.FC<AssetViewerProviderProps> = ({ childr
         fetchAssets()
     }, [filters])
 
-    const value = {
+    const value: AssetViewerContextType = {
         assets,
         isLoading,
         error,
-        // query,
+        query,
         setQuery,
         fetchAssets,
         currentPage,
         setCurrentPage,
         filters,
-        setFilters
+        pageSize,
+        setFilters,
     };
 
     return (

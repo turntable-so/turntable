@@ -23,11 +23,11 @@ interface DataTablePaginationProps<TData> {
 export function DataTablePagination<TData>({
     table,
 }: DataTablePaginationProps<TData>) {
-    const { currentPage, setCurrentPage, pageSize, setPageSize, fetchAssets } = useAssets();
+    const { currentPage, setCurrentPage, fetchAssets } = useAssets();
 
     const handlePageChange = (newPage: number) => {
         setCurrentPage(newPage);
-        fetchAssets({ page: newPage, pageSize });
+        fetchAssets({ page: newPage });
     };
 
     return (

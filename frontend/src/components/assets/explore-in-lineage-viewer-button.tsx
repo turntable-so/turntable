@@ -1,5 +1,5 @@
 "use client"
-import { Asset } from "@/app/assets/page"
+import { Asset } from '@/components/ui/schema'
 import { Button } from "@/components/ui/button"
 import { SquareArrowOutUpRight } from "lucide-react"
 import { useRouter } from "next/navigation"

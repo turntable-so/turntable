@@ -40,11 +40,12 @@ export const columns: ColumnDef<Asset>[] = [
         accessorFn: (row) => ({
             resource_subtype: row.resource_subtype,
             resource_has_dbt: row.resource_has_dbt,
-            resource_name: row.resource_name,
-            resource_id: row.resource_id
+            resource_name: row.name,
+            resource_id: row.id
         }),
         filterFn: (row, id, value) => {
-            return value.includes(row.getValue(id).resource_id)
+            const rowValue = row.getValue(id) as { resource_id: string };
+            return value.includes(rowValue.resource_id);
         },
         enableSorting: false,
         header: ({ column }) => (
@@ -85,7 +86,7 @@ export const columns: ColumnDef<Asset>[] = [
         cell: ({ row }) => {
             return (
                 <div>
-                    {row.getValue("type") && <Badge variant="outline">{(row.getValue("type") as string).toUpperCase()}</Badge>}
+                    {row.getValue("type") ? <Badge variant="outline">{(row.getValue("type") as string).toUpperCase()}</Badge> : ''}
                 </div>
             )
         },
@@ -112,10 +113,18 @@ export const columns: ColumnDef<Asset>[] = [
         header: ({ column }) => (
             <DataTableColumnHeader column={column} title="Tags" />
         ),
-        cell: ({ row }) => <div>{row.getValue("tags") ? row.getValue("tags").map((tag: string) => <Badge key={tag} variant="secondary">{tag}</Badge>) : ""}</div>,
+        cell: ({ row }) => {
+            const tags = row.getValue("tags");
+            return (
+                <div>
+                    {Array.isArray(tags) ? tags.map((tag: string) => (
+                        <Badge key={tag} variant="secondary">{tag}</Badge>
+                    )) : ''}
+                </div>
+            );
+        },
         enableHiding: true,
         enableSorting: false,
-
     },
 
     // {
