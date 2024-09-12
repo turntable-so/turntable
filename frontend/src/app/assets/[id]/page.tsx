@@ -106,13 +106,14 @@ export default async function AssetPage({ params }: { params: { id: string } }) 
                         </CardContent>
                     </Card>
                 </div>
-                <div>
-                    <div className="font-medium text-muted-foreground my-1  text-lg">Columns</div>
-                    <Card className="rounded-md">
-                        <ColumnsTable columns={asset.columns} />
-                    </Card>
-                </div>
-
+                {asset.columns && (
+                    <div>
+                        <div className="font-medium text-muted-foreground my-1  text-lg">Columns</div>
+                        <Card className="rounded-md">
+                            <ColumnsTable columns={asset.columns} />
+                        </Card>
+                    </div>
+                )}
                 <div>
                     <div className="flex justify-between items-center">
                         <div className="font-medium text-muted-foreground my-1 text-lg">Lineage</div>

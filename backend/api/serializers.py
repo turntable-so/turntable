@@ -17,7 +17,6 @@ from app.models import (
     LookerDetails,
     Notebook,
     PostgresDetails,
-    RedshiftDetails,
     Resource,
     ResourceDetails,
     SnowflakeDetails,
@@ -165,6 +164,11 @@ class AssetIndexSerializer(serializers.ModelSerializer):
             "unique_name",
             "name",
             "type",
+            "tags",
+            "tests",
+            "materialization",
+            "description",
+            "resource_id",
         ]
 
 
@@ -295,12 +299,6 @@ class PostgresDetailsSerializer(ResourceDetailsSerializer):
     class Meta:
         model = PostgresDetails
         fields = ["host", "username", "password", "database", "port"]
-
-
-class RedshiftDetailsSerializer(ResourceDetailsSerializer):
-    class Meta:
-        model = RedshiftDetails
-        fields = ["host", "username", "password", "database", "port", "serverless"]
 
 
 class DatabricksDetailsSerializer(ResourceDetailsSerializer):
