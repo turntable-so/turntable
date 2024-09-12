@@ -1,4 +1,4 @@
-import { DatabricksLogo, TableauLogo } from "@/components/connections/connection-options";
+import { DatabricksLogo, RedshiftLogo, TableauLogo } from "@/components/connections/connection-options";
 import { DbtLogo } from "../components/ActionBar";
 import { type ClassValue, clsx } from "clsx"
 import { BarChartBig, Database, File, FileIcon, History, LayoutDashboard, PanelsTopLeft } from "lucide-react";
@@ -409,6 +409,13 @@ export function getAssetIcon(type: string, resourceType?: string) {
       </div>
     )
   }
+  if (resourceType === 'redshift') {
+    return (
+      <div className='mr-1'>
+        <RedshiftLogo height={14} width={14} />
+      </div>
+    )
+  }
   if (type === 'source') {
     return <div className='mr-1 flex flex-col'><BigQueryLogo />  <DbtLogo /></div>
   } else {
@@ -444,6 +451,8 @@ export function getResourceIcon(subtype: string) {
     return <SnowflakeLogo />
   } else if (subtype === 'databricks') {
     return <DatabricksLogo width={18} height={18} />
+  } else if (subtype === 'redshift') {
+    return <RedshiftLogo height={18} width={18} />
   } else {
     return <File className='size-5' />
   }
