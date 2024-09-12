@@ -42,7 +42,7 @@ import {
 import { DataTableFacetedFilter } from "./DataTableFacetedFilter"
 import { useState } from "react"
 import { useAssets } from "@/contexts/AssetViewerContext"
-import { AsteriskSquare } from "lucide-react"
+import { AsteriskSquare, Search } from "lucide-react"
 
 interface DataTableViewOptionsProps<TData> {
     table: Table<TData>
@@ -100,7 +100,7 @@ export function DataTableToolbar<TData>({
     table,
 
 }: DataTableToolbarProps<TData>) {
-    const isFiltered = table.getState().columnFilters.length > 0
+
     const { query, setQuery, assets, fetchAssets, filters, setFilters } = useAssets();
     console.log({ assets })
 
@@ -114,6 +114,8 @@ export function DataTableToolbar<TData>({
         }
     };
 
+    const isFiltered = filters.sources.length > 0 || filters.types.length > 0 || filters.tags.length > 0;
+
 
 
     return (
@@ -121,16 +123,19 @@ export function DataTableToolbar<TData>({
             <div className="w-full">
                 <div>
                     <div className="space-y-4 w-full">
-                        <Input
-                            autoFocus
-                            placeholder="Search assets"
-                            value={query}
-                            onChange={(event) =>
-                                setQuery(event.target.value)
-                            }
-                            onKeyDown={handleKeyDown}
-                            className="h-10 w-full"
-                        />
+                        <div className="relative">
+                            <Search className="size-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                            <Input
+                                autoFocus
+                                placeholder="Search assets"
+                                value={query}
+                                onChange={(event) =>
+                                    setQuery(event.target.value)
+                                }
+                                onKeyDown={handleKeyDown}
+                                className="h-10 w-full pl-10"
+                            />
+                        </div>
                         <div className="flex items-center justify-between">
                             <div className="flex space-x-2 items-center">
                                 <div>
@@ -182,8 +187,8 @@ export function DataTableToolbar<TData>({
                                         title="Tags"
                                         options={assets.filters.tags.map((tag: any) => (
                                             {
-                                                label: tag.tags,
-                                                value: tag.tags,
+                                                label: tag.type,
+                                                value: tag.type,
                                                 count: tag.count
                                             }
                                         ))}
@@ -192,7 +197,12 @@ export function DataTableToolbar<TData>({
                                 {isFiltered && (
                                     <Button
                                         variant="ghost"
-                                        onClick={() => table.resetColumnFilters()}
+                                        onClick={() => setFilters({
+                                            ...filters,
+                                            sources: [],
+                                            types: [],
+                                            tags: [],
+                                        })}
                                         className="h-8 px-2 lg:px-3"
                                     >
                                         Reset

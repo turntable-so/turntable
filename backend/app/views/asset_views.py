@@ -1,3 +1,4 @@
+from functools import reduce
 from api.serializers import AssetIndexSerializer, AssetSerializer, ResourceSerializer
 from app.models import Asset, Resource
 from rest_framework import viewsets, status
@@ -6,8 +7,7 @@ from rest_framework.response import Response
 from django.core.cache import caches
 from rest_framework.permissions import AllowAny
 from math import ceil
-from django.db.models import Count
-
+from django.db.models import Count, Q
 
 cache = caches["default"]
 
@@ -64,6 +64,14 @@ class AssetViewSet(viewsets.ModelViewSet):
                 resource__in=resources_filter.split(",")
             )
 
+        if tags_filter and len(tags_filter) > 0:
+            tag_list = tags_filter.split(",")
+            filtered_assets = filtered_assets.filter(
+                reduce(
+                    lambda x, y: x | y, [Q(tags__contains=[tag]) for tag in tag_list]
+                )
+            )
+
         # Calculate filters using the base queryset
         types = (
             base_queryset.values("type").annotate(count=Count("type")).order_by("type")
@@ -74,8 +82,18 @@ class AssetViewSet(viewsets.ModelViewSet):
             .order_by("resource__name")
         )
         tags = (
-            base_queryset.values("tags").annotate(count=Count("tags")).order_by("tags")
+            base_queryset.filter(tags__isnull=False)
+            .exclude(tags__exact=[])
+            .values_list("tags", flat=True)
+            .order_by()
+            .distinct()
         )
+        tags = [
+            {"type": tag, "count": base_queryset.filter(tags__contains=[tag]).count()}
+            for sublist in tags
+            for tag in sublist
+            if tag
+        ]
 
         # Get all resources for the workspace
         resources = Resource.objects.filter(workspace=workspace)

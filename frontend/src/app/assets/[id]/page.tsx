@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/table"
 import ExploreInLineageViewerButton from "@/components/assets/explore-in-lineage-viewer-button"
 import { getResourceIcon } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
 
 
 function ColumnsTable({ columns }: {
@@ -57,14 +58,15 @@ export default async function AssetPage({ params }: { params: { id: string } }) 
             <div className="flex gap-4 items-center">
                 <div className="mb-8">
                     <h1 className="text-2xl font-medium text-black">{asset.name}</h1>
-                    <div className="flex gap-2 my-2 items-center">
-                        <div className='flex space-x-1'>
-                            <div>{getResourceIcon(asset.resource_subtype)}</div>
-                            <div>{asset.resource_has_dbt && getResourceIcon('dbt')}</div>
-                            <div className='text-sm text-gray-500'>{asset.resource_name}</div>
+                    <div className="flex gap-6 my-2 items-center">
+                        <div>
+                            <div className="flex gap-2">
+                                <div>{getResourceIcon(asset.resource_subtype)}</div>
+                                <div>{asset.resource_has_dbt && getResourceIcon('dbt')}</div>
+                                <div className='text-sm text-gray-500'>{asset.resource_name}</div>
+                            </div>
                         </div>
-                        <p className="text-sm text-gray-500">{'>'}</p>
-                        <p className="text-sm text-gray-500">{asset.type.toUpperCase()}</p>
+                        <Badge variant='outline'>{asset.type.toUpperCase()}</Badge>
                     </div>
                 </div>
             </div>
@@ -76,20 +78,22 @@ export default async function AssetPage({ params }: { params: { id: string } }) 
                             <div className="flex gap-6">
                                 <div>
                                     <p className="text-sm text-gray-500">Schema</p>
-                                    <p className="text-sm">{asset.schema}</p>
+                                    <p className="text-sm my-1">{asset.schema}</p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-500">Dataset</p>
-                                    <p className="text-sm">{asset.dataset}</p>
+                                    <p className="text-sm my-1">{asset.dataset}</p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-500">Table</p>
-                                    <p className="text-sm">{asset.table_name}</p>
+                                    <p className="text-sm my-1">{asset.table_name}</p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-500">Tags</p>
-                                    <div>
-                                        {asset.tags ? <p className="text-sm text-gray-500">{asset.description}</p> : <p className="text-sm text-gray-500 italic">No tags</p>}
+                                    <div className="flex gap-2 my-1">
+                                        {asset.tags ? <p className="text-sm text-gray-500">{
+                                            asset.tags.map((tag: string) => <Badge variant="secondary" key={tag}>{tag}</Badge>)
+                                        }</p> : <p className="text-sm text-gray-500 italic">No tags</p>}
                                     </div>
                                 </div>
                             </div>

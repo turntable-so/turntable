@@ -99,20 +99,20 @@ export const columns: ColumnDef<Asset>[] = [
         enableSorting: false,
         enableHiding: true,
     },
-    {
-        accessorKey: "num_columns",
-        header: ({ column }) => (
-            <DataTableColumnHeader column={column} title="Num Columns" />
-        ),
-        cell: ({ row }) => <div>{row.getValue("num_columns")}</div>,
-        enableHiding: true,
-    },
+    // {
+    //     accessorKey: "num_columns",
+    //     header: ({ column }) => (
+    //         <DataTableColumnHeader column={column} title="Num Cols" />
+    //     ),
+    //     cell: ({ row }) => <div>{row.getValue("num_columns")}</div>,
+    //     enableHiding: true,
+    // },
     {
         accessorKey: "tags",
         header: ({ column }) => (
             <DataTableColumnHeader column={column} title="Tags" />
         ),
-        cell: ({ row }) => <div>{row.getValue("tags") ? row.getValue("tags").join(", ") : ""}</div>,
+        cell: ({ row }) => <div>{row.getValue("tags") ? row.getValue("tags").map((tag: string) => <Badge key={tag} variant="secondary">{tag}</Badge>) : ""}</div>,
         enableHiding: true,
         enableSorting: false,
 
