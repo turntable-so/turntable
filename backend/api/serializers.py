@@ -17,6 +17,7 @@ from app.models import (
     LookerDetails,
     Notebook,
     PostgresDetails,
+    RedshiftDetails,
     Resource,
     ResourceDetails,
     SnowflakeDetails,
@@ -293,6 +294,12 @@ class SnowflakeDetailsSerializer(ResourceDetailsSerializer):
     class Meta:
         model = SnowflakeDetails
         fields = ["account", "username", "password", "warehouse", "role"]
+
+
+class RedshiftDetailsSerializer(ResourceDetailsSerializer):
+    class Meta:
+        model = RedshiftDetails
+        fields = ["host", "username", "password", "database", "port", "serverless"]
 
 
 class PostgresDetailsSerializer(ResourceDetailsSerializer):
