@@ -8,6 +8,7 @@ from api.serializers import (
     DBTCoreDetailsSerializer,
     MetabaseDetailsSerializer,
     PostgresDetailsSerializer,
+    RedshiftDetailsSerializer,
     ResourceSerializer,
     SnowflakeDetailsSerializer,
 )
@@ -18,6 +19,7 @@ from app.models.resources import (
     DBTResource,
     MetabaseDetails,
     PostgresDetails,
+    RedshiftDetails,
     ResourceDetails,
     ResourceSubtype,
     SnowflakeDetails,
@@ -118,6 +120,12 @@ class PostgresResourceService(ResourceServiceHelper):
     subtype = ResourceSubtype.POSTGRES
     serializer = PostgresDetailsSerializer
     details_obj = PostgresDetails
+
+
+class RedshiftResourceService(ResourceServiceHelper):
+    subtype = ResourceSubtype.REDSHIFT
+    serializer = RedshiftDetailsSerializer
+    details_obj = RedshiftDetails
 
 
 class DatabricksResourceService(ResourceServiceHelper):
@@ -276,7 +284,6 @@ class ResourceService:
             "test_db": test_db,
             "test_datahub": test_datahub,
         }
-        
 
     async def sync_resource(self, resource_id: int):
         from workflows.hatchet import hatchet

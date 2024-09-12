@@ -166,15 +166,15 @@ def create_redshift_n(workspace: Workspace, n):
     host = os.getenv(f"REDSHIFT_{n}_HOST")
     port = os.getenv(f"REDSHIFT_{n}_PORT")
     database = os.getenv(f"REDSHIFT_{n}_DATABASE")
-    username = os.getenv(f"REDSHIFT_{n}_USERNAME")
+    username = os.getenv(f"REDSHIFT_{n}_USER")
     password = os.getenv(f"REDSHIFT_{n}_PASSWORD")
     serverless = os.getenv(f"REDSHIFT_{n}_SERVERLESS", "false") == "true"
-    resource_name = os.getenv(f"DATABRICKS_{n}_RESOURCE_NAME")
+    resource_name = os.getenv(f"REDSHIFT_{n}_RESOURCE_NAME")
 
     assert host, f"must provide REDSHIFT_{n}_HOST to use this test"
     assert port, f"must provide REDSHIFT_{n}_PORT to use this test"
     assert database, f"must provide REDSHIFT_{n}_DATABASE to use this test"
-    assert username, f"must provide REDSHIFT_{n}_USERNAME to use this test"
+    assert username, f"must provide REDSHIFT_{n}_USER to use this test"
     assert password, f"must provide REDSHIFT_{n}_PASSWORD to use this test"
     assert serverless, f"must provide REDSHIFT_{n}_SERVERLESS to use this test"
     assert resource_name, f"must provide REDSHIFT_{n}_RESOURCE_NAME to use this test"
@@ -198,6 +198,8 @@ def create_redshift_n(workspace: Workspace, n):
             password=password,
             serverless=serverless,
         ).save()
+
+    return resource
 
 
 def create_dbt_n(resource: Resource, n, force_db: bool = False):
