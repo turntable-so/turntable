@@ -41,7 +41,6 @@ const useWorkflowUpdates = (workspaceId: string) => {
             if (data.type === 'pong') {
                 console.log('Received pong');
             } else {
-                console.log(data);
                 setWorkflowStatus(data.status);
                 setResource(data.resource_id);
                 console.log(`Workflow Run ${data.workflow_run_id} status updated: ${data.status}`);
