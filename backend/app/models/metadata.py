@@ -455,7 +455,7 @@ class AssetError(models.Model):
     lineage_type = models.TextField(null=True)
 
     # relationships
-    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
+    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
 
     def adjust_urns(self):
