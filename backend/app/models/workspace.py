@@ -8,7 +8,7 @@ from app.services.storage_backends import PublicMediaStorage
 
 
 class Workspace(models.Model):
-    id = models.AutoField(primary_key=True)
+    id = models.CharField(primary_key=True, max_length=255)
     name = models.CharField(max_length=1000)
     icon_url = models.URLField(blank=True, null=True)
     icon_file = models.ImageField(
