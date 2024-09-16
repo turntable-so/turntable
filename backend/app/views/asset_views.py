@@ -46,7 +46,7 @@ class AssetViewSet(viewsets.ModelViewSet):
             )
 
         # Base queryset
-        base_queryset = Asset.objects.filter(workspace=workspace)
+        base_queryset = Asset.objects.filter(workspace=workspace).order_by("name")
 
         # Apply search filter if query exists
         if query and len(query) > 0:
@@ -164,5 +164,9 @@ class AssetViewSet(viewsets.ModelViewSet):
         resource_serializer = ResourceSerializer(resources, many=True)
         resource_data = resource_serializer.data
         for resource in resource_data:
-            resource["assets"] = grouped_assets[str(resource["id"])]
+            resource["assets"] = (
+                grouped_assets[str(resource["id"])]
+                if str(resource["id"]) in grouped_assets
+                else []
+            )
         return Response(resource_data)

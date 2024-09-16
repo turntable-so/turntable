@@ -40,8 +40,8 @@ export const columns: ColumnDef<Asset>[] = [
         accessorFn: (row) => ({
             resource_subtype: row.resource_subtype,
             resource_has_dbt: row.resource_has_dbt,
-            resource_name: row.name,
-            resource_id: row.id
+            resource_name: row.resource_name,
+            resource_id: row.resource_id
         }),
         filterFn: (row, id, value) => {
             const rowValue = row.getValue(id) as { resource_id: string };
@@ -49,10 +49,12 @@ export const columns: ColumnDef<Asset>[] = [
         },
         enableSorting: false,
         header: ({ column }) => (
-            <DataTableColumnHeader column={column} title="Source" />
+            <DataTableColumnHeader column={column} title="Resource" />
         ),
         cell: ({ row }) => {
             const { resource_subtype, resource_name, resource_has_dbt } = row.getValue("resource") as any
+
+            console.log(resource_subtype, resource_name, resource_has_dbt)
 
             return (
                 <div className='flex space-x-2 items-center'>

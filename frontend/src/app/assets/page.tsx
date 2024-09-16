@@ -7,15 +7,7 @@ import { AssetViewerProvider } from '@/contexts/AssetViewerContext'
 
 
 
-
-type Option = {
-    value: string, label: string, icon?: ReactNode
-}
-
-
 export default function AssetsPage() {
-
-
 
     return (
         <AssetViewerProvider>

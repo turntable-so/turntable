@@ -164,6 +164,7 @@ class AssetIndexSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "type",
+            "resource_id",
         ]
 
 
