@@ -23,7 +23,6 @@ from typing_extensions import Protocol
 class EncryptedJSONField(models.TextField):
     def __init__(self, *args, **kwargs):
         self.cipher = Fernet(settings.ENCRYPTION_KEY)
-        print(settings.ENCRYPTION_KEY)
         super().__init__(*args, **kwargs)
 
     def get_prep_value(self, value):
