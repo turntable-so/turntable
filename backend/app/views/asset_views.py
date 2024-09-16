@@ -47,6 +47,13 @@ class AssetViewSet(viewsets.ModelViewSet):
 
         # Base queryset
         base_queryset = Asset.objects.filter(workspace=workspace).order_by("name")
+        # Exclude assets based on workspace.assets_exclude_name_contains
+        exclude_filters = workspace.assets_exclude_name_contains
+        if exclude_filters:
+            exclude_q = Q()
+            for filter_string in exclude_filters:
+                exclude_q |= Q(name__icontains=filter_string)
+            base_queryset = base_queryset.exclude(exclude_q)
 
         # Apply search filter if query exists
         if query and len(query) > 0:
@@ -70,10 +77,10 @@ class AssetViewSet(viewsets.ModelViewSet):
                     lambda x, y: x | y, [Q(tags__contains=[tag]) for tag in tag_list]
                 )
             )
-
         # Calculate filters using the base queryset
         types = (
-            filtered_assets.values("type")
+            filtered_assets.exclude(type__exact="")
+            .values("type")
             .annotate(count=Count("type"))
             .order_by("type")
         )
@@ -152,6 +159,13 @@ class AssetViewSet(viewsets.ModelViewSet):
         assets = Asset.objects.filter(resource__in=resources).values(
             "resource_id", "id", "name", "type"
         )
+        exclude_filters = workspace.assets_exclude_name_contains
+        if exclude_filters:
+            exclude_q = Q()
+            for filter_string in exclude_filters:
+                exclude_q |= Q(name__icontains=filter_string)
+            assets = assets.exclude(exclude_q)
+
         grouped_assets = {}
         for asset in assets:
             resource_id = str(asset["resource_id"])

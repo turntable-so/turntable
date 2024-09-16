@@ -17,6 +17,7 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import include, path, re_path
+from app.views.settings_view import SettingsView
 from rest_framework import routers
 
 from app.consumers import WorkflowRunConsumer
@@ -96,5 +97,6 @@ urlpatterns = [
         name="asset-detail",
     ),
     path("ws/subscribe/<str:workspace_id>/", WorkflowRunConsumer.as_asgi()),
+    path("settings/", SettingsView.as_view(), name="settings"),
     path("", include(router.urls)),
 ]

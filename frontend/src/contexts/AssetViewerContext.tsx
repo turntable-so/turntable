@@ -1,16 +1,11 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect, Dispatch, SetStateAction } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, Dispatch, SetStateAction, useCallback } from 'react';
 import { getAssets } from '@/app/actions/actions';
+import { current } from 'tailwindcss/colors';
 
 interface AssetViewerContextType {
     assets: any;
     error: string | null;
-    fetchAssets: (params?: {
-        query?: string;
-        source?: string;
-        type?: string;
-        tags?: string[];
-        page?: number;
-    }) => Promise<void>;
+    submitSearch: () => void;
     currentPage: number;
     setCurrentPage: (page: number) => void;
     query: string;
@@ -60,7 +55,7 @@ export const AssetViewerProvider: React.FC<AssetViewerProviderProps> = ({ childr
         tags: [],
         types: []
     });
-    async function fetchAssets() {
+    const fetchAssets = useCallback(async () => {
         setIsLoading(true);
         setError(null);
         try {
@@ -77,19 +72,18 @@ export const AssetViewerProvider: React.FC<AssetViewerProviderProps> = ({ childr
         } finally {
             setIsLoading(false);
         }
-    }
+    }, [query, currentPage, filters]);
 
-    useEffect(() => {
-        fetchAssets();
-    }, [currentPage]);
-
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [filters, query])
 
     useEffect(() => {
         fetchAssets()
-    }, [filters])
+    }, [filters, currentPage])
+
+
+    const submitSearch = useCallback(() => {
+        setCurrentPage(1);
+        fetchAssets();
+    }, [fetchAssets]);
 
     const value: AssetViewerContextType = {
         assets,
@@ -97,7 +91,7 @@ export const AssetViewerProvider: React.FC<AssetViewerProviderProps> = ({ childr
         error,
         query,
         setQuery,
-        fetchAssets,
+        submitSearch,
         currentPage,
         setCurrentPage,
         filters,
