@@ -6,6 +6,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from django.core.cache import caches
 from rest_framework.permissions import AllowAny
+from rest_framework.decorators import action
 from math import ceil
 from django.db.models import Count, Q
 
@@ -32,8 +33,6 @@ class AssetPagination(PageNumberPagination):
 class AssetViewSet(viewsets.ModelViewSet):
     queryset = Asset.objects.all()
     pagination_class = AssetPagination
-
-    permission_classes = [AllowAny]
 
     def list(self, request):
         query = request.query_params.get("q", None)
@@ -74,22 +73,24 @@ class AssetViewSet(viewsets.ModelViewSet):
 
         # Calculate filters using the base queryset
         types = (
-            base_queryset.values("type").annotate(count=Count("type")).order_by("type")
+            filtered_assets.values("type")
+            .annotate(count=Count("type"))
+            .order_by("type")
         )
         sources = (
-            base_queryset.values("resource__id")
+            filtered_assets.values("resource__id")
             .annotate(count=Count("resource__id"))
             .order_by("resource__name")
         )
         tags = (
-            base_queryset.filter(tags__isnull=False)
+            filtered_assets.filter(tags__isnull=False)
             .exclude(tags__exact=[])
             .values_list("tags", flat=True)
             .order_by()
             .distinct()
         )
         tags = [
-            {"type": tag, "count": base_queryset.filter(tags__contains=[tag]).count()}
+            {"type": tag, "count": filtered_assets.filter(tags__contains=[tag]).count()}
             for sublist in tags
             for tag in sublist
             if tag
@@ -139,3 +140,29 @@ class AssetViewSet(viewsets.ModelViewSet):
             return Response(
                 {"error": "Asset not found."}, status=status.HTTP_404_NOT_FOUND
             )
+
+    @action(detail=False, methods=["GET"])
+    def index(self, request):
+        workspace = request.user.current_workspace()
+        if not workspace:
+            return Response(
+                {"detail": "Workspace not found."}, status=status.HTTP_403_FORBIDDEN
+            )
+        resources = Resource.objects.filter(workspace=workspace)
+        assets = Asset.objects.filter(resource__in=resources).values(
+            "resource_id", "id", "name", "type"
+        )
+        grouped_assets = {}
+        for asset in assets:
+            resource_id = str(asset["resource_id"])
+            if resource_id not in grouped_assets:
+                grouped_assets[resource_id] = []
+            grouped_assets[resource_id].append(
+                {"id": asset["id"], "name": asset["name"], "type": asset["type"]}
+            )
+
+        resource_serializer = ResourceSerializer(resources, many=True)
+        resource_data = resource_serializer.data
+        for resource in resource_data:
+            resource["assets"] = grouped_assets[str(resource["id"])]
+        return Response(resource_data)

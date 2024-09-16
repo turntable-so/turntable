@@ -114,6 +114,16 @@ export async function getAssets({ query, page, sources, tags, types }: { query: 
   return data;
 }
 
+
+export async function getAssetIndex() {
+  const response = await fetcher("/assets/index/", {
+    cookies,
+    method: "GET",
+  });
+  const data = await response.json();
+  return data;
+}
+
 export async function getWorkspace() {
   const response = await fetcher("/workspaces/current/", {
     cookies,

@@ -51,7 +51,7 @@ export default function SideBar({ collapsed }: { collapsed: boolean }) {
     const MenuItems = [
         { title: 'Connections', path: '/connections', Icon: () => <DatabaseZap className='size-5' /> },
         { title: 'Assets', path: '/assets', Icon: () => <Boxes className='size-5' /> },
-        { title: 'Reports', path: '/notebooks', Icon: () => <FileBarChart className='size-5' /> },
+        // { title: 'Reports', path: '/notebooks', Icon: () => <FileBarChart className='size-5' /> },
         { title: 'Lineage', path: '/lineage', Icon: () => <Network className='size-5' /> },
         { title: 'Workspace', path: '/team', Icon: () => <Users className='size-5' /> },
         { title: 'Settings', path: '/settings', Icon: () => <Settings className='size-5' /> },

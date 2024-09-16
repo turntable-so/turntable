@@ -162,14 +162,8 @@ class AssetIndexSerializer(serializers.ModelSerializer):
         model = Asset
         fields = [
             "id",
-            "unique_name",
             "name",
             "type",
-            "tags",
-            "tests",
-            "materialization",
-            "description",
-            "resource_id",
         ]
 
 
