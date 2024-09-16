@@ -54,8 +54,6 @@ export const columns: ColumnDef<Asset>[] = [
         cell: ({ row }) => {
             const { resource_subtype, resource_name, resource_has_dbt } = row.getValue("resource") as any
 
-            console.log(resource_subtype, resource_name, resource_has_dbt)
-
             return (
                 <div className='flex space-x-2 items-center'>
                     <div className='space-y-1'>
