@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
             field=models.CharField(
                 default=app.models.workspace.generate_short_uuid,
                 editable=False,
-                max_length=6,
+                max_length=255,
                 primary_key=True,
                 serialize=False,
             ),
