@@ -162,9 +162,9 @@ class AssetIndexSerializer(serializers.ModelSerializer):
         model = Asset
         fields = [
             "id",
-            "unique_name",
             "name",
             "type",
+            "resource_id",
         ]
 
 
@@ -291,16 +291,16 @@ class SnowflakeDetailsSerializer(ResourceDetailsSerializer):
         fields = ["account", "username", "password", "warehouse", "role"]
 
 
-class PostgresDetailsSerializer(ResourceDetailsSerializer):
-    class Meta:
-        model = PostgresDetails
-        fields = ["host", "username", "password", "database", "port"]
-
-
 class RedshiftDetailsSerializer(ResourceDetailsSerializer):
     class Meta:
         model = RedshiftDetails
         fields = ["host", "username", "password", "database", "port", "serverless"]
+
+
+class PostgresDetailsSerializer(ResourceDetailsSerializer):
+    class Meta:
+        model = PostgresDetails
+        fields = ["host", "username", "password", "database", "port"]
 
 
 class DatabricksDetailsSerializer(ResourceDetailsSerializer):

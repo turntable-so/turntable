@@ -89,6 +89,7 @@ urlpatterns = [
         LineageViewSet.as_view({"get": "retrieve"}),
         name="lineage-detail",
     ),
+    path("assets/index/", AssetViewSet.as_view({"get": "index"})),
     re_path(
         r"^assets/(?P<pk>.+)/$",
         AssetViewSet.as_view({"get": "retrieve"}),

@@ -436,7 +436,12 @@ export const PostgresLogo = ({ height = 18, width = 18 }: {
 
 export function getResourceIcon(subtype: string) {
   if (subtype === 'bigquery') {
-    return <BigQueryLogo />
+    return (
+      <div className='ml-[-2px]'>
+        <BigQueryLogo />
+      </div>
+
+    )
   } else if (subtype === 'looker') {
     return <LookerIcon />
   } else if (subtype === 'metabase') {

@@ -88,8 +88,22 @@ export async function getNotebook(id: string) {
 }
 
 
-export async function getAssets(resourceId: string) {
-  const response = await fetcher(`/assets/?resource_id=${resourceId}`, {
+export async function getAssets({ query, page, sources, tags, types }: { query: string, page: number, sources?: string[], tags?: string[], types?: string[] }) {
+  let url = `/assets/?q=${encodeURIComponent(query)}&page=${page}`;
+
+  if (sources && sources.length > 0) {
+    url += `&resources=${sources.map(encodeURIComponent).join(',')}`;
+  }
+
+  if (tags && tags.length > 0) {
+    url += `&tags=${tags.map(encodeURIComponent).join(',')}`;
+  }
+
+  if (types && types.length > 0) {
+    url += `&types=${types.map(encodeURIComponent).join(',')}`;
+  }
+
+  const response = await fetcher(url, {
     cookies,
     method: "GET",
     next: {
@@ -99,6 +113,17 @@ export async function getAssets(resourceId: string) {
   const data = await response.json();
   return data;
 }
+
+
+export async function getAssetIndex() {
+  const response = await fetcher("/assets/index/", {
+    cookies,
+    method: "GET",
+  });
+  const data = await response.json();
+  return data;
+}
+
 export async function getWorkspace() {
   const response = await fetcher("/workspaces/current/", {
     cookies,
