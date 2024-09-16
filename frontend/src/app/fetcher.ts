@@ -16,8 +16,9 @@ const fetchWithAuth = async (url: string, options = {} as any) => {
     const response = await fetch(url, { ...options, headers });
     if (response.status === 401) {
         try {
-            const { access } = await (await handleJWTRefresh()).json() as any;
+            const { access, refresh } = await (await handleJWTRefresh()).json() as any;
             storeToken(access, "access");
+            storeToken(refresh, "refresh"); // Store the new refresh token
 
             const retryHeaders = {
                 ...headers,

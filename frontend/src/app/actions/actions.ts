@@ -401,3 +401,11 @@ export async function deleteAuthProfile(id: string) {
   revalidateTag("profiles");
   return response.ok;
 }
+
+export async function getSettings() {
+  const response = await fetcher(`/settings/`, {
+    cookies,
+    method: "GET",
+  });
+  return response.json();
+}

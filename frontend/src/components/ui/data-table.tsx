@@ -1,6 +1,6 @@
 "use client"
 
-import * as React from "react"
+import { useState, useMemo, useEffect } from "react"
 import {
     ColumnDef,
     ColumnFiltersState,
@@ -34,24 +34,27 @@ import { useAssets } from "@/contexts/AssetViewerContext"
 import { Loader2 } from "lucide-react"
 
 export default function AssetViewDataTable() {
-    const [rowSelection, setRowSelection] = React.useState({})
+    const [rowSelection, setRowSelection] = useState({})
     const [columnVisibility, setColumnVisibility] =
-        React.useState<VisibilityState>({})
-    const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+        useState<VisibilityState>({})
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
         []
     )
-    const [sorting, setSorting] = React.useState<SortingState>([])
-    const [pagination, setPagination] = React.useState({
+    const [sorting, setSorting] = useState<SortingState>([])
+    const [pagination, setPagination] = useState({
         pageIndex: 0,
         pageSize: 10,
     })
     const router = useRouter()
 
-    const { assets, isLoading } = useAssets()
+    const { assets, isLoading, submitSearch } = useAssets()
 
-    console.log({ assets, isLoading })
+    useEffect(() => {
+        submitSearch()
+    }, [])
 
-    const data = React.useMemo(() => {
+
+    const data = useMemo(() => {
         const resources = assets.resources
         if (!assets || !assets.results) return []
 
@@ -143,14 +146,15 @@ export default function AssetViewDataTable() {
                         ) : (
                             <>
                                 {isLoading ? (
-                                    <TableRow>
-                                        <TableCell
-                                            colSpan={columns.length}
-                                            className="w-full text-center flex items-center justify-center"
-                                        >
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                        </TableCell>
-                                    </TableRow>
+                                    Array.from({ length: 20 }).map((_, rowIndex) => (
+                                        <TableRow key={rowIndex}>
+                                            {Array.from({ length: columns.length }).map((_, index) => (
+                                                <TableCell key={index} className="animate-pulse">
+                                                    <div className="h-4 bg-gray-200 rounded"></div>
+                                                </TableCell>
+                                            ))}
+                                        </TableRow>
+                                    ))
                                 ) : (
                                     <TableRow>
                                         <TableCell

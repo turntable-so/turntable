@@ -17,6 +17,7 @@ import {
 import ExploreInLineageViewerButton from "@/components/assets/explore-in-lineage-viewer-button"
 import { getResourceIcon } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
+import LineagePreview from "@/components/lineage/LineagePreview"
 
 
 function ColumnsTable({ columns }: {
@@ -51,7 +52,6 @@ function ColumnsTable({ columns }: {
 export default async function AssetPage({ params }: { params: { id: string } }) {
 
     const asset = await getAssetPreview(params.id)
-    const { lineage, root_asset } = await getLineage({ nodeId: params.id, successor_depth: 1, predecessor_depth: 1, lineage_type: 'all' })
 
     return (
         <div className="max-w-7xl w-full px-16 pt-16">
@@ -124,13 +124,7 @@ export default async function AssetPage({ params }: { params: { id: string } }) 
                         <ExploreInLineageViewerButton asset={asset} />
                     </div>
                     <Card className="rounded-md h-[600px] ">
-                        <div>
-                            {/* <ErrorBoundary
-                FallbackComponent={() => <div>Something went wrong</div>}
-                onError={e => console.error(e)}> */}
-                            <LineageView lineage={lineage} rootAsset={root_asset} style={{ height: '600px' }} />
-                            {/* </ErrorBoundary> */}
-                        </div>
+                        <LineagePreview nodeId={params.id} />
                     </Card>
                 </div>
             </div>

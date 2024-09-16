@@ -6,6 +6,7 @@ from django.db import models
 
 from app.models.user import User
 from app.services.storage_backends import PublicMediaStorage
+from django.contrib.postgres.fields import ArrayField
 
 
 def generate_short_uuid():
@@ -22,6 +23,9 @@ class Workspace(models.Model):
         storage=PublicMediaStorage(), upload_to="assets/icons/", blank=True, null=True
     )
     users = models.ManyToManyField(User, related_name="workspaces")
+    assets_exclude_name_contains = ArrayField(
+        models.CharField(max_length=255), default=list
+    )
 
     class Meta:
         permissions = [

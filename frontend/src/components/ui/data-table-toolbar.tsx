@@ -101,16 +101,13 @@ export function DataTableToolbar<TData>({
 
 }: DataTableToolbarProps<TData>) {
 
-    const { query, setQuery, assets, fetchAssets, filters, setFilters } = useAssets();
+    const { query, setQuery, assets, submitSearch, filters, setFilters } = useAssets();
     console.log({ assets })
 
-    const onSubmit = () => {
-        fetchAssets();
-    };
 
     const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === 'Enter') {
-            onSubmit();
+            submitSearch();
         }
     };
 
