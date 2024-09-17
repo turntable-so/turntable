@@ -25,8 +25,11 @@ function ColumnsTable({ columns }: {
         name: string
         type: string
         description: string
+        tests: string[]
+        is_unused: boolean
     }[]
 }) {
+    console.log({ columns })
     return (
         <Table>
             <TableHeader>
@@ -34,14 +37,18 @@ function ColumnsTable({ columns }: {
                     <TableHead className="w-[200px] text-wrap pl-4">Name</TableHead>
                     <TableHead className="w-[150px] text-wrap">Data Type</TableHead>
                     <TableHead>Description</TableHead>
+                    <TableHead>Tests</TableHead>
+                    <TableHead>Usage</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {columns.map((column) => (
+                {columns.sort((a, b) => a.name.localeCompare(b.name)).map((column) => (
                     <TableRow key={column.name} className="text-gray-500">
                         <TableCell className="text-black font-medium pl-4">{column.name}</TableCell>
                         <TableCell>{column.type}</TableCell>
                         <TableCell className="pr-4">{column.description}</TableCell>
+                        <TableCell>{column.tests?.map((test) => <Badge variant='secondary' key={test}>{test}</Badge>)}</TableCell>
+                        <TableCell>{column.is_unused && <Badge variant='outline'>Unused</Badge>}</TableCell>
                     </TableRow>
                 ))}
             </TableBody>
@@ -52,6 +59,7 @@ function ColumnsTable({ columns }: {
 export default async function AssetPage({ params }: { params: { id: string } }) {
 
     const asset = await getAssetPreview(params.id)
+
 
     return (
         <div className="max-w-7xl w-full px-16 pt-16">

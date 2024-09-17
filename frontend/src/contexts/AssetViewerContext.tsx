@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, Dispatch, SetStateAction, useCallback } from 'react';
-import { getAssets } from '@/app/actions/actions';
+import { getAssets, getColumns } from '@/app/actions/actions';
 import { current } from 'tailwindcss/colors';
 
 interface AssetViewerContextType {
@@ -22,8 +22,6 @@ interface AssetViewerContextType {
         tags: string[];
         types: string[];
     }>>;
-    view: "ASSET" | "COLUMN";
-    setView: (view: "ASSET" | "COLUMN") => void;
 }
 
 const AssetViewerContext = createContext<AssetViewerContextType | undefined>(undefined);
@@ -47,7 +45,6 @@ export const AssetViewerProvider: React.FC<AssetViewerProviderProps> = ({ childr
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [query, setQuery] = useState<string>("")
-    const [view, setView] = useState<"ASSET" | "COLUMN">("ASSET")
     const [currentPage, setCurrentPage] = useState(1);
     const [filters, setFilters] = useState<{
         sources: string[];
@@ -71,6 +68,7 @@ export const AssetViewerProvider: React.FC<AssetViewerProviderProps> = ({ childr
                 types: filters.types
             });
             setAssets(data);
+            console.log({ data })
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An unknown error occurred');
         } finally {
@@ -79,9 +77,10 @@ export const AssetViewerProvider: React.FC<AssetViewerProviderProps> = ({ childr
     }, [query, currentPage, filters]);
 
 
+
     useEffect(() => {
         fetchAssets()
-    }, [filters, currentPage])
+    }, [fetchAssets])
 
 
     const submitSearch = useCallback(() => {
@@ -101,8 +100,6 @@ export const AssetViewerProvider: React.FC<AssetViewerProviderProps> = ({ childr
         filters,
         pageSize,
         setFilters,
-        view,
-        setView
     };
 
     return (

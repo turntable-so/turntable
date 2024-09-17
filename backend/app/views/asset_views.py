@@ -1,6 +1,7 @@
 from functools import reduce
 from api.serializers import AssetIndexSerializer, AssetSerializer, ResourceSerializer
 from app.models import Asset, Resource
+from app.models.metadata import ColumnLink, AssetLink
 from rest_framework import viewsets, status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
@@ -11,7 +12,16 @@ from django.views.decorators.cache import cache_page
 from math import ceil
 from django.utils.decorators import method_decorator
 
-from django.db.models import Count, Q
+from django.db.models import (
+    Count,
+    Q,
+    Exists,
+    OuterRef,
+    Case,
+    When,
+    IntegerField,
+    BooleanField,
+)
 
 cache = caches["default"]
 
@@ -81,6 +91,18 @@ class AssetViewSet(viewsets.ModelViewSet):
                     lambda x, y: x | y, [Q(tags__contains=[tag]) for tag in tag_list]
                 )
             )
+
+        # Apply sorting
+        sort_by = request.query_params.get("sort_by")
+        sort_order = request.query_params.get("sort_order", "asc")
+
+        if sort_by in ["column_count", "unused_columns_count"]:
+            order_by = f"{'-' if sort_order == 'desc' else ''}{sort_by}"
+            filtered_assets = filtered_assets.order_by(order_by)
+        else:
+            # Default sorting
+            filtered_assets = filtered_assets.order_by("name")
+
         # Calculate filters using the base queryset
         types = (
             filtered_assets.exclude(type__exact="")
@@ -110,6 +132,16 @@ class AssetViewSet(viewsets.ModelViewSet):
         # Get all resources for the workspace
         resources = Resource.objects.filter(workspace=workspace)
         resources_serializer = ResourceSerializer(resources, many=True)
+
+        filtered_assets = filtered_assets.prefetch_related("columns")
+        filtered_assets = filtered_assets.annotate(column_count=Count("columns"))
+        # Add a count for columns with no column links
+        filtered_assets = filtered_assets.annotate(
+            unused_columns_count=Count(
+                "columns",
+                filter=~Exists(ColumnLink.objects.filter(source=OuterRef("columns"))),
+            )
+        )
 
         # Paginate the filtered assets
         page = self.paginate_queryset(filtered_assets)
