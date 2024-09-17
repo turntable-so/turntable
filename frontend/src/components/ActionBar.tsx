@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import useResizeObserver from "use-resize-observer";
-import { getNotebooks } from "../app/actions/actions";
+import { getAssetIndex, getNotebooks } from "../app/actions/actions";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@radix-ui/react-dropdown-menu";
@@ -24,6 +24,7 @@ import { Tree } from "@/components/ui/tree";
 import { getAssetIcon, getLeafIcon } from "@/lib/utils";
 import { Folder, Workflow } from "lucide-react";
 import MultiSelect from "./ui/multi-select";
+import { Asset } from "./ui/schema";
 // @ts-ignore
 const groupBy = (array, key) =>
   array.reduce((result: any, currentValue: any) => {
@@ -60,39 +61,6 @@ const TreeDataNode = ({
   ...(children && { children }),
 });
 
-const BigQueryLogo = () => (
-  <svg
-    height="16px"
-    width="16px"
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="-1.633235433328256 7.0326093303156565 131.26574682416876 114.63439066968435"
-  >
-    <linearGradient
-      id="a"
-      gradientUnits="userSpaceOnUse"
-      x1="64"
-      x2="64"
-      y1="7.034"
-      y2="120.789"
-    >
-      <stop offset="0" stop-color="#4387fd" />
-      <stop offset="1" stop-color="#4683ea" />
-    </linearGradient>
-    <path
-      d="M27.79 115.217L1.54 69.749a11.499 11.499 0 0 1 0-11.499l26.25-45.467a11.5 11.5 0 0 1 9.96-5.75h52.5a11.5 11.5 0 0 1 9.959 5.75l26.25 45.467a11.499 11.499 0 0 1 0 11.5l-26.25 45.467a11.5 11.5 0 0 1-9.959 5.749h-52.5a11.499 11.499 0 0 1-9.96-5.75z"
-      fill="url(#a)"
-    />
-    <path
-      clip-path="url(#b)"
-      d="M119.229 86.48L80.625 47.874 64 43.425l-14.933 5.55L43.3 64l4.637 16.729 40.938 40.938 8.687-.386z"
-      opacity=".07"
-    />
-    <g fill="#fff">
-      <path d="M64 40.804c-12.81 0-23.195 10.385-23.195 23.196 0 12.81 10.385 23.195 23.195 23.195S87.194 76.81 87.194 64c0-12.811-10.385-23.196-23.194-23.196m0 40.795c-9.72 0-17.6-7.88-17.6-17.6S54.28 46.4 64 46.4 81.6 54.28 81.6 64 73.72 81.6 64 81.6" />
-      <path d="M52.99 63.104v7.21a12.794 12.794 0 0 0 4.38 4.475V63.104zM61.675 57.026v19.411c.745.137 1.507.22 2.29.22.714 0 1.41-.075 2.093-.189V57.026zM70.766 66.1v8.562a12.786 12.786 0 0 0 4.382-4.7v-3.861zM80.691 78.287l-2.403 2.405a1.088 1.088 0 0 0 0 1.537l9.115 9.112a1.088 1.088 0 0 0 1.537 0l2.403-2.402a1.092 1.092 0 0 0 0-1.536l-9.116-9.116a1.09 1.09 0 0 0-1.536 0" />
-    </g>
-  </svg>
-);
 
 export const DbtLogo = () => (
   <svg
@@ -111,27 +79,33 @@ export const DbtLogo = () => (
   </svg>
 );
 
-type Model = {
+
+type ResourceAsset = {
   id: string;
   name: string;
-  tags: string[];
-  type: string;
-};
+  subtype: string;
+  has_dbt: boolean;
+  assets: {
+    id: string;
+    name: string;
+    type: string;
+  }[];
+}
 
 export default function ActionBar({
   context,
 }: {
-  context: "NOTEBOOK" | "LINEAGE";
+  context: "NOTEBOOK" | "LINEAGE"
 }) {
   const searchRef = useRef<HTMLInputElement>(null);
   const resizerRef = useRef<HTMLDivElement>(null);
   const { ref: treeRef, width, height } = useResizeObserver();
 
   const {
-    assets,
+    // assets,
     clearAssetPreview,
     assetPreview,
-    areAssetsLoading,
+    // areAssetsLoading,
     focusedAsset,
     setIsLineageLoading,
     tags,
@@ -142,40 +116,28 @@ export default function ActionBar({
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isFilterPopoverOpen, setIsFilterPopoverOpen] = useState(false);
   const [treeData, setTreeData] = useState<any>([]);
+  const [resourceAssets, setResourceAssets] = useState<ResourceAsset[]>([]);
   const [notebooks, setNotebooks] = useState<any>([]);
   type Item = Record<"value" | "label", string>;
   const [selectedTagFilters, setSelectedTagFilters] = useState<Item[]>([]);
   const [selectedTypeFilters, setSelectedTypeFilters] = useState<Item[]>([]);
   const [lowHeight, setLowheight] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const pathName = usePathname();
   const router = useRouter();
   const isNotebook = pathName.includes("/notebooks/");
 
-  const filteredAssets = useMemo(() => {
-    if (!assets) return {};
 
-    return Object.entries(assets).reduce((acc, [resourceId, entry]) => {
-      const filteredAssetsFromQuery = entry.assets.filter((asset: Model) =>
-        asset.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+  useEffect(() => {
+    const fetchAssetIndex = async () => {
+      setIsLoading(true);
+      const data = await getAssetIndex();
+      setIsLoading(false);
+      setResourceAssets(data);
+    }
+    fetchAssetIndex();
+  }, []);
 
-      const filteredAssetsFromTags =
-        selectedTagFilters.length > 0
-          ? filteredAssetsFromQuery.filter((asset: Model) =>
-            selectedTagFilters.some(
-              (tag) => asset.tags && asset.tags.includes(tag.value)
-            )
-          )
-          : filteredAssetsFromQuery;
-
-      acc[resourceId] = {
-        ...entry,
-        assets: filteredAssetsFromTags,
-      };
-
-      return acc;
-    }, {} as Record<string, (typeof assets)[keyof typeof assets]>);
-  }, [assets, searchQuery, selectedTagFilters]);
 
   useEffect(() => {
     const fetchAndSetNotebooks = async () => {
@@ -191,24 +153,30 @@ export default function ActionBar({
     }
   }, [searchRef]);
 
+  console.log({ resourceAssets })
+
   function createTreeDataNode(
     resource: any,
-    assetsForResource: any,
+    assets: {
+      id: string;
+      name: string;
+      type: string;
+    }[],
     getAssetIcon: Function,
     groupBy: Function
   ) {
-    if (assetsForResource.assets.length === 0) {
+    if (assets.length === 0) {
       return TreeDataNode({
         icon: getAssetIcon("dbt", resource.subtype),
         id: resource.id,
         name: resource.name,
-        isLoading: assetsForResource.isLoading,
+        isLoading: false,
         count: 0,
         children: [],
       });
     }
 
-    const groupedAssets = groupBy(assetsForResource.assets, "type");
+    const groupedAssets = groupBy(assets, "type");
     return TreeDataNode({
       icon: getAssetIcon("dbt", resource.subtype),
       id: resource.id,
@@ -305,18 +273,17 @@ export default function ActionBar({
   }
 
   useEffect(() => {
-    const treeData = resources.map((resource) => {
-      const assetsForResource = filteredAssets[resource.id] || { assets: [] };
+    const treeData = resourceAssets.map((resource: ResourceAsset) => {
       return createTreeDataNode(
         resource,
-        assetsForResource,
+        resource.assets.filter((asset: any) => asset.name.includes(searchQuery)),
         getAssetIcon,
         groupBy
       );
     });
 
     setTreeData(treeData);
-  }, [filteredAssets, resources]);
+  }, [resourceAssets, searchQuery]);
   const isCurrentNotebook = (pathName: string, id: string) => {
     return pathName.includes(id);
   };
@@ -332,67 +299,11 @@ export default function ActionBar({
             className="focus:outline-none bg-gray-100 w-full text-sm rounded-md py-1 px-2 border"
             placeholder="Filter assets"
           />
-          <Popover onOpenChange={(isOpen) => setIsFilterPopoverOpen(isOpen)}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="secondary"
-                className="hover:border-black hover:opacity-80 py-0 px-2 border"
-              >
-                <SlidersHorizontal size="14" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className=" mt-2 mr-2 ">
-              <Card className="w-[300px]">
-                <CardContent>
-                  <form>
-                    <input
-                      style={{
-                        position: "absolute",
-                        opacity: 0,
-                        height: 0,
-                        width: 0,
-                        border: "none",
-                      }}
-                    />
-                    <div className="grid w-full items-center  text-muted-foreground space-y-4 mt-4">
-                      <Label className="flex space-x-1 items-center">
-                        <div className="text-sm pl-1">Filter by tag</div>
-                      </Label>
-                      {/* @ts-ignore */}
-                      <MultiSelect
-                        items={tags.map((tag: string) => ({
-                          label: tag,
-                          value: tag,
-                        }))}
-                        selected={selectedTagFilters as any}
-                        setSelected={setSelectedTagFilters}
-                        label="Select tags"
-                      />
-                    </div>
-                    {/*<div className="grid w-full items-center  text-muted-foreground space-y-4 mt-4">
-                      <Label className="flex space-x-1 items-center">
-                        <div className="text-sm pl-1">Filter by asset type</div>
-                      </Label>
-                      <FancyMultiSelect
-                        items={types.map((type: string) => ({
-                          label: type,
-                          value: type,
-                        }))}
-                        selected={selectedTypeFilters}
-                        setSelected={setSelectedTypeFilters}
-                        label="Select asset type"
-                      />
-                    </div>*/}
-                  </form>
-                </CardContent>
-              </Card>
-            </PopoverContent>
-          </Popover>
         </div>
         <div className="flex justify-between">
-          <div className="text-xs mt-2 px-1 invisible">
+          {/* <div className="text-xs mt-2 px-1 invisible">
             {filteredAssets.length} Assets
-          </div>
+          </div> */}
           {selectedTagFilters.length + selectedTypeFilters.length > 0 && (
             <div className="text-xs mt-2 px-1 bg-gray-100">
               {selectedTagFilters.length + selectedTypeFilters.length} Filters
@@ -436,9 +347,9 @@ export default function ActionBar({
             <div className="h-full">
               {!assetPreview ? (
                 <div className="flex flex-col h-full max-h-screen z-0">
-                  {false ? (
+                  {isLoading ? (
                     <div className="flex items-center justify-center h-full">
-                      <Loader2 className="mr-2 h-8 w-8 animate-spin opacity-50" />
+                      <Loader2 className="h-6 w-6 animate-spin opacity-50" />
                     </div>
                   ) : (
                     <Fragment>
@@ -474,9 +385,9 @@ export default function ActionBar({
                   style={{ height: "100%" }}
                 >
                   <ResizablePanel defaultSize={25}>
-                    {areAssetsLoading ? (
+                    {isLoading ? (
                       <div className="flex items-center justify-center h-full">
-                        <Loader2 className="mr-2 h-8 w-8 animate-spin opacity-50" />
+                        <Loader2 className="h-6 w-6 animate-spin opacity-50" />
                       </div>
                     ) : (
                       <Fragment>

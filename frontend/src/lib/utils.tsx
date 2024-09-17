@@ -365,6 +365,12 @@ export function getLeafIcon(assetType: string) {
 }
 
 export function getAssetIcon(type: string, resourceType?: string) {
+  if (type === 'model') {
+    return (<div className="mr-1">
+      <DbtLogo />
+    </div>
+    )
+  }
   if (type === 'chart') {
     <BarChartBig className='w-4 h-4 mr-1' />
   }
@@ -436,7 +442,12 @@ export const PostgresLogo = ({ height = 18, width = 18 }: {
 
 export function getResourceIcon(subtype: string) {
   if (subtype === 'bigquery') {
-    return <BigQueryLogo />
+    return (
+      <div className='ml-[-2px]'>
+        <BigQueryLogo />
+      </div>
+
+    )
   } else if (subtype === 'looker') {
     return <LookerIcon />
   } else if (subtype === 'metabase') {

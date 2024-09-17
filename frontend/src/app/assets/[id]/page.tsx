@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/table"
 import ExploreInLineageViewerButton from "@/components/assets/explore-in-lineage-viewer-button"
 import { getResourceIcon } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
+import LineagePreview from "@/components/lineage/LineagePreview"
 
 
 function ColumnsTable({ columns }: {
@@ -23,6 +25,8 @@ function ColumnsTable({ columns }: {
         name: string
         type: string
         description: string
+        tests: string[]
+        is_unused: boolean
     }[]
 }) {
     return (
@@ -32,14 +36,18 @@ function ColumnsTable({ columns }: {
                     <TableHead className="w-[200px] text-wrap pl-4">Name</TableHead>
                     <TableHead className="w-[150px] text-wrap">Data Type</TableHead>
                     <TableHead>Description</TableHead>
+                    <TableHead>Tests</TableHead>
+                    <TableHead>Usage</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {columns.map((column) => (
+                {columns.sort((a, b) => a.name.localeCompare(b.name)).map((column) => (
                     <TableRow key={column.name} className="text-gray-500">
                         <TableCell className="text-black font-medium pl-4">{column.name}</TableCell>
                         <TableCell>{column.type}</TableCell>
                         <TableCell className="pr-4">{column.description}</TableCell>
+                        <TableCell>{column.tests?.map((test) => <Badge variant='secondary' key={test}>{test}</Badge>)}</TableCell>
+                        <TableCell>{column.is_unused && <Badge variant='outline'>Unused</Badge>}</TableCell>
                     </TableRow>
                 ))}
             </TableBody>
@@ -50,83 +58,83 @@ function ColumnsTable({ columns }: {
 export default async function AssetPage({ params }: { params: { id: string } }) {
 
     const asset = await getAssetPreview(params.id)
-    const { lineage, root_asset } = await getLineage({ nodeId: params.id, successor_depth: 1, predecessor_depth: 1, lineage_type: 'all' })
+
 
     return (
-        <div className="max-w-7xl w-full px-16 pt-16">
-            <div className="flex gap-4 items-center">
-                <div className="mb-8">
-                    <h1 className="text-2xl font-medium text-black">{asset.name}</h1>
-                    <div className="flex gap-2 my-2 items-center">
-                        <div className='flex space-x-1'>
-                            <div>{getResourceIcon(asset.resource_subtype)}</div>
-                            <div>{asset.resource_has_dbt && getResourceIcon('dbt')}</div>
-                            <div className='text-sm text-gray-500'>{asset.resource_name}</div>
+        <div className="w-full  flex justify-center">
+            <div className="max-w-7xl w-full px-16 pt-16">
+                <div className="flex gap-4 items-center">
+                    <div className="mb-8">
+                        <h1 className="text-2xl font-medium text-black">{asset.name}</h1>
+                        <div className="flex gap-6 my-2 items-center">
+                            <div>
+                                <div className="flex gap-2 items-center">
+                                    <div>{getResourceIcon(asset.resource_subtype)}</div>
+                                    <div>{asset.resource_has_dbt && getResourceIcon('dbt')}</div>
+                                    <div className='text-sm text-gray-500'>{asset.unique_name}</div>
+                                </div>
+                            </div>
+                            <Badge variant='outline'>{asset.type.toUpperCase()}</Badge>
                         </div>
-                        <p className="text-sm text-gray-500">{'>'}</p>
-                        <p className="text-sm text-gray-500">{asset.type.toUpperCase()}</p>
                     </div>
                 </div>
-            </div>
-            <div className="flex flex-col gap-8 w-full pb-12">
-                <div>
-                    <div className="font-medium text-muted-foreground my-1 text-lg">Details</div>
-                    <Card className="rounded-md">
-                        <CardContent className="p-4">
-                            <div className="flex gap-6">
-                                <div>
-                                    <p className="text-sm text-gray-500">Schema</p>
-                                    <p className="text-sm">{asset.schema}</p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-gray-500">Dataset</p>
-                                    <p className="text-sm">{asset.dataset}</p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-gray-500">Table</p>
-                                    <p className="text-sm">{asset.table_name}</p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-gray-500">Tags</p>
+                <div className="flex flex-col gap-8 w-full pb-12">
+                    <div>
+                        <div className="font-medium text-muted-foreground my-1 text-lg">Details</div>
+                        <Card className="rounded-md">
+                            <CardContent className="p-4">
+                                <div className="flex gap-6">
                                     <div>
-                                        {asset.tags ? <p className="text-sm text-gray-500">{asset.description}</p> : <p className="text-sm text-gray-500 italic">No tags</p>}
+                                        <p className="text-sm text-gray-500">Schema</p>
+                                        <p className="text-sm my-1">{asset.schema}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-500">Dataset</p>
+                                        <p className="text-sm my-1">{asset.dataset}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-500">Table</p>
+                                        <p className="text-sm my-1">{asset.table_name}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-500">Tags</p>
+                                        <div className="flex gap-2 my-1">
+                                            {asset.tags ? <p className="text-sm text-gray-500">{
+                                                asset.tags.map((tag: string) => <Badge variant="secondary" key={tag}>{tag}</Badge>)
+                                            }</p> : <p className="text-sm text-gray-500 italic">No tags</p>}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-                <div>
-                    <div className="font-medium text-muted-foreground my-1  text-lg">Summary</div>
-                    <Card className="rounded-md">
-                        <CardContent className="p-4">
-                            <div>
-                                {asset.description ? <p className="text-sm">{asset.description}</p> : <p className="text-sm italic">No description</p>}
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-                <div>
-                    <div className="font-medium text-muted-foreground my-1  text-lg">Columns</div>
-                    <Card className="rounded-md">
-                        <ColumnsTable columns={asset.columns} />
-                    </Card>
-                </div>
-
-                <div>
-                    <div className="flex justify-between items-center">
-                        <div className="font-medium text-muted-foreground my-1 text-lg">Lineage</div>
-                        <ExploreInLineageViewerButton asset={asset} />
+                            </CardContent>
+                        </Card>
                     </div>
-                    <Card className="rounded-md h-[600px] ">
+                    <div>
+                        <div className="font-medium text-muted-foreground my-1  text-lg">Summary</div>
+                        <Card className="rounded-md">
+                            <CardContent className="p-4">
+                                <div>
+                                    {asset.description ? <p className="text-sm">{asset.description}</p> : <p className="text-sm italic">No description</p>}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                    {asset.columns && (
                         <div>
-                            {/* <ErrorBoundary
-                FallbackComponent={() => <div>Something went wrong</div>}
-                onError={e => console.error(e)}> */}
-                            <LineageView lineage={lineage} rootAsset={root_asset} style={{ height: '600px' }} />
-                            {/* </ErrorBoundary> */}
+                            <div className="font-medium text-muted-foreground my-1  text-lg">Columns</div>
+                            <Card className="rounded-md">
+                                <ColumnsTable columns={asset.columns} />
+                            </Card>
                         </div>
-                    </Card>
+                    )}
+                    <div>
+                        <div className="flex justify-between items-center">
+                            <div className="font-medium text-muted-foreground my-1 text-lg">Lineage</div>
+                            <ExploreInLineageViewerButton asset={asset} />
+                        </div>
+                        <Card className="rounded-md h-[600px] ">
+                            <LineagePreview nodeId={params.id} />
+                        </Card>
+                    </div>
                 </div>
             </div>
         </div>

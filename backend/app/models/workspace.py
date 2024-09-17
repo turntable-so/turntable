@@ -1,3 +1,4 @@
+import uuid
 from django.contrib.auth.models import (
     Permission,
 )
@@ -5,16 +6,26 @@ from django.db import models
 
 from app.models.user import User
 from app.services.storage_backends import PublicMediaStorage
+from django.contrib.postgres.fields import ArrayField
+
+
+def generate_short_uuid():
+    return uuid.uuid4().hex[:6]
 
 
 class Workspace(models.Model):
-    id = models.AutoField(primary_key=True)
+    id = models.CharField(
+        primary_key=True, max_length=6, default=generate_short_uuid, editable=False
+    )
     name = models.CharField(max_length=1000)
     icon_url = models.URLField(blank=True, null=True)
     icon_file = models.ImageField(
         storage=PublicMediaStorage(), upload_to="assets/icons/", blank=True, null=True
     )
     users = models.ManyToManyField(User, related_name="workspaces")
+    assets_exclude_name_contains = ArrayField(
+        models.CharField(max_length=255), default=list
+    )
 
     class Meta:
         permissions = [

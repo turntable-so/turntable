@@ -42,7 +42,7 @@ export default function ConnectionCard({ resource }: {
         if (resourceId === resource.id) {
           setRealStatus(status);
         }
-      }, [status, resourceId]);
+      }, [status, resourceId, resource]);
 
     return (
         <Card className='rounded-md hover:border-black hover:cursor-pointer' onClick={() => {

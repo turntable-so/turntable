@@ -10,6 +10,7 @@ from pgvector.django import VectorField
 from app.models.resources import Resource
 from app.models.workspace import Workspace
 from app.utils.urns import UrnAdjuster
+from django.db.models import Exists, OuterRef
 
 
 class AssetContainer(models.Model):
@@ -218,6 +219,14 @@ class Column(models.Model):
 
     def get_resource_ids(self) -> set[str]:
         return {self.asset.resource.id}
+
+    @property
+    def is_unused(self):
+        from app.models.metadata import (
+            ColumnLink,
+        )  # Import here to avoid circular imports
+
+        return not ColumnLink.objects.filter(Q(source=self)).exists()
 
     @classmethod
     def get_for_resource(cls, resource_id: str, inclusive: bool = True):
@@ -455,7 +464,7 @@ class AssetError(models.Model):
     lineage_type = models.TextField(null=True)
 
     # relationships
-    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
+    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
 
     def adjust_urns(self):

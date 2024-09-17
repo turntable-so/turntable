@@ -33,13 +33,13 @@ class Migration(migrations.Migration):
                 on_delete=django.db.models.deletion.CASCADE, to="app.workspace"
             ),
         ),
-        migrations.AlterField(
-            model_name="asseterror",
-            name="workspace",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to="app.workspace"
-            ),
-        ),
+        # migrations.AlterField(
+        #     model_name="asseterror",
+        #     name="workspace",
+        #     field=models.ForeignKey(
+        #         on_delete=django.db.models.deletion.CASCADE, to="app.workspace"
+        #     ),
+        # ),
         migrations.AlterField(
             model_name="assetlink",
             name="workspace",
@@ -61,11 +61,11 @@ class Migration(migrations.Migration):
                 on_delete=django.db.models.deletion.CASCADE, to="app.workspace"
             ),
         ),
-        migrations.AlterField(
-            model_name="workspace",
-            name="id",
-            field=models.AutoField(primary_key=True, serialize=False),
-        ),
+        # migrations.AlterField(
+        #     model_name="workspace",
+        #     name="id",
+        #     field=models.AutoField(primary_key=True, serialize=False),
+        # ),
         migrations.CreateModel(
             name="AssetContainer",
             fields=[

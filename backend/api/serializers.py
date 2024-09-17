@@ -153,18 +153,26 @@ class ColumnSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "tests",
+            "is_unused",
         ]
 
 
 # minified asset serializers for listing in the asset tree
 class AssetIndexSerializer(serializers.ModelSerializer):
+
+    column_count = serializers.IntegerField(read_only=True)
+    unused_columns_count = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = Asset
         fields = [
             "id",
-            "unique_name",
             "name",
+            "unique_name",
             "type",
+            "resource_id",
+            "column_count",
+            "unused_columns_count",
         ]
 
 
@@ -291,16 +299,16 @@ class SnowflakeDetailsSerializer(ResourceDetailsSerializer):
         fields = ["account", "username", "password", "warehouse", "role"]
 
 
-class PostgresDetailsSerializer(ResourceDetailsSerializer):
-    class Meta:
-        model = PostgresDetails
-        fields = ["host", "username", "password", "database", "port"]
-
-
 class RedshiftDetailsSerializer(ResourceDetailsSerializer):
     class Meta:
         model = RedshiftDetails
         fields = ["host", "username", "password", "database", "port", "serverless"]
+
+
+class PostgresDetailsSerializer(ResourceDetailsSerializer):
+    class Meta:
+        model = PostgresDetails
+        fields = ["host", "username", "password", "database", "port"]
 
 
 class DatabricksDetailsSerializer(ResourceDetailsSerializer):

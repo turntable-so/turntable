@@ -3,6 +3,7 @@
 import { fetcher } from '@/app/fetcher';
 import { revalidateTag } from 'next/cache';
 import { cookies } from 'next/headers';
+import getUrl from '@/app/url';
 
 const isDev = process.env.DEV ? true : false;
 
@@ -88,8 +89,34 @@ export async function getNotebook(id: string) {
 }
 
 
-export async function getAssets(resourceId: string) {
-  const response = await fetcher(`/assets/?resource_id=${resourceId}`, {
+export async function getAssets({ query, page, sources, tags, types, sortBy, sortOrder }: {
+  query: string,
+  page: number,
+  sources?: string[],
+  tags?: string[],
+  types?: string[],
+  sortBy?: string,
+  sortOrder?: 'asc' | 'desc'
+}) {
+  let url = `/assets/?q=${encodeURIComponent(query)}&page=${page}`;
+
+  if (sources && sources.length > 0) {
+    url += `&resources=${sources.map(encodeURIComponent).join(',')}`;
+  }
+
+  if (tags && tags.length > 0) {
+    url += `&tags=${tags.map(encodeURIComponent).join(',')}`;
+  }
+
+  if (types && types.length > 0) {
+    url += `&types=${types.map(encodeURIComponent).join(',')}`;
+  }
+
+  if (sortBy && sortOrder) {
+    url += `&sort_by=${sortBy}&sort_order=${sortOrder}`;
+  }
+
+  const response = await fetcher(url, {
     cookies,
     method: "GET",
     next: {
@@ -99,6 +126,46 @@ export async function getAssets(resourceId: string) {
   const data = await response.json();
   return data;
 }
+
+
+export async function getColumns({ query, page, sources, tags, types }: { query: string, page: number, sources?: string[], tags?: string[], types?: string[] }) {
+  let url = `/columns/?q=${encodeURIComponent(query)}&page=${page}`;
+
+  if (sources && sources.length > 0) {
+    url += `&resources=${sources.map(encodeURIComponent).join(',')}`;
+  }
+
+  if (tags && tags.length > 0) {
+    url += `&tags=${tags.map(encodeURIComponent).join(',')}`;
+  }
+
+  if (types && types.length > 0) {
+    url += `&types=${types.map(encodeURIComponent).join(',')}`;
+  }
+
+  const response = await fetcher(url, {
+    cookies,
+    method: "GET",
+    next: {
+      tags: ["columns"],
+    },
+  });
+  const data = await response.json();
+  return data;
+}
+
+
+
+
+export async function getAssetIndex() {
+  const response = await fetcher("/assets/index/", {
+    cookies,
+    method: "GET",
+  });
+  const data = await response.json();
+  return data;
+}
+
 export async function getWorkspace() {
   const response = await fetcher("/workspaces/current/", {
     cookies,
@@ -375,4 +442,16 @@ export async function deleteAuthProfile(id: string) {
   });
   revalidateTag("profiles");
   return response.ok;
+}
+
+export async function getSettings() {
+  const response = await fetcher(`/settings/`, {
+    cookies,
+    method: "GET",
+  });
+  return response.json();
+}
+
+export async function getBackendUrl() {
+  return getUrl();
 }

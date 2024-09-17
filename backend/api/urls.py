@@ -17,6 +17,7 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import include, path, re_path
+from app.views.settings_view import SettingsView
 from rest_framework import routers
 
 from app.consumers import WorkflowRunConsumer
@@ -89,11 +90,13 @@ urlpatterns = [
         LineageViewSet.as_view({"get": "retrieve"}),
         name="lineage-detail",
     ),
+    path("assets/index/", AssetViewSet.as_view({"get": "index"})),
     re_path(
         r"^assets/(?P<pk>.+)/$",
         AssetViewSet.as_view({"get": "retrieve"}),
         name="asset-detail",
     ),
     path("ws/subscribe/<str:workspace_id>/", WorkflowRunConsumer.as_asgi()),
+    path("settings/", SettingsView.as_view(), name="settings"),
     path("", include(router.urls)),
 ]
