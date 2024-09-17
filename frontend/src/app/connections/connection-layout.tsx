@@ -187,10 +187,10 @@ export default function ConnectionLayout({
                 <MetabaseForm resource={resource} details={details} />
               )}
               {resource.subtype === "snowflake" && (
-                <SnowflakeForm resource={resource} details={details} />
+                <SnowflakeForm resource={resource} details={details} testConnection={testConnection} tested={testRun} connectionCheck={testStatus} />
               )}
               {resource.subtype === "databricks" && (
-                <DatabricksForm resource={resource} details={details} />
+                <DatabricksForm resource={resource} details={details} testConnection={testConnection} tested={testRun} connectionCheck={testStatus} />
               )}
               {resource.subtype === "tableau" && (
                 <TableauForm resource={resource} details={details} />
