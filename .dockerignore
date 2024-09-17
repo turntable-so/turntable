@@ -9,7 +9,6 @@
 .*venv/
 .env
 private/
-exports/
 
 # dependencies
 /node_modules

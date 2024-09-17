@@ -10,7 +10,6 @@
 .*env
 .hatchetconfig
 private/
-exports/
 
 # dependencies
 /node_modules
