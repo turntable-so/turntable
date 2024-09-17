@@ -136,8 +136,6 @@ class AssetViewSet(viewsets.ModelViewSet):
         sort_by = request.query_params.get("sort_by")
         sort_order = request.query_params.get("sort_order", "asc")
 
-        print(sort_by, sort_order, flush=True)
-
         if sort_by in ["column_count", "unused_columns_count"]:
             order_by = f"{'-' if sort_order == 'desc' else ''}{sort_by}"
             filtered_assets = filtered_assets.order_by(order_by)
