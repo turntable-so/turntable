@@ -8,6 +8,8 @@
 .ruff_cache
 .*venv/
 .env
+private/
+exports/
 
 # dependencies
 /node_modules
