@@ -10,7 +10,7 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
     const pathName = usePathname()
     const [sidebarCollapsed, collapseSidebar] = useState<boolean>(false)
     const [sidebarContext, setSidebarContext] = useState<'ACTION' | 'HIDDEN'>('ACTION')
-    const [actionBarContext, setActionBarContext] = useState<'NOTEBOOK' | 'LINEAGE' | null>('LINEAGE')
+    const [actionBarContext, setActionBarContext] = useState<'NOTEBOOK' | 'LINEAGE'>('LINEAGE')
 
 
     useEffect(() => {
