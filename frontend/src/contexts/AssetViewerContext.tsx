@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, Dispatch, SetStateAction, useCallback } from 'react';
 import { getAssets, getColumns } from '@/app/actions/actions';
 import { current } from 'tailwindcss/colors';
+import { SortingState } from '@tanstack/react-table';
 
 interface AssetViewerContextType {
     assets: any;
@@ -22,6 +23,8 @@ interface AssetViewerContextType {
         tags: string[];
         types: string[];
     }>>;
+    sorting: SortingState
+    setSorting: Dispatch<SetStateAction<SortingState>>
 }
 
 const AssetViewerContext = createContext<AssetViewerContextType | undefined>(undefined);
@@ -46,6 +49,8 @@ export const AssetViewerProvider: React.FC<AssetViewerProviderProps> = ({ childr
     const [error, setError] = useState<string | null>(null);
     const [query, setQuery] = useState<string>("")
     const [currentPage, setCurrentPage] = useState(1);
+    const [sorting, setSorting] = useState<SortingState>([])
+
     const [filters, setFilters] = useState<{
         sources: string[];
         tags: string[];
@@ -65,7 +70,9 @@ export const AssetViewerProvider: React.FC<AssetViewerProviderProps> = ({ childr
                 page: page || currentPage,
                 sources: filters.sources,
                 tags: filters.tags,
-                types: filters.types
+                types: filters.types,
+                sortBy: sorting[0]?.id,
+                sortOrder: sorting[0]?.desc ? "desc" : "asc"
             });
             setAssets(data);
             console.log({ data })
@@ -74,7 +81,9 @@ export const AssetViewerProvider: React.FC<AssetViewerProviderProps> = ({ childr
         } finally {
             setIsLoading(false);
         }
-    }, [query, currentPage, filters]);
+    }, [query, currentPage, filters, sorting]);
+
+    console.log({ sorting })
 
 
 
@@ -100,6 +109,8 @@ export const AssetViewerProvider: React.FC<AssetViewerProviderProps> = ({ childr
         filters,
         pageSize,
         setFilters,
+        sorting,
+        setSorting
     };
 
     return (

@@ -92,17 +92,6 @@ class AssetViewSet(viewsets.ModelViewSet):
                 )
             )
 
-        # Apply sorting
-        sort_by = request.query_params.get("sort_by")
-        sort_order = request.query_params.get("sort_order", "asc")
-
-        if sort_by in ["column_count", "unused_columns_count"]:
-            order_by = f"{'-' if sort_order == 'desc' else ''}{sort_by}"
-            filtered_assets = filtered_assets.order_by(order_by)
-        else:
-            # Default sorting
-            filtered_assets = filtered_assets.order_by("name")
-
         # Calculate filters using the base queryset
         types = (
             filtered_assets.exclude(type__exact="")
@@ -142,6 +131,19 @@ class AssetViewSet(viewsets.ModelViewSet):
                 filter=~Exists(ColumnLink.objects.filter(source=OuterRef("columns"))),
             )
         )
+
+        # Apply sorting
+        sort_by = request.query_params.get("sort_by")
+        sort_order = request.query_params.get("sort_order", "asc")
+
+        print(sort_by, sort_order, flush=True)
+
+        if sort_by in ["column_count", "unused_columns_count"]:
+            order_by = f"{'-' if sort_order == 'desc' else ''}{sort_by}"
+            filtered_assets = filtered_assets.order_by(order_by)
+        else:
+            # Default sorting
+            filtered_assets = filtered_assets.order_by("name")
 
         # Paginate the filtered assets
         page = self.paginate_queryset(filtered_assets)

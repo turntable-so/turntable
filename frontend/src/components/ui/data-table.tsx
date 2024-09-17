@@ -43,14 +43,13 @@ export default function DataTable() {
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
         []
     )
-    const [sorting, setSorting] = useState<SortingState>([])
     const [pagination, setPagination] = useState({
         pageIndex: 0,
-        pageSize: 10,
+        pageSize: 50,
     })
     const router = useRouter()
 
-    const { assets, isLoading, submitSearch } = useAssets()
+    const { assets, isLoading, submitSearch, sorting, setSorting } = useAssets()
 
 
     console.log({ assets })
@@ -74,7 +73,6 @@ export default function DataTable() {
             }
         })
     }, [assets])
-
 
     const table = useReactTable({
         data,
