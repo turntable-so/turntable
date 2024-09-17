@@ -5,8 +5,9 @@ import { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
 
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header"
-import { Asset } from "./schema"
+import { Asset } from "@/components/ui/schema"
 import { getResourceIcon } from "@/lib/utils"
+import { Columns2 } from "lucide-react"
 
 
 
@@ -109,14 +110,28 @@ export const columns: ColumnDef<Asset>[] = [
         enableSorting: false,
         enableHiding: true,
     },
-    // {
-    //     accessorKey: "num_columns",
-    //     header: ({ column }) => (
-    //         <DataTableColumnHeader column={column} title="Num Cols" />
-    //     ),
-    //     cell: ({ row }) => <div>{row.getValue("num_columns")}</div>,
-    //     enableHiding: true,
-    // },
+    {
+        accessorKey: "column_count",
+        header: ({ column }) => (
+            <DataTableColumnHeader column={column} title="Num Cols" />
+        ),
+        cell: ({ row }) => <Badge variant='secondary' className="text-muted-foreground">
+            <Columns2 className="mr-2 h-4 w-4" />{row.getValue("column_count")}
+        </Badge>,
+        enableHiding: true,
+        enableSorting: true, // Enable sorting for this column
+    },
+    {
+        accessorKey: "unused_columns_count",
+        header: ({ column }) => (
+            <DataTableColumnHeader column={column} title="Unused Cols" />
+        ),
+        cell: ({ row }) => <Badge variant='secondary' className="text-muted-foreground">
+            <Columns2 className="mr-2 h-4 w-4" />{row.getValue("unused_columns_count")}
+        </Badge>,
+        enableHiding: true,
+        enableSorting: true, // Enable sorting for this column
+    },
     {
         accessorKey: "tags",
         header: ({ column }) => (
@@ -197,3 +212,5 @@ export const columns: ColumnDef<Asset>[] = [
     //     cell: ({ row }) => <DataTableRowActions row={row} />,
     // },
 ]
+
+export default columns

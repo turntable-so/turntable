@@ -14,6 +14,8 @@ export const assetSchema = z.object({
     resource_has_dbt: z.boolean(),
     resource_id: z.string(),
     resource_name: z.string(),
+    column_count: z.number(),
+    unused_columns_count: z.number(),
 })
 
 export type Asset = z.infer<typeof assetSchema>

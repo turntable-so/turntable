@@ -70,7 +70,7 @@ const buildTableLineage = ({
                 relationshipToModel = 'right';
             }
             const columns = node.columns
-            const name = node.name
+            const name = node.unique_name || node.name
             return {
                 id: node.id,
                 name,

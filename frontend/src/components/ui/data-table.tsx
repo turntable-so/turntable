@@ -29,25 +29,30 @@ import { DataTablePagination } from "@/components/ui/data-table-pagination"
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar"
 import { useRouter } from "next/navigation"
 import { useAppContext } from "@/contexts/AppContext"
-import { columns } from "./data-table-columns"
+import { columns } from "@/components/table-viewer/asset-viewer-columns"
 import { useAssets } from "@/contexts/AssetViewerContext"
 import { Loader2 } from "lucide-react"
 
-export default function AssetViewDataTable() {
+export default function DataTable() {
     const [rowSelection, setRowSelection] = useState({})
     const [columnVisibility, setColumnVisibility] =
-        useState<VisibilityState>({})
+        useState<VisibilityState>({
+            tags: false,
+            unique_name: false,
+        })
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
         []
     )
-    const [sorting, setSorting] = useState<SortingState>([])
     const [pagination, setPagination] = useState({
         pageIndex: 0,
-        pageSize: 10,
+        pageSize: 50,
     })
     const router = useRouter()
 
-    const { assets, isLoading, submitSearch } = useAssets()
+    const { assets, isLoading, submitSearch, sorting, setSorting } = useAssets()
+
+
+    console.log({ assets })
 
     useEffect(() => {
         submitSearch()
@@ -68,7 +73,6 @@ export default function AssetViewDataTable() {
             }
         })
     }, [assets])
-
 
     const table = useReactTable({
         data,

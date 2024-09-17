@@ -9,7 +9,7 @@ import useSession from '@/app/hooks/use-session';
 export default function WorkspaceLayout({ children }: { children: React.ReactNode }) {
     const pathName = usePathname()
     const [sidebarCollapsed, collapseSidebar] = useState<boolean>(false)
-    const [sidebarContext, setSidebarContext] = useState<'ACTION'>('ACTION')
+    const [sidebarContext, setSidebarContext] = useState<'ACTION' | 'HIDDEN'>('ACTION')
     const [actionBarContext, setActionBarContext] = useState<'NOTEBOOK' | 'LINEAGE'>('LINEAGE')
 
 
@@ -17,7 +17,8 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
         collapseSidebar(
             pathName.includes('/notebooks/') ||
             pathName.includes('/lineage') ||
-            pathName.includes('/sources/')
+            pathName.includes('/sources/') ||
+            pathName.includes('/assets')
         )
     }, [pathName, collapseSidebar])
 
@@ -27,6 +28,12 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
         }
         if (pathName.includes('/notebooks')) {
             setActionBarContext('NOTEBOOK')
+        }
+
+        if (pathName.includes('/assets')) {
+            setSidebarContext('HIDDEN')
+        } else {
+            setSidebarContext('ACTION')
         }
     }, [pathName])
 
