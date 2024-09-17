@@ -36,7 +36,10 @@ import { Loader2 } from "lucide-react"
 export default function AssetViewDataTable() {
     const [rowSelection, setRowSelection] = useState({})
     const [columnVisibility, setColumnVisibility] =
-        useState<VisibilityState>({})
+        useState<VisibilityState>({
+            tags: false,
+            unique_name: false,
+        })
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
         []
     )
@@ -48,6 +51,9 @@ export default function AssetViewDataTable() {
     const router = useRouter()
 
     const { assets, isLoading, submitSearch } = useAssets()
+
+
+    console.log({ assets })
 
     useEffect(() => {
         submitSearch()

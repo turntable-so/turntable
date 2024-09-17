@@ -7,7 +7,10 @@ from rest_framework.response import Response
 from django.core.cache import caches
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import action
+from django.views.decorators.cache import cache_page
 from math import ceil
+from django.utils.decorators import method_decorator
+
 from django.db.models import Count, Q
 
 cache = caches["default"]
@@ -34,6 +37,7 @@ class AssetViewSet(viewsets.ModelViewSet):
     queryset = Asset.objects.all()
     pagination_class = AssetPagination
 
+    @method_decorator(cache_page(60))  # Cache the response for 60 seconds
     def list(self, request):
         query = request.query_params.get("q", None)
         resources_filter = request.query_params.get("resources", None)
@@ -148,6 +152,7 @@ class AssetViewSet(viewsets.ModelViewSet):
                 {"error": "Asset not found."}, status=status.HTTP_404_NOT_FOUND
             )
 
+    @method_decorator(cache_page(60))  # Cache the response for 60 seconds
     @action(detail=False, methods=["GET"])
     def index(self, request):
         workspace = request.user.current_workspace()
@@ -157,7 +162,10 @@ class AssetViewSet(viewsets.ModelViewSet):
             )
         resources = Resource.objects.filter(workspace=workspace)
         assets = Asset.objects.filter(resource__in=resources).values(
-            "resource_id", "id", "name", "type"
+            "resource_id",
+            "id",
+            "name",
+            "type",
         )
         exclude_filters = workspace.assets_exclude_name_contains
         if exclude_filters:

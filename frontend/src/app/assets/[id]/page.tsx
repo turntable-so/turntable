@@ -60,10 +60,10 @@ export default async function AssetPage({ params }: { params: { id: string } }) 
                     <h1 className="text-2xl font-medium text-black">{asset.name}</h1>
                     <div className="flex gap-6 my-2 items-center">
                         <div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 items-center">
                                 <div>{getResourceIcon(asset.resource_subtype)}</div>
                                 <div>{asset.resource_has_dbt && getResourceIcon('dbt')}</div>
-                                <div className='text-sm text-gray-500'>{asset.resource_name}</div>
+                                <div className='text-sm text-gray-500'>{asset.unique_name}</div>
                             </div>
                         </div>
                         <Badge variant='outline'>{asset.type.toUpperCase()}</Badge>

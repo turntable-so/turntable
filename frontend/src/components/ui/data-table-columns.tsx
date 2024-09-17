@@ -56,7 +56,7 @@ export const columns: ColumnDef<Asset>[] = [
 
             return (
                 <div className='flex space-x-2 items-center'>
-                    <div className='space-y-1'>
+                    <div className='space-y-0'>
                         <div>{getResourceIcon(resource_subtype)}</div>
                         <div>{resource_has_dbt && getResourceIcon('dbt')}</div>
                     </div>
@@ -73,6 +73,15 @@ export const columns: ColumnDef<Asset>[] = [
         cell: ({ row }) => <div className="font-semibold">{row.getValue("name")}</div>,
         enableSorting: false,
         enableHiding: false,
+    },
+    {
+        accessorKey: "unique_name",
+        header: ({ column }) => (
+            <DataTableColumnHeader column={column} title="Unique Name" />
+        ),
+        cell: ({ row }) => <div className="text-xs">{row.getValue("unique_name")}</div>,
+        enableSorting: false,
+        enableHiding: true,
     },
     {
         accessorKey: "type",
@@ -125,6 +134,7 @@ export const columns: ColumnDef<Asset>[] = [
         },
         enableHiding: true,
         enableSorting: false,
+
     },
 
     // {

@@ -42,7 +42,9 @@ import {
 import { DataTableFacetedFilter } from "./DataTableFacetedFilter"
 import { useState } from "react"
 import { useAssets } from "@/contexts/AssetViewerContext"
-import { AsteriskSquare, Search } from "lucide-react"
+import { AsteriskSquare, Search, Box, Columns } from "lucide-react"
+
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface DataTableViewOptionsProps<TData> {
     table: Table<TData>
@@ -57,7 +59,6 @@ export function DataTableViewOptions<TData>({
             <DropdownMenuTrigger asChild>
                 <Button
                     variant="outline"
-                    size="sm"
                     className="ml-auto hidden h-8 lg:flex"
                 >
                     <MixerHorizontalIcon className="mr-2 h-4 w-4" />
@@ -101,8 +102,7 @@ export function DataTableToolbar<TData>({
 
 }: DataTableToolbarProps<TData>) {
 
-    const { query, setQuery, assets, submitSearch, filters, setFilters } = useAssets();
-    console.log({ assets })
+    const { query, setQuery, assets, submitSearch, filters, setFilters, view, setView } = useAssets();
 
 
     const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -120,97 +120,113 @@ export function DataTableToolbar<TData>({
             <div className="w-full">
                 <div>
                     <div className="space-y-4 w-full">
-                        <div className="relative">
-                            <Search className="size-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                            <Input
-                                autoFocus
-                                placeholder="Search assets"
-                                value={query}
-                                onChange={(event) =>
-                                    setQuery(event.target.value)
-                                }
-                                onKeyDown={handleKeyDown}
-                                className="h-10 w-full pl-10"
-                            />
+                        <div className='flex items-center'>
+                            <div className="relative w-full">
+                                <Search className="size-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                                <Input
+                                    autoFocus
+                                    placeholder={view === "ASSET" ? "Search assets" : "Search columns"}
+                                    value={query}
+                                    onChange={(event) =>
+                                        setQuery(event.target.value)
+                                    }
+                                    onKeyDown={handleKeyDown}
+                                    className="h-10 w-full pl-10"
+                                />
+                            </div>
+                            <Tabs value={view} className="ml-2" onValueChange={(value) => setView(value as "ASSET" | "COLUMN")}>
+                                <TabsList>
+                                    <TabsTrigger value="ASSET">
+                                        <Box className="text-gray-400 mr-2 h-4 w-4" />
+                                        Assets
+                                    </TabsTrigger>
+                                    <TabsTrigger value="COLUMN">
+                                        <Columns className="text-gray-400 mr-2 h-4 w-4" />
+                                        Columns
+                                    </TabsTrigger>
+                                </TabsList>
+                            </Tabs>
                         </div>
-                        <div className="flex items-center justify-between">
-                            <div className="flex space-x-2 items-center">
-                                <div>
-                                    <div className="ml-1 text-sm text-muted-foreground w-24">
-                                        {assets?.count} results
+                        <Tabs defaultValue="asset-view" className="w-full">
+                            <div className="flex items-center justify-between">
+                                <div className="flex space-x-2 items-center">
+                                    <div>
+                                        <div className="ml-1 text-sm text-muted-foreground w-24">
+                                            {assets?.count} results
+                                        </div>
                                     </div>
+                                    {table.getColumn("resource") && assets?.filters?.sources && (
+                                        <DataTableFacetedFilter
+                                            title="Source"
+                                            selectedValues={filters.sources}
+                                            setSelectedValues={(sources) => setFilters({
+                                                ...filters,
+                                                sources
+                                            })}
+                                            options={assets.filters.sources.map((resource: any) => (
+                                                {
+                                                    label: assets.resources.find((r: any) => r.id === resource.resource__id)?.name,
+                                                    value: resource.resource__id,
+                                                    count: resource.count
+                                                }
+                                            ))}
+                                        />
+                                    )}
+                                    {table.getColumn("type") && assets?.filters?.types && (
+                                        <DataTableFacetedFilter
+                                            selectedValues={filters.types}
+                                            setSelectedValues={(types) => setFilters({
+                                                ...filters,
+                                                types,
+                                            })}
+                                            title="Type"
+                                            options={assets.filters.types.map((type: any) => (
+                                                {
+                                                    label: type.type,
+                                                    value: type.type,
+                                                    count: type.count
+                                                }
+                                            ))}
+                                        />
+                                    )}
+                                    {table.getColumn("tags") && assets?.filters?.tags && (
+                                        <DataTableFacetedFilter
+                                            selectedValues={filters.tags}
+                                            setSelectedValues={(tags) => setFilters({
+                                                ...filters,
+                                                tags,
+                                            })}
+                                            title="Tags"
+                                            options={assets.filters.tags.map((tag: any) => (
+                                                {
+                                                    label: tag.type,
+                                                    value: tag.type,
+                                                    count: tag.count
+                                                }
+                                            ))}
+                                        />
+                                    )}
+                                    {isFiltered && (
+                                        <Button
+                                            variant="ghost"
+                                            onClick={() => setFilters({
+                                                ...filters,
+                                                sources: [],
+                                                types: [],
+                                                tags: [],
+                                            })}
+                                            className="h-8 px-2 lg:px-3"
+                                        >
+                                            Reset
+                                            <Cross2Icon className="ml-2 h-4 w-4" />
+                                        </Button>
+                                    )}
                                 </div>
-                                {table.getColumn("resource") && assets?.filters?.sources && (
-                                    <DataTableFacetedFilter
-                                        title="Source"
-                                        selectedValues={filters.sources}
-                                        setSelectedValues={(sources) => setFilters({
-                                            ...filters,
-                                            sources
-                                        })}
-                                        options={assets.filters.sources.map((resource: any) => (
-                                            {
-                                                label: assets.resources.find((r: any) => r.id === resource.resource__id)?.name,
-                                                value: resource.resource__id,
-                                                count: resource.count
-                                            }
-                                        ))}
-                                    />
-                                )}
-                                {table.getColumn("type") && assets?.filters?.types && (
-                                    <DataTableFacetedFilter
-                                        selectedValues={filters.types}
-                                        setSelectedValues={(types) => setFilters({
-                                            ...filters,
-                                            types,
-                                        })}
-                                        title="Type"
-                                        options={assets.filters.types.map((type: any) => (
-                                            {
-                                                label: type.type,
-                                                value: type.type,
-                                                count: type.count
-                                            }
-                                        ))}
-                                    />
-                                )}
-                                {table.getColumn("tags") && assets?.filters?.tags && (
-                                    <DataTableFacetedFilter
-                                        selectedValues={filters.tags}
-                                        setSelectedValues={(tags) => setFilters({
-                                            ...filters,
-                                            tags,
-                                        })}
-                                        title="Tags"
-                                        options={assets.filters.tags.map((tag: any) => (
-                                            {
-                                                label: tag.type,
-                                                value: tag.type,
-                                                count: tag.count
-                                            }
-                                        ))}
-                                    />
-                                )}
-                                {isFiltered && (
-                                    <Button
-                                        variant="ghost"
-                                        onClick={() => setFilters({
-                                            ...filters,
-                                            sources: [],
-                                            types: [],
-                                            tags: [],
-                                        })}
-                                        className="h-8 px-2 lg:px-3"
-                                    >
-                                        Reset
-                                        <Cross2Icon className="ml-2 h-4 w-4" />
-                                    </Button>
-                                )}
+                                <div>
+                                    <DataTableViewOptions table={table} />
+                                </div>
                             </div>
-                            <div>
-                                <DataTableViewOptions table={table} />
-                            </div>
-                        </div>
+                        </Tabs>
                     </div>
                 </div>
 

@@ -22,6 +22,8 @@ interface AssetViewerContextType {
         tags: string[];
         types: string[];
     }>>;
+    view: "ASSET" | "COLUMN";
+    setView: (view: "ASSET" | "COLUMN") => void;
 }
 
 const AssetViewerContext = createContext<AssetViewerContextType | undefined>(undefined);
@@ -45,6 +47,7 @@ export const AssetViewerProvider: React.FC<AssetViewerProviderProps> = ({ childr
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [query, setQuery] = useState<string>("")
+    const [view, setView] = useState<"ASSET" | "COLUMN">("ASSET")
     const [currentPage, setCurrentPage] = useState(1);
     const [filters, setFilters] = useState<{
         sources: string[];
@@ -55,13 +58,14 @@ export const AssetViewerProvider: React.FC<AssetViewerProviderProps> = ({ childr
         tags: [],
         types: []
     });
-    const fetchAssets = useCallback(async () => {
+
+    const fetchAssets = useCallback(async (page?: number) => {
         setIsLoading(true);
         setError(null);
         try {
             const data = await getAssets({
                 query,
-                page: currentPage,
+                page: page || currentPage,
                 sources: filters.sources,
                 tags: filters.tags,
                 types: filters.types
@@ -82,7 +86,7 @@ export const AssetViewerProvider: React.FC<AssetViewerProviderProps> = ({ childr
 
     const submitSearch = useCallback(() => {
         setCurrentPage(1);
-        fetchAssets();
+        fetchAssets(1);
     }, [fetchAssets]);
 
     const value: AssetViewerContextType = {
@@ -97,6 +101,8 @@ export const AssetViewerProvider: React.FC<AssetViewerProviderProps> = ({ childr
         filters,
         pageSize,
         setFilters,
+        view,
+        setView
     };
 
     return (
