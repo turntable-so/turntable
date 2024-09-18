@@ -1,5 +1,5 @@
-import { ChartComponent } from "@/components/QueryBlock";
-import MultiSelect from "@/components/ui/multi-select";
+import { Chart } from "@/components/QueryBlock";
+import MultiSelect from "@/components/ui/multi-select-compact";
 import { AgGridReact } from "ag-grid-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -87,7 +87,7 @@ export default function ChartComposer({
       <div className="flex w-full h-full justify-between">
         <div className="flex-grow-1 w-4/5  flex-col items-between">
           <div className="flex flex-col w-full h-2/3 flex-grow-1">
-            <ChartComponent
+            <Chart
               chartType={currentOptions?.chartType}
               xAxis={currentOptions?.xAxis}
               yAxisSeriesList={currentOptions?.yAxisSeriesList}
@@ -168,13 +168,12 @@ export default function ChartComposer({
           <div>
             <div className="text-lg py-2 font-semibold">Y Axis</div>
             <MultiSelect
-              items={currentOptions?.columnOptions.map((item: string) => ({
+              renderIcon={() => <span>Y</span>}
+              options={currentOptions?.columnOptions.map((item: string) => ({
                 label: item,
                 value: item,
               }))}
-              selected={currentOptions?.yAxisSeriesList}
-              setSelected={() => { }}
-              functionSelected={(newValue: any) => {
+              onValueChange={(newValue: any) => {
                 setNotebookCharts({
                   ...notebookCharts,
                   [activeNode]: {
@@ -183,6 +182,7 @@ export default function ChartComposer({
                   },
                 });
               }}
+              defaultValue={currentOptions?.yAxisSeriesList}
               label="Select Y Axis columns"
             />
           </div>

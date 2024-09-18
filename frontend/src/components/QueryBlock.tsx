@@ -93,7 +93,7 @@ const chartConfig = {
 } satisfies ChartConfig;
 const chartColors = ["#2563eb", "#60a5fa"];
 
-export function ChartComponent(props: any) {
+export function Chart(props: any) {
   const {
     chartType,
     xAxis,
@@ -102,31 +102,31 @@ export function ChartComponent(props: any) {
     isXAxisNumeric,
     xAxisRange,
   } = props;
-  const [filteredData, setFilteredData] = useState<any>([]);
 
-  const setData = () => {
-    if (isXAxisNumeric && data) {
-      const filteredData = data.filter(
-        (row) => row[xAxis] >= xAxisRange[0] && row[xAxis] <= xAxisRange[1]
-      );
-      setFilteredData(filteredData);
-    } else {
-      setFilteredData(filteredData);
-    }
-  };
+  // const [filteredData, setFilteredData] = useState<any>(data);
 
-  useEffect(() => {
-    setData();
-  }, [xAxisRange, xAxis, data, isXAxisNumeric]);
+  // console.log({ props, filteredData })
 
-  useEffect(() => {
-    setData();
-  }, []);
+  // const setData = () => {
+  //   if (isXAxisNumeric && data) {
+  //     const filteredData = data.filter(
+  //       (row) => row[xAxis] >= xAxisRange[0] && row[xAxis] <= xAxisRange[1]
+  //     );
+  //     setFilteredData(filteredData);
+  //   } else {
+  //     setFilteredData(filteredData);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   setData();
+  // }, [xAxisRange, xAxis, data, isXAxisNumeric]);
+
 
   return (
-    <ChartContainer config={chartConfig} className="min-h-[400px] w-full">
+    <ChartContainer config={chartConfig} className="h-[400px] w-full">
       {chartType === "BAR" ? (
-        <BarChart accessibilityLayer data={filteredData}>
+        <BarChart accessibilityLayer data={data}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis
             dataKey={xAxis as string}
@@ -146,7 +146,7 @@ export function ChartComponent(props: any) {
           ))}
         </BarChart>
       ) : chartType === "HBAR" ? (
-        <BarChart accessibilityLayer data={filteredData} layout="vertical">
+        <BarChart accessibilityLayer data={data} layout="vertical">
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis type="number" />
           <YAxis type="category" />
@@ -161,7 +161,7 @@ export function ChartComponent(props: any) {
           ))}
         </BarChart>
       ) : (
-        <LineChart accessibilityLayer data={filteredData}>
+        <LineChart accessibilityLayer data={data}>
           <CartesianGrid vertical={false} />
           <XAxis
             dataKey={xAxis as string}
@@ -229,7 +229,6 @@ export default function QueryBlock(props: QueryBlockProps) {
   const [resourceType, setResourceType] = useState<string>("bigquery");
   const [syntaxObject, setSyntaxObject] = useState<any>({});
   const [isRunning, setIsRunning] = useState<any>(false);
-  const [isFullScreen, setIsFullScreen] = useState<boolean>(false);
   const [notebookCharts, setNotebookCharts] = useState<any>({});
 
   const gridRef = useRef<AgGridReact>(null);
@@ -362,10 +361,22 @@ export default function QueryBlock(props: QueryBlockProps) {
   const [selectedResource, setSelectedResource] = useState<any | null>(null);
   const [blockId, setBlockId] = useState<string>(uuidv4());
   const [title, setTitle] = useState<string>("Mock Query Block");
-  const [sql, setSql] = useState<string>("select * from mydb.dbt_sl_test.raw_orders");
+  const [sql, setSql] = useState<string>(
+    `SELECT DATE(ordered_at) AS order_date, SUM(order_total) AS total_sales
+FROM mydb.dbt_sl_test.raw_orders
+GROUP BY DATE(ordered_at)
+ORDER BY order_date`
+  );
   const [viewType, setViewType] = useState<ViewType>("table");
   const [chartSettings, setChartSettings] = useState<any>({});
 
+  const [chartType, setChartType] = useState<'BAR' | 'HBAR' | 'LINE'>('BAR');
+  const [xAxis, setXAxis] = useState(notebookCharts[blockId]?.xAxis);
+  const [yAxisSeriesList, setYAxisSeriesList] = useState(notebookCharts[blockId]?.yAxisSeriesList);
+  const [isXAxisNumeric, setIsXAxisNumeric] = useState(notebookCharts[blockId]?.isXAxisNumeric);
+  const [xAxisRange, setXAxisRange] = useState(notebookCharts[blockId]?.xAxisRange);
+
+  const { setActiveNode, setFullScreenData, setIsFullScreen, isFullScreen } = useAppContext()
 
   useEffect(() => {
     const fetchResources = async () => {
@@ -427,7 +438,8 @@ export default function QueryBlock(props: QueryBlockProps) {
         const insertText = ` ${transformWordTable(
           suggestion.label,
           lastWordCase
-        )}`;
+        )
+          } `;
         view.dispatch({
           changes: { from, to, insert: insertText },
         });
@@ -561,42 +573,6 @@ export default function QueryBlock(props: QueryBlockProps) {
     blockId && props.deleteNode();
   };
 
-  const setDefaultDataChart = async (rowData: any, colDefs) => {
-    if (!notebookCharts[blockId]) {
-      if (
-        chartSettings &&
-        Object.keys(chartSettings).length > 0
-      ) {
-        setNotebookCharts((prev) => ({
-          ...prev,
-          [blockId]: chartSettings,
-        }));
-      } else {
-        const xAxis = colDefs[0].field;
-        const isXAxisNumeric = rowData.every(
-          (row) => typeof row[xAxis] === "number"
-        );
-        const data: any = {
-          chartType: "BAR",
-          xAxis: colDefs[0].field,
-          yAxisSeriesList: [
-            { label: colDefs[1].field, value: colDefs[1].field },
-          ],
-          columnOptions: colDefs.map((colDef) => colDef.field),
-          isXAxisNumeric,
-        };
-        if (isXAxisNumeric) {
-          const minXAxisValue = Math.min(...rowData.map((row) => row[xAxis]));
-          data.xAxisRange = [minXAxisValue, minXAxisValue + 30];
-        }
-        setNotebookCharts((prev) => ({
-          ...prev,
-          [blockId]: data,
-        }));
-      }
-    }
-  };
-
   const getTablefromSignedUrl = async (signedUrl: string) => {
     const response = await fetch(signedUrl);
     if (response.ok) {
@@ -618,7 +594,17 @@ export default function QueryBlock(props: QueryBlockProps) {
       console.log({ defs, types: table.column_types });
       setColDefs(defs);
       setRowData(table.data);
-      setDefaultDataChart(table.data, defs);
+      setXAxis(defs[0].field);
+      setIsXAxisNumeric(table.data.every(
+        (row) => typeof row[xAxis] === "number"
+      ));
+      setChartType("BAR");
+      setYAxisSeriesList([{ label: defs[1].field, value: defs[1].field }]);
+
+      if (isXAxisNumeric) {
+        const minXAxisValue = Math.min(...table.data.map((row) => row[xAxis]));
+        setXAxisRange([minXAxisValue, minXAxisValue + 30]);
+      }
     }
     setIsLoading(false);
   };
@@ -750,17 +736,14 @@ export default function QueryBlock(props: QueryBlockProps) {
   // }
   const handleChangeSql = (value: string) => {
     setSql(value);
-    props.updateAttributes({
-      sql: value,
-    });
   };
 
   const handleChangeTitle = (e: any) => {
     setTitle(e.target.value);
-    props.updateAttributes({
-      title: e.target.value,
-    });
   };
+
+  console.log({ viewType, xAxis, chartType, yAxisSeriesList, isXAxisNumeric, xAxisRange })
+
 
   const renderGrid = () => {
     return (
@@ -773,9 +756,6 @@ export default function QueryBlock(props: QueryBlockProps) {
                   defaultValue={viewType}
                   onValueChange={(newViewType: ViewType) => {
                     setViewType(newViewType);
-                    props.updateAttributes({
-                      viewType: newViewType,
-                    });
                   }}
                 >
                   <TabsList>
@@ -789,7 +769,7 @@ export default function QueryBlock(props: QueryBlockProps) {
                 </Tabs>
                 <div className="flex items-center gap-1 text-xs">
                   <Clock className="w-4 h-4" />
-                  {`Ran in ${time.toFixed(2)}s`}
+                  {`Ran in ${time.toFixed(2)} s`}
                 </div>
               </div>
               <div className="flex items-center gap-0">
@@ -890,23 +870,15 @@ export default function QueryBlock(props: QueryBlockProps) {
               </div>
             ))}
           {viewType === "chart" && (
-            <div className="h-[400px]">
-              {notebookCharts[blockId] && (
-                <ChartComponent
-                  chartType={notebookCharts[blockId].chartType}
-                  xAxis={notebookCharts[blockId].xAxis}
-                  yAxisSeriesList={
-                    notebookCharts[blockId].yAxisSeriesList
-                  }
-                  data={rowData}
-                  isXAxisNumeric={
-                    notebookCharts[blockId].isXAxisNumeric
-                  }
-                  xAxisRange={
-                    notebookCharts[blockId].xAxisRange
-                  }
-                />
-              )}
+            <div className="h-[300px]">
+              <Chart
+                chartType={chartType}
+                xAxis={xAxis}
+                yAxisSeriesList={yAxisSeriesList}
+                data={rowData}
+                isXAxisNumeric={isXAxisNumeric}
+                xAxisRange={xAxisRange}
+              />
             </div>
           )}
         </div>
