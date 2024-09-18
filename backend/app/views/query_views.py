@@ -20,7 +20,7 @@ class ExecuteQueryView(APIView):
         from workflows.hatchet import hatchet
 
         workspace = await self.get_current_workspace(request.user)
-        data = json.loads(json.loads(request.body))
+        data = json.loads(request.body)
         resource_id = data["resource_id"]
         if not resource_id:
             return Response(

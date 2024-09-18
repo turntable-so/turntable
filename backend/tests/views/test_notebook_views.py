@@ -1,14 +1,13 @@
-import pytest
-import logging
-from django.test import TestCase
-from rest_framework.test import APIClient
-from rest_framework import status
-from django.contrib.auth import get_user_model
-from app.models import Notebook, Block, Workspace
-from unittest.mock import patch
-from rest_framework_simplejwt.tokens import RefreshToken
 import json
+from unittest.mock import patch
 
+import pytest
+from django.contrib.auth import get_user_model
+from django.test import TestCase
+from rest_framework import status
+from rest_framework.test import APIClient
+
+from app.models import Notebook, Workspace
 
 User = get_user_model()
 
@@ -16,7 +15,6 @@ User = get_user_model()
 @pytest.mark.django_db
 class NotebookViewSetTestCase(TestCase):
     def setUp(self):
-
         self.client = APIClient()
         self.user = User.objects.create_user(
             email="test@turntable.so", password="testpass"

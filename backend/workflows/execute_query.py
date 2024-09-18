@@ -1,6 +1,5 @@
 import os
 
-import ibis
 import orjson
 import pandas as pd
 from django.core.files.base import ContentFile
@@ -11,7 +10,7 @@ from workflows.hatchet import hatchet
 
 load_dotenv()
 
-from app.models import Block, Resource, ResourceDetails
+from app.models import Block, Resource
 
 
 def df_to_json(df: pd.DataFrame) -> str:
@@ -31,7 +30,6 @@ def df_to_json(df: pd.DataFrame) -> str:
 # - resource_id: int
 @hatchet.workflow(on_events=["execute_query"], timeout="2m")
 class ExecuteQueryWorkflow:
-
     @hatchet.step()
     def execute_query(self, context: Context):
         os.environ["AWS_QUERYSTRING_AUTH"] = "True"
@@ -50,12 +48,10 @@ class ExecuteQueryWorkflow:
             return {"error": "block_id is empty"}
 
         resource = Resource.objects.get(id=resource_id)
-        details = ResourceDetails.objects.get(resource=resource)
         block, created = Block.objects.get_or_create(id=block_id)
         try:
-            connect = ibis.duckdb.connect(details.path, read_only=True)
-            table = connect.sql(query)
-            df = table.execute()
+            connector = resource.details.get_connector()
+            df = connector.sql_to_df(query)
         except Exception as e:
             return {"status": "failed", "error": str(e)}
         query_results = df_to_json(df)
