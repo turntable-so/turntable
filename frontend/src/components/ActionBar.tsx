@@ -153,7 +153,6 @@ export default function ActionBar({
     }
   }, [searchRef]);
 
-  console.log({ resourceAssets })
 
   function createTreeDataNode(
     resource: any,

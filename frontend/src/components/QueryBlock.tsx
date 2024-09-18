@@ -70,6 +70,8 @@ import { ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
 import { ChartConfig, ChartContainer } from "@/components/ui/chart";
 
+import { getResources } from "@/app/actions/actions";
+
 const chartData = [
   { month: "January", desktop: 186, mobile: 80 },
   { month: "February", desktop: 305, mobile: 200 },
@@ -191,32 +193,17 @@ interface Suggestion {
 }
 
 type QueryBlockProps = {
-  node: {
-    attrs: {
-      resourceId: string;
-      blockId: string;
-      title: string;
-      sql: string;
-      viewType: ViewType;
-      chartSettings: any;
-    };
-  };
   updateAttributes: (attrs: any) => void;
-  deleteNode: any;
+  deleteNode: () => void;
 };
 
 export default function QueryBlock(props: QueryBlockProps) {
-  const {
-    resources,
-    isFullScreen,
-    setIsFullScreen,
-    setFullScreenData,
-    notebookCharts,
-    setNotebookCharts,
-    setActiveNode,
-  } = useAppContext();
+
 
   const codeMirrorRef = useRef<ReactCodeMirrorRef | null>(null);
+
+
+
 
   function codeMirrorRefCallack(editor: ReactCodeMirrorRef) {
     if (editor?.editor && editor?.state && editor?.view && !codeMirrorRef.current) {
@@ -242,6 +229,8 @@ export default function QueryBlock(props: QueryBlockProps) {
   const [resourceType, setResourceType] = useState<string>("bigquery");
   const [syntaxObject, setSyntaxObject] = useState<any>({});
   const [isRunning, setIsRunning] = useState<any>(false);
+  const [isFullScreen, setIsFullScreen] = useState<boolean>(false);
+  const [notebookCharts, setNotebookCharts] = useState<any>({});
 
   const gridRef = useRef<AgGridReact>(null);
   const timeIntervalRef = useRef<number | null>(null);
@@ -369,13 +358,35 @@ export default function QueryBlock(props: QueryBlockProps) {
     };
   };
 
+  const [resources, setResources] = useState<any[] | null>([]);
+  const [selectedResource, setSelectedResource] = useState<any | null>(null);
+  const [blockId, setBlockId] = useState<string>(uuidv4());
+  const [title, setTitle] = useState<string>("Mock Query Block");
+  const [sql, setSql] = useState<string>("select * from mydb.dbt_sl_test.raw_orders");
+  const [viewType, setViewType] = useState<ViewType>("table");
+  const [chartSettings, setChartSettings] = useState<any>({});
+
+
+  useEffect(() => {
+    const fetchResources = async () => {
+      const resources = await getResources()
+      const dbResources = resources.filter((resource: any) => resource.type === 'db')
+      if (dbResources.length > 0) {
+        setResources(dbResources)
+        setSelectedResource(dbResources[0])
+      }
+    }
+    fetchResources()
+  }, [])
+
+
   const setTableCompletion = async (
     beforeSql: string,
     afterSql: string,
     lastWordCase: string
   ): Promise<void> => {
     const ctesSuggestions = await getCTEAutocomplete({
-      resourceId: props.node.attrs.resourceId,
+      resourceId: selectedResource.id,
       beforeSql,
       afterSql,
     });
@@ -547,19 +558,18 @@ export default function QueryBlock(props: QueryBlockProps) {
   };
 
   const deleteBlock = () => {
-    console.log(props);
-    props.node.attrs.blockId && props.deleteNode();
+    blockId && props.deleteNode();
   };
 
   const setDefaultDataChart = async (rowData: any, colDefs) => {
-    if (!notebookCharts[props.node.attrs.blockId]) {
+    if (!notebookCharts[blockId]) {
       if (
-        props.node.attrs.chartSettings &&
-        Object.keys(props.node.attrs.chartSettings).length > 0
+        chartSettings &&
+        Object.keys(chartSettings).length > 0
       ) {
         setNotebookCharts((prev) => ({
           ...prev,
-          [props.node.attrs.blockId]: props.node.attrs.chartSettings,
+          [blockId]: chartSettings,
         }));
       } else {
         const xAxis = colDefs[0].field;
@@ -571,13 +581,6 @@ export default function QueryBlock(props: QueryBlockProps) {
           xAxis: colDefs[0].field,
           yAxisSeriesList: [
             { label: colDefs[1].field, value: colDefs[1].field },
-            //...data.colDefs
-            //.slice(1)
-            //.map((colDef) => colDef.field)
-            //.map((item: string) => ({
-            // label: item,
-            // value: item,
-            // })),
           ],
           columnOptions: colDefs.map((colDef) => colDef.field),
           isXAxisNumeric,
@@ -588,7 +591,7 @@ export default function QueryBlock(props: QueryBlockProps) {
         }
         setNotebookCharts((prev) => ({
           ...prev,
-          [props.node.attrs.blockId]: data,
+          [blockId]: data,
         }));
       }
     }
@@ -601,8 +604,8 @@ export default function QueryBlock(props: QueryBlockProps) {
       const defs = Object.keys(table.column_types).map((key) => ({
         field: key,
         headerName: key,
-        type: [getColumnType(table.column_types[key])],
-        cellDataType: getColumnType(table.column_types[key]),
+        type: [table.column_types[key]],
+        cellDataType: table.column_types[key],
         editable: false,
         valueGetter: (p: any) => {
           if (p.colDef.cellDataType === "date") {
@@ -643,16 +646,16 @@ export default function QueryBlock(props: QueryBlockProps) {
   useEffect(() => {
     const fetchQueryBlockResult = async () => {
       const block = await getQueryBlockResult({
-        blockId: props.node.attrs.blockId,
+        blockId,
       });
       if (block && block.results) {
         getTablefromSignedUrl(block.results);
       }
     };
-    if (props.node.attrs.blockId && !rowData) {
+    if (blockId && !rowData) {
       fetchQueryBlockResult();
     }
-  }, [props.node.attrs.blockId]);
+  }, [blockId]);
 
   async function stopQuery() {
     if (abortControllerRef.current) {
@@ -679,8 +682,8 @@ export default function QueryBlock(props: QueryBlockProps) {
     try {
       data = await executeQuery({
         notebook_id: notebookId as any,
-        resource_id: props.node.attrs.resourceId,
-        block_id: props.node.attrs.blockId,
+        resource_id: selectedResource.id,
+        block_id: blockId,
         sql: query,
       }, abortController.signal);
     } catch (e: any) {
@@ -709,22 +712,6 @@ export default function QueryBlock(props: QueryBlockProps) {
   }, [isLoading]);
 
   useEffect(() => {
-    if (resources) {
-      props.updateAttributes({
-        resourceId: resources[0].id,
-      });
-    }
-  }, [resources]);
-
-  useEffect(() => {
-    if (props.node.attrs.blockId) {
-      props.updateAttributes({
-        chartSettings: notebookCharts[props.node.attrs.blockId],
-      });
-    }
-  }, [notebookCharts, props.node.attrs.blockId]);
-
-  useEffect(() => {
     if (resourceType && resourceType.length > 0) {
       // const jsonSyntaxComplete = require("../../backend/intellisense/syntax/outputs/" +
       //   resourceType +
@@ -732,14 +719,6 @@ export default function QueryBlock(props: QueryBlockProps) {
       // setSyntaxObject(jsonSyntaxComplete);
     }
   }, [resourceType]);
-
-  useEffect(() => {
-    if (!props.node.attrs.blockId) {
-      props.updateAttributes({
-        blockId: `${uuidv4()}`,
-      });
-    }
-  }, [props.node.attrs.blockId]);
 
 
   // const getDBAutocomplete = async (resourceId: string) => {
@@ -770,12 +749,14 @@ export default function QueryBlock(props: QueryBlockProps) {
   //     }))
   // }
   const handleChangeSql = (value: string) => {
+    setSql(value);
     props.updateAttributes({
       sql: value,
     });
   };
 
   const handleChangeTitle = (e: any) => {
+    setTitle(e.target.value);
     props.updateAttributes({
       title: e.target.value,
     });
@@ -789,10 +770,11 @@ export default function QueryBlock(props: QueryBlockProps) {
             <div className="flex text-muted-foreground font-semibold  text-sm py-1 px-0 justify-between">
               <div className="flex items-center gap-4">
                 <Tabs
-                  defaultValue={props.node.attrs.viewType}
-                  onValueChange={(viewType: string) => {
+                  defaultValue={viewType}
+                  onValueChange={(newViewType: ViewType) => {
+                    setViewType(newViewType);
                     props.updateAttributes({
-                      viewType,
+                      viewType: newViewType,
                     });
                   }}
                 >
@@ -827,7 +809,7 @@ export default function QueryBlock(props: QueryBlockProps) {
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    setActiveNode(props.node.attrs.blockId);
+                    setActiveNode(blockId);
                     setFullScreenData({
                       rowData,
                       colDefs,
@@ -861,7 +843,7 @@ export default function QueryBlock(props: QueryBlockProps) {
               </div>
             </div>
           </div>
-          {props.node.attrs.viewType === "table" &&
+          {viewType === "table" &&
             (rowData && rowData.length > 0 ? (
               <div className="flex flex-col w-full h-full flex-grow-1">
                 <AgGridReact
@@ -907,21 +889,21 @@ export default function QueryBlock(props: QueryBlockProps) {
                             )} */}
               </div>
             ))}
-          {props.node.attrs.viewType === "chart" && (
+          {viewType === "chart" && (
             <div className="h-[400px]">
-              {notebookCharts[props.node.attrs.blockId] && (
+              {notebookCharts[blockId] && (
                 <ChartComponent
-                  chartType={notebookCharts[props.node.attrs.blockId].chartType}
-                  xAxis={notebookCharts[props.node.attrs.blockId].xAxis}
+                  chartType={notebookCharts[blockId].chartType}
+                  xAxis={notebookCharts[blockId].xAxis}
                   yAxisSeriesList={
-                    notebookCharts[props.node.attrs.blockId].yAxisSeriesList
+                    notebookCharts[blockId].yAxisSeriesList
                   }
                   data={rowData}
                   isXAxisNumeric={
-                    notebookCharts[props.node.attrs.blockId].isXAxisNumeric
+                    notebookCharts[blockId].isXAxisNumeric
                   }
                   xAxisRange={
-                    notebookCharts[props.node.attrs.blockId].xAxisRange
+                    notebookCharts[blockId].xAxisRange
                   }
                 />
               )}
@@ -944,11 +926,11 @@ export default function QueryBlock(props: QueryBlockProps) {
             <input
               onChange={handleChangeTitle}
               className="text text-muted-foreground outline-none focus:ring-0 font-medium flex-grow truncate"
-              value={props.node.attrs.title}
+              value={title}
             />
             <div className="flex gap-4">
               <div className="flex items-center">
-                <Select defaultValue={resources.length > 0 && resources[0].id}>
+                <Select defaultValue={selectedResource?.id}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a resource" />
                   </SelectTrigger>
@@ -971,7 +953,7 @@ export default function QueryBlock(props: QueryBlockProps) {
                 <Button
                   disabled={isLoading}
                   variant="outline"
-                  onClick={() => runQuery(props.node.attrs.sql)}
+                  onClick={() => runQuery(sql)}
                 >
                   {isLoading ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -989,25 +971,6 @@ export default function QueryBlock(props: QueryBlockProps) {
                   Stop
                 </Button>
               )}
-              <Popover>
-                <PopoverTrigger>
-                  <Button variant="outline" onClick={() => { }}>
-                    <EllipsisVertical className="w-4 h-4 text-green-500" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  align="start"
-                  className="w-fit text-muted-foreground"
-                >
-                  <Button
-                    onClick={deleteBlock}
-                    variant="ghost"
-                    className="flex items-center"
-                  >
-                    Delete
-                  </Button>
-                </PopoverContent>
-              </Popover>
             </div>
           </div>
           <Card className="rounded-md bg-muted/50">
@@ -1017,14 +980,13 @@ export default function QueryBlock(props: QueryBlockProps) {
                   highlightActiveLine: false,
                 }}
                 extensions={[
-                  sql(),
                   EditorView.lineWrapping,
                   autocompletion({
                     override: [customAutocomplete],
                   }),
                 ]}
                 ref={codeMirrorRefCallack}
-                value={props.node.attrs.sql}
+                value={sql}
                 onChange={(value) => handleChangeSql(value)}
                 className="text-sm"
                 theme={quietlight}
