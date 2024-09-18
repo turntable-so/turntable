@@ -13,12 +13,13 @@ const fetchWithAuth = async (url: string, options = {} as any) => {
     if (!(options?.body instanceof FormData)) {
         headers["Content-Type"] = "application/json";
     }
+
     const response = await fetch(url, { ...options, headers });
+
     if (response.status === 401) {
         try {
-            const { access, refresh } = await (await handleJWTRefresh()).json() as any;
+            const { access } = await (await handleJWTRefresh(options?.cookies)).json() as any;
             storeToken(access, "access");
-            storeToken(refresh, "refresh"); // Store the new refresh token
 
             const retryHeaders = {
                 ...headers,
