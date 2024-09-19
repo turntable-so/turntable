@@ -16,7 +16,6 @@
 
 .password-hidden {
   -webkit-text-security: disc;
-  font-family: 'password';
 }
 
 @layer base {
