@@ -18,6 +18,8 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { EyeIcon, EyeOffIcon } from "lucide-react";
+import { useState } from "react";
 
 const serviceAccountPlaceholder = `{
   "type": "service_account",
@@ -59,6 +61,7 @@ export default function BigqueryForm({
   connectionCheck?: boolean;
 }) {
   const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -134,13 +137,28 @@ export default function BigqueryForm({
             name="service_account"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Service account</FormLabel>
+                <FormLabel>Service Account</FormLabel>
                 <FormControl>
-                  <Textarea
-                    className="h-[250px]"
-                    placeholder={serviceAccountPlaceholder}
-                    {...field}
-                  />
+                  <div className="relative">
+                    <Textarea
+                      className={`h-[250px] w-full px-4 py-2 border rounded ${
+                        showPassword ? "" : "password-hidden"
+                      }`}
+                      placeholder={serviceAccountPlaceholder}
+                      {...field}
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-3"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOffIcon className="h-5 w-5" />
+                      ) : (
+                        <EyeIcon className="h-5 w-5" />
+                      )}
+                    </button>
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>

@@ -137,7 +137,7 @@ export default function DatabricksForm({ resource, details }: { resource?: any, 
                                     <FormItem>
                                         <FormLabel>Personal Access Token (PAT)</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="********" {...field} />
+                                            <Input type="password" placeholder="********" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
