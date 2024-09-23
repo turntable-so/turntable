@@ -11,12 +11,21 @@ from app.models import Resource
 class Command(BaseCommand):
     help = "Export db data and datahub dbs as a zip in exports folder"
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--nodb',
+            action='store_true',
+            help='Do not include the database dump in the export'
+        )
+
     def handle(self, *args, **kwargs):
         base_dir = "fixtures/datahub_dbs"
-        # get db dump
-        output_file = os.path.join(base_dir, "dumpdata.json")
-        with open(output_file, "w") as f:
-            call_command("dumpdata", "--format=json", stdout=f)
+        
+        # get db dump if --nodb is not specified
+        if not kwargs['nodb']:
+            output_file = os.path.join(base_dir, "dumpdata.json")
+            with open(output_file, "w") as f:
+                call_command("dumpdata", "--format=json", stdout=f)
 
         # get datahub db
         for resource in Resource.objects.all():
@@ -36,5 +45,6 @@ class Command(BaseCommand):
         shutil.make_archive(zip_path, "zip", base_dir)
         shutil.move(f"{zip_path}.zip", export_dir)
 
-        # delete dumpdata.json
-        os.remove(output_file)
+        # delete dumpdata.json if it was created
+        if not kwargs['nodb']:
+            os.remove(output_file)
