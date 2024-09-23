@@ -95,7 +95,7 @@ export default function DataTable() {
         getSortedRowModel: getSortedRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
         manualPagination: true,
-        pageCount: assets.total_pages || -1,
+        pageCount: assets.total_pages || 1,
         rowCount: assets.count || 0,
         getFacetedRowModel: getFacetedRowModel(),
         getFacetedUniqueValues: getFacetedUniqueValues(),
