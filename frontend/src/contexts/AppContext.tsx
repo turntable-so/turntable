@@ -128,47 +128,6 @@ export default function AppContextProvider({
     }, []);
 
 
-    useEffect(() => {
-        const fetchAssetsForResources = async (resources: any[]) => {
-            try {
-                // Initialize the assets state with loading indicators
-                const initialAssetState = resources.reduce((acc: AssetMap, resource) => {
-                    acc[resource.id] = { isLoading: true, assets: [], name: resource.name };
-                    return acc;
-                }, {});
-                setAssets(initialAssetState);
-
-                // Fetch assets for all resources concurrently
-                const assetPromises = resources.map(async (resource) => {
-                    const assetsForResource = await getAssets(resource.id);
-                    return { resourceId: resource.id, assets: assetsForResource };
-                });
-
-                // Wait for all promises to resolve
-                const resolvedAssets = await Promise.all(assetPromises);
-
-                // Update the state once with all fetched assets
-                setAssets((prevAssets) => {
-                    const newAssets = { ...prevAssets };
-                    resolvedAssets.forEach(({ resourceId, assets }) => {
-                        newAssets[resourceId] = { isLoading: false, assets, name: prevAssets[resourceId].name };
-                    });
-                    return newAssets;
-                });
-
-                // If you need to update tags, you can do it here
-                // const allTags = resolvedAssets.flatMap(({ assets }) => assets.tags);
-                // setTags((prevTags) => Array.from(new Set([...prevTags, ...allTags])));
-            } catch (error) {
-                console.error('Error fetching assets:', error);
-                // Handle the error appropriately
-            }
-        };
-
-        if (resources) {
-            fetchAssetsForResources(resources);
-        }
-    }, [resources]);
     const runQuery = async (blockId: string) => {
         if (!activeNotebook) {
             return;
