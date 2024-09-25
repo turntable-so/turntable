@@ -23,7 +23,21 @@ class CodeRepoService:
         self.workspace_id = workspace_id
 
     def _generate_code_repo_path(self, user_id: str):
-        path = os.path.join(f"/ws/{self.workspace_id}/users/{user_id}")
+        if os.environ["EPHEMERAL_FILESYSTEM"] == "True":
+            path = os.path.join(
+                tempfile.gettempdir(),
+                "ws",
+                str(self.workspace_id),
+                "users",
+                str(user_id),
+            )
+        else:
+            path = os.path.join(
+                "ws",
+                str(self.workspace_id),
+                "users",
+                str(user_id),
+            )
         return os.path.join(settings.MEDIA_ROOT, path)
 
     def _generate_ssh_rsa(self):

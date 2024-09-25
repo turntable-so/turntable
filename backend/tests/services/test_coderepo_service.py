@@ -23,6 +23,7 @@ class CodeRepoServiceTests(TestCase):
 
     def setUp(self):
         # Set up initial data
+        os.environ["EPHEMERAL_FILESYSTEM"] = "True"
         self.user = User.objects.create_user(
             email="testuser@test.com", password="password"
         )
