@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import os
+import re
 import traceback
 from typing import Any, Callable, Literal
 
@@ -413,6 +414,14 @@ class DatasetInfoParser(DataHubDBParserBase):
             if "viewLogic" in info:
                 db_sql = info["viewLogic"]
                 db_ast = sqlglot.parse(db_sql, dialect=self.dialect)[0]
+                if isinstance(db_ast, exp.Command):
+                    # this is sqlglot's fallback in case of ddl parse failure
+                    # remove schema binding phrase that causes parsing issues
+                    db_sql = re.sub(
+                        r"with\s+schema\s+binding", "", db_sql, flags=re.IGNORECASE
+                    )
+                    db_ast = sqlglot.parse(db_sql, dialect=self.dialect)[0]
+
                 if isinstance(db_ast, exp.Create):
                     db_ast = db_ast.expression.copy()
                     db_sql = db_ast.sql(dialect=self.dialect)

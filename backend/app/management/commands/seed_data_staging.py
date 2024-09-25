@@ -12,18 +12,18 @@ from fixtures.staging_env import (
 
 
 class Command(BaseCommand):
-    # help = "Seed data with staging user and workspace"
+    help = "Seed data with staging user and workspace"
 
-    # @transaction.atomic
+    @transaction.atomic
     def handle(self, *args, **kwargs):
         pass
 
-    #     user = create_user()
-    #     group_1(user)
-    #     group_2(user)
-    #     group_3(user)
-    #     group_4(user)
-    #     group_6(user)
-    #     self.stdout.write(
-    #         self.style.SUCCESS("Successfully seeded the database with staging data")
-    #     )
+        user = create_user()
+        group_1(user)
+        group_2(user)
+        group_3(user)
+        group_4(user)
+        group_6(user)
+        self.stdout.write(
+            self.style.SUCCESS("Successfully seeded the database with staging data")
+        )

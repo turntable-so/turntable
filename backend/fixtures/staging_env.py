@@ -31,8 +31,9 @@ def create_user():
         )
 
 
-def create_workspace_n(user, dialect, n):
-    workspace_id = os.getenv(f"{dialect.upper()}_{n}_WORKSPACE_ID")
+def create_workspace_n(user, dialect, n, workspace_id=None):
+    if not workspace_id:
+        workspace_id = os.getenv(f"{dialect.upper()}_{n}_WORKSPACE_ID")
     workspace_name = os.getenv(f"{dialect.upper()}_{n}_WORKSPACE_NAME")
     assert (
         workspace_id
