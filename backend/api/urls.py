@@ -18,6 +18,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path, re_path
 from app.views.settings_view import SettingsView
+from app.views.project_views import ProjectViewSet
 from rest_framework import routers
 
 from app.consumers import WorkflowRunConsumer
@@ -53,6 +54,7 @@ router.register(r"github", GithubInstallationViewSet, basename="github")
 router.register(r"notebooks", NotebookViewSet, basename="notebook")
 router.register(r"blocks", BlockViewSet, basename="block")
 router.register(r"healthcheck", HealthCheckViewSet, basename="healthcheck")
+router.register(r"project", ProjectViewSet, basename="project")
 
 urlpatterns = [
     path("oauth/auth", OAuthView.as_view(), name="oauth-auth"),

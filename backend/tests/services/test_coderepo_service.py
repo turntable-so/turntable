@@ -38,7 +38,6 @@ class CodeRepoServiceTests(TestCase):
         )
 
     def test_repo_connection(self):
-
         coderepo_service = CodeRepoService(workspace_id=self.workspace.id)
         res = coderepo_service.test_repo_connection(
             public_key=self.test_ssh_public_key,

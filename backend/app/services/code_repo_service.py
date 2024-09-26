@@ -23,7 +23,7 @@ class CodeRepoService:
         self.workspace_id = workspace_id
 
     def _generate_code_repo_path(self, user_id: str):
-        if os.environ["EPHEMERAL_FILESYSTEM"] == "True":
+        if os.environ.get("EPHEMERAL_FILESYSTEM", "False") == "True":
             path = os.path.join(
                 tempfile.gettempdir(),
                 "ws",
