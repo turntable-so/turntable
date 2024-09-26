@@ -110,7 +110,6 @@ class ResourceViewSetTestCases(TestCase):
         response = self.client.get(f"/project/files/?filepath={encoded_filepath}")
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        breakpoint()
 
         assert "{{ ref('stg_customers') }}" in data["contents"]
 
