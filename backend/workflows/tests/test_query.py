@@ -9,6 +9,8 @@ from workflows.utils.debug import WorkflowDebugger
 
 TEST_QUERY = "select * from mydb.dbt_sl_test.raw_products"
 
+TEST_DBT_QUERY_FAST = "select * from {{ ref('raw_products') }}"
+
 
 def run_test_query(resource: Resource, user, query=TEST_QUERY, output_len=10):
     input = {

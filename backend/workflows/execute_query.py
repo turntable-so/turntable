@@ -3,14 +3,11 @@ import os
 import orjson
 import pandas as pd
 from django.core.files.base import ContentFile
-from dotenv import load_dotenv
 from hatchet_sdk import Context
 
-from workflows.hatchet import hatchet
-
-load_dotenv()
-
 from app.models import Block, Resource
+from workflows.hatchet import hatchet
+from workflows.utils.log import inject_workflow_run_logging
 
 
 def df_to_json(df: pd.DataFrame) -> str:
@@ -29,6 +26,7 @@ def df_to_json(df: pd.DataFrame) -> str:
 # - block_id: int
 # - resource_id: int
 @hatchet.workflow(on_events=["execute_query"], timeout="2m")
+@inject_workflow_run_logging(hatchet)
 class ExecuteQueryWorkflow:
     @hatchet.step()
     def execute_query(self, context: Context):

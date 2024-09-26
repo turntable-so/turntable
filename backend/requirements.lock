@@ -112,7 +112,7 @@ databricks-sql-connector==3.4.0
 db-dtypes==1.2.0
     # via turntable-spoonbill
 dbt-extractor==0.5.1
-dbtenv @ git+https://github.com/turntable-so/dbtenv.git@e1de6455270784da76ee2b6734325cc1a79a3d4e#subdirectory=dbtenv
+dbtx==0.0.3
 deepmerge==1.1.1
     # via turntable-cli
 defusedxml==0.7.1
@@ -508,9 +508,9 @@ pytz==2024.1
     # via pandas
     # via snowflake-connector-python
     # via turntable-spoonbill
-pyyaml==6.0.1
+pyyaml==6.0.2
     # via acryl-datahub
-    # via dbtenv
+    # via dbtx
     # via hatchet-sdk
     # via huggingface-hub
     # via turntable-cli
@@ -695,7 +695,8 @@ urllib3==2.2.2
     # via pygithub
     # via requests
     # via sentry-sdk
-uv==0.2.18
+uv==0.4.16
+    # via dbtx
 uvicorn==0.30.1
     # via fastapi
     # via sse-starlette

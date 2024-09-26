@@ -10,7 +10,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-from app.models import SSHKey
+from app.models.git_connections import SSHKey
 
 logger = logging.getLogger(__name__)
 

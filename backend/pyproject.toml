@@ -33,7 +33,6 @@ dependencies = [
     "rich>=13.7.1",
     "diskcache>=5.6.3",
     "turntable-cli>=0.4.8",
-    "dbtenv @ git+https://github.com/turntable-so/dbtenv.git@main#subdirectory=dbtenv",
     "turntable-spoonbill[bigquery,duckdb,postgres,snowflake,sqlite] == 10.0.2",
     "databricks-sql-connector>=3.4.0",
     "pyarrow>=16.1.0",
@@ -80,9 +79,9 @@ dependencies = [
     "channels>=4.1.0",
     "django-health-check>=3.18.3",
     "channels_redis>=4.2.0",
-    "uv==0.2.18",
     "django-pgbulk>=3.0.0",
     "psycopg[binary]>=3.2.1",
+    "dbtx>=0.0.3",
 ]
 
 [project.scripts]
