@@ -290,6 +290,8 @@ if region := os.getenv("AWS_S3_REGION_NAME"):
     AWS_S3_REGION_NAME = region
 
 PUBLIC_MEDIA_LOCATION = "public-assets"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+MEDIA_URL = "/media/"
 
 if acl := os.getenv("AWS_DEFAULT_ACL"):
     AWS_DEFAULT_ACL = None if acl == "None" else acl
