@@ -18,7 +18,8 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
             pathName.includes('/notebooks/') ||
             pathName.includes('/lineage') ||
             pathName.includes('/sources/') ||
-            pathName.includes('/assets')
+            pathName.includes('/assets') ||
+            pathName.includes('/editor')
         )
     }, [pathName, collapseSidebar])
 
@@ -30,7 +31,7 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
             setActionBarContext('NOTEBOOK')
         }
 
-        if (pathName.includes('/assets')) {
+        if (pathName.includes('/assets') || pathName.includes('/editor')) {
             setSidebarContext('HIDDEN')
         } else {
             setSidebarContext('ACTION')

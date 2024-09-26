@@ -455,3 +455,11 @@ export async function getSettings() {
 export async function getBackendUrl() {
   return getUrl();
 }
+
+export async function getBranches() {
+  const response = await fetcher(`/project/branches/`, {
+    cookies,
+    method: "GET",
+  });
+  return response.json();
+}
