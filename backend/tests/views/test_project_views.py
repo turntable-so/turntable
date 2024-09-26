@@ -119,16 +119,25 @@ class ResourceViewSetTestCases(TestCase):
         response = self.client.put(
             f"/project/files/?filepath={encoded_filepath}", {"contents": "test"}
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 204)
+
+    def test_create_file(self):
+        filepath = "models/marts/sales.sql"
+        encoded_filepath = safe_encode(filepath)
+        response = self.client.post(
+            f"/project/files/?filepath={encoded_filepath}",
+            {"contents": "salesly stuff"},
+        )
+        self.assertEqual(response.status_code, 201)
 
     def test_delete_file(self):
         filepath = "models/marts/customers.sql"
         encoded_filepath = safe_encode(filepath)
         response = self.client.delete(f"/project/files/?filepath={encoded_filepath}")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 204)
 
     def test_delete_directory(self):
         filepath = "models/marts/"
         encoded_filepath = safe_encode(filepath)
         response = self.client.delete(f"/project/files/?filepath={encoded_filepath}")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 204)

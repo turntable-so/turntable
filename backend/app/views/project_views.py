@@ -8,7 +8,7 @@ import shutil
 
 
 class ProjectViewSet(viewsets.ViewSet):
-    @action(detail=False, methods=["GET", "PUT", "DELETE"])
+    @action(detail=False, methods=["GET", "POST", "PUT", "DELETE"])
     def files(self, request):
         workspace = request.user.current_workspace()
         user_id = request.user.id
@@ -23,6 +23,18 @@ class ProjectViewSet(viewsets.ViewSet):
         if filepath and len(filepath) > 0:
             filepath = unquote(filepath)
             filepath = os.path.join(repo.working_tree_dir, filepath)
+            if request.method == "POST":
+                if os.path.exists(filepath):
+                    return Response(
+                        {"error": "file already exists"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                # Create directory if it doesn't exist
+                os.makedirs(os.path.dirname(filepath), exist_ok=True)
+                with open(filepath, "w") as file:
+                    file.write(request.data.get("contents"))
+                return Response(status=status.HTTP_201_CREATED)
+
             if not os.path.exists(filepath):
                 return Response(status=status.HTTP_404_NOT_FOUND)
 
@@ -32,33 +44,29 @@ class ProjectViewSet(viewsets.ViewSet):
                 return Response({"contents": file_content})
 
             if request.method == "PUT":
-                if filepath and len(filepath) > 0:
-                    filepath = unquote(filepath)
-                filepath = os.path.join(repo.working_tree_dir, filepath)
                 with open(filepath, "w") as file:
                     file.write(request.data.get("contents"))
-                return Response(True)
+                return Response(status=status.HTTP_204_NO_CONTENT)
 
             if request.method == "DELETE":
                 if filepath and len(filepath) > 0:
-                    filepath = unquote(filepath)
-                filepath = os.path.join(repo.working_tree_dir, filepath)
-                if os.path.exists(filepath):
-                    if os.path.isfile(filepath):
-                        os.remove(filepath)
-                    elif os.path.isdir(filepath):
-                        shutil.rmtree(filepath)
+                    filepath = os.path.join(repo.working_tree_dir, filepath)
+                    if os.path.exists(filepath):
+                        if os.path.isfile(filepath):
+                            os.remove(filepath)
+                        elif os.path.isdir(filepath):
+                            shutil.rmtree(filepath)
+                        else:
+                            return Response(
+                                {"error": "Path is neither a file nor a directory"},
+                                status=status.HTTP_400_BAD_REQUEST,
+                            )
+                        return Response(status=status.HTTP_204_NO_CONTENT)
                     else:
                         return Response(
-                            {"error": "Path is neither a file nor a directory"},
-                            status=status.HTTP_400_BAD_REQUEST,
+                            {"error": "File or directory not found"},
+                            status=status.HTTP_404_NOT_FOUND,
                         )
-                else:
-                    return Response(
-                        {"error": "File or directory not found"},
-                        status=status.HTTP_404_NOT_FOUND,
-                    )
-                return Response(True)
 
         def get_file_tree(path):
             tree = []
