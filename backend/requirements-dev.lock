@@ -38,8 +38,6 @@ asgiref==3.8.1
     # via django-cors-headers
 asn1crypto==1.5.1
     # via snowflake-connector-python
-asttokens==2.4.1
-    # via stack-data
 async-property==0.2.2
     # via adrf
 atpublic==4.1.0
@@ -109,9 +107,7 @@ click==8.1.7
     # via dbt-core
     # via dbt-semantic-interfaces
     # via flask
-    # via harlequin
     # via litellm
-    # via rich-click
     # via shandy-sqlfmt
     # via typer
     # via uvicorn
@@ -149,9 +145,7 @@ dbt-extractor==0.5.1
 dbt-postgres==1.8.2
 dbt-semantic-interfaces==0.5.1
     # via dbt-core
-dbtenv @ git+https://github.com/turntable-so/dbtenv.git@e1de6455270784da76ee2b6734325cc1a79a3d4e#subdirectory=dbtenv
-decorator==5.1.1
-    # via ipython
+dbtenv @ git+https://github.com/turntable-so/dbtenv.git@main#subdirectory=dbtenv
 deepdiff==7.0.1
     # via dbt-common
 deepmerge==1.1.1
@@ -171,6 +165,7 @@ distro==1.9.0
     # via openai
 dj-database-url==2.2.0
 dj-rest-auth==6.0.0
+    # via dj-rest-auth
 django==5.0.6
     # via adrf
     # via channels
@@ -193,8 +188,9 @@ django-cors-headers==4.4.0
 django-health-check==3.18.3
 django-invitations==2.1.0
 django-pgbulk==3.0.0
-django-polymorphic @ git+https://github.com/jazzband/django-polymorphic.git@1039f882b99f97bf657bd958c949ee6a3b00377a
+django-polymorphic @ git+https://github.com/jazzband/django-polymorphic.git@v4.0.0a
 django-storages==1.14.3
+    # via django-storages
 django-templated-mail==1.1.1
     # via djoser
 djangorestframework==3.15.2
@@ -211,14 +207,11 @@ docker==7.1.0
 docstring-parser==0.16
     # via instructor
 duckdb==1.0.0
-    # via harlequin
     # via turntable-spoonbill
 email-validator==2.2.0
     # via fastapi
 et-xmlfile==1.1.0
     # via openpyxl
-executing==2.0.1
-    # via stack-data
 expandvars==0.12.0
     # via acryl-datahub
 fastapi==0.111.0
@@ -297,7 +290,6 @@ h11==0.14.0
     # via httpcore
     # via uvicorn
     # via wsproto
-harlequin==1.23.1
 hatchet-sdk==0.27.1
 hishel==0.0.26
     # via githubkit
@@ -335,14 +327,11 @@ importlib-metadata==6.11.0
 iniconfig==2.0.0
     # via pytest
 instructor==1.3.4
-ipython==8.18.0
 isodate==0.6.1
     # via agate
     # via dbt-common
 itsdangerous==2.2.0
     # via flask
-jedi==0.19.1
-    # via ipython
 jinja2==3.1.4
     # via dbt-common
     # via dbt-core
@@ -383,6 +372,7 @@ lxml==5.2.2
 lz4==4.3.3
     # via databricks-sql-connector
 markdown-it-py==3.0.0
+    # via markdown-it-py
     # via mdit-py-plugins
     # via rich
     # via textual
@@ -393,10 +383,9 @@ mashumaro==3.13.1
     # via dbt-adapters
     # via dbt-common
     # via dbt-core
+    # via mashumaro
 matplotlib==3.9.0
     # via networkx
-matplotlib-inline==0.1.7
-    # via ipython
 mdit-py-plugins==0.4.1
     # via markdown-it-py
 mdurl==0.1.2
@@ -410,6 +399,7 @@ monotonic==1.6
 more-itertools==10.3.0
     # via dbt-semantic-interfaces
 mpire==2.10.2
+    # via mpire
     # via turntable-cli
 msgpack==1.0.8
     # via channels-redis
@@ -438,7 +428,6 @@ numpy==1.26.4
     # via databricks-sql-connector
     # via db-dtypes
     # via geopandas
-    # via harlequin
     # via matplotlib
     # via networkx
     # via pandas
@@ -491,22 +480,17 @@ pandas==2.2.2
     # via turntable-spoonbill
 parsedatetime==2.6
     # via agate
-parso==0.8.4
-    # via jedi
 parsy==2.1
     # via turntable-spoonbill
 pathspec==0.12.1
     # via black
     # via dbt-common
     # via dbt-core
-pexpect==4.9.0
-    # via ipython
 pgvector==0.3.0
 pillow==10.4.0
     # via matplotlib
 platformdirs==4.2.2
     # via black
-    # via harlequin
     # via shandy-sqlfmt
     # via snowflake-connector-python
 pluggy==1.5.0
@@ -519,9 +503,6 @@ posthog==3.5.0
     # via turntable-cli
 progressbar2==4.4.2
     # via acryl-datahub
-prompt-toolkit==3.0.36
-    # via ipython
-    # via questionary
 proto-plus==1.24.0
     # via google-api-core
     # via google-cloud-bigquery-storage
@@ -542,21 +523,17 @@ protobuf==4.25.3
 psutil==6.0.0
     # via acryl-datahub
 psycopg==3.2.1
+    # via psycopg
 psycopg-binary==3.2.1
     # via psycopg
 psycopg2-binary==2.9.9
     # via dbt-postgres
     # via turntable-spoonbill
-ptyprocess==0.7.0
-    # via pexpect
-pure-eval==0.2.2
-    # via stack-data
 pyaes==1.6.1
     # via fernet
 pyarrow==16.1.0
     # via databricks-sql-connector
     # via db-dtypes
-    # via textual-fastdatatable
     # via turntable-spoonbill
 pyarrow-hotfix==0.6
     # via turntable-spoonbill
@@ -587,7 +564,6 @@ pydata-google-auth==1.8.2
 pygithub==2.3.0
     # via turntable-cli
 pygments==2.18.0
-    # via ipython
     # via mpire
     # via rich
 pyinstrument==4.6.2
@@ -606,8 +582,6 @@ pyopenssl==24.1.0
 pyparsing==3.1.2
     # via grandalf
     # via matplotlib
-pyperclip==1.9.0
-    # via textual-textarea
 pypng==0.20220715.0
     # via lets-plot
 pyproj==3.6.1
@@ -664,8 +638,6 @@ pyyaml==6.0.1
     # via turntable-cli
     # via uvicorn
     # via watchdog
-questionary==2.0.1
-    # via harlequin
 realtime==1.0.6
     # via supabase
 redis==5.0.7
@@ -709,12 +681,9 @@ rich==13.7.1
     # via instructor
     # via netext
     # via plum-dispatch
-    # via rich-click
     # via textual
     # via turntable-spoonbill
     # via typer
-rich-click==1.8.3
-    # via harlequin
 rpds-py==0.18.1
     # via jsonschema
     # via referencing
@@ -736,11 +705,8 @@ scipy==1.14.0
 selenium==4.22.0
 sentry-sdk==2.7.1
     # via acryl-datahub
-setuptools==74.0.0
-    # via grpcio-tools
-    # via pydata-google-auth
 shandy-sqlfmt==0.21.3
-    # via harlequin
+    # via shandy-sqlfmt
     # via turntable-cli
 shapely==2.0.4
     # via geopandas
@@ -748,7 +714,6 @@ shapely==2.0.4
 shellingham==1.5.4
     # via typer
 six==1.16.0
-    # via asttokens
     # via avro-gen3
     # via isodate
     # via minimal-snowplow-tracker
@@ -773,6 +738,7 @@ sortedcontainers==2.4.0
 soupsieve==2.5
     # via beautifulsoup4
 sqlglot==25.0.3
+    # via sqlglot
     # via turntable-cli
     # via turntable-spoonbill
 sqlglotrs==0.2.5
@@ -781,8 +747,6 @@ sqlparse==0.5.0
     # via dbt-core
     # via django
 sse-starlette==2.1.2
-stack-data==0.6.3
-    # via ipython
 starlette==0.37.2
     # via fastapi
     # via sse-starlette
@@ -803,13 +767,6 @@ termcolor==2.4.0
 text-unidecode==1.3
     # via python-slugify
 textual==0.72.0
-    # via harlequin
-    # via textual-fastdatatable
-    # via textual-textarea
-textual-fastdatatable==0.9.0
-    # via harlequin
-textual-textarea==0.14.0
-    # via harlequin
 thrift==0.20.0
     # via databricks-sql-connector
 tiktoken==0.7.0
@@ -819,7 +776,6 @@ tokenizers==0.19.1
 toml==0.10.2
     # via acryl-datahub
 tomlkit==0.12.5
-    # via harlequin
     # via snowflake-connector-python
 toolz==0.12.1
     # via turntable-spoonbill
@@ -828,14 +784,6 @@ tqdm==4.66.4
     # via mpire
     # via openai
     # via shandy-sqlfmt
-traitlets==5.14.3
-    # via ipython
-    # via matplotlib-inline
-tree-sitter==0.20.4
-    # via textual
-    # via tree-sitter-languages
-tree-sitter-languages==1.10.2
-    # via textual
 trio==0.25.1
     # via selenium
     # via trio-websocket
@@ -843,6 +791,7 @@ trio-websocket==0.11.1
     # via selenium
 turntable-cli==0.4.8
 turntable-spoonbill==10.0.2
+    # via turntable-spoonbill
 typer==0.12.3
     # via fastapi-cli
     # via instructor
@@ -871,7 +820,6 @@ typing-extensions==4.12.2
     # via pygithub
     # via python-utils
     # via realtime
-    # via rich-click
     # via selenium
     # via snowflake-connector-python
     # via storage3
@@ -904,10 +852,9 @@ uvicorn==0.30.1
 uvloop==0.19.0
     # via uvicorn
 watchdog==4.0.1
+    # via watchdog
 watchfiles==0.22.0
     # via uvicorn
-wcwidth==0.2.13
-    # via prompt-toolkit
 websocket-client==1.8.0
     # via selenium
 websockets==12.0
@@ -923,3 +870,6 @@ yarl==1.9.4
     # via aiohttp
 zipp==3.19.2
     # via importlib-metadata
+setuptools==74.0.0
+    # via grpcio-tools
+    # via pydata-google-auth

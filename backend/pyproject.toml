@@ -109,7 +109,6 @@ dev-dependencies = [
     "mypy>=1.10.0",
     "watchdog>=4.0.0",
     "pyinstrument>=4.6.2",
-    "ipython>=8",
     "pytest>=8.2.1",
     "selenium>=4.21.0",
     "chromedriver-autoinstaller>=0.6.4",
@@ -119,7 +118,6 @@ dev-dependencies = [
     "google-cloud-dataproc>=5.9.3",
     "pytest-django>=4.8.0",
     "dbt-postgres>=1.8.2",
-    "harlequin>=1.23.1",
 ]
 
 [tool.vinyl]
