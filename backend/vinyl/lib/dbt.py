@@ -3,16 +3,17 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 import traceback
 from dataclasses import make_dataclass
 from io import StringIO
 from typing import Any
 
+import orjson
 import yaml
 from dbt_extractor import ExtractionError, py_extract_from_source
 
 from vinyl.lib.dbt_methods import (
-    MAX_DIALECT_VERSION,
     DBTArgs,
     DBTDialect,
     DBTError,
@@ -79,7 +80,6 @@ class DBTProject(object):
             self.multitenant = True
         else:
             self.multitenant = False
-            # self.install_dbt_if_necessary()
 
         # get profiles-dir
         self.dbt_profiles_dir = (
@@ -99,43 +99,6 @@ class DBTProject(object):
         # validate paths
         if not os.path.exists(self.dbt_project_dir):
             raise Exception(f"Project path do not exist: {self.dbt_project_dir}")
-
-    def install_dbt_if_necessary(self):
-        dbt_package = f"dbt-{self.dialect.value.lower()}"
-        install_package = f"{dbt_package}~={self.version}.0"
-        res = subprocess.run(
-            ["uv", "pip", "show", dbt_package, "--python", sys.executable],
-            capture_output=True,
-        )
-        if res.returncode != 0:
-            subprocess.run(
-                [
-                    "uv",
-                    "pip",
-                    "install",
-                    install_package,
-                    "--python",
-                    sys.executable,
-                ],
-                check=True,
-            )
-            return
-
-        major_version_in_stdout = (
-            res.stdout.decode().split("\n")[1].split(":")[1].strip().rsplit(".", 1)[0]
-        )
-        if major_version_in_stdout != self.version:
-            subprocess.run(
-                [
-                    "uv",
-                    "pip",
-                    "install",
-                    install_package,
-                    "--python",
-                    sys.executable,
-                ],
-                check=True,
-            )
 
     def generate_target_paths(self):
         if self.target_path:
@@ -289,19 +252,14 @@ class DBTProject(object):
             **{"DBT_PROFILES_DIR": self.dbt_profiles_dir},
             **{"DBT_TARGET_PATH": self.target_path},
             **self.env_vars,
+            **{"DBT_VERSION": self.version},
         }
         if self.dbt1_5:
             env["DBT_PROJECT_DIR"] = self.dbt_project_dir
 
         result = subprocess.run(
             [
-                "dbtenv",
-                "--profiles-dir",
-                self.dbt_profiles_dir,
-                "execute",
-                "--dbt",
-                f"dbt-{self.dialect.value}=={MAX_DIALECT_VERSION[self.dialect.value][self.version]}",
-                "--",
+                "dbtx",
                 *command,
             ],
             capture_output=True,
@@ -355,8 +313,11 @@ class DBTProject(object):
 
         print(stdout, stderr, success)
 
-        if len(stderr) > 0 and not stderr.startswith("dbtenv info:"):
-            success = False
+        if len(stderr) > 0:
+            installation_pattern = r"^Installed \d+ packages? in \d+(?:\.\d+)?\s*\w+$"
+            if not re.match(installation_pattern, stderr.strip()):
+                success = False
+
         return stdout, stderr, success
 
     def dbt_parse(self) -> tuple[str, str, bool]:
@@ -593,39 +554,38 @@ class DBTProject(object):
                 return None
         return relation_name
 
-
-def install_dbt_version(
-    dialect: DBTDialect,
-    major_version: DBTVersion,
-):
-    need_to_install = False
-    try:
-        from dbt import version
-
-        version_diff = (
-            version.__version__.split(".")[:2] != major_version.value.split(".")[:2]
-        )
-        if version_diff:
-            need_to_install = True
-
-    except ImportError:
-        need_to_install = True
-
-    if need_to_install:
-        result = subprocess.run(
-            [
-                sys.executable,
-                "-m",
-                "pip",
-                "install",
-                f"dbt-{dialect.value}~={major_version.value}.0",
-            ],
-            capture_output=True,
-            text=True,
-        )
-    if not need_to_install or result.returncode == 0:
-        return True
-    return False
+    def preview(self, dbt_sql: str, limit: int | None = None):
+        if not self.dbt1_5:
+            raise ValueError("Must use dbt 1.5+ to use show")
+        command = [
+            "show",
+            "--inline",
+            dbt_sql,
+            "--output",
+            "json",
+            "--log-level",
+            "warn",
+            "--log-level-file",
+            "info",
+            "--log-format-file",
+            "json",
+        ]
+        if limit:
+            command.extend(["--limit", str(limit)])
+        with tempfile.TemporaryDirectory() as temp_dir:
+            command.extend(["--log-path", temp_dir])
+            stdout, stderr, success = self.run_dbt_command(
+                command, write_json=False, dbt_cache=False
+            )
+            if not success:
+                raise Exception(
+                    f"DBT show command failed.\nStderr: {stderr}\nStdout: {stdout}"
+                )
+            log_file = os.path.join(temp_dir, "dbt.log")
+            with open(log_file, "r") as f:
+                last_line = f.readlines()[-1]
+                contents = orjson.loads(last_line)
+            return contents["data"]["preview"]
 
 
 def run_adjusted_replace(base_pattern_list, replacement, contents):
@@ -726,6 +686,11 @@ def replace_configs_and_this(
 
 
 def fast_compile(project: DBTProject, dbt_sql: str):
+    if not dbt_sql:
+        raise ValueError("dbt_sql is empty")
     contents = replace_sources_and_refs(project, dbt_sql)
     contents = replace_configs_and_this(project, contents)
+    # if there are still jinja vars, then we failed to fast compile
+    if "{{" in contents:
+        return None
     return contents

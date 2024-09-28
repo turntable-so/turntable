@@ -12,7 +12,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from git import Repo
 from git.exc import GitCommandError
 
-from app.models import SSHKey
+from app.models.git_connections import SSHKey
 from django.conf import settings
 
 logger = logging.getLogger(__name__)

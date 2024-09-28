@@ -14,7 +14,6 @@ def test_dbt_runner_success(local_postgres):
     res = WorkflowDebugger(DBTRunnerWorkflow, input).run().result()["run_dbt_commands"]
     assert res["success"]
     assert all(res["stdouts"])
-    assert all(res["stderrs"])
     assert all(res["run_results"])
     assert WorkflowRun.objects.count() == 1
     assert WorkflowRun.objects.first().status == "SUCCESS"

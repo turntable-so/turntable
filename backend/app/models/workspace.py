@@ -1,12 +1,13 @@
 import uuid
+
 from django.contrib.auth.models import (
     Permission,
 )
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
 from app.models.user import User
 from app.services.storage_backends import PublicMediaStorage
-from django.contrib.postgres.fields import ArrayField
 
 
 def generate_short_uuid():
@@ -15,7 +16,7 @@ def generate_short_uuid():
 
 class Workspace(models.Model):
     id = models.CharField(
-        primary_key=True, max_length=6, default=generate_short_uuid, editable=False
+        primary_key=True, max_length=255, default=generate_short_uuid, editable=False
     )
     name = models.CharField(max_length=1000)
     icon_url = models.URLField(blank=True, null=True)
