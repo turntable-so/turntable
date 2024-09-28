@@ -135,13 +135,13 @@ export function DataTableToolbar<TData>({
                         </div>
                         <div className="flex items-center justify-between">
                             <div className="flex space-x-2 items-center">
-                                {assets?.count && assets?.count > 0 && (
+                                {assets?.count > 0 ? (
                                     <div>
                                         <div className="ml-1 text-sm text-muted-foreground w-24">
                                             {assets?.count} results
                                         </div>
                                     </div>
-                                )}
+                                ) : null}
                                 {table.getColumn("resource") && assets?.filters?.sources && (
                                     <DataTableFacetedFilter
                                         title="Source"
