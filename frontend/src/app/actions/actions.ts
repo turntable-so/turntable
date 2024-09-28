@@ -463,3 +463,21 @@ export async function getBranches() {
   });
   return response.json();
 }
+
+
+export async function getFileIndex() {
+  const response = await fetcher(`/project/files/`, {
+    cookies,
+    method: "GET",
+  });
+  return response.json();
+}
+
+export async function openFile(path: str) {
+  const encodedPath = encodeURIComponent(path);
+  const response = await fetcher(`/project/files/?filepath=${encodedPath}`, {
+    cookies,
+    method: "GET",
+  });
+  return response.json();
+}

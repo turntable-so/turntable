@@ -68,24 +68,7 @@ class ProjectViewSet(viewsets.ViewSet):
                             status=status.HTTP_404_NOT_FOUND,
                         )
 
-        def get_file_tree(path):
-            tree = []
-            for entry in os.scandir(path):
-                if not entry.name.startswith(
-                    "."
-                ):  # Exclude hidden files and directories
-                    node = {
-                        "path": entry.path,
-                        "type": "directory" if entry.is_dir() else "file",
-                        "name": entry.name,
-                        "children": [],
-                    }
-                    if entry.is_dir():
-                        node["children"] = get_file_tree(entry.path)
-                    tree.append(node)
-            return tree
-
-        file_tree = get_file_tree(repo.working_tree_dir)
+        file_tree = service.get_file_tree(user_id, repo.working_tree_dir)
         dirty_changes = repo.index.diff(None)
 
         return Response(

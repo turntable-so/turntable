@@ -22,6 +22,25 @@ class CodeRepoService:
     def __init__(self, workspace_id: str):
         self.workspace_id = workspace_id
 
+    def get_file_tree(self, user_id: str, path: str):
+        tree = []
+        base_path = self._generate_code_repo_path(
+            user_id,
+        )
+        for entry in os.scandir(path):
+            if not entry.name.startswith("."):  # Exclude hidden files and directories
+                relative_path = os.path.relpath(entry.path, base_path)
+                node = {
+                    "path": relative_path,
+                    "type": "directory" if entry.is_dir() else "file",
+                    "name": entry.name,
+                    "id": relative_path,
+                }
+                if entry.is_dir():
+                    node["children"] = self.get_file_tree(user_id, entry.path)
+                tree.append(node)
+        return tree
+
     def _generate_code_repo_path(self, user_id: str):
         if os.environ.get("EPHEMERAL_FILESYSTEM", "False") == "True":
             path = os.path.join(
