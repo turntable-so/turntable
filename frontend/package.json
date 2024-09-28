@@ -15,6 +15,7 @@
     "@dagrejs/dagre": "^1.1.1",
     "@formkit/tempo": "^0.1.1",
     "@hookform/resolvers": "^3.3.4",
+    "@monaco-editor/react": "^4.6.0",
     "@radix-ui/react-accordion": "^1.1.2",
     "@radix-ui/react-alert-dialog": "^1.1.1",
     "@radix-ui/react-avatar": "^1.0.4",

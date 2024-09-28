@@ -473,7 +473,7 @@ export async function getFileIndex() {
   return response.json();
 }
 
-export async function openFile(path: str) {
+export async function fetchFileContents(path: string) {
   const encodedPath = encodeURIComponent(path);
   const response = await fetcher(`/project/files/?filepath=${encodedPath}`, {
     cookies,
