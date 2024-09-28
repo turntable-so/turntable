@@ -149,7 +149,7 @@ dbt-extractor==0.5.1
 dbt-postgres==1.8.2
 dbt-semantic-interfaces==0.5.1
     # via dbt-core
-dbtenv @ git+https://github.com/turntable-so/dbtenv.git@e1de6455270784da76ee2b6734325cc1a79a3d4e#subdirectory=dbtenv
+dbtx==0.0.3
 decorator==5.1.1
     # via ipython
 deepdiff==7.0.1
@@ -657,11 +657,11 @@ pytz==2024.1
     # via pandas
     # via snowflake-connector-python
     # via turntable-spoonbill
-pyyaml==6.0.1
+pyyaml==6.0.2
     # via acryl-datahub
     # via dbt-core
     # via dbt-semantic-interfaces
-    # via dbtenv
+    # via dbtx
     # via hatchet-sdk
     # via huggingface-hub
     # via turntable-cli
@@ -902,7 +902,8 @@ urllib3==2.2.2
     # via requests
     # via selenium
     # via sentry-sdk
-uv==0.2.18
+uv==0.4.16
+    # via dbtx
 uvicorn==0.30.1
     # via fastapi
     # via sse-starlette

@@ -141,7 +141,7 @@ class Resource(models.Model):
     def has_dbt(self):
         return self.dbtresource_set.exists()
 
-    def get_dbt_resource(self, dbt_resource_id):
+    def get_dbt_resource(self, dbt_resource_id=None):
         if dbt_resource_id is None:
             dbt_resource_count = self.dbtresource_set.count()
             assert (

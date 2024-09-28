@@ -1,3 +1,4 @@
+from .editor import DBTQuery
 from .git_connections import GithubInstallation, SSHKey
 from .metadata import (
     Asset,
