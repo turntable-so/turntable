@@ -413,15 +413,12 @@ class DatasetInfoParser(DataHubDBParserBase):
         for info in db_view_info:
             if "viewLogic" in info:
                 db_sql = info["viewLogic"]
-                db_ast = sqlglot.parse(db_sql, dialect=self.dialect)[0]
-                if isinstance(db_ast, exp.Command):
-                    # this is sqlglot's fallback in case of ddl parse failure
+                if self.dialect == "databricks":
                     # remove schema binding phrase that causes parsing issues
                     db_sql = re.sub(
                         r"with\s+schema\s+binding", "", db_sql, flags=re.IGNORECASE
                     )
-                    db_ast = sqlglot.parse(db_sql, dialect=self.dialect)[0]
-
+                db_ast = sqlglot.parse(db_sql, dialect=self.dialect)[0]
                 if isinstance(db_ast, exp.Create):
                     db_ast = db_ast.expression.copy()
                     db_sql = db_ast.sql(dialect=self.dialect)
@@ -796,7 +793,13 @@ class DataHubDBParser:
         }
 
     def get_sqlglot_table_helper(self, k: str):
-        catalog, schema, *table_list = DatasetUrn.from_string(k).name.split(".")
+        split_name = DatasetUrn.from_string(k).name.split(".")
+        if len(split_name) == 1:
+            return exp.Table(
+                this=exp.Identifier(this=split_name[0]),
+            )
+
+        catalog, schema, *table_list = split_name
         table = ".".join(table_list)
         return exp.Table(
             catalog=exp.Identifier(this=catalog),
@@ -881,11 +884,6 @@ class DataHubDBParser:
     def get_db_cll(self):
         self.get_asset_column_dict()
         asset_dict_items = self.asset_dict.items()
-        # if os.getenv("DEV") == "true":
-        #     asset_dict_items = tqdm(
-        #         asset_dict_items,
-        #         desc="Getting lineage...",
-        #     )
         graphs = []
         for j, (k, asset) in enumerate(asset_dict_items):
             if not asset.sql:
@@ -907,8 +905,13 @@ class DataHubDBParser:
                             workspace_id=self.workspace_id,
                         )
                         if error not in self.asset_errors:
-                            print("error", error)
-                            print(error.error)
+                            if os.getenv("DEV") == "true":
+                                to_print = error.error.copy()
+                                if to_print.get("context"):
+                                    to_print["context"] = "\n".join(
+                                        to_print["context"].splitlines()[:100]
+                                    )
+                                print("error", to_print)
                             self.asset_errors.append(error)
                 lineage = node.lineage.to_networkx()
                 nx.set_edge_attributes(
