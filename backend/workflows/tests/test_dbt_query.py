@@ -40,11 +40,11 @@ def test_dbt_query_local(local_postgres, user):
     run_test_dbt_query(local_postgres, user, use_fast_compile=False)
 
 
-# @pytest.mark.django_db
-# @require_env_vars("DATABRICKS_0_WORKSPACE_ID")
-# def test_dbt_query_databricks(remote_databricks, user):
-#     run_test_dbt_query(remote_databricks, user)
-#     run_test_dbt_query(remote_databricks, user, use_fast_compile=False)
+@pytest.mark.django_db
+@require_env_vars("DATABRICKS_0_WORKSPACE_ID")
+def test_dbt_query_databricks(remote_databricks, user):
+    run_test_dbt_query(remote_databricks, user)
+    run_test_dbt_query(remote_databricks, user, use_fast_compile=False)
 
 
 @pytest.mark.django_db
