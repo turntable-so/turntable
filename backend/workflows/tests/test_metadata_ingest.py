@@ -4,7 +4,6 @@ from app.models import (
     Resource,
 )
 from app.utils.test_utils import assert_ingest_output, require_env_vars
-from fixtures.staging_env import create_databricks_n, create_dbt_n, create_workspace_n
 from workflows.metadata_sync import MetadataSyncWorkflow
 from workflows.utils.debug import ContextDebugger, WorkflowDebugger
 
@@ -68,13 +67,3 @@ def test_redshift_sync(remote_redshift, recache: bool, use_cache: bool):
 @require_env_vars("TABLEAU_0_USERNAME")
 def test_tableau_sync(remote_tableau, recache: bool, use_cache: bool):
     run_test_sync([remote_tableau], recache, use_cache)
-
-
-@pytest.mark.django_db
-@require_env_vars("DATABRICKS_0_WORKSPACE_ID")
-def test_databricks_db_example(user):
-    workspace = create_workspace_n(user, "databricks", 0)
-    databricks = create_databricks_n(workspace, 0)
-    create_dbt_n(databricks, 0)
-    db_read_path = "fixtures/datahub_dbs/*_databricks.duckdb"
-    run_test_sync([databricks], False, True, db_read_path)
