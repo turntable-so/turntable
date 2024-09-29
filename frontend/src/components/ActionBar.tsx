@@ -95,7 +95,7 @@ type ResourceAsset = {
 export default function ActionBar({
   context,
 }: {
-  context: "NOTEBOOK" | "LINEAGE";
+  context: "NOTEBOOK" | "LINEAGE"
 }) {
   const searchRef = useRef<HTMLInputElement>(null);
   const resizerRef = useRef<HTMLDivElement>(null);

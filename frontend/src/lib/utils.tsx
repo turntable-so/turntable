@@ -365,6 +365,12 @@ export function getLeafIcon(assetType: string) {
 }
 
 export function getAssetIcon(type: string, resourceType?: string) {
+  if (type === 'model') {
+    return (<div className="mr-1">
+      <DbtLogo />
+    </div>
+    )
+  }
   if (type === 'chart') {
     <BarChartBig className='w-4 h-4 mr-1' />
   }

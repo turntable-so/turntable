@@ -77,7 +77,7 @@ export default function ConnectionLayout({
     if (resourceId === resource.id) {
       setRealStatus(status);
     }
-  }, [status, resourceId]);
+  }, [status, resourceId, resource]);
 
   const testConnection = async (resource: any) => {
     const tests = await testResource(resource.id);

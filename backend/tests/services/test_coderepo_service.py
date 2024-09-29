@@ -23,6 +23,7 @@ class CodeRepoServiceTests(TestCase):
 
     def setUp(self):
         # Set up initial data
+        os.environ["EPHEMERAL_FILESYSTEM"] = "True"
         self.user = User.objects.create_user(
             email="testuser@test.com", password="password"
         )
@@ -30,55 +31,30 @@ class CodeRepoServiceTests(TestCase):
         self.workspace.users.add(self.user)
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
-
-    def test_repo_connection(self):
-
         SSHKey.objects.create(
             workspace_id=self.workspace.id,
             public_key=self.test_ssh_public_key,
             private_key=self.test_ssh_private_key,
         )
 
-        data = {
-            "public_key": self.test_ssh_public_key,
-            "git_repo_url": self.git_repo_url,
-        }
+    def test_repo_connection(self):
 
         coderepo_service = CodeRepoService(workspace_id=self.workspace.id)
         res = coderepo_service.test_repo_connection(
-            public_key=data.get("public_key"),
-            git_repo_url=data.get("git_repo_url"),
+            public_key=self.test_ssh_public_key,
+            git_repo_url=self.git_repo_url,
         )
         assert res["success"] == True
 
     def test_repo_context(self):
-
-        SSHKey.objects.create(
-            workspace_id=self.workspace.id,
-            public_key=self.test_ssh_public_key,
-            private_key=self.test_ssh_private_key,
-        )
-        data = {
-            "public_key": self.test_ssh_public_key,
-            "git_repo_url": self.git_repo_url,
-        }
         coderepo_service = CodeRepoService(workspace_id=self.workspace.id)
         with coderepo_service.repo_context(
-            public_key=data.get("public_key"),
-            git_repo_url=data.get("git_repo_url"),
+            public_key=self.test_ssh_public_key,
+            git_repo_url=self.git_repo_url,
         ) as repo:
             assert len(os.listdir(repo)) > 3
 
-    def test_dbt_repo_context(self):
-        SSHKey.objects.create(
-            workspace_id=self.workspace.id,
-            public_key=self.test_ssh_public_key,
-            private_key=self.test_ssh_private_key,
-        )
-        data = {
-            "public_key": self.test_ssh_public_key,
-            "git_repo_url": self.git_repo_url,
-        }
+    def test_dbt_repo_context_legacy(self):
         bigquery_resource = Resource.objects.create(
             type=ResourceType.DB,
             workspace=self.workspace,
@@ -105,3 +81,139 @@ class CodeRepoServiceTests(TestCase):
         with details.dbt_repo_context() as (project, filepath):
             assert project != None
             assert filepath != None
+
+    def test_dbt_context_git_repo(self):
+        bigquery_resource = Resource.objects.create(
+            type=ResourceType.DB,
+            workspace=self.workspace,
+        )
+        gac = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+        BigqueryDetails(
+            resource=bigquery_resource,
+            lookback_days=1,
+            schema_include=["analytics", "analytics-mini"],
+            service_account=json.loads(gac.replace("\n", "\\n")),
+        ).save()
+
+        details = DBTCoreDetails.objects.create(
+            git_repo_url=self.git_repo_url,
+            resource=bigquery_resource,
+            deploy_key=self.test_ssh_public_key,
+            main_git_branch="main",
+            project_path=".",
+            threads=1,
+            version=DBTVersion.V1_6.value,
+            database="test",
+            schema="test",
+        )
+        with details.dbt_context_git_repo(self.user.id) as (project, repo):
+            assert project is not None
+            assert repo.active_branch.name == "main"
+            assert repo.is_dirty() == False
+            unstaged_changes = repo.index.diff(None)
+            assert len(unstaged_changes) == 0
+            staged_changes = repo.index.diff("HEAD")
+            assert len(staged_changes) == 0
+
+    def test_clone_repo_if_not_exists(self):
+        coderepo_service = CodeRepoService(workspace_id=self.workspace.id)
+        repo = coderepo_service.get_repo(
+            user_id=self.user.id,
+            public_key=self.test_ssh_public_key,
+            git_repo_url=self.git_repo_url,
+        )
+        assert repo.active_branch.name == "main"
+
+    def test_get_repo_if_already_exists(self):
+        coderepo_service = CodeRepoService(workspace_id=self.workspace.id)
+        repo = coderepo_service.get_repo(
+            user_id=self.user.id,
+            public_key=self.test_ssh_public_key,
+            git_repo_url=self.git_repo_url,
+        )
+        assert repo is not None
+        repo = coderepo_service.get_repo(
+            user_id=self.user.id,
+            public_key=self.test_ssh_public_key,
+            git_repo_url=self.git_repo_url,
+        )
+        assert repo is not None
+
+    def test_get_working_tree(self):
+        coderepo_service = CodeRepoService(workspace_id=self.workspace.id)
+        repo = coderepo_service.get_repo(
+            user_id=self.user.id,
+            public_key=self.test_ssh_public_key,
+            git_repo_url=self.git_repo_url,
+        )
+        assert repo.working_tree_dir is not None
+
+    def test_create_branch(self):
+        coderepo_service = CodeRepoService(workspace_id=self.workspace.id)
+        branch = coderepo_service.create_branch(
+            user_id=self.user.id,
+            public_key=self.test_ssh_public_key,
+            git_repo_url=self.git_repo_url,
+            branch_name="test_branch",
+        )
+        assert branch == "test_branch"
+
+    def test_switch_branch(self):
+        coderepo_service = CodeRepoService(workspace_id=self.workspace.id)
+        branch = coderepo_service.switch_branch(
+            user_id=self.user.id,
+            public_key=self.test_ssh_public_key,
+            git_repo_url=self.git_repo_url,
+            branch_name="test_branch",
+        )
+        assert branch == "test_branch"
+
+    def test_pull(self):
+        coderepo_service = CodeRepoService(workspace_id=self.workspace.id)
+        result = coderepo_service.pull(
+            user_id=self.user.id,
+            public_key=self.test_ssh_public_key,
+            git_repo_url=self.git_repo_url,
+        )
+        assert result == True
+
+    def test_commit_and_push(self):
+        coderepo_service = CodeRepoService(workspace_id=self.workspace.id)
+        branch = coderepo_service.switch_branch(
+            user_id=self.user.id,
+            public_key=self.test_ssh_public_key,
+            git_repo_url=self.git_repo_url,
+            branch_name="test-commits",
+        )
+        assert branch == "test-commits"
+
+        repo = coderepo_service.get_repo(
+            user_id=self.user.id,
+            public_key=self.test_ssh_public_key,
+            git_repo_url=self.git_repo_url,
+        )
+        path = os.path.join(repo.working_tree_dir, "README.md")
+        with open(path, "a") as f:
+            f.write("\n" + "".join([hex(x)[2:] for x in os.urandom(4)]))
+
+        repo = coderepo_service.get_repo(
+            user_id=self.user.id,
+            public_key=self.test_ssh_public_key,
+            git_repo_url=self.git_repo_url,
+        )
+        assert repo.is_dirty(untracked_files=True) == True
+
+        result = coderepo_service.commit_and_push(
+            user_id=self.user.id,
+            public_key=self.test_ssh_public_key,
+            git_repo_url=self.git_repo_url,
+            commit_message="Add random hex string to README.md",
+        )
+        assert result == True
+
+        repo = coderepo_service.get_repo(
+            user_id=self.user.id,
+            public_key=self.test_ssh_public_key,
+            git_repo_url=self.git_repo_url,
+        )
+        assert repo.is_dirty(untracked_files=True) == False

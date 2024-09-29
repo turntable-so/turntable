@@ -149,7 +149,7 @@ dbt-extractor==0.5.1
 dbt-postgres==1.8.2
 dbt-semantic-interfaces==0.5.1
     # via dbt-core
-dbtenv @ git+https://github.com/turntable-so/dbtenv.git@e1de6455270784da76ee2b6734325cc1a79a3d4e#subdirectory=dbtenv
+dbtx==0.0.3
 decorator==5.1.1
     # via ipython
 deepdiff==7.0.1
@@ -193,7 +193,7 @@ django-cors-headers==4.4.0
 django-health-check==3.18.3
 django-invitations==2.1.0
 django-pgbulk==3.0.0
-django-polymorphic @ git+https://github.com/jazzband/django-polymorphic.git@1039f882b99f97bf657bd958c949ee6a3b00377a
+django-polymorphic @ git+https://github.com/jazzband/django-polymorphic.git@1039f882b99f97bf657bd958c949ee6a3b00377a#egg=django-polymorphic
 django-storages==1.14.3
 django-templated-mail==1.1.1
     # via djoser
@@ -238,7 +238,10 @@ frozenlist==1.4.1
 fsspec==2024.6.1
     # via huggingface-hub
 geopandas==1.0.1
+gitdb==4.0.11
+    # via gitpython
 githubkit==0.11.6
+gitpython==3.1.43
 google-api-core==2.19.1
     # via google-cloud-bigquery
     # via google-cloud-bigquery-storage
@@ -541,8 +544,8 @@ protobuf==4.25.3
     # via proto-plus
 psutil==6.0.0
     # via acryl-datahub
-psycopg==3.2.1
-psycopg-binary==3.2.1
+psycopg==3.1.19
+psycopg-binary==3.1.19
     # via psycopg
 psycopg2-binary==2.9.9
     # via dbt-postgres
@@ -654,11 +657,11 @@ pytz==2024.1
     # via pandas
     # via snowflake-connector-python
     # via turntable-spoonbill
-pyyaml==6.0.1
+pyyaml==6.0.2
     # via acryl-datahub
     # via dbt-core
     # via dbt-semantic-interfaces
-    # via dbtenv
+    # via dbtx
     # via hatchet-sdk
     # via huggingface-hub
     # via turntable-cli
@@ -756,6 +759,8 @@ six==1.16.0
     # via posthog
     # via python-dateutil
     # via thrift
+smmap==5.0.1
+    # via gitdb
 sniffio==1.3.1
     # via anyio
     # via httpx
@@ -897,7 +902,8 @@ urllib3==2.2.2
     # via requests
     # via selenium
     # via sentry-sdk
-uv==0.2.18
+uv==0.4.16
+    # via dbtx
 uvicorn==0.30.1
     # via fastapi
     # via sse-starlette

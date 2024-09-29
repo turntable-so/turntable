@@ -42,7 +42,7 @@ import {
 import { DataTableFacetedFilter } from "./DataTableFacetedFilter"
 import { useState } from "react"
 import { useAssets } from "@/contexts/AssetViewerContext"
-import { AsteriskSquare, Search } from "lucide-react"
+import { AsteriskSquare, Search, Box, Columns } from "lucide-react"
 
 interface DataTableViewOptionsProps<TData> {
     table: Table<TData>
@@ -57,7 +57,6 @@ export function DataTableViewOptions<TData>({
             <DropdownMenuTrigger asChild>
                 <Button
                     variant="outline"
-                    size="sm"
                     className="ml-auto hidden h-8 lg:flex"
                 >
                     <MixerHorizontalIcon className="mr-2 h-4 w-4" />
@@ -102,7 +101,6 @@ export function DataTableToolbar<TData>({
 }: DataTableToolbarProps<TData>) {
 
     const { query, setQuery, assets, submitSearch, filters, setFilters } = useAssets();
-    console.log({ assets })
 
 
     const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -120,26 +118,30 @@ export function DataTableToolbar<TData>({
             <div className="w-full">
                 <div>
                     <div className="space-y-4 w-full">
-                        <div className="relative">
-                            <Search className="size-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                            <Input
-                                autoFocus
-                                placeholder="Search assets"
-                                value={query}
-                                onChange={(event) =>
-                                    setQuery(event.target.value)
-                                }
-                                onKeyDown={handleKeyDown}
-                                className="h-10 w-full pl-10"
-                            />
+                        <div className='flex items-center'>
+                            <div className="relative w-full">
+                                <Search className="size-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                                <Input
+                                    autoFocus
+                                    placeholder="Search assets"
+                                    value={query}
+                                    onChange={(event) =>
+                                        setQuery(event.target.value)
+                                    }
+                                    onKeyDown={handleKeyDown}
+                                    className="h-10 w-full pl-10"
+                                />
+                            </div>
                         </div>
                         <div className="flex items-center justify-between">
                             <div className="flex space-x-2 items-center">
-                                <div>
-                                    <div className="ml-1 text-sm text-muted-foreground w-24">
-                                        {assets?.count} results
+                                {assets?.count > 0 ? (
+                                    <div>
+                                        <div className="ml-1 text-sm text-muted-foreground w-24">
+                                            {assets?.count} results
+                                        </div>
                                     </div>
-                                </div>
+                                ) : null}
                                 {table.getColumn("resource") && assets?.filters?.sources && (
                                     <DataTableFacetedFilter
                                         title="Source"

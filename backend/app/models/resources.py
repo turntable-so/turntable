@@ -141,7 +141,7 @@ class Resource(models.Model):
     def has_dbt(self):
         return self.dbtresource_set.exists()
 
-    def get_dbt_resource(self, dbt_resource_id):
+    def get_dbt_resource(self, dbt_resource_id=None):
         if dbt_resource_id is None:
             dbt_resource_count = self.dbtresource_set.count()
             assert (
@@ -574,6 +574,10 @@ class DBTCoreDetails(DBTResource):
             self.version = self.version.value
         super().save(*args, **kwargs)
 
+    # Note: legacy context manager
+    # Only supports main branch and is user-less
+    # Unless you're running tenant-agnostic operations, you probably
+    # want to use dbt_context_git_repo below
     @contextmanager
     def dbt_repo_context(self):
         env_vars = self.env_vars or {}
@@ -599,6 +603,38 @@ class DBTCoreDetails(DBTResource):
                             env_vars={} if env_vars is None else env_vars,
                         ),
                         project_path,
+                    )
+
+    @contextmanager
+    def dbt_context_git_repo(self, user_id: str):
+        env_vars = self.env_vars or {}
+        dialect_str = self.resource.details.subtype
+        service = CodeRepoService(self.resource.workspace.id)
+        repo = service.get_repo(
+            user_id=user_id,
+            public_key=self.deploy_key,
+            git_repo_url=self.git_repo_url,
+        )
+        with open(os.path.join(repo.working_tree_dir, "dbt_project.yml"), "r") as f:
+            contents = yaml.load(f, Loader=yaml.FullLoader)
+            profile_name = contents["profile"]
+            with tempfile.TemporaryDirectory() as dbt_profiles_dir:
+                with open(os.path.join(dbt_profiles_dir, "profiles.yml"), "w") as f:
+                    profile_contents = self.resource.details.get_dbt_profile_contents(
+                        self
+                    )
+                    adj_profile_contents = {profile_name: profile_contents}
+                    yaml.dump(adj_profile_contents, f)
+                with open(os.path.join(dbt_profiles_dir, "profiles.yml"), "r") as f:
+                    yield (
+                        DBTProject(
+                            repo.working_tree_dir,
+                            DBTDialect._value2member_map_[dialect_str],
+                            self.version,
+                            dbt_profiles_dir=dbt_profiles_dir,
+                            env_vars={} if env_vars is None else env_vars,
+                        ),
+                        repo,
                     )
 
     def upload_artifacts(self):

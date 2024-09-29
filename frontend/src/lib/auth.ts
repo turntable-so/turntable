@@ -77,8 +77,8 @@ const logout = () => {
  * Refreshes the JWT token using the stored refresh token.
  * @returns {Promise} A promise that resolves with the new access token.
  */
-const handleJWTRefresh = () => {
-    const refreshToken = getToken("refresh");
+const handleJWTRefresh = (cookies:any = null) => {
+    const refreshToken = getToken("refresh", cookies);
     return api.post({ refresh: refreshToken }, "/auth/jwt/refresh");
 };
 

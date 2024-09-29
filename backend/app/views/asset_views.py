@@ -1,14 +1,27 @@
 from functools import reduce
 from api.serializers import AssetIndexSerializer, AssetSerializer, ResourceSerializer
 from app.models import Asset, Resource
+from app.models.metadata import ColumnLink, AssetLink
 from rest_framework import viewsets, status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from django.core.cache import caches
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import action
+from django.views.decorators.cache import cache_page
 from math import ceil
-from django.db.models import Count, Q
+from django.utils.decorators import method_decorator
+
+from django.db.models import (
+    Count,
+    Q,
+    Exists,
+    OuterRef,
+    Case,
+    When,
+    IntegerField,
+    BooleanField,
+)
 
 cache = caches["default"]
 
@@ -34,6 +47,7 @@ class AssetViewSet(viewsets.ModelViewSet):
     queryset = Asset.objects.all()
     pagination_class = AssetPagination
 
+    @method_decorator(cache_page(60))  # Cache the response for 60 seconds
     def list(self, request):
         query = request.query_params.get("q", None)
         resources_filter = request.query_params.get("resources", None)
@@ -77,6 +91,7 @@ class AssetViewSet(viewsets.ModelViewSet):
                     lambda x, y: x | y, [Q(tags__contains=[tag]) for tag in tag_list]
                 )
             )
+
         # Calculate filters using the base queryset
         types = (
             filtered_assets.exclude(type__exact="")
@@ -106,6 +121,27 @@ class AssetViewSet(viewsets.ModelViewSet):
         # Get all resources for the workspace
         resources = Resource.objects.filter(workspace=workspace)
         resources_serializer = ResourceSerializer(resources, many=True)
+
+        filtered_assets = filtered_assets.prefetch_related("columns")
+        filtered_assets = filtered_assets.annotate(column_count=Count("columns"))
+        # Add a count for columns with no column links
+        filtered_assets = filtered_assets.annotate(
+            unused_columns_count=Count(
+                "columns",
+                filter=~Exists(ColumnLink.objects.filter(source=OuterRef("columns"))),
+            )
+        )
+
+        # Apply sorting
+        sort_by = request.query_params.get("sort_by")
+        sort_order = request.query_params.get("sort_order", "asc")
+
+        if sort_by in ["column_count", "unused_columns_count"]:
+            order_by = f"{'-' if sort_order == 'desc' else ''}{sort_by}"
+            filtered_assets = filtered_assets.order_by(order_by)
+        else:
+            # Default sorting
+            filtered_assets = filtered_assets.order_by("name")
 
         # Paginate the filtered assets
         page = self.paginate_queryset(filtered_assets)
@@ -148,6 +184,7 @@ class AssetViewSet(viewsets.ModelViewSet):
                 {"error": "Asset not found."}, status=status.HTTP_404_NOT_FOUND
             )
 
+    @method_decorator(cache_page(60))  # Cache the response for 60 seconds
     @action(detail=False, methods=["GET"])
     def index(self, request):
         workspace = request.user.current_workspace()
@@ -157,7 +194,10 @@ class AssetViewSet(viewsets.ModelViewSet):
             )
         resources = Resource.objects.filter(workspace=workspace)
         assets = Asset.objects.filter(resource__in=resources).values(
-            "resource_id", "id", "name", "type"
+            "resource_id",
+            "id",
+            "name",
+            "type",
         )
         exclude_filters = workspace.assets_exclude_name_contains
         if exclude_filters:

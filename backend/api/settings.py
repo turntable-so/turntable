@@ -279,29 +279,26 @@ AWS_DEFAULT_ACL = None
 AWS_QUERYSTRING_AUTH = True
 AWS_QUERYSTRING_EXPIRE = 60
 
+AWS_S3_PUBLIC_URL = (
+    os.getenv("AWS_S3_PUBLIC_URL")
+    if os.getenv("AWS_S3_PUBLIC_URL")
+    else "http://localhost:9000"
+)
+AWS_S3_SIGNATURE_VERSION = "s3v4"
+
 if region := os.getenv("AWS_S3_REGION_NAME"):
     AWS_S3_REGION_NAME = region
 
-if os.getenv("LOCAL_STORAGE") == "true":
-    AWS_S3_PUBLIC_URL = (
-        os.getenv("AWS_S3_PUBLIC_URL")
-        if os.getenv("AWS_S3_PUBLIC_URL")
-        else "http://localhost:9000"
-    )
-    AWS_S3_SIGNATURE_VERSION = "s3v4"
+PUBLIC_MEDIA_LOCATION = "public-assets"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+MEDIA_URL = "/media/"
 
-    AWS_DEFAULT_ACL = None
-    AWS_QUERYSTRING_AUTH = True
-    AWS_QUERYSTRING_EXPIRE = 60
-
-    PUBLIC_MEDIA_LOCATION = "public-assets"
-
-    if acl := os.getenv("AWS_DEFAULT_ACL"):
-        AWS_DEFAULT_ACL = None if acl == "None" else acl
-    if querystring_auth := os.getenv("AWS_QUERYSTRING_AUTH"):
-        AWS_QUERYSTRING_AUTH = True if querystring_auth == "true" else False
-    if overwrite := os.getenv("AWS_S3_FILE_OVERWRITE"):
-        AWS_S3_FILE_OVERWRITE = True if overwrite == "true" else False
+if acl := os.getenv("AWS_DEFAULT_ACL"):
+    AWS_DEFAULT_ACL = None if acl == "None" else acl
+if querystring_auth := os.getenv("AWS_QUERYSTRING_AUTH"):
+    AWS_QUERYSTRING_AUTH = True if querystring_auth == "true" else False
+if overwrite := os.getenv("AWS_S3_FILE_OVERWRITE"):
+    AWS_S3_FILE_OVERWRITE = True if overwrite == "true" else False
 
 
 CACHES = {
