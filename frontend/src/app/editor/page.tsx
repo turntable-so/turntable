@@ -4,10 +4,14 @@ import { useState, useEffect } from 'react'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { executeQueryPreview, getBranches, getFileIndex } from '../actions/actions'
 import useResizeObserver from "use-resize-observer";
-import { Box, File, FileText, Folder, FolderOpen, Plus, X } from 'lucide-react'
+import { Box, File, FileText, Folder, FolderOpen, GitBranch, PanelBottom, PanelLeft, PanelRight, Plus, X } from 'lucide-react'
 import Editor from '@monaco-editor/react';
 import { FilesProvider, useFiles, FileNode, OpenedFile } from '../contexts/FilesContext';
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import { Separator } from '@/components/ui/separator'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Input } from '@/components/ui/input'
 
 function Node({ node, style, dragHandle }: { node: any, style: any, dragHandle: any }) {
     const { openFile } = useFiles();
@@ -110,16 +114,77 @@ function EditorPageContent() {
              nodes   asd
             </div> */}
             <PanelGroup direction="horizontal" className="h-fit">
-                <Panel defaultSize={leftWidth} minSize={15} maxSize={30} onResize={setLeftWidth}>
-                    <div className="h-full bg-gray-100 p-4" ref={ref}>
-                        <Tree height={height} width={width} data={files} openByDefault={false} >
-                            {Node}
-                        </Tree>
-                    </div>
+                <Panel defaultSize={leftWidth} minSize={15} maxSize={30} onResize={setLeftWidth} className='border-r'>
+                    <Tabs defaultValue="files" className="">
+                        <div
+                            className={cn(
+                                "flex h-[52px] items-center justify-center",
+                                "h-[52px]"
+                            )}
+                        >
+                            <TabsList className="grid w-full grid-cols-2 mx-4">
+                                <TabsTrigger value="files" className="flex items-center justify-center">
+                                    <File className="w-4 h-4 mr-2" />
+                                    Files
+                                </TabsTrigger>
+                                <TabsTrigger value="branch" className="flex items-center justify-center">
+                                    <GitBranch className="w-4 h-4 mr-2" />
+                                    Branch
+                                </TabsTrigger>
+                            </TabsList>
+                        </div>
+                        <Separator />
+                        <TabsContent value="files">
+                            <div className="h-full   p-4" ref={ref}>
+                                <Tree height={height} width={width} data={files} openByDefault={false} >
+                                    {Node}
+                                </Tree>
+                            </div>
+                        </TabsContent>
+                        <TabsContent value="branch">Branhce</TabsContent>
+                    </Tabs>
                 </Panel>
                 <PanelResizeHandle className="w-1 bg-transparent hover:bg-gray-300 hover:cursor-col-resize  transition-colors" />
                 <Panel>
                     <div className="h-full bg-white">
+                        <div
+                            className={cn(
+                                "flex h-[52px] items-center justify-center",
+                                "h-[52px]"
+                            )}
+                        >
+                            <div className="flex items-center w-full px-4">
+                                <div className="w-1/4">
+                                    {/* Left column content */}
+                                </div>
+                                <div className="w-1/2 relative">
+                                    <Input
+                                        type="text"
+                                        placeholder="Search files..."
+                                        className="w-full pl-10 pr-4 py-2 rounded-md bg-muted focus:outline-none focus:ring-2 focus:ring-gray-400"
+                                    />
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div className="w-1/4">
+                                    <div className="flex justify-end space-x-2">
+                                        <Button variant="ghost" size="icon">
+                                            <PanelLeft className="h-4 w-4" />
+                                        </Button>
+                                        <Button variant="ghost" size="icon">
+                                            <PanelBottom className="h-4 w-4" />
+                                        </Button>
+                                        <Button variant="ghost" size="icon">
+                                            <PanelRight className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <Separator />
                         <div className='hover:cursor-pointer h-8 border-b-2 flex items-center space-x-4 py-4'>
                             <div className='ml-1  hover:bg-gray-200 bg-muted w-8 h-6 rounded-md flex items-center justify-center'>
                                 <Plus className='size-3' />
@@ -147,8 +212,8 @@ function EditorPageContent() {
                                 <Panel>
                                     <EditorContent />
                                 </Panel>
-                                <PanelResizeHandle className="h-2 bg-gray hover:bg-gray-300 hover:cursor-col-resize  transition-colors" />
-                                <Panel defaultSize={30} className='border-t-2'>
+                                <PanelResizeHandle className="h-1 bg-gray hover:bg-gray-300 hover:cursor-col-resize  transition-colors" />
+                                <Panel defaultSize={30} className='border-t flex items-center justify-center'>
                                     <Button onClick={runQueryPreview}>
                                         Run Query
                                     </Button>
@@ -162,6 +227,23 @@ function EditorPageContent() {
                     <div className="h-full bg-gray-100 p-4">Right Sidebar</div>
                 </Panel> */}
             </PanelGroup>
+        </div >
+    )
+
+    return (
+        <div>
+            <div
+                className={cn(
+                    "flex h-[52px] items-center justify-center",
+                    "h-[52px]"
+                )}
+            >
+                asd
+            </div>
+            <Separator />
+            <div>
+                asd
+            </div>
         </div>
     )
 }
