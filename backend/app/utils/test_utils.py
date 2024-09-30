@@ -71,7 +71,7 @@ def assert_ingest_output(resources):
                 db_assets_with_column_links.add(id)
     assert db_assets_with_asset_links == db_assets_with_column_links
 
-    ## check at least one db asset has a tag/descriptoin
+    ## check at least one db asset has a tag/description
     if any([isinstance(r.details, DBDetails) for r in resources]):
         assert Asset.objects.filter(tags__isnull=False).count() > 0
         assert Asset.objects.filter(description__isnull=False).count() > 0

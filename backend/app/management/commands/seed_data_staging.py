@@ -11,9 +11,9 @@ from fixtures.staging_env import (
 
 
 class Command(BaseCommand):
-    # help = "Seed data with staging user and workspace"
+    help = "Seed data with staging user and workspace"
 
-    # @transaction.atomic
+    @transaction.atomic
     def handle(self, *args, **kwargs):
         pass
 
