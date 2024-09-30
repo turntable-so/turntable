@@ -1,7 +1,6 @@
 import json
 import os
 import re
-import shutil
 import tempfile
 import uuid
 from contextlib import contextmanager
@@ -217,52 +216,16 @@ class ResourceDetails(PolymorphicModel):
         )
         return db_path, config_path
 
-    def get_venv_python(self):
-        # only works on unix
-        return f"{os.path.abspath(self.venv_path)}/bin/python"
-
-    def activate_datahub_env(self):
-        run_and_capture_subprocess(
-            f". {self.venv_path}/bin/activate", shell=True, check=True
-        )
-
-    def create_venv_and_install_datahub(self, force=False):
-        if os.path.exists(self.venv_path):
-            if not force:
-                self.activate_datahub_env()
-                return
-            else:
-                shutil.rmtree(self.venv_path)
-
-        # Create a virtual environment
-        run_and_capture_subprocess(["uv", "venv", self.venv_path], check=True)
-
-        # activate the virtual environment
-        self.activate_datahub_env()
-
-        # Install datahub with correct extras
-        package_to_install = "acryl-datahub[datahub-lite"
-        for extra in self.datahub_extras:
-            package_to_install += f",{extra}"
-        package_to_install += "]"
-        command = [
-            "uv",
-            "pip",
-            "install",
-            package_to_install,
-            "spacy==3.7.5",  # hardcode space version to prevent docker build issues on arm linux
-            "--python",
-            self.get_venv_python(),
-        ]
-        run_and_capture_subprocess(command, check=True)
-
     def _run_datahub_ingest_base(
         self,
         test: bool = False,
         workunits: int | None = None,
         tolerate_errors: bool = True,
     ):
-        self.create_venv_and_install_datahub()
+        dh_packages = "acryl-datahub[datahub-lite"
+        for extra in self.datahub_extras:
+            dh_packages += f",{extra}"
+        dh_packages += "]"
 
         # run ingest test
         log_pattern = re.compile(
@@ -274,17 +237,26 @@ class ResourceDetails(PolymorphicModel):
                 if test and os.path.basename(path) == "dbt.yml":
                     # skip dbt config if testing
                     continue
+                command = [
+                    "uvx",
+                    "--no-progress",
+                    "--isolated",
+                    "--from",
+                    dh_packages,
+                    "--with",
+                    "spacy==3.7.5",  # hardcode spacy version to prevent docker build issues on arm linux
+                    "datahub",
+                ]
                 with tempfile.NamedTemporaryFile(suffix=".log", mode="r+") as log_file:
-                    command = [
-                        self.get_venv_python(),
-                        "-m",
-                        "datahub",
-                        "--log-file",
-                        log_file.name,
-                        "ingest",
-                        "-c",
-                        path,
-                    ]
+                    command.extend(
+                        [
+                            "--log-file",
+                            log_file.name,
+                            "ingest",
+                            "-c",
+                            path,
+                        ]
+                    )
                     if workunits is not None:
                         command.extend(
                             [
