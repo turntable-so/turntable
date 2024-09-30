@@ -481,3 +481,14 @@ export async function fetchFileContents(path: string) {
   });
   return response.json();
 }
+
+export async function executeQueryPreview(dbtSql: string) {
+  const response = await fetcher(`/query/preview/`, {
+    cookies,
+    method: "POST",
+    body: {
+      query: dbtSql,
+    }
+  });
+  return response.json();
+}

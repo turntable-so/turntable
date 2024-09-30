@@ -19,6 +19,7 @@ from django.contrib import admin
 from django.urls import include, path, re_path
 from app.views.settings_view import SettingsView
 from app.views.project_views import ProjectViewSet
+from app.views.query_views import DbtQueryPreviewView
 from rest_framework import routers
 
 from app.consumers import WorkflowRunConsumer
@@ -62,6 +63,11 @@ urlpatterns = [
         "notebooks/<str:notebook_id>/blocks/<str:block_id>/query/",
         ExecuteQueryView.as_view(),
         name="execute_query",
+    ),
+    path(
+        "query/preview/",
+        DbtQueryPreviewView.as_view(),
+        name="dbt_query_preview",
     ),
     path(
         "resources/<str:resource_id>/sync/",

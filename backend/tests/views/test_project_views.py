@@ -150,3 +150,11 @@ class ResourceViewSetTestCases(TestCase):
         encoded_filepath = safe_encode(filepath)
         response = self.client.delete(f"/project/files/?filepath={encoded_filepath}")
         self.assertEqual(response.status_code, 204)
+
+    def test_query_preview(self):
+
+        response = self.client.post(
+            "/project/preview/", {"query": "select * from {{ ref('raw_products') }}"}
+        )
+        self.assertEqual(response.status_code, 200)
+        assert response.json()["signed_url"]

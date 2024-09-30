@@ -2,7 +2,7 @@
 import { Tree } from 'react-arborist'
 import { useState, useEffect } from 'react'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
-import { getBranches, getFileIndex } from '../actions/actions'
+import { executeQueryPreview, getBranches, getFileIndex } from '../actions/actions'
 import useResizeObserver from "use-resize-observer";
 import { Box, File, FileText, Folder, FolderOpen, Plus, X } from 'lucide-react'
 import Editor from '@monaco-editor/react';
@@ -96,6 +96,14 @@ function EditorPageContent() {
 
     console.log({ files, activeFile })
 
+    const runQueryPreview = async () => {
+        const query = "select * from {{ ref('raw_products') }}"
+        const data = await executeQueryPreview(
+            query,
+        )
+        console.log({ data })
+    }
+
     return (
         <div className='flex flex-col h-screen'>
             {/* <div className='bg-muted border-b-2 h-10'>
@@ -141,9 +149,9 @@ function EditorPageContent() {
                                 </Panel>
                                 <PanelResizeHandle className="h-2 bg-gray hover:bg-gray-300 hover:cursor-col-resize  transition-colors" />
                                 <Panel defaultSize={30} className='border-t-2'>
-                                    <div>
-                                        sd
-                                    </div>
+                                    <Button onClick={runQueryPreview}>
+                                        Run Query
+                                    </Button>
                                 </Panel>
                             </PanelGroup>
                         </div>
