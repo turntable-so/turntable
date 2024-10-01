@@ -146,6 +146,7 @@ volumes:
   hatchet_credentials_handoff:
   postgres_test_db_data:
   frontend_data:
+  code_repos:
 
 networks:
   default:
