@@ -127,6 +127,7 @@ class ProjectViewSet(viewsets.ViewSet):
                 dbt_details.git_repo_url,
                 dbt_details.deploy_key,
                 request.data.get("branch_name"),
+                project_path=".",
             )
             return Response(
                 {"branch_name": branch_name}, status=status.HTTP_201_CREATED
@@ -143,6 +144,7 @@ class ProjectViewSet(viewsets.ViewSet):
                 dbt_details.git_repo_url,
                 dbt_details.deploy_key,
                 request.data.get("branch_name"),
+                project_path=".",
             )
             return Response({"branch_name": branch_name})
 
