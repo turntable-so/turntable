@@ -20,7 +20,10 @@ class ProjectViewSet(viewsets.ViewSet):
         dbt_details = workspace.get_dbt_details()
         service = CodeRepoService(workspace.id)
         repo = service.get_repo(
-            user_id, dbt_details.deploy_key, dbt_details.git_repo_url
+            user_id,
+            dbt_details.deploy_key,
+            dbt_details.git_repo_url,
+            dbt_details.project_path,
         )
 
         filepath = request.query_params.get("filepath")
@@ -72,12 +75,17 @@ class ProjectViewSet(viewsets.ViewSet):
                             status=status.HTTP_404_NOT_FOUND,
                         )
 
-        file_tree = service.get_file_tree(user_id, repo.working_tree_dir)
+        base_path = None
+        if not dbt_details.git_repo_url or len(dbt_details.git_repo_url) == 0:
+            base_path = dbt_details.project_path
+
+        root = service.get_file_tree(user_id, repo.working_tree_dir, base_path)
+        print(root, flush=True)
         dirty_changes = repo.index.diff(None)
 
         return Response(
             {
-                "file_index": file_tree,
+                "file_index": [root],
                 "dirty_changes": dirty_changes,
             }
         )
@@ -95,7 +103,10 @@ class ProjectViewSet(viewsets.ViewSet):
             )
         service = CodeRepoService(workspace.id)
         repo = service.get_repo(
-            user_id, dbt_details.deploy_key, dbt_details.git_repo_url
+            user_id,
+            dbt_details.deploy_key,
+            dbt_details.git_repo_url,
+            dbt_details.project_path,
         )
         if request.method == "GET":
             return Response(

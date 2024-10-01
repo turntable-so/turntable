@@ -1080,7 +1080,7 @@ class DataHubDBParser:
         combined = cls.combine(parsers, resource)
         all_resource_dict = {
             resource.details.subtype: resource
-            for resource in resource.workspace.resource_set.all()
+            for resource in resource.workspace.resources.all()
         }
         indirect_assets = []
         indirect_columns = []

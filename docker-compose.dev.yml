@@ -20,9 +20,8 @@ x-postgres-test-db-credentials: &postgres-test-db-credentials
   POSTGRES_PORT: 5432
 
 x-hatchet-credentials: &hatchet-credentials
-  SERVER_LOGGER_LEVEL: warn
-  DATABASE_LOGGER_LEVEL: warn
-
+  SERVER_LOGGER_LEVEL: error
+  DATABASE_LOGGER_LEVEL: error
 name: turntable-dev
 
 services:
@@ -37,7 +36,7 @@ services:
       /bin/sh -c "
       python manage.py migrate &&
       python manage.py seed_data &&
-      uvicorn api.asgi:application --host 0.0.0.0 --port 8000 --reload"   
+      uvicorn api.asgi:application --host 0.0.0.0 --port 8000 --reload"
     environment:
       <<: *dev-credentials
     volumes:

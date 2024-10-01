@@ -110,9 +110,10 @@ class DbtQueryPreviewView(APIView):
             },
         )
 
+        result = await workflow_run.result()
+        signed_url = result.get("dbt_query_preview", {}).get("signed_url", "")
+
         return JsonResponse(
-            {
-                "workflow_run": str(workflow_run),
-            },
+            {"signed_url": signed_url},
             status=status.HTTP_201_CREATED,
         )

@@ -22,11 +22,9 @@ class CodeRepoService:
     def __init__(self, workspace_id: str):
         self.workspace_id = workspace_id
 
-    def get_file_tree(self, user_id: str, path: str):
+    def _build_file_tree(self, user_id: str, path: str, base_path: str | None):
         tree = []
-        base_path = self._generate_code_repo_path(
-            user_id,
-        )
+        base_path = base_path or self._generate_code_repo_path(user_id)
         for entry in os.scandir(path):
             if not entry.name.startswith("."):  # Exclude hidden files and directories
                 relative_path = os.path.relpath(entry.path, base_path)
@@ -37,9 +35,22 @@ class CodeRepoService:
                     "id": relative_path,
                 }
                 if entry.is_dir():
-                    node["children"] = self.get_file_tree(user_id, entry.path)
+                    node["children"] = self._build_file_tree(
+                        user_id, entry.path, base_path
+                    )
                 tree.append(node)
         return tree
+
+    def get_file_tree(self, user_id: str, path: str, base_path=None):
+        file_tree = self._build_file_tree(user_id, path, base_path)
+        relative_path = os.path.relpath(path, base_path)
+        return {
+            "path": path,
+            "type": "directory",
+            "name": os.path.basename(path),
+            "id": relative_path,
+            "children": file_tree,
+        }
 
     def _generate_code_repo_path(self, user_id: str):
         if os.environ.get("EPHEMERAL_FILESYSTEM", "False") == "True":
@@ -188,7 +199,13 @@ class CodeRepoService:
         finally:
             os.remove(temp_key_file.name)
 
-    def get_repo(self, user_id: str, public_key: str, git_repo_url: str) -> Repo:
+    def get_repo(
+        self, user_id: str, public_key: str, git_repo_url: str, project_path: str
+    ) -> Repo:
+        if not git_repo_url or len(git_repo_url) == 0:
+            repo = Repo(project_path)
+            return Repo(project_path)
+
         path = self._generate_code_repo_path(user_id)
 
         if os.path.exists(path):

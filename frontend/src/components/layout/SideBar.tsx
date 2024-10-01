@@ -70,7 +70,11 @@ export const accounts = [
 export default function SideBar({ isCollapsed }: { isCollapsed: boolean }) {
     const pathName = usePathname()
     return (
-        <div className={cn(`w-[250px] border-r`, isCollapsed ? 'w-[75px]' : 'w-[350px]')}>
+        <div className={cn(
+            "flex-shrink-0",
+            isCollapsed ? "w-[75px]" : "w-[250px]",
+            "border-r"
+        )}>
             <TooltipProvider delayDuration={0}>
                 <div
                     className={cn(

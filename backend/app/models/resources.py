@@ -616,6 +616,7 @@ class DBTCoreDetails(DBTResource):
             user_id=user_id,
             public_key=self.deploy_key,
             git_repo_url=self.git_repo_url,
+            project_path=self.project_path
         )
         with open(os.path.join(repo.working_tree_dir, "dbt_project.yml"), "r") as f:
             contents = yaml.load(f, Loader=yaml.FullLoader)

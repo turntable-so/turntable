@@ -14,6 +14,7 @@ from vinyl.lib.dbt import fast_compile
 
 
 class DBTQuery(models.Model):
+    user_id = models.CharField(max_length=255)
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True, null=True)
@@ -40,6 +41,8 @@ class DBTQuery(models.Model):
 
     def run(self, use_fast_compile: bool = True, limit: int | None = _QUERY_LIMIT):
         with self.dbtresource.dbt_repo_context() as (dbtproj, project_path):
+            dbtproj.mount_manifest()
+
             if use_fast_compile and (sql := fast_compile(dbtproj, self.dbt_sql)):
                 connector = self.dbtresource.resource.details.get_connector()
                 df = connector.sql_to_df(sql, limit=limit)

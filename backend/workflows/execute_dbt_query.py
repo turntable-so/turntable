@@ -25,7 +25,7 @@ class DBTQueryPreviewWorkflow:
         resource_id = context.workflow_input()["resource_id"]
         dbt_sql = context.workflow_input()["dbt_sql"]
         dbt_resource_id = context.workflow_input().get("dbt_resource_id")
-        limit = context.workflow_input().get("limit")
+        limit = context.workflow_input().get("limit") or 500
         use_fast_compile = context.workflow_input()["use_fast_compile"]
         resource = Resource.objects.get(id=resource_id)
         dbt_query = DBTQuery(

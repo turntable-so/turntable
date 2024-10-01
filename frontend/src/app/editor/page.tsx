@@ -1,10 +1,10 @@
 'use client'
-import { Tree } from 'react-arborist'
-import { useState, useEffect } from 'react'
+import { Tree, TreeApi } from 'react-arborist'
+import { useState, useEffect, Fragment, useCallback, useRef } from 'react'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { executeQueryPreview, getBranches, getFileIndex } from '../actions/actions'
 import useResizeObserver from "use-resize-observer";
-import { Box, File, FileText, Folder, FolderOpen, GitBranch, PanelBottom, PanelLeft, PanelRight, Plus, X } from 'lucide-react'
+import { Box, File, FileText, Folder, FolderOpen, GitBranch, Loader2, PanelBottom, PanelLeft, PanelRight, Play, Plus, X } from 'lucide-react'
 import Editor from '@monaco-editor/react';
 import { FilesProvider, useFiles, FileNode, OpenedFile } from '../contexts/FilesContext';
 import { Button } from '@/components/ui/button'
@@ -12,6 +12,12 @@ import { cn } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { AgGridReact } from 'ag-grid-react'
+import "@/components/ag-grid-custom-theme.css"; // Custom CSS Theme for Data Grid
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/ui/command'
+
 
 function Node({ node, style, dragHandle }: { node: any, style: any, dragHandle: any }) {
     const { openFile } = useFiles();
@@ -38,6 +44,17 @@ function Node({ node, style, dragHandle }: { node: any, style: any, dragHandle: 
 function EditorContent() {
     const { activeFile, updateFileContent } = useFiles();
 
+    // Define your custom theme
+    const customTheme: editor.IStandaloneThemeData = {
+        base: 'vs',
+        inherit: true,
+        rules: [],
+        colors: {
+            'editor.foreground': '#000000',
+            'editorLineNumber.foreground': '#A1A1AA',
+        }
+    };
+
     console.log('editrocontent', { activeFile })
 
     return (
@@ -61,23 +78,24 @@ function EditorContent() {
                 },
                 lineNumbers: 'on',
                 wordWrap: 'on',
-                theme: 'vs-light',
                 fontSize: 14,
                 lineNumbersMinChars: 3,
             }}
             beforeMount={(monaco) => {
-                monaco.editor.defineTheme('muted-theme', {
-                    base: 'vs',
-                    inherit: true,
-                    rules: [],
-                    colors: {
-                        'editorLineNumber.foreground': '#9CA3AF', // Tailwind gray-400
-                    },
-                });
+                monaco.editor.defineTheme('mutedTheme', customTheme);
+                monaco.editor.setTheme('mutedTheme');
             }}
-            theme="muted-theme"
+            onMount={(editor, monaco) => {
+                monaco.editor.setTheme('mutedTheme');
+            }}
+            theme="mutedTheme"
         />
     );
+}
+
+type QueryPreview = {
+    rows?: Object
+    signed_url: string
 }
 
 function EditorPageContent() {
@@ -87,6 +105,71 @@ function EditorPageContent() {
     const [activeBranch, setActiveBranch] = useState('')
     const { ref, width, height } = useResizeObserver();
     const { files, openedFiles, activeFile, setActiveFile, closeFile } = useFiles();
+
+    const [showLeftSideBar, setShowLeftSidebar] = useState(true)
+    const [showRightSideBar, setShowRightSidebar] = useState(false)
+    const [showBottomPanel, setShowBottomPanel] = useState(false)
+
+    const [colDefs, setColDefs] = useState([])
+    const [rowData, setRowData] = useState([])
+    const [isLoading, setIsLoading] = useState(false)
+    const gridRef = useRef<AgGridReact>(null);
+    const [queryPreview, setQueryPreview] = useState<QueryPreview | null>(null)
+
+    const treeRef = useRef<TreeApi>(null);
+    const [isSearchFocused, setIsSearchFocused] = useState(false);
+    const searchInputRef = useRef<HTMLInputElement>(null);
+
+    // Function to initially open the first node
+    const initialOpenNodes = useCallback((node: any) => {
+        return node.parent === null;
+    }, []);
+
+    // Effect to open the first node after the tree is mounted
+    useEffect(() => {
+        if (treeRef.current) {
+            const rootNode = treeRef.current.root;
+            if (rootNode && rootNode.children.length > 0) {
+                rootNode.children[0].open();
+            }
+        }
+    }, [files]);
+
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.metaKey) {
+                switch (event.key.toLowerCase()) {
+                    case 'b':
+                        event.preventDefault();
+                        if (event.shiftKey) {
+                            console.log('Cmd+Shift+B pressed');
+                            setShowRightSidebar(!showRightSideBar)
+
+                        } else {
+                            console.log('Cmd+B pressed');
+                            setShowLeftSidebar(!showLeftSideBar)
+                        }
+                        break;
+                    case 'k':
+                        event.preventDefault();
+                        console.log('Cmd+K pressed');
+                        searchInputRef.current?.focus();
+                        break;
+                    case 'j':
+                        event.preventDefault();
+                        console.log('Cmd+J pressed');
+                        setShowBottomPanel(!showBottomPanel)
+                        break;
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [showLeftSideBar, showRightSideBar, showBottomPanel]);
 
 
     useEffect(() => {
@@ -98,15 +181,57 @@ function EditorPageContent() {
         fetchBranches()
     }, [])
 
-    console.log({ files, activeFile })
-
     const runQueryPreview = async () => {
-        const query = "select * from {{ ref('raw_products') }}"
-        const data = await executeQueryPreview(
-            query,
-        )
-        console.log({ data })
+        setIsLoading(true)
+        setQueryPreview(null)
+        if (activeFile && activeFile.content) {
+            const query = activeFile.content
+            const preview = await executeQueryPreview(
+                query,
+            )
+            setQueryPreview(preview)
+        }
     }
+
+
+
+    const getTablefromSignedUrl = async (signedUrl: string) => {
+        const response = await fetch(signedUrl);
+        if (response.ok) {
+            const table = await response.json();
+            console.log({ table })
+            const defs = Object.keys(table.data[0]).map((key) => ({
+                field: key,
+                headerName: key,
+                // type: [getColumnType(table.column_types[key])],
+                // cellDataType: getColumnType(table.column_types[key]),
+                editable: false,
+                valueGetter: (p: any) => {
+                    if (p.colDef.cellDataType === "date") {
+                        return new Date(p.data[key]);
+                    }
+                    return p.data[key];
+                },
+                cellClass: "p-0",
+            }));
+            console.log({ defs, types: table.column_types });
+            setColDefs(defs);
+            setRowData(table.data);
+            // setDefaultDataChart(table.data, defs);
+        }
+        setIsLoading(false);
+    }
+
+
+    useEffect(() => {
+        const fetchQueryPreview = async () => {
+            if (queryPreview?.signed_url) {
+                getTablefromSignedUrl(queryPreview.signed_url as string)
+            }
+        }
+        fetchQueryPreview()
+    }, [queryPreview?.signed_url])
+
 
     return (
         <div className='flex flex-col h-screen'>
@@ -114,37 +239,49 @@ function EditorPageContent() {
              nodes   asd
             </div> */}
             <PanelGroup direction="horizontal" className="h-fit">
-                <Panel defaultSize={leftWidth} minSize={15} maxSize={30} onResize={setLeftWidth} className='border-r'>
-                    <Tabs defaultValue="files" className="">
-                        <div
-                            className={cn(
-                                "flex h-[52px] items-center justify-center",
-                                "h-[52px]"
-                            )}
-                        >
-                            <TabsList className="grid w-full grid-cols-2 mx-4">
-                                <TabsTrigger value="files" className="flex items-center justify-center">
-                                    <File className="w-4 h-4 mr-2" />
-                                    Files
-                                </TabsTrigger>
-                                <TabsTrigger value="branch" className="flex items-center justify-center">
-                                    <GitBranch className="w-4 h-4 mr-2" />
-                                    Branch
-                                </TabsTrigger>
-                            </TabsList>
-                        </div>
-                        <Separator />
-                        <TabsContent value="files">
-                            <div className="h-full   p-4" ref={ref}>
-                                <Tree height={height} width={width} data={files} openByDefault={false} >
-                                    {Node}
-                                </Tree>
-                            </div>
-                        </TabsContent>
-                        <TabsContent value="branch">Branhce</TabsContent>
-                    </Tabs>
-                </Panel>
-                <PanelResizeHandle className="w-1 bg-transparent hover:bg-gray-300 hover:cursor-col-resize  transition-colors" />
+                {showLeftSideBar && (
+                    <Fragment>
+                        <Panel defaultSize={leftWidth} minSize={15} maxSize={30} onResize={setLeftWidth} className='border-r'>
+                            <Tabs defaultValue="files" className="h-full">
+                                <div
+                                    className={cn(
+                                        "flex h-[52px] items-center justify-center",
+                                        "h-[52px]"
+                                    )}
+                                >
+                                    <TabsList className="grid w-full grid-cols-2 mx-4">
+                                        <TabsTrigger value="files" className="flex items-center justify-center">
+                                            <File className="w-4 h-4 mr-2" />
+                                            Files
+                                        </TabsTrigger>
+                                        <TabsTrigger value="branch" className="flex items-center justify-center">
+                                            <GitBranch className="w-4 h-4 mr-2" />
+                                            Branch
+                                        </TabsTrigger>
+                                    </TabsList>
+                                </div>
+                                <Separator />
+                                <TabsContent value="files" className='h-full px-2'>
+                                    <div className="h-full" ref={ref}>
+                                        <Tree
+                                            height={height}
+                                            width={width}
+                                            data={files}
+                                            openByDefault={false}
+                                            indent={12}
+                                            ref={treeRef}
+                                            initialOpenNodes={initialOpenNodes}
+                                        >
+                                            {Node}
+                                        </Tree>
+                                    </div>
+                                </TabsContent>
+                                <TabsContent value="branch">Branhce</TabsContent>
+                            </Tabs>
+                        </Panel>
+                        <PanelResizeHandle className="w-1 bg-transparent hover:bg-gray-300 hover:cursor-col-resize  transition-colors" />
+                    </Fragment>
+                )}
                 <Panel>
                     <div className="h-full bg-white">
                         <div
@@ -159,10 +296,14 @@ function EditorPageContent() {
                                 </div>
                                 <div className="w-1/2 relative">
                                     <Input
+                                        ref={searchInputRef}
                                         type="text"
-                                        placeholder="Search files..."
+                                        placeholder="Search files... (⌘K)"
                                         className="w-full pl-10 pr-4 py-2 rounded-md bg-muted focus:outline-none focus:ring-2 focus:ring-gray-400"
+                                        onFocus={() => setIsSearchFocused(true)}
+                                        onBlur={() => setIsSearchFocused(false)}
                                     />
+
                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -171,30 +312,65 @@ function EditorPageContent() {
                                 </div>
                                 <div className="w-1/4">
                                     <div className="flex justify-end space-x-2">
-                                        <Button variant="ghost" size="icon">
-                                            <PanelLeft className="h-4 w-4" />
-                                        </Button>
-                                        <Button variant="ghost" size="icon">
-                                            <PanelBottom className="h-4 w-4" />
-                                        </Button>
-                                        <Button variant="ghost" size="icon">
-                                            <PanelRight className="h-4 w-4" />
-                                        </Button>
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button
+                                                        variant={showLeftSideBar ? "secondary" : "ghost"}
+                                                        size="icon"
+                                                        onClick={() => setShowLeftSidebar(!showLeftSideBar)}
+                                                    >
+                                                        <PanelLeft className="h-4 w-4" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Toggle Side Bar (⌘B)</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button
+                                                        variant={showBottomPanel ? "secondary" : "ghost"}
+                                                        size="icon"
+                                                        onClick={() => setShowBottomPanel(!showBottomPanel)}
+                                                    >
+                                                        <PanelBottom className="h-4 w-4" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Toggle Bottom Panel (⌘J)</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button
+                                                        variant={showRightSideBar ? "secondary" : "ghost"}
+                                                        size="icon"
+                                                        onClick={() => setShowRightSidebar(!showRightSideBar)}
+                                                    >
+                                                        <PanelRight className="h-4 w-4" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Toggle AI Pane (⌘^B)</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <Separator />
-                        <div className='hover:cursor-pointer h-8 border-b-2 flex items-center space-x-4 py-4'>
+                        <div className='hover:cursor-pointer h-8 border-b-2 flex items-center space-x-2 py-4'>
                             <div className='ml-1  hover:bg-gray-200 bg-muted w-8 h-6 rounded-md flex items-center justify-center'>
                                 <Plus className='size-3' />
                             </div>
-                            <div className='overflow-x-scroll flex space-x-2'>
+                            <div className='overflow-x-scroll flex space-x-0'>
                                 {openedFiles.map((file: OpenedFile) => (
                                     <div
                                         key={file.node.path}
                                         onClick={() => setActiveFile(file)}
-                                        className={`text-sm font-medium border  px-2 py-1 rounded-md flex items-center space-x-2 group select-none ${file.node.path === activeFile?.node.path ? 'bg-muted' : ''}`}
+                                        className={`text-sm font-medium border-x-2  px-2 py-1 flex items-center space-x-2 group select-none ${file.node.path === activeFile?.node.path ? 'bg-muted' : ''}`}
                                     >
                                         <div>
                                             {file.node.name}
@@ -212,20 +388,53 @@ function EditorPageContent() {
                                 <Panel>
                                     <EditorContent />
                                 </Panel>
-                                <PanelResizeHandle className="h-1 bg-gray hover:bg-gray-300 hover:cursor-col-resize  transition-colors" />
-                                <Panel defaultSize={30} className='border-t flex items-center justify-center'>
-                                    <Button onClick={runQueryPreview}>
-                                        Run Query
-                                    </Button>
-                                </Panel>
+                                {showBottomPanel && (
+                                    <Fragment>
+                                        <PanelResizeHandle className="h-1 bg-gray hover:bg-gray-300 hover:cursor-col-resize  transition-colors" />
+                                        <div className='h-10 bg-muted border-t-2 flex justify-end items-center px-4'>
+                                            <Button size='sm'
+                                                onClick={runQueryPreview}
+                                                disabled={isLoading}
+                                            >
+                                                {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Play className="h-4 w-4 mr-2" />}
+                                                Preview Query
+                                            </Button>
+                                        </div>
+                                        <Panel defaultSize={40} className='border-t flex items-center justify-center'>
+
+                                            <div className="flex flex-col w-full h-full flex-grow-1">
+                                                <AgGridReact
+                                                    loading={isLoading}
+                                                    loadingOverlayComponent={() => (
+                                                        <div className='flex items-center justify-center h-full'>
+                                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                                        </div>
+                                                    )}
+                                                    className="ag-theme-custom"
+                                                    ref={gridRef}
+                                                    suppressRowHoverHighlight={true}
+                                                    columnHoverHighlight={true}
+                                                    rowData={rowData}
+                                                    pagination={true}
+                                                    // @ts-ignore
+                                                    columnDefs={colDefs}
+                                                />
+                                            </div>
+                                        </Panel>
+                                    </Fragment>
+                                )}
                             </PanelGroup>
                         </div>
                     </div>
                 </Panel>
-                <PanelResizeHandle className="w-1 bg-transparent hover:bg-gray-300 hover:cursor-col-resize transition-colors" />
-                {/* <Panel defaultSize={rightWidth} minSize={15} maxSize={30} onResize={setRightWidth}>
-                    <div className="h-full bg-gray-100 p-4">Right Sidebar</div>
-                </Panel> */}
+                {showRightSideBar && (
+                    <Fragment>
+                        <PanelResizeHandle className="border-l w-1 bg-transparent hover:bg-gray-300 hover:cursor-col-resize transition-colors" />
+                        <Panel defaultSize={rightWidth} minSize={25} maxSize={60} onResize={setRightWidth}>
+                            <div className="h-full p-4 flex items-center justify-center">Coming soon...</div>
+                        </Panel>
+                    </Fragment>
+                )}
             </PanelGroup>
         </div >
     )
