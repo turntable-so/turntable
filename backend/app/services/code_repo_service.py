@@ -221,10 +221,15 @@ class CodeRepoService:
         return repo
 
     def create_branch(
-        self, user_id: str, git_repo_url: str, public_key: str, branch_name: str
+        self,
+        user_id: str,
+        git_repo_url: str,
+        public_key: str,
+        branch_name: str,
+        project_path: str,
     ) -> str:
         with self.with_ssh_env(public_key) as env:
-            repo = self.get_repo(user_id, public_key, git_repo_url)
+            repo = self.get_repo(user_id, public_key, git_repo_url, project_path)
             # Fetch the latest changes from the remote
             repo.remotes.origin.fetch(env=env)
             # Create and checkout the new branch
@@ -242,10 +247,15 @@ class CodeRepoService:
                 return None
 
     def switch_branch(
-        self, user_id: str, git_repo_url: str, public_key: str, branch_name: str
+        self,
+        user_id: str,
+        git_repo_url: str,
+        public_key: str,
+        branch_name: str,
+        project_path: str,
     ) -> str:
         with self.with_ssh_env(public_key) as env:
-            repo = self.get_repo(user_id, public_key, git_repo_url)
+            repo = self.get_repo(user_id, public_key, git_repo_url, project_path)
 
             # Fetch the latest changes from the remote
             repo.remotes.origin.fetch(env=env)
@@ -269,10 +279,15 @@ class CodeRepoService:
                 return None
 
     def commit_and_push(
-        self, user_id: str, public_key: str, git_repo_url: str, commit_message: str
+        self,
+        user_id: str,
+        public_key: str,
+        git_repo_url: str,
+        commit_message: str,
+        project_path: str,
     ) -> bool:
         with self.with_ssh_env(public_key) as env:
-            repo = self.get_repo(user_id, public_key, git_repo_url)
+            repo = self.get_repo(user_id, public_key, git_repo_url, project_path)
 
             try:
                 # Check if there are any changes to commit
@@ -314,9 +329,9 @@ class CodeRepoService:
                 print(f"Error committing and pushing changes: {e}")
                 return False
 
-    def pull(self, user_id: str, public_key: str, git_repo_url: str):
+    def pull(self, user_id: str, public_key: str, git_repo_url: str, project_path: str):
         with self.with_ssh_env(public_key) as env:
-            repo = self.get_repo(user_id, public_key, git_repo_url)
+            repo = self.get_repo(user_id, public_key, git_repo_url, project_path)
 
             # Check if the working directory is clean
             if repo.is_dirty(untracked_files=True):
