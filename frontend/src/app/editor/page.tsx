@@ -45,7 +45,7 @@ function EditorContent() {
     const { activeFile, updateFileContent } = useFiles();
 
     // Define your custom theme
-    const customTheme: editor.IStandaloneThemeData = {
+    const customTheme = {
         base: 'vs',
         inherit: true,
         rules: [],
@@ -82,7 +82,7 @@ function EditorContent() {
                 lineNumbersMinChars: 3,
             }}
             beforeMount={(monaco) => {
-                monaco.editor.defineTheme('mutedTheme', customTheme);
+                monaco.editor.defineTheme('mutedTheme', customTheme as any);
                 monaco.editor.setTheme('mutedTheme');
             }}
             onMount={(editor, monaco) => {
@@ -116,16 +116,10 @@ function EditorPageContent() {
     const gridRef = useRef<AgGridReact>(null);
     const [queryPreview, setQueryPreview] = useState<QueryPreview | null>(null)
 
-    const treeRef = useRef<TreeApi>(null);
+    const treeRef = useRef<any>(null);
     const [isSearchFocused, setIsSearchFocused] = useState(false);
     const searchInputRef = useRef<HTMLInputElement>(null);
 
-    // Function to initially open the first node
-    const initialOpenNodes = useCallback((node: any) => {
-        return node.parent === null;
-    }, []);
-
-    // Effect to open the first node after the tree is mounted
     useEffect(() => {
         if (treeRef.current) {
             const rootNode = treeRef.current.root;
@@ -215,7 +209,7 @@ function EditorPageContent() {
                 cellClass: "p-0",
             }));
             console.log({ defs, types: table.column_types });
-            setColDefs(defs);
+            setColDefs(defs as any);
             setRowData(table.data);
             // setDefaultDataChart(table.data, defs);
         }
@@ -270,9 +264,8 @@ function EditorPageContent() {
                                             openByDefault={false}
                                             indent={12}
                                             ref={treeRef}
-                                            initialOpenNodes={initialOpenNodes}
                                         >
-                                            {Node}
+                                            {Node as any}
                                         </Tree>
                                     </div>
                                 </TabsContent>
@@ -404,12 +397,6 @@ function EditorPageContent() {
 
                                             <div className="flex flex-col w-full h-full flex-grow-1">
                                                 <AgGridReact
-                                                    loading={isLoading}
-                                                    loadingOverlayComponent={() => (
-                                                        <div className='flex items-center justify-center h-full'>
-                                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                                        </div>
-                                                    )}
                                                     className="ag-theme-custom"
                                                     ref={gridRef}
                                                     suppressRowHoverHighlight={true}
