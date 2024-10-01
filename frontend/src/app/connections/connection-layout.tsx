@@ -113,9 +113,9 @@ export default function ConnectionLayout({
           <Card className="px-5 py-6 flex justify-between items-center">
             <div>
               <CardTitle>Sync Connection</CardTitle>
-              <CardDescription className="py-1">{`Last synced ${dayjs(
-                resource.updated_at
-              ).fromNow()} `}</CardDescription>
+              <CardDescription className="py-1">{resource.last_synced ? `Last synced ${dayjs(
+                resource.last_synced
+              ).fromNow()} ` : ''}</CardDescription>
             </div>
             <div className="flex justify-end items-center space-x-2">
               <div>
