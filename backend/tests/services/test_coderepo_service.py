@@ -38,7 +38,6 @@ class CodeRepoServiceTests(TestCase):
         )
 
     def test_repo_connection(self):
-
         coderepo_service = CodeRepoService(workspace_id=self.workspace.id)
         res = coderepo_service.test_repo_connection(
             public_key=self.test_ssh_public_key,
@@ -121,6 +120,7 @@ class CodeRepoServiceTests(TestCase):
             user_id=self.user.id,
             public_key=self.test_ssh_public_key,
             git_repo_url=self.git_repo_url,
+            project_path=".",
         )
         assert repo.active_branch.name == "main"
 
@@ -130,12 +130,14 @@ class CodeRepoServiceTests(TestCase):
             user_id=self.user.id,
             public_key=self.test_ssh_public_key,
             git_repo_url=self.git_repo_url,
+            project_path=".",
         )
         assert repo is not None
         repo = coderepo_service.get_repo(
             user_id=self.user.id,
             public_key=self.test_ssh_public_key,
             git_repo_url=self.git_repo_url,
+            project_path=".",
         )
         assert repo is not None
 
@@ -145,6 +147,7 @@ class CodeRepoServiceTests(TestCase):
             user_id=self.user.id,
             public_key=self.test_ssh_public_key,
             git_repo_url=self.git_repo_url,
+            project_path=".",
         )
         assert repo.working_tree_dir is not None
 
@@ -155,6 +158,7 @@ class CodeRepoServiceTests(TestCase):
             public_key=self.test_ssh_public_key,
             git_repo_url=self.git_repo_url,
             branch_name="test_branch",
+            project_path=".",
         )
         assert branch == "test_branch"
 
@@ -165,6 +169,7 @@ class CodeRepoServiceTests(TestCase):
             public_key=self.test_ssh_public_key,
             git_repo_url=self.git_repo_url,
             branch_name="test_branch",
+            project_path=".",
         )
         assert branch == "test_branch"
 
@@ -174,6 +179,7 @@ class CodeRepoServiceTests(TestCase):
             user_id=self.user.id,
             public_key=self.test_ssh_public_key,
             git_repo_url=self.git_repo_url,
+            project_path=".",
         )
         assert result == True
 
@@ -184,6 +190,7 @@ class CodeRepoServiceTests(TestCase):
             public_key=self.test_ssh_public_key,
             git_repo_url=self.git_repo_url,
             branch_name="test-commits",
+            project_path=".",
         )
         assert branch == "test-commits"
 
@@ -191,6 +198,7 @@ class CodeRepoServiceTests(TestCase):
             user_id=self.user.id,
             public_key=self.test_ssh_public_key,
             git_repo_url=self.git_repo_url,
+            project_path=".",
         )
         path = os.path.join(repo.working_tree_dir, "README.md")
         with open(path, "a") as f:
@@ -200,6 +208,7 @@ class CodeRepoServiceTests(TestCase):
             user_id=self.user.id,
             public_key=self.test_ssh_public_key,
             git_repo_url=self.git_repo_url,
+            project_path=".",
         )
         assert repo.is_dirty(untracked_files=True) == True
 
@@ -208,6 +217,7 @@ class CodeRepoServiceTests(TestCase):
             public_key=self.test_ssh_public_key,
             git_repo_url=self.git_repo_url,
             commit_message="Add random hex string to README.md",
+            project_path=".",
         )
         assert result == True
 
@@ -215,5 +225,6 @@ class CodeRepoServiceTests(TestCase):
             user_id=self.user.id,
             public_key=self.test_ssh_public_key,
             git_repo_url=self.git_repo_url,
+            project_path=".",
         )
         assert repo.is_dirty(untracked_files=True) == False

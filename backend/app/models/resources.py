@@ -101,7 +101,9 @@ def repo_path(obj):
 
 class Resource(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
+    workspace = models.ForeignKey(
+        Workspace, on_delete=models.CASCADE, null=True, related_name="resources"
+    )
     name = models.TextField(null=True)
     type = models.TextField(choices=ResourceType.choices, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -614,6 +616,7 @@ class DBTCoreDetails(DBTResource):
             user_id=user_id,
             public_key=self.deploy_key,
             git_repo_url=self.git_repo_url,
+            project_path=self.project_path
         )
         with open(os.path.join(repo.working_tree_dir, "dbt_project.yml"), "r") as f:
             contents = yaml.load(f, Loader=yaml.FullLoader)

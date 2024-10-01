@@ -18,6 +18,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path, re_path
 from app.views.settings_view import SettingsView
+from app.views.project_views import ProjectViewSet
+from app.views.query_views import DbtQueryPreviewView
 from rest_framework import routers
 
 from app.consumers import WorkflowRunConsumer
@@ -53,6 +55,7 @@ router.register(r"github", GithubInstallationViewSet, basename="github")
 router.register(r"notebooks", NotebookViewSet, basename="notebook")
 router.register(r"blocks", BlockViewSet, basename="block")
 router.register(r"healthcheck", HealthCheckViewSet, basename="healthcheck")
+router.register(r"project", ProjectViewSet, basename="project")
 
 urlpatterns = [
     path("oauth/auth", OAuthView.as_view(), name="oauth-auth"),
@@ -60,6 +63,11 @@ urlpatterns = [
         "notebooks/<str:notebook_id>/blocks/<str:block_id>/query/",
         ExecuteQueryView.as_view(),
         name="execute_query",
+    ),
+    path(
+        "query/preview/",
+        DbtQueryPreviewView.as_view(),
+        name="dbt_query_preview",
     ),
     path(
         "resources/<str:resource_id>/sync/",
