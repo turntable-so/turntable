@@ -6,11 +6,11 @@ from django.core.files.base import ContentFile
 from django.db import models
 from django.utils import timezone
 
+from app.models.git_connections import Branch
 from app.models.resources import DBTResource
 from app.models.workspace import Workspace
 from app.services.storage_backends import CustomS3Boto3Storage
 from vinyl.lib.connect import _QUERY_LIMIT
-from vinyl.lib.dbt import fast_compile
 
 
 class DBTQuery(models.Model):
@@ -25,6 +25,9 @@ class DBTQuery(models.Model):
         DBTResource,
         on_delete=models.CASCADE,
     )
+
+    # relationships
+    branch = models.ForeignKey(Branch, on_delete=models.CASCADE, null=True)
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
 
     @classmethod
@@ -38,9 +41,17 @@ class DBTQuery(models.Model):
             }
         )
 
-    def run(self, use_fast_compile: bool = True, limit: int | None = _QUERY_LIMIT):
-        with self.dbtresource.dbt_repo_context() as (dbtproj, project_path):
-            if use_fast_compile and (sql := fast_compile(dbtproj, self.dbt_sql)):
+    def run(
+        self,
+        use_fast_compile: bool = True,
+        limit: int | None = _QUERY_LIMIT,
+    ):
+        branch_id = self.branch.id if self.branch else None
+        with self.dbtresource.dbt_repo_context(branch_id) as (
+            dbtproj,
+            project_path,
+        ):
+            if use_fast_compile and (sql := dbtproj.fast_compile(self.dbt_sql)):
                 connector = self.dbtresource.resource.details.get_connector()
                 df = connector.sql_to_df(sql, limit=limit)
                 query_results = self.df_to_json(df)

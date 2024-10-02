@@ -24,6 +24,12 @@ from vinyl.lib.utils.files import adjust_path, cd, file_exists_in_directory, loa
 from vinyl.lib.utils.graph import DAG
 
 
+def run_adjusted_replace(base_pattern_list, replacement, contents):
+    pattern = r"\s*".join(base_pattern_list)
+    adjusted_pattern = pattern
+    return re.sub(adjusted_pattern, replacement, contents)
+
+
 class DBTProject(object):
     compiled_sql_path: str
     manifest_path: str
@@ -587,25 +593,20 @@ class DBTProject(object):
                 contents = orjson.loads(last_line)
             return contents["data"]["preview"]
 
+    def _replace_sources_and_refs(self, contents):
+        self.mount_manifest()
+        self.get_project_yml_files()
+        try:
+            extracted = py_extract_from_source(contents)
+        except ExtractionError:
+            return contents
 
-def run_adjusted_replace(base_pattern_list, replacement, contents):
-    pattern = r"\s*".join(base_pattern_list)
-    adjusted_pattern = pattern
-    return re.sub(adjusted_pattern, replacement, contents)
-
-
-def replace_sources_and_refs(project: DBTProject, contents):
-    try:
-        project.mount_manifest()
-        project.get_project_yml_files()
-
-        extracted = py_extract_from_source(contents)
         new_contents = contents
-        manifest_info = project.manifest
+        manifest_info = self.manifest
         nodes = manifest_info["nodes"]
         sources = manifest_info["sources"]
-        proj_name = project.dbt_project_yml["name"]
-        macro_dir = os.path.join(project.dbt_project_dir, "macros")
+        proj_name = self.dbt_project_yml["name"]
+        macro_dir = os.path.join(self.dbt_project_dir, "macros")
         # check if user has custom ref macro
         if not file_exists_in_directory("ref.sql", macro_dir):
             for ref in extracted["refs"]:
@@ -623,7 +624,7 @@ def replace_sources_and_refs(project: DBTProject, contents):
                 ]
                 node_id = f"model.{package_name}.{model_name}"
                 if node_id in nodes:
-                    replacement = project.get_relation_name(node_id)
+                    replacement = self.get_relation_name(node_id)
                     new_contents = run_adjusted_replace(
                         base_pattern_list, replacement, new_contents
                     )
@@ -647,22 +648,17 @@ def replace_sources_and_refs(project: DBTProject, contents):
                 ]
                 source_id = f"source.{proj_name}.{source[0]}.{source[1]}"
                 if source_id in sources:
-                    replacement = project.get_relation_name(source_id)
+                    replacement = self.get_relation_name(source_id)
                     new_contents = run_adjusted_replace(
                         base_pattern_list, replacement, new_contents
                     )
         return new_contents
 
-    except ExtractionError:
-        return contents
-
-
-def replace_configs_and_this(
-    project: DBTProject, contents, model_node_string: str | None = None
-):
-    try:
-        project.mount_manifest()
-        project.get_project_yml_files()
+    def _replace_configs_and_this(
+        self, contents: str, model_node_string: str | None = None
+    ):
+        self.mount_manifest()
+        self.get_project_yml_files()
 
         new_contents = contents
         pattern = r"{{\s*config\s*\([\s\S]*?\)\s*}}"
@@ -675,22 +671,34 @@ def replace_configs_and_this(
                 r"this",
                 r"}}",
             ]
-            replacement = project.get_relation_name(model_node_string)
+            replacement = self.get_relation_name(model_node_string)
             new_contents = run_adjusted_replace(
                 base_pattern_list, replacement, new_contents
             )
         return new_contents
 
-    except ExtractionError:
+    def fast_compile(self, dbt_sql: str):
+        if not dbt_sql:
+            raise ValueError("dbt_sql is empty")
+        contents = self._replace_sources_and_refs(dbt_sql)
+        contents = self._replace_configs_and_this(contents)
+        # if there are still jinja vars, then we failed to fast compile
+        if "{{" in contents:
+            return None
         return contents
 
 
-def fast_compile(project: DBTProject, dbt_sql: str):
-    if not dbt_sql:
-        raise ValueError("dbt_sql is empty")
-    contents = replace_sources_and_refs(project, dbt_sql)
-    contents = replace_configs_and_this(project, contents)
-    # if there are still jinja vars, then we failed to fast compile
-    if "{{" in contents:
-        return None
-    return contents
+class DBTTransition:
+    before: DBTProject
+    after: DBTProject
+    defer: bool
+
+    def __init__(
+        self,
+        before_project: DBTProject,
+        after_project: DBTProject,
+        defer=True,
+    ):
+        self.before = before_project
+        self.after = after_project
+        self.defer = defer

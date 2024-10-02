@@ -13,10 +13,8 @@ from django.core.files import File
 from django.db import models
 from polymorphic.models import PolymorphicModel
 
-from app.models.git_connections import GithubInstallation
+from app.models.git_connections import Branch, Repository
 from app.models.workspace import Workspace
-from app.services.code_repo_service import CodeRepoService
-from app.services.github_service import GithubService
 from app.utils.fields import encrypt
 from vinyl.lib.connect import (
     BigQueryConnector,
@@ -71,31 +69,20 @@ def get_sync_config(db_path):
 
 
 @contextmanager
-def repo_path(obj):
-    github_repo_id = getattr(obj, "github_repo_id", None)
-    github_installation_id = getattr(obj, "github_installation_id", None)
+def repo_path(obj, branch_id: str | None = None) -> tuple[str, Repository | None]:
+    repo: Repository | None = getattr(obj, "repo")
     project_path = getattr(obj, "project_path")
-    git_repo_url = getattr(obj, "git_repo_url", None)
-    if git_repo_url is not None:
-        deploy_key = getattr(obj, "deploy_key")
-        coderepo_service = CodeRepoService(obj.resource.workspace.id)
-        with coderepo_service.repo_context(
-            public_key=deploy_key,
-            git_repo_url=git_repo_url,
-        ) as temp_dir:
-            project_path = os.path.join(temp_dir, project_path)
-
-            yield project_path
-    elif github_repo_id is not None and github_installation_id is not None:
-        github_service = GithubService(
-            obj.resource.workspace.id, github_installation_id
-        )
-        repo = github_service.get_repository_by_id(github_repo_id)
-        with github_service.repo_context(repo.id) as (zip_contents, temp_dir):
-            project_path = os.path.join(temp_dir, os.listdir(temp_dir)[0], project_path)
-            yield project_path
+    if repo is None:
+        yield project_path, None
     else:
-        yield project_path
+        if branch_id is None:
+            branch = Branch.objects.get(branch_name=repo.main_branch_name, repo=repo)
+
+        else:
+            branch = Branch.objects.get(id=branch_id, repo=repo)
+        git_repo = branch.get_repo()
+        project_path = os.path.join(git_repo.working_tree_dir, project_path)
+        yield project_path, git_repo
 
 
 class Resource(models.Model):
@@ -381,9 +368,9 @@ class LookerDetails(ResourceDetails):
     client_secret = encrypt(models.CharField(max_length=255, blank=False))
     github_repo_id = encrypt(models.CharField(max_length=255, null=True))
     project_path = models.CharField(max_length=255, null=True)
-    github_installation = models.ForeignKey(
-        GithubInstallation, null=True, on_delete=models.CASCADE
-    )
+
+    # relationships
+    repo = models.ForeignKey(Repository, on_delete=models.CASCADE, null=True)
 
     @property
     def venv_path(self):
@@ -440,7 +427,7 @@ class LookerDetails(ResourceDetails):
 
             else:
                 # add in lookml configs, may need to use github
-                with repo_path(self) as project_path:
+                with repo_path(self) as (project_path, _):
                     config_path_lookml = os.path.join(temp_dir, "lookml.yml")
                     config_lookml = self.get_datahub_config_lookml(
                         db_path, project_path
@@ -524,13 +511,6 @@ class MetabaseDetails(ResourceDetails):
 ## DBT polymorphisms
 class DBTCoreDetails(DBTResource):
     subtype = models.CharField(max_length=255, default=ResourceSubtype.DBT)
-    github_installation = models.ForeignKey(
-        GithubInstallation, null=True, on_delete=models.CASCADE
-    )
-    github_repo_id = encrypt(models.CharField(max_length=255, null=True))
-    deploy_key = encrypt(models.TextField(null=True))
-    git_repo_url = models.CharField(max_length=255, null=True)
-    main_git_branch = models.CharField(max_length=255, null=True)
     project_path = models.CharField(max_length=255, blank=False)
     database = encrypt(models.CharField(max_length=255, blank=False))
     schema = encrypt(models.CharField(max_length=255, blank=False))
@@ -540,6 +520,9 @@ class DBTCoreDetails(DBTResource):
         choices=[(v, v.value) for v in DBTVersion], max_length=255, blank=False
     )
     env_vars = encrypt(models.JSONField(null=True))
+
+    # relationships
+    repo = models.ForeignKey(Repository, on_delete=models.CASCADE, null=True)
 
     def save(self, *args, **kwargs):
         if isinstance(self.version, DBTVersion):
@@ -551,21 +534,23 @@ class DBTCoreDetails(DBTResource):
     # Unless you're running tenant-agnostic operations, you probably
     # want to use dbt_context_git_repo below
     @contextmanager
-    def dbt_repo_context(self):
+    def dbt_repo_context(self, branch_id: str | None = None):
         env_vars = self.env_vars or {}
         dialect_str = self.resource.details.subtype
-        with repo_path(self) as project_path:
-            with open(os.path.join(project_path, "dbt_project.yml"), "r") as f:
+        with repo_path(self, branch_id) as (project_path, git_repo):
+            dbt_project_yml_path = os.path.join(project_path, "dbt_project.yml")
+            with open(dbt_project_yml_path, "r") as f:
                 contents = yaml.load(f, Loader=yaml.FullLoader)
-            profile_name = contents["profile"]
+                profile_name = contents["profile"]
             with tempfile.TemporaryDirectory() as dbt_profiles_dir:
-                with open(os.path.join(dbt_profiles_dir, "profiles.yml"), "w") as f:
+                dbt_profiles_path = os.path.join(dbt_profiles_dir, "profiles.yml")
+                with open(dbt_profiles_path, "w") as f:
                     profile_contents = self.resource.details.get_dbt_profile_contents(
                         self
                     )
                     adj_profile_contents = {profile_name: profile_contents}
                     yaml.dump(adj_profile_contents, f)
-                with open(os.path.join(dbt_profiles_dir, "profiles.yml"), "r") as f:
+                with open(dbt_profiles_path, "r") as f:
                     yield (
                         DBTProject(
                             project_path,
@@ -575,42 +560,11 @@ class DBTCoreDetails(DBTResource):
                             env_vars={} if env_vars is None else env_vars,
                         ),
                         project_path,
+                        git_repo,
                     )
 
-    @contextmanager
-    def dbt_context_git_repo(self, user_id: str):
-        env_vars = self.env_vars or {}
-        dialect_str = self.resource.details.subtype
-        service = CodeRepoService(self.resource.workspace.id)
-        repo = service.get_repo(
-            user_id=user_id,
-            public_key=self.deploy_key,
-            git_repo_url=self.git_repo_url,
-        )
-        with open(os.path.join(repo.working_tree_dir, "dbt_project.yml"), "r") as f:
-            contents = yaml.load(f, Loader=yaml.FullLoader)
-            profile_name = contents["profile"]
-            with tempfile.TemporaryDirectory() as dbt_profiles_dir:
-                with open(os.path.join(dbt_profiles_dir, "profiles.yml"), "w") as f:
-                    profile_contents = self.resource.details.get_dbt_profile_contents(
-                        self
-                    )
-                    adj_profile_contents = {profile_name: profile_contents}
-                    yaml.dump(adj_profile_contents, f)
-                with open(os.path.join(dbt_profiles_dir, "profiles.yml"), "r") as f:
-                    yield (
-                        DBTProject(
-                            repo.working_tree_dir,
-                            DBTDialect._value2member_map_[dialect_str],
-                            self.version,
-                            dbt_profiles_dir=dbt_profiles_dir,
-                            env_vars={} if env_vars is None else env_vars,
-                        ),
-                        repo,
-                    )
-
-    def upload_artifacts(self):
-        with self.dbt_repo_context() as (dbtproj, project_path):
+    def upload_artifacts(self, branch_id: str | None = None):
+        with self.dbt_repo_context(branch_id) as (dbtproj, project_path, _):
             stdout, stderr, success = dbtproj.dbt_compile(
                 models_only=True, update_manifest=True
             )

@@ -13,7 +13,6 @@ from app.models import (
     ColumnLink,
     DatabricksDetails,
     DBTCoreDetails,
-    GithubInstallation,
     LookerDetails,
     Notebook,
     PostgresDetails,
@@ -48,21 +47,6 @@ class InvitationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Invitation
         fields = ["id", "email", "inviter_id", "accepted"]
-
-
-class GithubInstallationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = GithubInstallation
-        fields = [
-            "id",
-            "workspace_id",
-            "user_id",
-            "ssh_key",
-            "git_url",
-            "git_repo_type",
-            "main_git_branch",
-            "name",
-        ]
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -159,7 +143,6 @@ class ColumnSerializer(serializers.ModelSerializer):
 
 # minified asset serializers for listing in the asset tree
 class AssetIndexSerializer(serializers.ModelSerializer):
-
     column_count = serializers.IntegerField(read_only=True)
     unused_columns_count = serializers.IntegerField(read_only=True)
 

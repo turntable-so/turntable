@@ -5,7 +5,6 @@ from app.models import (
     BigqueryDetails,
     DatabricksDetails,
     DBTCoreDetails,
-    GithubInstallation,
     LookerDetails,
     RedshiftDetails,
     Resource,
@@ -210,8 +209,6 @@ def create_dbt_n(resource: Resource, n, force_db: bool = False):
     assert schema, f"must provide DBT_{n}_SCHEMA to use this test"
     assert dbt_version, f"must provide DBT_{n}_VERSION to use this test"
 
-    github_installation_id = os.getenv(f"DBT_{n}_GITHUB_INSTALLATION_ID")
-    github_repo_id = os.getenv(f"DBT_{n}_GITHUB_REPO_ID")
     project_path = os.getenv(f"DBT_{n}_PROJECT_PATH", ".")
 
     if force_db:
@@ -220,32 +217,22 @@ def create_dbt_n(resource: Resource, n, force_db: bool = False):
         else:
             raise ValueError("force_db is only supported for BigQuery resources")
 
-    if github_installation_id:
-        try:
-            github_installation = GithubInstallation.objects.get(
-                id=github_installation_id
-            )
-        except GithubInstallation.DoesNotExist:
-            github_installation = GithubInstallation.objects.create(
-                id=github_installation_id, workspace=resource.workspace
-            )
-
     dbt_major, dbt_minor = dbt_version.split(".")
     other_schemas = os.getenv(f"DBT_{n}_OTHER_SCHEMAS")
     if other_schemas:
         other_schemas = json.loads(other_schemas)
 
-    for dbtres in resource.dbtresource_set.all():
-        dbt_resource_already_created = (
-            (
-                not github_installation_id
-                or dbtres.github_installation == github_installation
-            )
-            and (not github_repo_id or dbtres.github_repo_id == github_repo_id)
-            and (project_path == dbtres.project_path)
-        )
-        if dbt_resource_already_created:
-            return resource
+    # for dbtres in resource.dbtresource_set.all():
+    #     dbt_resource_already_created = (
+    #         (
+    #             not github_installation_id
+    #             or dbtres.github_installation == github_installation
+    #         )
+    #         and (not github_repo_id or dbtres.github_repo_id == github_repo_id)
+    #         and (project_path == dbtres.project_path)
+    #     )
+    #     if dbt_resource_already_created:
+    return resource
 
     DBTCoreDetails(
         resource=resource,
@@ -277,9 +264,9 @@ def create_looker_n(workspace, n):
 
     looker_secret_json = json.loads(looker_secret)
 
-    github_installation, _ = GithubInstallation.objects.update_or_create(
-        id=github_installation_id, workspace=workspace
-    )
+    # github_installation, _ = GithubInstallation.objects.update_or_create(
+    #     id=github_installation_id, workspace=workspace
+    # )
 
     looker, _ = Resource.objects.update_or_create(
         name=resource_name, type=ResourceType.BI, workspace=workspace
@@ -290,7 +277,7 @@ def create_looker_n(workspace, n):
             base_url=looker_url,
             client_id=looker_secret_json["client_id"],
             client_secret=looker_secret_json["client_secret"],
-            github_installation=github_installation,
+            # github_installation=github_installation,
             github_repo_id=github_repo_id,
             project_path=os.getenv(f"LOOKER_{n}_PROJECT_PATH", "."),
         ).save()

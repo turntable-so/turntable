@@ -2,12 +2,11 @@ import json
 import os
 
 import pytest
-from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework.test import APIClient
 
 from app.models import User, Workspace
-from app.models.git_connections import SSHKey
+from app.models.git_connections import Repository, SSHKey
 from app.models.resources import BigqueryDetails, DBTCoreDetails, Resource, ResourceType
 from app.services.code_repo_service import CodeRepoService
 from vinyl.lib.dbt_methods import DBTVersion
@@ -15,7 +14,6 @@ from vinyl.lib.dbt_methods import DBTVersion
 
 @pytest.mark.django_db
 class CodeRepoServiceTests(TestCase):
-
     git_repo_url = "git@github.com:turntable-so/jaffle-shop.git"
     # test keys, not used in production
     test_ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDfjTM6KSLm6fVYjLNYosPupbjDwavf6thtHje+pBg0QLgn9hR2W0kiHRoomMIc8OBVoYk8xzQOQDGlx4uoobdQwiONwEqAzdisKVsZSW1mejuBWpxxkzTQx3rVtAmy3bSspiGIqwFWbKAiWoHTvSq6XXriHrs4iZX1f9cnp6AE0FdG3xWYpYlC3wmeK010F/9U2RVYTMikUyPj8CPmNmH0E00f00Nlk43EjwITpcNt5nzzL8Mvet7c2Bh4udp2WVItnK0Jh4G1yYxKg7835vcRzVRwJiARbA9i7+9fzmHZHWEJucSw04M98pPdWyokBHpdRj8hBTXgjh5+wN92SVwL"
@@ -36,9 +34,13 @@ class CodeRepoServiceTests(TestCase):
             public_key=self.test_ssh_public_key,
             private_key=self.test_ssh_private_key,
         )
+        self.repo = Repository.objects.create(
+            workspace=self.workspace,
+            url=self.git_repo_url,
+            branch_name="main",
+        )
 
     def test_repo_connection(self):
-
         coderepo_service = CodeRepoService(workspace_id=self.workspace.id)
         res = coderepo_service.test_repo_connection(
             public_key=self.test_ssh_public_key,
