@@ -131,11 +131,15 @@ const DbtCoreConfig = ({ resources, form }: { resources: any[], form: any }) => 
 
 export default function DbtProjectForm({ resource, details }: { resource?: any, details?: any }) {
     const router = useRouter()
-    const { resources } = useAppContext()
+    const { resources, fetchResources } = useAppContext()
     const { user } = useSession()
     const [connectionCheckStatus, setConnectionCheckStatus] = useState<'IDLE' | 'RUNNING' | 'FAIL' | 'SUCCESS'>('IDLE');
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [selectedTab, setSelectedTab] = useState<'remote' | 'local'>('remote')
+
+    useEffect(() => {
+        fetchResources()
+    }, [])
 
     const RemoteFormSchema = z.object({
         database_resource_id: z.string().min(1, {
