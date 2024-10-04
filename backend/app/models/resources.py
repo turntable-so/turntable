@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import shutil
 import tempfile
 import uuid
 from contextlib import contextmanager
@@ -13,7 +14,7 @@ from django.core.files import File
 from django.db import models
 from polymorphic.models import PolymorphicModel
 
-from app.models.git_connections import Branch, Repository
+from app.models.git_connections import Repository
 from app.models.workspace import Workspace
 from app.utils.fields import encrypt
 from vinyl.lib.connect import (
@@ -69,18 +70,26 @@ def get_sync_config(db_path):
 
 
 @contextmanager
-def repo_path(obj, branch_id: str | None = None) -> tuple[str, Repository | None]:
-    repo: Repository | None = getattr(obj, "repo")
+def repo_path(
+    obj, isolate: bool = False, branch_id: str | None = None
+) -> tuple[str, Repository | None]:
+    repo: Repository | None = getattr(obj, "repository")
     project_path = getattr(obj, "project_path")
     if repo is None:
-        yield project_path, None
-    else:
-        if branch_id is None:
-            branch = Branch.objects.get(branch_name=repo.main_branch_name, repo=repo)
+        if isolate:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                temp_project_path = os.path.join(
+                    temp_dir, os.path.basename(project_path)
+                )
+                shutil.copytree(project_path, temp_project_path)
+                yield temp_project_path, None
+                return
 
-        else:
-            branch = Branch.objects.get(id=branch_id, repo=repo)
-        git_repo = branch.get_repo()
+        yield project_path, None
+        return
+
+    branch = repo.main_branch if branch_id is None else repo.get_branch(branch_id)
+    with branch.repo_context(isolate=isolate) as (git_repo, _):
         project_path = os.path.join(git_repo.working_tree_dir, project_path)
         yield project_path, git_repo
 
@@ -370,7 +379,9 @@ class LookerDetails(ResourceDetails):
     project_path = models.CharField(max_length=255, null=True)
 
     # relationships
-    repo = models.ForeignKey(Repository, on_delete=models.CASCADE, null=True)
+    repository = models.ForeignKey(
+        Repository, on_delete=models.CASCADE, null=True, default=None
+    )
 
     @property
     def venv_path(self):
@@ -427,7 +438,7 @@ class LookerDetails(ResourceDetails):
 
             else:
                 # add in lookml configs, may need to use github
-                with repo_path(self) as (project_path, _):
+                with repo_path(self, isolate=True) as (project_path, _):
                     config_path_lookml = os.path.join(temp_dir, "lookml.yml")
                     config_lookml = self.get_datahub_config_lookml(
                         db_path, project_path
@@ -522,7 +533,9 @@ class DBTCoreDetails(DBTResource):
     env_vars = encrypt(models.JSONField(null=True))
 
     # relationships
-    repo = models.ForeignKey(Repository, on_delete=models.CASCADE, null=True)
+    repository = models.ForeignKey(
+        Repository, on_delete=models.CASCADE, null=True, default=None
+    )
 
     def save(self, *args, **kwargs):
         if isinstance(self.version, DBTVersion):
@@ -534,10 +547,13 @@ class DBTCoreDetails(DBTResource):
     # Unless you're running tenant-agnostic operations, you probably
     # want to use dbt_context_git_repo below
     @contextmanager
-    def dbt_repo_context(self, branch_id: str | None = None):
+    def dbt_repo_context(self, isolate: bool = False, branch_id: str | None = None):
         env_vars = self.env_vars or {}
         dialect_str = self.resource.details.subtype
-        with repo_path(self, branch_id) as (project_path, git_repo):
+        with repo_path(self, isolate=isolate, branch_id=branch_id) as (
+            project_path,
+            git_repo,
+        ):
             dbt_project_yml_path = os.path.join(project_path, "dbt_project.yml")
             with open(dbt_project_yml_path, "r") as f:
                 contents = yaml.load(f, Loader=yaml.FullLoader)
@@ -564,7 +580,11 @@ class DBTCoreDetails(DBTResource):
                     )
 
     def upload_artifacts(self, branch_id: str | None = None):
-        with self.dbt_repo_context(branch_id) as (dbtproj, project_path, _):
+        with self.dbt_repo_context(isolate=True, branch_id=branch_id) as (
+            dbtproj,
+            project_path,
+            _,
+        ):
             stdout, stderr, success = dbtproj.dbt_compile(
                 models_only=True, update_manifest=True
             )

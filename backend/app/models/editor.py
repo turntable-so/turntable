@@ -47,10 +47,7 @@ class DBTQuery(models.Model):
         limit: int | None = _QUERY_LIMIT,
     ):
         branch_id = self.branch.id if self.branch else None
-        with self.dbtresource.dbt_repo_context(branch_id) as (
-            dbtproj,
-            project_path,
-        ):
+        with self.dbtresource.dbt_repo_context(branch_id) as (dbtproj, project_path, _):
             if use_fast_compile and (sql := dbtproj.fast_compile(self.dbt_sql)):
                 connector = self.dbtresource.resource.details.get_connector()
                 df = connector.sql_to_df(sql, limit=limit)

@@ -17,6 +17,7 @@ from app.models import (
     Notebook,
     PostgresDetails,
     RedshiftDetails,
+    Repository,
     Resource,
     ResourceDetails,
     SnowflakeDetails,
@@ -267,7 +268,7 @@ class ResourceDetailsSerializer(serializers.ModelSerializer):
 class LookerDetailsSerializer(ResourceDetailsSerializer):
     class Meta:
         model = LookerDetails
-        fields = ["base_url", "client_id", "client_secret", "resource"]
+        fields = ["base_url", "client_id", "client_secret", "resource", "repository_id"]
 
 
 class BigQueryDetailsSerializer(ResourceDetailsSerializer):
@@ -333,9 +334,7 @@ class DBTCoreDetailsSerializer(ResourceDetailsSerializer):
     class Meta:
         model = DBTCoreDetails
         fields = [
-            "git_repo_url",
-            "main_git_branch",
-            "deploy_key",
+            "repository_id",
             "project_path",
             "threads",
             "version",
@@ -376,3 +375,9 @@ class ResourceSerializer(serializers.HyperlinkedModelSerializer):
 
     def get_has_dbt(self, obj):
         return obj.has_dbt
+
+
+class RepositorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Repository
+        fields = ["id", "main_branch_name", "git_repo_url"]

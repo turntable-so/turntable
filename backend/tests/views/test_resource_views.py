@@ -6,7 +6,8 @@ from rest_framework.test import APIClient
 from api.serializers import (
     ResourceSerializer,
 )
-from app.models import Resource, User, Workspace
+from app.models import Repository, Resource, SSHKey, User, Workspace
+from tests.models.test_git_connections import GitConnectionHelper
 
 User = get_user_model()
 
@@ -22,6 +23,20 @@ class ResourceViewSetTestCases(TestCase):
         self.workspace.users.add(self.user)
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
+
+    def get_dbt_repository_id(self):
+        ssh_key = SSHKey.objects.create(
+            workspace=self.workspace,
+            public_key=GitConnectionHelper.test_ssh_public_key,
+            private_key=GitConnectionHelper.test_ssh_private_key,
+        )
+        repository = Repository.objects.create(
+            workspace=self.workspace,
+            main_branch_name=GitConnectionHelper.main_branch_name,
+            git_repo_url=GitConnectionHelper.git_repo_url,
+            ssh_key=ssh_key,
+        )
+        return repository.id
 
     def test_list_resources(self):
         Resource.objects.create(name="test resouce", workspace=self.workspace)
@@ -201,6 +216,7 @@ class ResourceViewSetTestCases(TestCase):
 
     def test_create_dbt_resource(self):
         resource_id = self._create_resource()
+        repository_id = self.get_dbt_repository_id()
         response = self.client.get("/resources/")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data[0]["has_dbt"], False)
@@ -212,8 +228,7 @@ class ResourceViewSetTestCases(TestCase):
             "subtype": "dbt",
             "config": {
                 "resource_id": resource_id,
-                "git_repo_url": "git@github.com:turntable-so/dbt.git",
-                "main_git_branch": "main",
+                "repository_id": repository_id,
                 "project_path": "/",
                 "threads": 1,
                 "version": "1.6",
@@ -231,6 +246,7 @@ class ResourceViewSetTestCases(TestCase):
 
     def test_create_dbt_resource_get_details(self):
         resource_id = self._create_resource()
+        repository_id = self.get_dbt_repository_id()
         data = {
             "resource": {
                 "type": "db",
@@ -238,8 +254,7 @@ class ResourceViewSetTestCases(TestCase):
             "subtype": "dbt",
             "config": {
                 "resource_id": resource_id,
-                "git_repo_url": "git@github.com:turntable-so/dbt.git",
-                "main_git_branch": "main",
+                "repository_id": repository_id,
                 "project_path": "/",
                 "threads": 1,
                 "version": "1.6",
@@ -256,6 +271,7 @@ class ResourceViewSetTestCases(TestCase):
 
     def test_update_dbt(self):
         resource_id = self._create_resource()
+        repository_id = self.get_dbt_repository_id()
         data = {
             "resource": {
                 "type": "db",
@@ -263,8 +279,7 @@ class ResourceViewSetTestCases(TestCase):
             "subtype": "dbt",
             "config": {
                 "resource_id": resource_id,
-                "git_repo_url": "git@github.com:turntable-so/dbt.git",
-                "main_git_branch": "main",
+                "repository_id": repository_id,
                 "project_path": "/",
                 "threads": 1,
                 "version": "1.6",
@@ -279,9 +294,7 @@ class ResourceViewSetTestCases(TestCase):
             "subtype": "dbt",
             "config": {
                 "resource_id": resource_id,
-                "deploy_key": "ssh-key",
-                "git_repo_url": "git@github.com:turntable-so/dbt.git",
-                "main_git_branch": "main",
+                "repository_id": repository_id,
                 "project_path": "/",
                 "threads": 1,
                 "version": "1.6",

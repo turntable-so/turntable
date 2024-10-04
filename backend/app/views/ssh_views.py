@@ -1,9 +1,5 @@
 import logging
-import os
-import subprocess
-from random import randint
 
-from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -15,17 +11,14 @@ logger = logging.getLogger(__name__)
 
 
 class SSHViewSet(APIView):
-
     def get(self, request):
         action = request.query_params.get("action")
         workspace_id = request.query_params.get("tenant_id")
 
         logger.debug(f"Received action: {action}, tenant_id: {workspace_id}")
 
-        repo_service = CodeRepoService(workspace_id)
-
         if action == "generate_ssh_key":
-            resp = repo_service.generate_deploy_key()
+            resp = SSHKey.generate_deploy_key(workspace_id)
             return Response(resp, status=201)
         else:
             return Response({"error": "Invalid action"}, status=400)

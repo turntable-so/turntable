@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+import shutil
 import subprocess
 import tempfile
 import uuid
@@ -9,7 +10,7 @@ from contextlib import contextmanager
 from random import randint
 
 from django.conf import settings
-from django.db import models
+from django.db import models, transaction
 from git import Repo as GitRepo
 from git.exc import GitCommandError
 
@@ -68,13 +69,38 @@ class Repository(models.Model):
             models.Index(fields=["workspace_id"]),
         ]
 
+    @transaction.atomic
     def save(self, *args, **kwargs):
+        # save repo
+        super().save(*args, **kwargs)
+
         # create main branch
         Branch.objects.get_or_create(
-            repo=self, branch_name=self.main_branch_name, workspace=self.workspace
+            repository=self, branch_name=self.main_branch_name, workspace=self.workspace
         )
+
+    # override main branch id. Useful for tests
+    def save_with_main_branch_id(self, main_branch_id: str, *args, **kwargs):
         # save repo
-        super().save(self, *args, **kwargs)
+        super().save(*args, **kwargs)
+
+        # create main branch
+        Branch.objects.get_or_create(
+            id=main_branch_id,
+            repository=self,
+            branch_name=self.main_branch_name,
+            workspace=self.workspace,
+        )
+
+    @property
+    def main_branch(self) -> Branch:
+        return self.branches.get(
+            branch_name=self.main_branch_name,
+            workspace=self.workspace,
+        )
+
+    def get_branch(self, branch_id: str) -> Branch:
+        return self.branches.get(id=branch_id, workspace=self.workspace)
 
     def _run_ssh_command(self, command: list):
         ssh_key_text = self.ssh_key.private_key
@@ -128,11 +154,14 @@ class Repository(models.Model):
         return self._run_ssh_command(command=["git", "ls-remote", self.git_repo_url])
 
     @contextmanager
-    def with_ssh_env(self):
-        temp_key_file = tempfile.NamedTemporaryFile(mode="w", delete=False)
-        try:
+    def with_ssh_env(self, env_override: dict[str, str] | None = None):
+        if env_override is not None:
+            yield env_override
+            return
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".pem") as temp_key_file:
             temp_key_file.write(self.ssh_key.private_key)
-            temp_key_file.close()
+            temp_key_file.flush()
             os.chmod(temp_key_file.name, 0o400)
 
             git_ssh_cmd = f"ssh -i {temp_key_file.name} -o StrictHostKeyChecking=no"
@@ -140,8 +169,6 @@ class Repository(models.Model):
             env["GIT_SSH_COMMAND"] = git_ssh_cmd
 
             yield env
-        finally:
-            os.remove(temp_key_file.name)
 
 
 class Branch(models.Model):
@@ -149,83 +176,182 @@ class Branch(models.Model):
     branch_name = models.CharField(max_length=255)
 
     # relationships
-    repo = models.ForeignKey(Repository, on_delete=models.CASCADE)
+    repository = models.ForeignKey(
+        Repository, on_delete=models.CASCADE, related_name="branches"
+    )
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
 
     @property
     def is_main(self):
-        return self.branch_name == self.repo.main_git_branch
+        return self.branch_name == self.repository.main_branch_name
 
-    def get_repo(self) -> GitRepo:
-        path = self._generate_code_repo_path()
-
-        if os.path.exists(path):
-            return GitRepo(path)
-
-        with self.with_ssh_env() as env:
-            repo = GitRepo.clone_from(self.repo.git_repo_url, path, env=env)
-
-            # Fetch the latest changes from the remote
-            repo.remotes.origin.fetch(env=env)
-
-            # check if branch already exists in git, and create if not
-            if self.branch_name not in repo.heads:
-                self._create_git_branch(repo, env)
-
-            # switch to the branch
-            self._switch_git_branch(repo, env)
-
-        return repo
-
-    def _generate_code_repo_path(self):
+    @contextmanager
+    def _code_repo_path(self, isolate: bool = False):
         path = os.path.join(
             "ws",
-            str(self.workspace_id),
-            str(self.repo.id),
+            str(self.workspace.id),
+            str(self.repository.id),
             str(self.id),
         )
-        if os.environ["EPHEMERAL_FILESYSTEM"] == "True":
-            return os.path.join(tempfile.gettempdir(), path)
+        if not isolate:
+            yield os.path.join(settings.MEDIA_ROOT, path)
+            return
 
-        return os.path.join(settings.MEDIA_ROOT, path)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            yield os.path.join(temp_dir, path)
 
-    def _create_git_branch(self, repo: GitRepo, ssh_env=None) -> str:
-        if ssh_env is None:
-            ssh_env = self.repo.with_ssh_env()
-        with ssh_env as env:
-            # Fetch the latest changes from the remote
+    @contextmanager
+    def repo_context(
+        self,
+        isolate: bool = False,
+        repo_override: GitRepo | None = None,
+        env_override: dict[str, str] | None = None,
+    ) -> tuple[GitRepo, dict[str, str] | None]:
+        if repo_override is not None and env_override is not None:
+            yield repo_override, env_override
+            return
+
+        elif repo_override is not None:
+            with self.repository.with_ssh_env(env_override) as env:
+                yield repo_override, env
+                return
+
+        with self._code_repo_path(isolate) as path:
+            if os.path.exists(path) and ".git" in os.listdir(path):
+                yield GitRepo(path), env_override
+                return
+
+            with self.repository.with_ssh_env(env_override) as env:
+                repo = GitRepo.clone_from(self.repository.git_repo_url, path, env=env)
+
+                # Fetch the latest changes from the remote
+                repo.remotes.origin.fetch(env=env)
+
+                # check if branch already exists in git, and create if not
+                remote_branches = [ref.remote_head for ref in repo.remote().refs]
+                if self.branch_name not in remote_branches:
+                    self.create_git_branch(
+                        isolate=isolate, repo_override=repo, env_override=env
+                    )
+
+                # switch to the branch
+                self.switch_to_git_branch(
+                    isolate=isolate, repo_override=repo, env_override=env
+                )
+
+                yield repo, env_override
+
+    def create_git_branch(
+        self,
+        isolate: bool = False,
+        repo_override: GitRepo | None = None,
+        env_override: dict[str, str] | None = None,
+    ) -> str:
+        with self.repo_context(isolate, repo_override, env_override) as (repo, env):
+            # Fetch the latest changes from the remoteå
             repo.remotes.origin.fetch(env=env)
+            remote_names = [r.remote_name for r in repo.remotes.origin.refs]
+            if self.branch_name in remote_names:
+                raise ValueError(f"Branch {self.branch_name} already exists")
+
             # Create and checkout the new branch
-            try:
-                new_branch = repo.create_head(self.branch_name)
-                repo.set_tracking_branch(repo.remotes.origin.refs[self.branch_name])
-                new_branch.checkout()
-                # Push the new branch to the remote
-                repo.git.push("--set-upstream", "origin", self.branch_name, env=env)
-                return self.branch_name
-            except GitCommandError as e:
-                # Handle errors (e.g., branch already exists)
-                print(f"Error creating branch: {e}")
-                return None
+            new_branch = repo.create_head(self.branch_name)
+            new_branch.checkout()
 
-    def _switch_git_branch(self, repo: GitRepo, ssh_env=None) -> str:
-        if ssh_env is None:
-            ssh_env = self.repo.with_ssh_env()
+            # Push the new branch to the remote and set tracking branch
+            repo.git.push("--set-upstream", "origin", self.branch_name, env=env)
 
-        with ssh_env as env:
+            return self.branch_name
+
+    def switch_to_git_branch(
+        self,
+        isolate: bool = False,
+        repo_override: GitRepo | None = None,
+        env_override: dict[str, str] | None = None,
+    ) -> str:
+        with self.repo_context(isolate, repo_override, env_override) as (repo, env):
             # Fetch the latest changes from the remote
             repo.remotes.origin.fetch(env=env)
+            repo.git.checkout(self.branch_name, env=env)
+            return self.branch_name
 
-            try:
-                branch = repo.heads[self.branch_name]
-                branch.checkout()
-                return self.branch_name
-            except GitCommandError as e:
-                # Handle errors (e.g., branch doesn't exist)
-                print(f"Error switching branch: {e}")
-                return None
+    def git_pull(
+        self,
+        isolate: bool = False,
+        repo_override: GitRepo | None = None,
+        env_override: dict[str, str] | None = None,
+    ) -> str:
+        with self.repo_context(isolate, repo_override, env_override) as (
+            repo,
+            env,
+        ):
+            if repo.is_dirty(untracked_files=True):
+                raise GitCommandError(
+                    "DIRTY_WORKING_DIRECTORY",
+                    "The working directory has uncommitted changes.",
+                )
 
-    class Meta:
-        indexes = [
-            models.Index(fields=["workspace_id"]),
-        ]
+            # Fetch the latest changes
+            repo.remotes.origin.fetch(env=env)
+
+            # Get the current branch
+            current_branch = repo.active_branch
+
+            # Pull the latest changes
+            repo.git.pull("origin", current_branch.name, env=env)
+
+            return True
+
+    def git_commit_and_push(
+        self,
+        commit_message: str,
+        isolate: bool = False,
+        repo_override: GitRepo | None = None,
+        env_override: dict[str, str] | None = None,
+    ) -> bool:
+        with self.repo_context(
+            isolate=isolate,
+            repo_override=repo_override,
+            env_override=env_override,
+        ) as (repo, env):
+            # Check if there are any changes to commit
+            if not repo.is_dirty(untracked_files=True):
+                print("No changes to commit.")
+                return False
+
+            # Add all changes
+            repo.git.add(A=True)
+            # Commit changes
+            repo.index.commit(commit_message)
+
+            # Get the current branch name
+            current_branch = repo.active_branch.name
+
+            # Fetch the latest changes from remote
+            repo.remotes.origin.fetch(env=env)
+
+            # Check if local branch is behind remote
+            if repo.is_ancestor(
+                repo.head.commit,
+                repo.remotes.origin.refs[current_branch].commit,
+            ):
+                # If behind, attempt to rebase
+                try:
+                    repo.git.rebase(f"origin/{current_branch}", env=env)
+                except GitCommandError:
+                    # If rebase fails, abort and return False
+                    repo.git.rebase("--abort")
+                    print("Failed to rebase. Please resolve conflicts manually.")
+                    return False
+
+            # Push changes to remote
+            origin = repo.remote(name="origin")
+            origin.push(current_branch, env=env)
+
+            print(f"Changes committed and pushed to branch '{current_branch}'.")
+            return True
+
+    def delete_files(self, isolate: bool = False):
+        with self._code_repo_path(isolate) as path:
+            if os.path.exists(path):
+                shutil.rmtree(path)
