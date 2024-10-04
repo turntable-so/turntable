@@ -96,7 +96,9 @@ def repo_path(
 
 class Resource(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
+    workspace = models.ForeignKey(
+        Workspace, on_delete=models.CASCADE, null=True, related_name="resources"
+    )
     name = models.TextField(null=True)
     type = models.TextField(choices=ResourceType.choices, null=True)
     created_at = models.DateTimeField(auto_now_add=True)

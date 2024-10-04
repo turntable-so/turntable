@@ -8,13 +8,16 @@ from workflows.metadata_sync import MetadataSyncWorkflow
 from workflows.utils.debug import ContextDebugger, WorkflowDebugger
 
 
-def run_test_sync(resources, recache: bool, use_cache: bool = False):
+def run_test_sync(
+    resources, recache: bool, use_cache: bool = False, db_read_path: str | None = None
+):
     for resource in resources:
         input = {
             "resource_id": resource.id,
         }
         if use_cache:
-            db_read_path = f"fixtures/datahub_dbs/{resource.details.subtype}.duckdb"
+            if db_read_path is None:
+                db_read_path = f"fixtures/datahub_dbs/{resource.details.subtype}.duckdb"
             with open(db_read_path, "rb") as f:
                 resource.datahub_db.save(db_read_path, f, save=True)
             MetadataSyncWorkflow().process_metadata(ContextDebugger({"input": input}))

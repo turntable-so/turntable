@@ -14,6 +14,7 @@ from vinyl.lib.connect import _QUERY_LIMIT
 
 
 class DBTQuery(models.Model):
+    user_id = models.CharField(max_length=255)
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True, null=True)

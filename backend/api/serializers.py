@@ -3,7 +3,6 @@ from djoser.serializers import UserCreateSerializer, UserSerializer
 from invitations.utils import get_invitation_model
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
-
 from app.models import (
     Asset,
     AssetLink,
@@ -53,23 +52,28 @@ class InvitationSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     current_workspace = serializers.SerializerMethodField()
     workspace_groups = WorkspaceGroupSerializer(many=True, read_only=True)
+    workspaces = serializers.SerializerMethodField()
 
     def get_current_workspace(self, obj):
         current_workspace = obj.current_workspace()
         if current_workspace:
+            from api.serializers import WorkspaceSerializer
+
             return WorkspaceSerializer(current_workspace, context=self.context).data
         return None
+
+    def get_workspaces(self, obj):
+        from api.serializers import WorkspaceSerializer
+
+        return WorkspaceSerializer(
+            obj.workspaces.all(), many=True, context=self.context
+        ).data
 
     class Meta:
         model = User
         fields = ["id", "email", "current_workspace", "workspaces", "workspace_groups"]
         extra_kwargs = {
             "url": {"view_name": "user-detail"},
-            "workspaces": {
-                "view_name": "workspace-detail",
-                "many": True,
-                "read_only": True,
-            },
             "workspace_groups": {
                 "view_name": "workspacegroup-detail",
                 "many": True,

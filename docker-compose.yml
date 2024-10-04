@@ -99,6 +99,7 @@ x-common-backend: &common-backend
       condition: service_healthy
   volumes:
     - .hatchetconfig:/.hatchetconfig
+    - code_repos:/data/code
 
 name: turntable
 
@@ -111,7 +112,7 @@ services:
     command: >
       /bin/sh -c "
       python manage.py migrate &&
-      uvicorn api.asgi:application --host 0.0.0.0 --port 8000"    
+      uvicorn api.asgi:application --host 0.0.0.0 --port 8000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/healthcheck/health/"]
       interval: 30s
@@ -133,7 +134,6 @@ services:
         condition: service_started
     environment:
       <<: [*next-credentials, *telemetry-credentials]
-
 
   postgres:
     image: pgvector/pgvector:pg16
@@ -264,6 +264,7 @@ volumes:
   hatchet_credentials_handoff:
   postgres_test_db_data:
   frontend_data:
+  code_repos:
 
 networks:
   default:

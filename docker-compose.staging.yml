@@ -105,7 +105,7 @@ services:
       file: docker-compose.dev-internal.yml
       service: createbuckets
     entrypoint: ["echo", "Service createbuckets disabled"]
-  
+
   minio:
     extends:
       file: docker-compose.dev-internal.yml
@@ -132,14 +132,12 @@ services:
     entrypoint: ["echo", "Service setup-hatchet disabled"]
     restart: no
 
-  
   create_hatchet_db:
     extends:
       file: docker-compose.dev-internal.yml
       service: create_hatchet_db
     entrypoint: ["echo", "Service create_hatchet_db disabled"]
     restart: no
-
 
 volumes:
   postgres_data:
@@ -149,7 +147,7 @@ volumes:
   hatchet_credentials_handoff:
   postgres_test_db_data:
   frontend_data:
-
+  code_repos:
 
 networks:
   default:

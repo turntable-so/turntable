@@ -20,9 +20,8 @@ x-postgres-test-db-credentials: &postgres-test-db-credentials
   POSTGRES_PORT: 5432
 
 x-hatchet-credentials: &hatchet-credentials
-  SERVER_LOGGER_LEVEL: warn
-  DATABASE_LOGGER_LEVEL: warn
-
+  SERVER_LOGGER_LEVEL: error
+  DATABASE_LOGGER_LEVEL: error
 name: turntable-dev
 
 services:
@@ -147,6 +146,7 @@ volumes:
   hatchet_credentials_handoff:
   postgres_test_db_data:
   frontend_data:
+  code_repos:
 
 networks:
   default:

@@ -16,7 +16,7 @@ services:
       /bin/sh -c "
       python manage.py migrate &&
       python manage.py seed_data &&
-      uvicorn api.asgi:application --host 0.0.0.0 --port 8000"   
+      uvicorn api.asgi:application --host 0.0.0.0 --port 8000"
     depends_on:
       ensure_populate_test_db:
         condition: service_completed_successfully
@@ -27,7 +27,7 @@ services:
     extends:
       file: docker-compose.yml
       service: web
-  
+
   redis:
     extends:
       file: docker-compose.yml
@@ -143,6 +143,7 @@ volumes:
   hatchet_credentials_handoff:
   postgres_test_db_data:
   frontend_data:
+  code_repos:
 
 networks:
   default:

@@ -455,3 +455,40 @@ export async function getSettings() {
 export async function getBackendUrl() {
   return getUrl();
 }
+
+export async function getBranches() {
+  const response = await fetcher(`/project/branches/`, {
+    cookies,
+    method: "GET",
+  });
+  return response.json();
+}
+
+
+export async function getFileIndex() {
+  const response = await fetcher(`/project/files/`, {
+    cookies,
+    method: "GET",
+  });
+  return response.json();
+}
+
+export async function fetchFileContents(path: string) {
+  const encodedPath = encodeURIComponent(path);
+  const response = await fetcher(`/project/files/?filepath=${encodedPath}`, {
+    cookies,
+    method: "GET",
+  });
+  return response.json();
+}
+
+export async function executeQueryPreview(dbtSql: string) {
+  const response = await fetcher(`/query/preview/`, {
+    cookies,
+    method: "POST",
+    body: {
+      query: dbtSql,
+    }
+  });
+  return response.json();
+}

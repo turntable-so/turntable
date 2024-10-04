@@ -21,7 +21,7 @@ import {
 } from "./ui/resizable";
 
 import { Tree } from "@/components/ui/tree";
-import { getAssetIcon, getLeafIcon } from "@/lib/utils";
+import { cn, getAssetIcon, getLeafIcon } from "@/lib/utils";
 import { Folder, Workflow } from "lucide-react";
 import MultiSelect from "./ui/multi-select";
 import { Asset } from "./ui/schema";
@@ -289,14 +289,19 @@ export default function ActionBar({
   };
 
   return (
-    <div className="text-muted-foreground w-full mt-1 h-screen flex flex-col">
-      <div className="sticky top-0 p-2 pt-4">
-        <div className="flex space-x-2">
+    <div className="text-muted-foreground w-full h-screen flex flex-col">
+      <div
+        className={cn(
+          "flex h-[52px] items-center justify-center",
+          "h-[52px]"
+        )}
+      >
+        <div className="flex space-x-2 w-full px-4">
           <input
             ref={searchRef}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="focus:outline-none bg-gray-100 w-full text-sm rounded-md py-1 px-2 border"
+            className="focus:outline-none bg-gray-100 w-full text-sm rounded-md py-2 px-2 border"
             placeholder="Filter assets"
           />
         </div>
