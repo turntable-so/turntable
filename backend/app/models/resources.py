@@ -25,7 +25,7 @@ from vinyl.lib.connect import (
     RedshiftConnector,
     SnowflakeConnector,
 )
-from vinyl.lib.dbt import DBTProject
+from vinyl.lib.dbt import DBTProject, DBTTransition
 from vinyl.lib.dbt_methods import DBTDialect, DBTVersion
 from vinyl.lib.utils.files import save_orjson
 from vinyl.lib.utils.process import run_and_capture_subprocess
@@ -76,17 +76,12 @@ def repo_path(
     repo: Repository | None = getattr(obj, "repository")
     project_path = getattr(obj, "project_path")
     if repo is None:
-        if isolate:
-            with tempfile.TemporaryDirectory() as temp_dir:
-                temp_project_path = os.path.join(
-                    temp_dir, os.path.basename(project_path)
-                )
-                shutil.copytree(project_path, temp_project_path)
-                yield temp_project_path, None
-                return
-
-        yield project_path, None
-        return
+        # local repo always treated as isolated
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_project_path = os.path.join(temp_dir, os.path.basename(project_path))
+            shutil.copytree(project_path, temp_project_path)
+            yield temp_project_path, None
+            return
 
     branch = repo.main_branch if branch_id is None else repo.get_branch(branch_id)
     with branch.repo_context(isolate=isolate) as (git_repo, _):
@@ -580,6 +575,22 @@ class DBTCoreDetails(DBTResource):
                         project_path,
                         git_repo,
                     )
+
+    @contextmanager
+    def dbt_transition_context(
+        self, isolate: bool = False, branch_id: str | None = None
+    ):
+        with self.dbt_repo_context(isolate=isolate) as (
+            before,
+            _,
+            _,
+        ):
+            with self.dbt_repo_context(isolate=isolate, branch_id=branch_id) as (
+                after,
+                project_path,
+                git_repo,
+            ):
+                yield DBTTransition(before, after), project_path, git_repo
 
     def upload_artifacts(self, branch_id: str | None = None):
         with self.dbt_repo_context(isolate=True, branch_id=branch_id) as (

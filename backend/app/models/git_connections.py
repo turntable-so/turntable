@@ -102,6 +102,9 @@ class Repository(models.Model):
     def get_branch(self, branch_id: str) -> Branch:
         return self.branches.get(id=branch_id, workspace=self.workspace)
 
+    def get_branch_by_name(self, branch_name: str) -> Branch:
+        return self.branches.get(branch_name=branch_name, workspace=self.workspace)
+
     def _run_ssh_command(self, command: list):
         ssh_key_text = self.ssh_key.private_key
         private_key_path = str(randint(1000, 9999)) + ".pem"
@@ -180,6 +183,9 @@ class Branch(models.Model):
         Repository, on_delete=models.CASCADE, related_name="branches"
     )
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ["branch_name", "repository", "workspace"]
 
     @property
     def is_main(self):

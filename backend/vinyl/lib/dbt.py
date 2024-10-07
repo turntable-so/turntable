@@ -47,6 +47,8 @@ class DBTProject(object):
     version: DBTVersion
     version_list: list[int]
     multitenant: bool
+    deferral_target_path: str | None
+    defer: bool
 
     def __init__(
         self,
@@ -59,6 +61,7 @@ class DBTProject(object):
         catalog_req: bool = False,
         compile_exclusions: list[str] | None = None,
         env_vars: dict[str, str] = {},
+        deferral_target_path: str | None = None,
     ):
         self.dbt_project_dir = adjust_path(dbt_project_dir)
         self.dialect = dialect
@@ -124,11 +127,13 @@ class DBTProject(object):
             return False
         return True
 
-    def mount_manifest(self, read=True, force_read=False, force_run=False):
+    def mount_manifest(
+        self, read=True, force_read=False, force_run=False, defer: bool = False
+    ):
         if hasattr(self, "manifest") and not force_run and not force_read:
             return "", "", True
         elif force_run or not os.path.exists(self.manifest_path):
-            return self.dbt_parse()
+            return self.dbt_parse(defer=defer)
 
         if read:
             self.manifest = load_orjson(self.manifest_path)
@@ -137,6 +142,7 @@ class DBTProject(object):
             del self.manifest
 
     def build_model_graph(self, include_sources: bool = False, rebuild=False) -> DAG:
+        self.mount_manifest()
         if hasattr(self, "model_graph") and not rebuild:
             return self.model_graph
         # build networkx graph
@@ -151,6 +157,8 @@ class DBTProject(object):
             for k in dag.node_dict
             if k.startswith("metric.")
             or k.startswith("test.")
+            or k.startswith("semantic_model.")
+            or k.startswith("saved_query.")
             or (
                 not include_sources
                 and (k.startswith("source.") or k.startswith("seed."))
@@ -167,19 +175,30 @@ class DBTProject(object):
         predecessor_depth: int | None,
         successor_depth: int | None,
     ) -> list[str]:
+        self.mount_manifest()
         self.build_model_graph(include_sources=False)
         return self.model_graph.get_ancestors_and_descendants(
             node_ids, predecessor_depth, successor_depth
         )
 
-    def mount_catalog(self, read=True, force_run=False, force_read=False):
+    def mount_catalog(
+        self, read=True, force_run=False, force_read=False, defer: bool = False
+    ):
         if hasattr(self, "catalog") and not force_run and not force_read:
             return "", "", True
         elif force_run or not os.path.exists(self.catalog_path):
-            self.dbt_docs_generate()
+            self.dbt_docs_generate(defer=defer)
 
         if read:
-            self.catalog = load_orjson(self.catalog_path)
+            if defer:
+                self.catalog = load_orjson(
+                    os.path.join(self.deferral_target_path, "catalog.json")
+                )
+                new_catalog = load_orjson(self.catalog_path)
+                for key in ["nodes", "sources", "errors"]:
+                    self.catalog[key].update(new_catalog[key])
+            else:
+                self.catalog = load_orjson(self.catalog_path)
         elif (force_read or force_run) and hasattr(self, "catalog"):
             # make sure you don't accidentally read an outdated artifact in the future
             del self.catalog
@@ -286,6 +305,8 @@ class DBTProject(object):
         write_json: bool = False,
         dbt_cache: bool = False,
         force_terminal: bool = True,  # for our purposes, terminal execution is preferred due to version isolation
+        defer: bool = False,
+        defer_selection: bool = True,
     ) -> tuple[str, str, bool]:
         if cli_args is None:
             cli_args = []
@@ -308,6 +329,26 @@ class DBTProject(object):
 
         full_command += command + cli_args
 
+        if defer and full_command[0] in [
+            "parse",
+            "compile",
+            "docs",
+            "run",
+            "test",
+            "build",
+        ]:
+            if self.deferral_target_path is None:
+                raise Exception("Deferral target path not set")
+            if defer_selection and full_command[0] != "parse":
+                full_command.extend(["-s", "state:modified+"])
+            full_command.extend(
+                [
+                    "--defer",
+                    "--state",
+                    self.deferral_target_path,
+                ]
+            )
+
         if (
             self.dbt1_5
             and not force_terminal
@@ -326,10 +367,12 @@ class DBTProject(object):
 
         return stdout, stderr, success
 
-    def dbt_parse(self) -> tuple[str, str, bool]:
+    def dbt_parse(self, defer: bool = False) -> tuple[str, str, bool]:
         if self.dbt1_5:
-            return self.run_dbt_command(["parse"], write_json=True)
-        return self.run_dbt_command(["parse", "--write-manifest"], write_json=True)
+            return self.run_dbt_command(["parse"], write_json=True, defer=defer)
+        return self.run_dbt_command(
+            ["parse", "--write-manifest"], write_json=True, defer=defer
+        )
 
     def dbt_compile(
         self,
@@ -340,6 +383,7 @@ class DBTProject(object):
         successor_depth: int | None = 0,
         update_manifest=False,
         models_only: bool = False,
+        defer: bool = False,
     ) -> tuple[str, str, bool]:
         if not node_ids:
             command = ["compile", "-f"]
@@ -371,21 +415,26 @@ class DBTProject(object):
             command.extend(self.compile_exclusions)
 
         stdout, stderr, success = self.run_dbt_command(
-            command, write_json=write_json, dbt_cache=dbt_cache
+            command, write_json=write_json, dbt_cache=dbt_cache, defer=defer
         )
         if update_manifest:
-            self.mount_manifest(force_read=True)
+            self.mount_manifest(force_read=True, defer=defer)
         return stdout, stderr, success
 
-    def dbt_docs_generate(self, compile=False) -> tuple[str, str, bool]:
+    def dbt_docs_generate(
+        self, compile=False, defer: bool = False
+    ) -> tuple[str, str, bool]:
         if compile:
             stdout, stderr, success = self.run_dbt_command(
-                ["docs", "generate"], write_json=True, dbt_cache=True
+                ["docs", "generate"], write_json=True, dbt_cache=True, defer=defer
             )
             return stdout, stderr, success
 
         stdout, stderr, success = self.run_dbt_command(
-            ["docs", "generate", "--no-compile"], write_json=True, dbt_cache=True
+            ["docs", "generate", "--no-compile"],
+            write_json=True,
+            dbt_cache=True,
+            defer=defer,
         )
         return stdout, stderr, success
 
@@ -395,6 +444,7 @@ class DBTProject(object):
         force_read: bool = False,
         errors: list[VinylError] = [],
         compile_if_not_found: bool = True,
+        defer: bool = False,
     ) -> tuple[str | None, list[VinylError]]:
         self.mount_manifest(force_read=force_read)
         if node_id in self.manifest["nodes"]:
@@ -422,37 +472,57 @@ class DBTProject(object):
             )
             return None, errors
 
+        if "compiled_code" in node:
+            return node["compiled_code"], errors
+
         compiled_sql_abs_location = os.path.join(
             self.compiled_sql_path,
             node_id.split(".")[1],
             node["original_file_path"],
         )
 
-        try:
-            if not os.path.exists(compiled_sql_abs_location) and compile_if_not_found:
-                stdout, stderr, success = self.dbt_compile(
-                    [node_id], write_json=True, dbt_cache=False, update_manifest=False
-                )
+        if not os.path.exists(compiled_sql_abs_location) and compile_if_not_found:
+            stdout, stderr, success = self.dbt_compile(
+                ["node_id"],
+                write_json=True,
+                dbt_cache=False,
+                update_manifest=False,
+                defer=False,
+                defer_selection=False,
+            )
+        if os.path.exists(compiled_sql_abs_location):
             with open(compiled_sql_abs_location, "r") as f:
                 out = f.read()
             return out, errors
 
-        except FileNotFoundError:
-            msg = f"Compiled SQL not found for {node_id.split('.')[-1]}"
-            if locals().get("stdout", None):
-                msg += f". DBT output: {stdout}"
-            errors.extend(
-                [
-                    VinylError(
-                        node_id=node_id,
-                        type=VinylErrorType.FILE_NOT_FOUND,
-                        msg=msg,
-                        traceback=traceback.format_exc(),
-                        dialect=self.dialect,
-                    )
-                ]
+        if defer:
+            deferral_compiled_sql_abs_location = os.path.join(
+                self.deferral_target_path,
+                "compiled",
+                node_id.split(".")[1],
+                node["original_file_path"],
             )
-            return None, errors
+
+            if os.path.exists(deferral_compiled_sql_abs_location):
+                with open(deferral_compiled_sql_abs_location, "r") as f:
+                    out = f.read()
+                return out, errors
+
+        msg = f"Compiled SQL not found for {node_id.split('.')[-1]}"
+        if locals().get("stdout", None):
+            msg += f". DBT output: {stdout}"
+        errors.extend(
+            [
+                VinylError(
+                    node_id=node_id,
+                    type=VinylErrorType.FILE_NOT_FOUND,
+                    msg=msg,
+                    traceback=traceback.format_exc(),
+                    dialect=self.dialect,
+                )
+            ]
+        )
+        return None, errors
 
     def get_profiles_dir(self):
         if "DBT_PROFILES_DIR" in os.environ:
@@ -560,7 +630,7 @@ class DBTProject(object):
                 return None
         return relation_name
 
-    def preview(self, dbt_sql: str, limit: int | None = None):
+    def preview(self, dbt_sql: str, limit: int | None = None, defer: bool = False):
         if not self.dbt1_5:
             raise ValueError("Must use dbt 1.5+ to use show")
         command = [
@@ -581,7 +651,11 @@ class DBTProject(object):
         with tempfile.TemporaryDirectory() as temp_dir:
             command.extend(["--log-path", temp_dir])
             stdout, stderr, success = self.run_dbt_command(
-                command, write_json=False, dbt_cache=False
+                command,
+                write_json=False,
+                dbt_cache=False,
+                defer=defer,
+                defer_selection=False,
             )
             if not success:
                 raise Exception(
@@ -697,8 +771,29 @@ class DBTTransition:
         self,
         before_project: DBTProject,
         after_project: DBTProject,
-        defer=True,
     ):
         self.before = before_project
         self.after = after_project
-        self.defer = defer
+        self.after.deferral_target_path = before_project.target_path
+
+    def mount_manifest(
+        self,
+        read: bool = True,
+        force_run: bool = False,
+        force_read: bool = False,
+        defer: bool = False,
+    ):
+        self.before.mount_manifest()
+        self.after.mount_manifest(read=read, force_run=force_run, force_read=force_read)
+
+    def mount_catalog(
+        self,
+        read: bool = False,
+        force_run: bool = False,
+        force_read: bool = False,
+        defer: bool = False,
+    ):
+        self.before.mount_catalog()
+        self.after.mount_catalog(
+            read=read, force_run=force_run, force_read=force_read, defer=defer
+        )

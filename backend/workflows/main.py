@@ -5,8 +5,9 @@ django.setup()
 
 # rest of imports
 
-from workflows.execute_query import ExecuteQueryWorkflow
 from workflows.execute_dbt_query import DBTQueryPreviewWorkflow
+from workflows.execute_query import ExecuteQueryWorkflow
+from workflows.get_lineage import GetLineageWorkflow
 from workflows.hatchet import hatchet
 from workflows.metadata_sync import (
     MetadataSyncWorkflow,
@@ -19,6 +20,7 @@ def start():
     worker.register_workflow(MetadataSyncWorkflow())
     worker.register_workflow(ExecuteQueryWorkflow())
     worker.register_workflow(DBTQueryPreviewWorkflow())
+    worker.register_workflow(GetLineageWorkflow())
     worker.start()
 
 
