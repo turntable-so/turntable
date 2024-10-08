@@ -3,11 +3,9 @@ from __future__ import annotations
 import logging
 import os
 import shutil
-import subprocess
 import tempfile
 import uuid
 from contextlib import contextmanager
-from random import randint
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -125,65 +123,13 @@ class Repository(models.Model):
     def get_branch(self, branch_id: str) -> Branch:
         return self.branches.get(id=branch_id, workspace=self.workspace)
 
-    def _run_ssh_command(self, command: list):
-        ssh_key_text = self.ssh_key.private_key
-
-        private_key_path = str(randint(1000, 9999)) + ".pem"
-
-        if not isinstance(ssh_key_text, str):
-            ssh_key_text = ssh_key_text.decode("utf-8")
-
-        with open(private_key_path, "w") as f:
-            f.write(ssh_key_text)
-
-        try:
-            subprocess.run(["chmod", "600", private_key_path], check=True)
-            ssh_agent = subprocess.Popen(["ssh-agent", "-s"], stdout=subprocess.PIPE)
-            agent_output = ssh_agent.communicate()[0].decode("utf-8")
-
-            # Extract the SSH agent PID and socket
-            agent_info = dict(
-                line.split("=") for line in agent_output.split(";") if "=" in line
-            )
-            os.environ["SSH_AUTH_SOCK"] = agent_info.get("SSH_AUTH_SOCK", "").strip()
-            os.environ["SSH_AGENT_PID"] = agent_info.get("SSH_AGENT_PID", "").strip()
-
-            # Add the SSH key to the agent
-            subprocess.run(["ssh-add", private_key_path], check=True)
-
-            # Set up the SSH command for git
-            git_command = [
-                "ssh",
-                "-o",
-                "StrictHostKeyChecking=no",
-                "-i",
-                private_key_path,
-            ]
-            os.environ["GIT_SSH_COMMAND"] = git_command
-
-            # Execute the git ls-remote command
-            answer = subprocess.run(
-                command,
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-
-            stdout = answer.stdout
-            stderr = answer.stderr
-            returncode = answer.returncode
-            result = stdout if returncode == 0 else stderr
-
-            if returncode != 0:
-                return {"success": False, "error": result}
-            return {"success": True, "result": result}
-        except Exception as e:
-            return {"success": False, "error": str(e)}
-        finally:
-            os.remove(private_key_path)
-
     def test_repo_connection(self):
-        return self._run_ssh_command(command=["git", "ls-remote", self.git_repo_url])
+        with self.main_branch.repo_context() as (repo, env):
+            try:
+                repo.git.ls_remote(self.git_repo_url)
+                return {"success": True, "result": "Repository connection successful"}
+            except GitCommandError as e:
+                return {"success": False, "error": str(e)}
 
     @contextmanager
     def with_ssh_env(self, env_override: dict[str, str] | None = None):
