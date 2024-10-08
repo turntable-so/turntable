@@ -9,14 +9,13 @@ import uuid
 from contextlib import contextmanager
 from random import randint
 
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 from django.conf import settings
 from django.db import models, transaction
 from git import Repo as GitRepo
 from git.exc import GitCommandError
-
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.asymmetric import rsa
 
 from app.models.workspace import Workspace
 from app.utils.fields import encrypt
@@ -131,7 +130,7 @@ class Repository(models.Model):
 
         private_key_path = str(randint(1000, 9999)) + ".pem"
 
-        if type(ssh_key_text) != str:
+        if not isinstance(ssh_key_text, str):
             ssh_key_text = ssh_key_text.decode("utf-8")
 
         with open(private_key_path, "w") as f:
@@ -153,7 +152,13 @@ class Repository(models.Model):
             subprocess.run(["ssh-add", private_key_path], check=True)
 
             # Set up the SSH command for git
-            git_command = f"ssh -o StrictHostKeyChecking=no -i {private_key_path}"
+            git_command = [
+                "ssh",
+                "-o",
+                "StrictHostKeyChecking=no",
+                "-i",
+                private_key_path,
+            ]
             os.environ["GIT_SSH_COMMAND"] = git_command
 
             # Execute the git ls-remote command
