@@ -15,21 +15,23 @@ class Lineage(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     asset_id: str
-    assets: QuerySet[Asset]
+    assets: QuerySet[Asset] | list[Asset]
     asset_links: list[AssetLink]
-    columns: QuerySet[Column]
+    columns: QuerySet[Column] | list[Column]
     column_links: list[ColumnLink]
+
+    @classmethod
+    def get_values_serializable(cls, values):
+        return [make_values_serializable(model_to_dict(v)) for v in values]
 
     def to_dict(self):
         return {
             "asset_id": make_values_serializable(self.asset_id),
-            "assets": convert_to_dict(self.assets),
-            "asset_links": [
-                make_values_serializable(model_to_dict(a)) for a in self.asset_links
-            ],
-            "column_links": [
-                make_values_serializable(model_to_dict(c)) for c in self.column_links
-            ],
+            "assets": convert_to_dict(self.assets)
+            if isinstance(self.assets, QuerySet)
+            else self.get_values_serializable(self.assets),
+            "asset_links": self.get_values_serializable(self.asset_links),
+            "column_links": self.get_values_serializable(self.column_links),
         }
 
 

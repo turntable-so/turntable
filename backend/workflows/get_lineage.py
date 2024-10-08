@@ -1,6 +1,6 @@
 from hatchet_sdk import Context
 
-from app.core.dbt import get_lineage
+from app.core.dbt import LiveDBTParser
 from app.models import Resource
 from workflows.hatchet import hatchet
 from workflows.utils.log import inject_workflow_run_logging
@@ -22,7 +22,7 @@ class GetLineageWorkflow:
     input structure:
         {
             resource_id: str,
-            dbt_node_ids: list[str],
+            dbt_file_path: str,
             branch_id: str | None,
             dbt_resource_id: str | None,
             predecessor_depth: int | None,
@@ -36,7 +36,7 @@ class GetLineageWorkflow:
         resource_id = context.workflow_input()["resource_id"]
         branch_id = context.workflow_input().get("branch_id")
         dbt_resource_id = context.workflow_input().get("dbt_resource_id")
-        dbt_node_ids = context.workflow_input().get("dbt_node_ids")
+        dbt_file_path = context.workflow_input().get("dbt_file_path")
         predecessor_depth = context.workflow_input().get("predecessor_depth")
         successor_depth = context.workflow_input().get("successor_depth")
         defer = context.workflow_input().get("defer")
@@ -50,13 +50,21 @@ class GetLineageWorkflow:
             project_dir,
             _,
         ):
-            get_lineage(
+            transition.mount_manifest(defer=defer)
+            node_id = None
+            for k, v in transition.after.manifest["nodes"].items():
+                if dbt_file_path == v["original_file_path"]:
+                    node_id = k
+                    break
+            if not node_id:
+                raise ValueError(f"Node {dbt_file_path} not found in manifest")
+
+            dbtparser = LiveDBTParser.parse_project(
                 proj=transition.after,
-                node_ids=dbt_node_ids,
-                resource_id=resource.id,
-                workspace_id=resource.workspace.id,
+                node_id=node_id,
+                resource=resource,
                 predecessor_depth=predecessor_depth,
                 successor_depth=successor_depth,
                 defer=defer,
             )
-            breakpoint()
+            return dbtparser.get_lineage().to_dict()
