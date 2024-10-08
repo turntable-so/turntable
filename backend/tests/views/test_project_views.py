@@ -28,7 +28,7 @@ def safe_decode(s):
 
 
 @pytest.mark.django_db
-class ResourceViewSetTestCases(TestCase):
+class ProjectViewSetTestCases(TestCase):
 
     def setUp(self):
         REPO_URL = "git@github.com:turntable-so/jaffle-shop.git"
