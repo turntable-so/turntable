@@ -14,10 +14,35 @@ from django.db import models, transaction
 from git import Repo as GitRepo
 from git.exc import GitCommandError
 
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric import rsa
+
 from app.models.workspace import Workspace
 from app.utils.fields import encrypt
 
 logger = logging.getLogger(__name__)
+
+
+def generate_rsa_key_pair():
+    # Generate a new RSA key pair
+    key = rsa.generate_private_key(
+        backend=default_backend(), public_exponent=65537, key_size=2048
+    )
+
+    # Serialize the public key
+    public_key = key.public_key().public_bytes(
+        encoding=serialization.Encoding.OpenSSH,
+        format=serialization.PublicFormat.OpenSSH,
+    )
+
+    private_key = key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.TraditionalOpenSSL,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+
+    return public_key.decode("utf-8"), private_key.decode("utf-8")
 
 
 class SSHKey(models.Model):
@@ -26,6 +51,7 @@ class SSHKey(models.Model):
 
     # fields
     public_key = models.TextField()
+    # TODO: add encryption to this key
     private_key = encrypt(models.TextField())
 
     # relationships
@@ -37,22 +63,20 @@ class SSHKey(models.Model):
         ]
 
     @classmethod
-    def generate_deploy_key(cls, workspace_id: str):
-        try:
-            ssh_key = SSHKey.objects.get(workspace_id=workspace_id)
-            logger.debug(f"SSH keys already exist for {cls.workspace_id}")
-        except SSHKey.DoesNotExist:
-            public_key, private_key = cls._generate_ssh_rsa()
-            ssh_key = SSHKey.objects.create(
-                workspace_id=cls.workspace_id,
-                public_key=public_key,
-                private_key=private_key,
-            )
-            logger.debug(f"SSH keys generated successfully for {cls.workspace_id}")
+    def generate_deploy_key(cls, workspace: Workspace):
+        ssh_key = cls.objects.filter(workspace=workspace).last()
+        if ssh_key is not None:
+            return ssh_key
 
-        return {
-            "public_key": ssh_key.public_key,
-        }
+        public_key, private_key = generate_rsa_key_pair()
+        ssh_key = SSHKey.objects.create(
+            workspace=workspace,
+            public_key=public_key,
+            private_key=private_key,
+        )
+        logger.debug(f"SSH keys generated successfully for {workspace}")
+
+        return ssh_key
 
 
 class Repository(models.Model):
@@ -104,9 +128,12 @@ class Repository(models.Model):
 
     def _run_ssh_command(self, command: list):
         ssh_key_text = self.ssh_key.private_key
+
         private_key_path = str(randint(1000, 9999)) + ".pem"
 
-        # Load the SSH key from the text
+        if type(ssh_key_text) != str:
+            ssh_key_text = ssh_key_text.decode("utf-8")
+
         with open(private_key_path, "w") as f:
             f.write(ssh_key_text)
 

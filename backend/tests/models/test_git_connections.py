@@ -174,3 +174,11 @@ class TestGitConnections:
             )
 
             assert not repo.is_dirty(untracked_files=True)
+
+    def test_generate_deploy_key(self):
+        workspace = Workspace.objects.create(
+            id=TEST_WORKSPACE_ID + "1",
+            name="Test workspace 1",
+        )
+        key = SSHKey.generate_deploy_key(workspace)
+        assert key.public_key is not None
