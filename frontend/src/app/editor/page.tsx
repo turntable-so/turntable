@@ -228,7 +228,7 @@ function EditorContent({ setPromptBoxOpen }: { setPromptBoxOpen: (open: boolean)
                 // Prevent default behavior for cmd+s
                 editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, (e) => {
                     console.log('Cmd+S pressed in Monaco editor');
-                    saveFile(activeFile.node.path, editor.getValue());
+                    saveFile(activeFile?.node.path, editor.getValue());
                 });
             }}
             theme="mutedTheme"
@@ -520,11 +520,19 @@ function EditorPageContent() {
                                         <div>
                                             {file.node.name}
                                         </div>
-                                        {file.isDirty && (
-                                            <div className='text-xs text-gray-500'>*</div>
-                                        )}
-                                        <div onClick={() => closeFile(file)} className='rounded-full bg-gray-500 text-white w-3 h-3 flex justify-center items-center font-bold opacity-0 group-hover:opacity-100 transition-opacity'>
-                                            <X className='h-2 w-2' />
+                                        <div className="relative h-3 w-3">
+                                            {file.isDirty ? (
+                                                <div className="h-3 w-3 rounded-full bg-blue-300 group-hover:invisible"></div>
+                                            ) : null}
+                                            <div
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    closeFile(file);
+                                                }}
+                                                className={`rounded-full bg-gray-500 text-white w-3 h-3 flex justify-center items-center font-bold ${file.dirty ? 'opacity-0 group-hover:opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity absolute top-0 left-0`}
+                                            >
+                                                <X className='h-2 w-2' />
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
