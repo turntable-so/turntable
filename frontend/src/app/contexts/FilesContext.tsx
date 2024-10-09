@@ -30,6 +30,7 @@ type FilesContextType = {
     saveFile: (path: string, content: string) => void;
     setActiveFilepath: (path: string) => void;
     activeFilepath: string | null;
+    searchFileIndex: FileNode[];
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
@@ -39,12 +40,29 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const [openedFiles, setOpenedFiles] = useState<OpenedFile[]>([]);
     const [activeFile, setActiveFile] = useState<OpenedFile | null>(null);
     const [activeFilepath, setActiveFilepath] = useState<string | null>(null);
+    const [searchFileIndex, setSearchFileIndex] = useState<FileNode[]>([]);
 
     useEffect(() => {
         const fetchFiles = async () => {
             const { dirty_changes, file_index } = await getFileIndex()
+            console.log({ file_index })
             const fileIndex = file_index.map((file: FileNode) => ({ ...file }))
             setFiles(fileIndex)
+            const flattenFileIndex = (files: FileNode[]): FileNode[] => {
+                return files.reduce((acc: FileNode[], file: FileNode) => {
+                    if (file.type === 'directory' && file.children) {
+                        return [...acc, file, ...flattenFileIndex(file.children)];
+                    }
+                    return [...acc, file];
+                }, []);
+            };
+
+            const flattenedFiles = flattenFileIndex(fileIndex);
+            const searchableFiles = flattenedFiles
+                .filter(file => file.type === 'file')
+                .filter(file => !file.path.includes('dbt_packages/'))
+                .filter(file => !file.path.includes('target/'))
+            setSearchFileIndex(searchableFiles)
         }
         fetchFiles()
     }, [setFiles])
@@ -112,6 +130,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             saveFile,
             setActiveFilepath,
             activeFilepath,
+            searchFileIndex
         }}>
             {children}
         </FilesContext.Provider>
