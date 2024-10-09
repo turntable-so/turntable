@@ -1,14 +1,12 @@
 import os
+import shutil
+from urllib.parse import unquote
 
-from django.http import JsonResponse
-from app.models.git_connections import Branch
-from workflows.hatchet import hatchet
-from rest_framework import viewsets, status
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from urllib.parse import unquote
-from asgiref.sync import sync_to_async
-import shutil
+
+from app.models.git_connections import Branch
 
 
 def _build_file_tree(user_id: str, path: str, base_path: str):

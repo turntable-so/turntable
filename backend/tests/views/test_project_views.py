@@ -1,20 +1,16 @@
 import json
 import os
+from urllib.parse import quote, unquote
 
-import urllib3
-from app.models.git_connections import Branch, Repository, SSHKey
-from app.models.resources import BigqueryDetails, DBTCoreDetails, ResourceType
-from vinyl.lib.dbt_methods import DBTVersion
 import pytest
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework.test import APIClient
-from urllib.parse import quote, unquote
 
-from api.serializers import (
-    ResourceSerializer,
-)
 from app.models import Resource, User, Workspace
+from app.models.git_connections import Branch, Repository, SSHKey
+from app.models.resources import BigqueryDetails, DBTCoreDetails, ResourceType
+from vinyl.lib.dbt_methods import DBTVersion
 
 User = get_user_model()
 
@@ -29,7 +25,6 @@ def safe_decode(s):
 
 @pytest.mark.django_db
 class ProjectViewSetTestCases(TestCase):
-
     def setUp(self):
         REPO_URL = "git@github.com:turntable-so/jaffle-shop.git"
         # test keys, not used in production
