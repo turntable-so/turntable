@@ -19,6 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/ui/command'
 import { Textarea } from '@/components/ui/textarea'
 import FileSearchCommand from '@/components/editor/FileSearchCommand'
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 
 
 const PromptBox = ({ setPromptBoxOpen }: { setPromptBoxOpen: (open: boolean) => void }) => {
@@ -31,7 +32,6 @@ const PromptBox = ({ setPromptBoxOpen }: { setPromptBoxOpen: (open: boolean) => 
 
     const callInference = async () => {
         if (activeFile) {
-
             setIsLoading(true)
             const response = await infer({
                 filepath: activeFile.node.path,
@@ -53,11 +53,41 @@ const PromptBox = ({ setPromptBoxOpen }: { setPromptBoxOpen: (open: boolean) => 
         }
     }
 
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+            e.preventDefault();
+            callInference();
+        }
+    }
+
+    const handleEscape = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+            setPromptBoxOpen(false);
+        }
+    };
+
+    useEffect(() => {
+        document.addEventListener('keydown', handleEscape);
+        return () => {
+            document.removeEventListener('keydown', handleEscape);
+        };
+    }, []);
+
+    useEffect(() => {
+        const textarea = document.querySelector('textarea');
+        if (textarea) {
+            textarea.addEventListener('keydown', handleKeyDown);
+            return () => {
+                textarea.removeEventListener('keydown', handleKeyDown);
+            };
+        }
+    }, []);
+
     return (
-        <div className='bg-white border-b py-2 mb-2'>
-            <div className="flex flex-col items-center">
-                <Textarea className='w-1/2 my-2 z-100' placeholder="Add materialization to this model" value={prompt} onChange={(e) => setPrompt(e.target.value)} disabled={isLoading} />
-                <div className='flex space-x-2 items-end'>
+        <div className='border-b py-2 mb-2'>
+            <div className="flex flex-col items-center w-full px-4">
+                <Textarea className='w-full my-2 z-100' autoFocus placeholder="Add materialization to this model" value={prompt} onChange={(e) => setPrompt(e.target.value)} disabled={isLoading} />
+                <div className='flex space-x-2 justify-end w-full'>
                     <>
                         {model === 'PROMPT' ? (
                             <>
@@ -79,7 +109,7 @@ const PromptBox = ({ setPromptBoxOpen }: { setPromptBoxOpen: (open: boolean) => 
                                         callInference()
                                     }}
                                 >
-                                    {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : 'Edit'}
+                                    {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : 'Generate'}
                                 </Button>
                             </>
                         ) : (
@@ -640,6 +670,12 @@ function EditorPageContent() {
 
                                         className={`${isSearchFocused ? 'rounded-b-none' : 'rounded-md'} w-full pl-10 pr-4 py-2 bg-muted focus:outline-none focus:ring-2 focus:ring-gray-400`}
                                         onFocus={() => setIsSearchFocused(true)}
+                                        onBlur={() => {
+                                            setFilesearchQuery('')
+                                            setTimeout(() => {
+                                                setIsSearchFocused(false)
+                                            }, 100)
+                                        }}
                                     />
                                     {isSearchFocused && (
                                         <div className='w-full flex-grow mr-[4px] absolute h-[350px] border-l border-r border-b rounded-b-md  border-black  overflow-y-scroll bg-muted'>
@@ -712,35 +748,42 @@ function EditorPageContent() {
                             <div className='ml-1  hover:bg-gray-200 bg-muted w-8 h-6 rounded-md flex items-center justify-center'>
                                 <Plus className='size-3' />
                             </div>
-                            <div className='overflow-x-scroll flex space-x-0' >
-                                {openedFiles.map((file: OpenedFile) => (
-                                    <div
-                                        key={file.node.path}
-                                        onClick={() => {
-                                            setActiveFile(file)
-                                            setActiveFilepath(file.node.path)
-                                        }}
-                                        className={`text-sm font-medium border-x-2  px-2 py-1 flex items-center space-x-2 group select-none ${file.node.path === activeFile?.node.path ? 'bg-muted' : ''}`}
-                                    >
-                                        <div>
-                                            {file.node.name}
-                                        </div>
-                                        <div className="relative h-3 w-3">
-                                            {file.isDirty ? (
-                                                <div className="h-3 w-3 rounded-full bg-blue-300 group-hover:invisible"></div>
-                                            ) : null}
+                            <div className='w-full' style={{
+                                maxWidth: topBarWidth - 50
+                            }}>
+                                <ScrollArea className='w-full flex whitespace-nowrap overflow-x-scroll'>
+                                    <div className='w-max flex overflow-x-scroll'>
+                                        {openedFiles.map((file: OpenedFile) => (
                                             <div
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    closeFile(file);
+                                                key={file.node.path}
+                                                onClick={() => {
+                                                    setActiveFile(file)
+                                                    setActiveFilepath(file.node.path)
                                                 }}
-                                                className={`rounded-full bg-gray-500 text-white w-3 h-3 flex justify-center items-center font-bold ${file.dirty ? 'opacity-0 group-hover:opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity absolute top-0 left-0`}
+                                                className={`text-sm font-medium border-x-2  px-2 py-1 flex items-center space-x-2 group select-none ${file.node.path === activeFile?.node.path ? 'bg-muted' : ''}`}
                                             >
-                                                <X className='h-2 w-2' />
+                                                <div>
+                                                    {file.node.name}
+                                                </div>
+                                                <div className="relative h-3 w-3">
+                                                    {file.isDirty ? (
+                                                        <div className="h-3 w-3 rounded-full bg-blue-300 group-hover:invisible"></div>
+                                                    ) : null}
+                                                    <div
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            closeFile(file);
+                                                        }}
+                                                        className={`rounded-full bg-gray-500 text-white w-3 h-3 flex justify-center items-center font-bold ${file.dirty ? 'opacity-0 group-hover:opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity absolute top-0 left-0`}
+                                                    >
+                                                        <X className='h-2 w-2' />
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
+                                        ))}
                                     </div>
-                                ))}
+                                    <ScrollBar className='h-2' orientation="horizontal" />
+                                </ScrollArea>
                             </div>
                         </div>
                         <div className='py-2 w-full h-full'>
