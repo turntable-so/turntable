@@ -74,6 +74,13 @@ def workspace(user):
 
 
 @pytest.fixture
+def client(user, workspace):
+    client = APIClient()
+    client.force_authenticate(user=user)
+    return client
+
+
+@pytest.fixture
 def local_postgres(workspace):
     git_repo = None
     if os.getenv("SSHKEY_0_PUBLIC") and os.getenv("SSHKEY_0_PRIVATE"):
@@ -85,13 +92,6 @@ def local_postgres(workspace):
 @pytest.fixture
 def local_metabase(workspace):
     return create_local_metabase(workspace)
-
-
-@pytest.fixture
-def client(user, local_postgres, local_metabase):
-    client = APIClient()
-    client.force_authenticate(user=user)
-    return client
 
 
 @pytest.fixture
