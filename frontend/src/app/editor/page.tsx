@@ -398,7 +398,7 @@ function EditorContent({ setPromptBoxOpen, containerWidth }: { setPromptBoxOpen:
                 });
 
                 // Prevent default behavior for cmd+s
-                editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, (e) => {
+                editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, (e: any) => {
                     console.log('Cmd+S pressed in Monaco editor');
                     saveFile(activeFile?.node.path || '', editor.getValue());
                 });
