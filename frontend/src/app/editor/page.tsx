@@ -20,6 +20,7 @@ import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@
 import { Textarea } from '@/components/ui/textarea'
 import FileSearchCommand from '@/components/editor/FileSearchCommand'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
+import React from 'react'
 
 
 const PromptBox = ({ setPromptBoxOpen }: { setPromptBoxOpen: (open: boolean) => void }) => {
@@ -76,9 +77,9 @@ const PromptBox = ({ setPromptBoxOpen }: { setPromptBoxOpen: (open: boolean) => 
     useEffect(() => {
         const textarea = document.querySelector('textarea');
         if (textarea) {
-            textarea.addEventListener('keydown', handleKeyDown);
+            textarea.addEventListener('keydown', handleKeyDown as any);
             return () => {
-                textarea.removeEventListener('keydown', handleKeyDown);
+                textarea.removeEventListener('keydown', handleKeyDown as any);
             };
         }
     }, []);
@@ -120,10 +121,12 @@ const PromptBox = ({ setPromptBoxOpen }: { setPromptBoxOpen: (open: boolean) => 
                                     variant='destructive'
                                     className='rounded-sm'
                                     onClick={() => {
-                                        setActiveFile({
-                                            ...activeFile,
-                                            view: 'edit',
-                                        })
+                                        if (activeFile) {
+                                            setActiveFile({
+                                                ...activeFile,
+                                                view: 'edit',
+                                            })
+                                        }
                                         setPromptBoxOpen(false)
                                     }}
                                 >
@@ -159,7 +162,7 @@ const PromptBox = ({ setPromptBoxOpen }: { setPromptBoxOpen: (open: boolean) => 
     )
 }
 
-export const DbtLogo = () => (
+const DbtLogo = () => (
     <svg
         width="14px"
         height="14px"
@@ -205,15 +208,15 @@ function Node({ node, style, dragHandle, tree }: { node: any, style: any, dragHa
         }
     };
 
-    const handleRename = async (e: React.MouseEvent) => {
-        e.stopPropagation();
-        const newName = prompt("Enter new name:", node.data.name);
-        if (newName && newName !== node.data.name) {
-            const newPath = node.data.path.replace(node.data.name, newName);
-            await renameFile(node.data.path, newPath);
-            node.submit(newName);
-        }
-    };
+    // const handleRename = async (e: React.MouseEvent) => {
+    //     e.stopPropagation();
+    //     const newName = prompt("Enter new name:", node.data.name);
+    //     if (newName && newName !== node.data.name) {
+    //         const newPath = node.data.path.replace(node.data.name, newName);
+    //         await renameFile(node.data.path, newPath);
+    //         node.submit(newName);
+    //     }
+    // };
 
 
     // const handleCreateFolder = async (e: React.MouseEvent) => {
@@ -274,10 +277,10 @@ function Node({ node, style, dragHandle, tree }: { node: any, style: any, dragHa
                             </PopoverTrigger>
                             <PopoverContent className="w-40 p-0" onClick={(e) => e.stopPropagation()}>
                                 <div className='w-full'>
-                                    <Button className='w-full' variant="ghost" size="sm" onClick={handleRename}>
+                                    {/* <Button className='w-full' variant="ghost" size="sm" onClick={handleRename}>
                                         <Pencil className="mr-2 h-3 w-3" />
                                         Rename
-                                    </Button>
+                                    </Button> */}
                                     <Button className='w-full' variant="ghost" size="sm" onClick={handleDelete}>
                                         <Trash className="mr-2 h-3 w-3" />
                                         Delete
@@ -361,7 +364,7 @@ function EditorContent({ setPromptBoxOpen, containerWidth }: { setPromptBoxOpen:
             onChange={(value) => {
                 console.log('onchange', { value, activeFile })
                 if (activeFile) {
-                    updateFileContent(activeFile.node.path, value);
+                    updateFileContent(activeFile.node.path, value || '');
                 }
             }}
             language='sql'
@@ -397,7 +400,7 @@ function EditorContent({ setPromptBoxOpen, containerWidth }: { setPromptBoxOpen:
                 // Prevent default behavior for cmd+s
                 editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, (e) => {
                     console.log('Cmd+S pressed in Monaco editor');
-                    saveFile(activeFile?.node.path, editor.getValue());
+                    saveFile(activeFile?.node.path || '', editor.getValue());
                 });
             }}
             theme="mutedTheme"
@@ -570,19 +573,7 @@ function EditorPageContent() {
     }, [queryPreview?.signed_url])
 
     const onCreate = async ({ parentId, index, type }: { parentId: string, index: number, type: string }) => {
-        console.log('creating!', { parentId, index, type });
-        const parentNode = treeRef.current.get(parentId);
-        if (parentNode) {
-            const newName = type === 'file' ? 'New File' : 'New Folder';
-            const newPath = `${parentNode.data.path}/${newName}`;
-            await createFile(newPath, '', type === 'directory');
-            treeRef.current.create({
-                parentId,
-                index,
-                type,
-                data: { name: newName, path: newPath }
-            });
-        }
+
     };
     const onRename = ({ id, name }: { id: string, name: string }) => {
         console.log('renaming!', { id, name })
@@ -633,9 +624,13 @@ function EditorPageContent() {
                                             openByDefault={false}
                                             indent={12}
                                             ref={treeRef}
+                                            // @ts-ignore
                                             onCreate={onCreate}
+                                            // @ts-ignore
                                             onRename={onRename}
+                                            // @ts-ignore
                                             onMove={onMove}
+                                            // @ts-ignore
                                             onDelete={onDelete}
                                         >
                                             {Node as any}
@@ -749,7 +744,7 @@ function EditorPageContent() {
                                 <Plus className='size-3' />
                             </div>
                             <div className='w-full' style={{
-                                maxWidth: topBarWidth - 50
+                                maxWidth: topBarWidth ? topBarWidth - 50 : '100%'
                             }}>
                                 <ScrollArea className='w-full flex whitespace-nowrap overflow-x-scroll'>
                                     <div className='w-max flex overflow-x-scroll'>
@@ -774,7 +769,7 @@ function EditorPageContent() {
                                                             e.stopPropagation();
                                                             closeFile(file);
                                                         }}
-                                                        className={`rounded-full bg-gray-500 text-white w-3 h-3 flex justify-center items-center font-bold ${file.dirty ? 'opacity-0 group-hover:opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity absolute top-0 left-0`}
+                                                        className={`rounded-full bg-gray-500 text-white w-3 h-3 flex justify-center items-center font-bold ${file.isDirty ? 'opacity-0 group-hover:opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity absolute top-0 left-0`}
                                                     >
                                                         <X className='h-2 w-2' />
                                                     </div>

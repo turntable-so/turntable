@@ -1,4 +1,4 @@
-import { useFiles } from "@/app/contexts/FilesContext"
+import { FileNode, useFiles } from "@/app/contexts/FilesContext"
 import { FileText, File } from "lucide-react";
 export const DbtLogo = () => (
     <svg
