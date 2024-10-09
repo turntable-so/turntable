@@ -95,7 +95,7 @@ class TestGitConnections:
             )
 
     @isolate_mark
-    def create_branch(self, local_postgres_repo, isolate):
+    def test_create_branch(self, local_postgres_repo, isolate):
         branch_name = "test_branch" + "".join([hex(x)[2:] for x in os.urandom(32)])
         branch = Branch.objects.create(
             workspace=local_postgres_repo.workspace,

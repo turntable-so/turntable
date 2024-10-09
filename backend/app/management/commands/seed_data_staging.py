@@ -21,7 +21,6 @@ class Command(BaseCommand):
         group_1(user)
         group_2(user)
         group_3(user)
-        group_3(user)
         group_5(user)
         self.stdout.write(
             self.style.SUCCESS("Successfully seeded the database with staging data")
