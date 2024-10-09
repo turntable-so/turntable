@@ -165,6 +165,10 @@ class Asset(models.Model):
             models.Index(fields=["workspace_id"]),
         ]
 
+    def get_upstream_assets(self):
+        links = AssetLink.objects.filter(target_id=self.id)
+        return Asset.objects.filter(id__in=links.values_list("source_id", flat=True))
+
 
 class ContainerMembership(models.Model):
     # pk

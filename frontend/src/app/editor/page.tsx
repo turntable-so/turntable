@@ -2,10 +2,10 @@
 import { Tree, TreeApi } from 'react-arborist'
 import { useState, useEffect, Fragment, useCallback, useRef } from 'react'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
-import { executeQueryPreview, getBranches, getFileIndex } from '../actions/actions'
+import { executeQueryPreview, getBranches, infer } from '../actions/actions'
 import useResizeObserver from "use-resize-observer";
-import { Box, File, FileText, Folder, FolderOpen, GitBranch, Loader2, PanelBottom, PanelLeft, PanelRight, Play, Plus, X } from 'lucide-react'
-import Editor from '@monaco-editor/react';
+import { Box, Check, CircleArrowUp, File, FileText, Folder, FolderOpen, GitBranch, Loader2, PanelBottom, PanelLeft, PanelRight, Play, Plus, X } from 'lucide-react'
+import Editor, { DiffEditor } from '@monaco-editor/react';
 import { FilesProvider, useFiles, FileNode, OpenedFile } from '../contexts/FilesContext';
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -17,6 +17,108 @@ import { AgGridReact } from 'ag-grid-react'
 import "@/components/ag-grid-custom-theme.css"; // Custom CSS Theme for Data Grid
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/ui/command'
+import { Textarea } from '@/components/ui/textarea'
+
+
+const PromptBox = ({ setPromptBoxOpen }: { setPromptBoxOpen: (open: boolean) => void }) => {
+
+    const { activeFile, setActiveFile, updateFileContent } = useFiles();
+
+    const [prompt, setPrompt] = useState('')
+    const [model, setModel] = useState<'PROMPT' | 'CONFIRM'>('PROMPT')
+    const [isLoading, setIsLoading] = useState(false)
+
+    const callInference = async () => {
+        if (activeFile) {
+
+            setIsLoading(true)
+            const response = await infer({
+                filepath: activeFile.node.path,
+                content: activeFile.content,
+                instructions: prompt,
+            })
+            if (response.content) {
+                setActiveFile({
+                    ...activeFile,
+                    view: 'diff',
+                    diff: {
+                        original: activeFile.content,
+                        modified: response.content
+                    }
+                })
+                setModel('CONFIRM')
+            }
+            setIsLoading(false)
+        }
+    }
+
+    return (
+        <div className='bg-white border-b py-2 mb-2'>
+            <div className="flex flex-col items-center">
+                <Textarea className='w-1/2 my-2 z-100' placeholder="Add materialization to this model" value={prompt} onChange={(e) => setPrompt(e.target.value)} disabled={isLoading} />
+                <div className='flex space-x-2 items-end'>
+                    <>
+                        {model === 'PROMPT' ? (
+                            <>
+                                <Button
+                                    size='sm'
+
+                                    variant='outline'
+                                    className='rounded-sm'
+                                    onClick={() => setPromptBoxOpen(false)}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    size='sm'
+                                    disabled={!prompt || isLoading}
+                                    variant='default'
+                                    className='rounded-sm'
+                                    onClick={() => {
+                                        callInference()
+                                    }}
+                                >
+                                    {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : 'Edit'}
+                                </Button>
+                            </>
+                        ) : (
+                            <>
+                                <Button
+                                    size='sm'
+
+                                    variant='destructive'
+                                    className='rounded-sm'
+                                    onClick={() => {
+                                        setActiveFile({
+                                            ...activeFile,
+                                            view: 'edit',
+                                        })
+                                        setPromptBoxOpen(false)
+                                    }}
+                                >
+                                    <X className='mr-2 size-4' />
+                                    Reject
+                                </Button>
+                                <Button
+                                    size='sm'
+                                    disabled={!prompt || isLoading}
+                                    variant='default'
+                                    className='rounded-sm'
+                                    onClick={() => {
+                                        callInference()
+                                    }}
+                                >
+                                    <Check className='mr-2 size-4' />
+                                    Accept
+                                </Button>
+                            </>
+                        )}
+                    </>
+                </div>
+            </div>
+        </div>
+    )
+}
 
 
 function Node({ node, style, dragHandle }: { node: any, style: any, dragHandle: any }) {
@@ -41,8 +143,8 @@ function Node({ node, style, dragHandle }: { node: any, style: any, dragHandle: 
     );
 }
 
-function EditorContent() {
-    const { activeFile, updateFileContent } = useFiles();
+function EditorContent({ setPromptBoxOpen }: { setPromptBoxOpen: (open: boolean) => void }) {
+    const { activeFile, updateFileContent, saveActiveFile } = useFiles();
 
     // Define your custom theme
     const customTheme = {
@@ -55,14 +157,42 @@ function EditorContent() {
         }
     };
 
-    console.log('editrocontent', { activeFile })
+    console.log({ activeFile })
+
+    if (activeFile?.view === 'diff') {
+        return (
+            <DiffEditor
+                original={activeFile?.diff?.original || ''}
+                modified={activeFile?.diff?.modified || ''}
+                language='sql'
+                options={{
+                    minimap: { enabled: false },
+                    scrollbar: {
+                        vertical: 'visible',
+                        horizontal: 'visible',
+                        verticalScrollbarSize: 8,
+                        horizontalScrollbarSize: 8,
+                        verticalSliderSize: 8,
+                        horizontalSliderSize: 8
+                    },
+                    lineNumbers: 'on',
+                    wordWrap: 'on',
+                    fontSize: 14,
+                    lineNumbersMinChars: 3,
+                }}
+                theme="mutedTheme"
+            />
+        );
+    }
+
 
     return (
         <Editor
             value={activeFile?.content || ''}
             onChange={(value) => {
+                console.log('onchange', { value, activeFile })
                 if (activeFile) {
-                    updateFileContent(activeFile.node.path, value || '');
+                    updateFileContent(activeFile.node.path, value);
                 }
             }}
             language='sql'
@@ -87,6 +217,18 @@ function EditorContent() {
             }}
             onMount={(editor, monaco) => {
                 monaco.editor.setTheme('mutedTheme');
+
+                // Add cmd+k as a monaco keyboard listener
+                editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK, () => {
+                    console.log('Cmd+K pressed in Monaco editor');
+                    setPromptBoxOpen(true)
+                });
+
+                // Prevent default behavior for cmd+s
+                editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, (e) => {
+                    console.log('Cmd+S pressed in Monaco editor');
+                    saveActiveFile();
+                });
             }}
             theme="mutedTheme"
         />
@@ -108,8 +250,9 @@ function EditorPageContent() {
 
     const [showLeftSideBar, setShowLeftSidebar] = useState(true)
     const [showRightSideBar, setShowRightSidebar] = useState(false)
-    const [showBottomPanel, setShowBottomPanel] = useState(false)
+    const [showBottomPanel, setShowBottomPanel] = useState(true)
 
+    const [promptBoxOpen, setPromptBoxOpen] = useState(false)
     const [colDefs, setColDefs] = useState([])
     const [rowData, setRowData] = useState([])
     const [isLoading, setIsLoading] = useState(false)
@@ -227,11 +370,9 @@ function EditorPageContent() {
     }, [queryPreview?.signed_url])
 
 
+
     return (
-        <div className='flex flex-col h-screen'>
-            {/* <div className='bg-muted border-b-2 h-10'>
-             nodes   asd
-            </div> */}
+        <div className='flex flex-col h-screen' ref={ref}>
             <PanelGroup direction="horizontal" className="h-fit">
                 {showLeftSideBar && (
                     <Fragment>
@@ -269,7 +410,7 @@ function EditorPageContent() {
                                         </Tree>
                                     </div>
                                 </TabsContent>
-                                <TabsContent value="branch">Branhce</TabsContent>
+                                <TabsContent value="branch">Branches</TabsContent>
                             </Tabs>
                         </Panel>
                         <PanelResizeHandle className="w-1 bg-transparent hover:bg-gray-300 hover:cursor-col-resize  transition-colors" />
@@ -287,7 +428,7 @@ function EditorPageContent() {
                                 <div className="w-1/4">
                                     {/* Left column content */}
                                 </div>
-                                <div className="w-1/2 relative">
+                                <div className="w-full relative">
                                     <Input
                                         ref={searchInputRef}
                                         type="text"
@@ -296,6 +437,10 @@ function EditorPageContent() {
                                         onFocus={() => setIsSearchFocused(true)}
                                         onBlur={() => setIsSearchFocused(false)}
                                     />
+                                    {isSearchFocused && (
+                                        <div className='absolute w-full h-24 bg-white border border-black rounded-md'>
+                                        </div>
+                                    )}
 
                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -368,18 +513,23 @@ function EditorPageContent() {
                                         <div>
                                             {file.node.name}
                                         </div>
+                                        {file.isDirty && (
+                                            <div className='text-xs text-gray-500'>*</div>
+                                        )}
                                         <div onClick={() => closeFile(file)} className='rounded-full bg-gray-500 text-white w-3 h-3 flex justify-center items-center font-bold opacity-0 group-hover:opacity-100 transition-opacity'>
                                             <X className='h-2 w-2' />
                                         </div>
                                     </div>
                                 ))}
                             </div>
-
                         </div>
                         <div className='py-2 w-full h-full'>
                             <PanelGroup direction="vertical" className="h-fit">
+                                {promptBoxOpen && (
+                                    <PromptBox setPromptBoxOpen={setPromptBoxOpen} />
+                                )}
                                 <Panel>
-                                    <EditorContent />
+                                    <EditorContent setPromptBoxOpen={setPromptBoxOpen} />
                                 </Panel>
                                 {showBottomPanel && (
                                     <Fragment>
@@ -388,6 +538,7 @@ function EditorPageContent() {
                                             <Button size='sm'
                                                 onClick={runQueryPreview}
                                                 disabled={isLoading}
+                                                variant='outline'
                                             >
                                                 {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Play className="h-4 w-4 mr-2" />}
                                                 Preview Query

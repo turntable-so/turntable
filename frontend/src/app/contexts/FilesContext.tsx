@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
-import { fetchFileContents, getFileIndex } from '../actions/actions';
+import { fetchFileContents, getFileIndex, persistFile } from '../actions/actions';
 
 export type FileNode = {
     name: string;
@@ -11,6 +11,12 @@ export type FileNode = {
 export type OpenedFile = {
     node: FileNode;
     content: string;
+    isDirty: boolean;
+    view: 'edit' | 'diff';
+    diff?: {
+        original: string;
+        modified: string;
+    };
 };
 
 type FilesContextType = {
@@ -21,6 +27,7 @@ type FilesContextType = {
     activeFile: OpenedFile | null;
     setActiveFile: (file: OpenedFile | null) => void;
     updateFileContent: (path: string, content: string) => void;
+    saveActiveFile: () => void;
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
@@ -45,11 +52,12 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             console.log({ openedFiles })
             const existingFile = openedFiles.find(f => f.node.path === node.path);
             if (!existingFile) {
-                // In a real application, you'd fetch the file content here
                 const { contents } = await fetchFileContents(node.path)
                 const newFile: OpenedFile = {
                     node,
                     content: contents,
+                    isDirty: false,
+                    view: 'edit'
                 }
                 setOpenedFiles(prev => [...prev, newFile]);
                 setActiveFile(newFile);
@@ -68,11 +76,24 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         }
     }, [openedFiles]);
 
+
     const updateFileContent = useCallback((path: string, content: string) => {
+        console.log({ openedFiles, path })
         setOpenedFiles(prev => prev.map(f =>
-            f.node.path === path ? { ...f, content } : f
+            f.node.path === path ? { ...f, content, isDirty: true } : f
         ));
     }, []);
+
+    const saveActiveFile = useCallback(async () => {
+        console.log('saving active file', { activeFile });
+        if (activeFile) {
+            await persistFile(activeFile.node.path, activeFile.content);
+            setOpenedFiles(prev => prev.map(f =>
+                f.node.path === activeFile.node.path ? { ...f, isDirty: false } : f
+            ));
+        }
+    }, [activeFile, setOpenedFiles]);
+
 
     return (
         <FilesContext.Provider value={{
@@ -83,6 +104,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             activeFile,
             setActiveFile,
             updateFileContent,
+            saveActiveFile,
         }}>
             {children}
         </FilesContext.Provider>

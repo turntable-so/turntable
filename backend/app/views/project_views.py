@@ -80,7 +80,6 @@ class ProjectViewSet(viewsets.ViewSet):
             base_path = dbt_details.project_path
 
         root = service.get_file_tree(user_id, repo.working_tree_dir, base_path)
-        print(root, flush=True)
         dirty_changes = repo.index.diff(None)
 
         return Response(
