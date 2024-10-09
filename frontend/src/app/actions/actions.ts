@@ -503,6 +503,25 @@ export async function persistFile(filePath: string, fileContents: string) {
   });
 }
 
+export async function createFile(filePath: string, fileContents: string) {
+  const response = await fetcher(`/project/files/?filepath=${filePath}`, {
+    cookies,
+    method: "POST",
+    body: {
+      contents: fileContents,
+    }
+  });
+  return response.ok
+}
+
+export async function deleteFile(filePath: string) {
+  const response = await fetcher(`/project/files/?filepath=${filePath}`, {
+    cookies,
+    method: "DELETE",
+  });
+  return response.ok
+}
+
 export async function infer({
   instructions,
   content,

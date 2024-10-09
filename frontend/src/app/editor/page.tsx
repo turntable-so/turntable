@@ -4,7 +4,7 @@ import { useState, useEffect, Fragment, useCallback, useRef } from 'react'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { executeQueryPreview, getBranches, infer } from '../actions/actions'
 import useResizeObserver from "use-resize-observer";
-import { Box, Check, ChevronDown, ChevronRight, CircleArrowUp, File, FileText, Folder, FolderOpen, GitBranch, Loader2, PanelBottom, PanelLeft, PanelRight, Play, Plus, X } from 'lucide-react'
+import { Box, Check, ChevronDown, ChevronRight, CircleArrowUp, Ellipsis, File, FileText, Folder, FolderOpen, GitBranch, Loader2, PanelBottom, PanelLeft, PanelRight, Pencil, Play, Plus, Trash, X } from 'lucide-react'
 import Editor, { DiffEditor } from '@monaco-editor/react';
 import { FilesProvider, useFiles, FileNode, OpenedFile } from '../contexts/FilesContext';
 import { Button } from '@/components/ui/button'
@@ -148,8 +148,57 @@ export const DbtLogo = () => (
 
 
 
-function Node({ node, style, dragHandle }: { node: any, style: any, dragHandle: any }) {
-    const { openFile } = useFiles();
+function Node({ node, style, dragHandle, tree }: { node: any, style: any, dragHandle: any, tree: any }) {
+    const { openFile, createFileAndRefresh, deleteFileAndRefresh, closeFile } = useFiles();
+    const [showOptions, setShowOptions] = useState(false)
+
+    const handleCreateFile = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const newFileName = prompt("Enter new file name:");
+        if (newFileName) {
+            const newPath = `${node.data.path}/${newFileName}`;
+            await createFileAndRefresh(newPath, ''); // Call your backend API to create the file
+            openFile({
+                name: newFileName,
+                path: newPath,
+                type: 'file'
+            });
+        }
+    };
+
+
+    const handleDelete = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (confirm(`Are you sure you want to delete ${node.data.name}?`)) {
+            await deleteFileAndRefresh(node.data.path);
+            closeFile(node.data.path);
+        }
+    };
+
+    const handleRename = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const newName = prompt("Enter new name:", node.data.name);
+        if (newName && newName !== node.data.name) {
+            const newPath = node.data.path.replace(node.data.name, newName);
+            await renameFile(node.data.path, newPath);
+            node.submit(newName);
+        }
+    };
+
+
+    // const handleCreateFolder = async (e: React.MouseEvent) => {
+    //     e.stopPropagation();
+    //     const newFolderName = prompt("Enter new folder name:");
+    //     if (newFolderName) {
+    //         const newPath = `${node.data.path}/${newFolderName}`;
+    //         await createFile(newPath, '', true); // Call your backend API to create the folder
+    //         tree.create({
+    //             parentId: node.id,
+    //             type: 'directory',
+    //             data: { name: newFolderName, path: newPath }
+    //         });
+    //     }
+    // };
 
     return (
         <div style={style} onClick={() => {
@@ -163,9 +212,70 @@ function Node({ node, style, dragHandle }: { node: any, style: any, dragHandle: 
             {node.isLeaf && node.data.name.endsWith('.sql') && <div className={`mr-1 ${node.isSelected ? 'opacity-100' : 'opacity-70'}`}><DbtLogo /></div>}
             {node.isLeaf && node.data.name.endsWith('.yml') && <FileText className='mr-1 h-4 w-4' />}
             {node.isLeaf && !node.data.name.endsWith('.sql') && !node.data.name.endsWith('.yml') && <File className='mr-1 size-4' />}
-            <div className='truncate'>
-                {node.data.name}
-            </div>
+            {node.isEditing ? (
+                <input
+                    type="text"
+                    defaultValue={node.data.name}
+                    onFocus={(e) => e.currentTarget.select()}
+                    onBlur={() => node.reset()}
+                    onKeyDown={(e) => {
+                        if (e.key === "Escape") node.reset();
+                        if (e.key === "Enter") node.submit(e.currentTarget.value);
+                    }}
+                    autoFocus
+                />
+            ) : (
+                <div className='w-full flex items-center justify-between group'>
+                    <div className='truncate'>
+                        {node.data.name}
+                    </div>
+                    <div className='flex items-center opacity-0 group-hover:opacity-100 transition-opacity'>
+                        <Popover open={showOptions} onOpenChange={setShowOptions}>
+                            <PopoverTrigger asChild>
+                                <div
+                                    className='text-muted-foreground text-xs hover:cursor-pointer hover:text-foreground relative'
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setShowOptions(!showOptions);
+                                    }}
+                                >
+                                    <Ellipsis className='mr-1 size-4' />
+                                </div>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-40 p-0" onClick={(e) => e.stopPropagation()}>
+                                <div className='w-full'>
+                                    <Button className='w-full' variant="ghost" size="sm" onClick={handleRename}>
+                                        <Pencil className="mr-2 h-3 w-3" />
+                                        Rename
+                                    </Button>
+                                    <Button className='w-full' variant="ghost" size="sm" onClick={handleDelete}>
+                                        <Trash className="mr-2 h-3 w-3" />
+                                        Delete
+                                    </Button>
+                                </div>
+                            </PopoverContent>
+                        </Popover>
+                        {!node.isLeaf && (
+                            <>
+                                <div
+                                    className='text-muted-foreground text-xs hover:cursor-pointer hover:text-foreground relative'
+                                    onClick={handleCreateFile}
+                                >
+                                    <Plus className='mr-1 size-4' />
+                                </div>
+                                {/* <div
+                                    className='text-muted-foreground text-xs hover:cursor-pointer hover:text-foreground relative'
+                                    onClick={handleCreateFolder}
+                                >
+                                    <Folder className='mr-1 size-4' />
+                                    <span>New Folder</span>
+                                </div> */}
+                            </>
+                        )}
+                    </div>
+
+                </div>
+            )}
         </div>
     );
 }
@@ -429,6 +539,33 @@ function EditorPageContent() {
         fetchQueryPreview()
     }, [queryPreview?.signed_url])
 
+    const onCreate = async ({ parentId, index, type }: { parentId: string, index: number, type: string }) => {
+        console.log('creating!', { parentId, index, type });
+        const parentNode = treeRef.current.get(parentId);
+        if (parentNode) {
+            const newName = type === 'file' ? 'New File' : 'New Folder';
+            const newPath = `${parentNode.data.path}/${newName}`;
+            await createFile(newPath, '', type === 'directory');
+            treeRef.current.create({
+                parentId,
+                index,
+                type,
+                data: { name: newName, path: newPath }
+            });
+        }
+    };
+    const onRename = ({ id, name }: { id: string, name: string }) => {
+        console.log('renaming!', { id, name })
+    };
+    // noop
+    const onMove = ({ dragIds, parentId, index }: { dragIds: string[], parentId: string, index: number }) => {
+        console.log('moving!', { dragIds, parentId, index })
+    };
+
+    const onDelete = ({ ids }: { ids: string[] }) => {
+        console.log('deleting!', { ids, })
+    };
+
 
 
     return (
@@ -466,6 +603,10 @@ function EditorPageContent() {
                                             openByDefault={false}
                                             indent={12}
                                             ref={treeRef}
+                                            onCreate={onCreate}
+                                            onRename={onRename}
+                                            onMove={onMove}
+                                            onDelete={onDelete}
                                         >
                                             {Node as any}
                                         </Tree>

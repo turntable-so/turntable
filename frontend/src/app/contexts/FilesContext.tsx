@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
-import { fetchFileContents, getFileIndex, persistFile } from '../actions/actions';
+import { createFile, deleteFile, fetchFileContents, getFileIndex, persistFile } from '../actions/actions';
 
 export type FileNode = {
     name: string;
@@ -31,6 +31,8 @@ type FilesContextType = {
     setActiveFilepath: (path: string) => void;
     activeFilepath: string | null;
     searchFileIndex: FileNode[];
+    createFileAndRefresh: (path: string, fileContents: string) => void;
+    deleteFileAndRefresh: (path: string) => void;
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
@@ -42,30 +44,31 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const [activeFilepath, setActiveFilepath] = useState<string | null>(null);
     const [searchFileIndex, setSearchFileIndex] = useState<FileNode[]>([]);
 
-    useEffect(() => {
-        const fetchFiles = async () => {
-            const { dirty_changes, file_index } = await getFileIndex()
-            console.log({ file_index })
-            const fileIndex = file_index.map((file: FileNode) => ({ ...file }))
-            setFiles(fileIndex)
-            const flattenFileIndex = (files: FileNode[]): FileNode[] => {
-                return files.reduce((acc: FileNode[], file: FileNode) => {
-                    if (file.type === 'directory' && file.children) {
-                        return [...acc, file, ...flattenFileIndex(file.children)];
-                    }
-                    return [...acc, file];
-                }, []);
-            };
+    const fetchFiles = async () => {
+        const { dirty_changes, file_index } = await getFileIndex()
+        console.log({ file_index })
+        const fileIndex = file_index.map((file: FileNode) => ({ ...file }))
+        setFiles(fileIndex)
+        const flattenFileIndex = (files: FileNode[]): FileNode[] => {
+            return files.reduce((acc: FileNode[], file: FileNode) => {
+                if (file.type === 'directory' && file.children) {
+                    return [...acc, file, ...flattenFileIndex(file.children)];
+                }
+                return [...acc, file];
+            }, []);
+        };
 
-            const flattenedFiles = flattenFileIndex(fileIndex);
-            const searchableFiles = flattenedFiles
-                .filter(file => file.type === 'file')
-                .filter(file => !file.path.includes('dbt_packages/'))
-                .filter(file => !file.path.includes('target/'))
-            setSearchFileIndex(searchableFiles)
-        }
+        const flattenedFiles = flattenFileIndex(fileIndex);
+        const searchableFiles = flattenedFiles
+            .filter(file => file.type === 'file')
+            .filter(file => !file.path.includes('dbt_packages/'))
+            .filter(file => !file.path.includes('target/'))
+        setSearchFileIndex(searchableFiles)
+    }
+
+    useEffect(() => {
         fetchFiles()
-    }, [setFiles])
+    }, [])
 
     const openFile = useCallback(async (node: FileNode) => {
         console.log('openFile', { node })
@@ -99,6 +102,11 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         }
     }, [openedFiles]);
 
+    const createFileAndRefresh = async (path: string, fileContents: string) => {
+        await createFile(path, fileContents);
+        await fetchFiles()
+    }
+
 
     const updateFileContent = useCallback((path: string, content: string) => {
         console.log({ openedFiles, path })
@@ -117,6 +125,11 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         }
     }
 
+    const deleteFileAndRefresh = async (filepath: string) => {
+        await deleteFile(filepath);
+        await fetchFiles()
+    }
+
 
     return (
         <FilesContext.Provider value={{
@@ -130,7 +143,9 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             saveFile,
             setActiveFilepath,
             activeFilepath,
-            searchFileIndex
+            searchFileIndex,
+            createFileAndRefresh,
+            deleteFileAndRefresh
         }}>
             {children}
         </FilesContext.Provider>
