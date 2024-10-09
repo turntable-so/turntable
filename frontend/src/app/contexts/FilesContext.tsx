@@ -27,7 +27,9 @@ type FilesContextType = {
     activeFile: OpenedFile | null;
     setActiveFile: (file: OpenedFile | null) => void;
     updateFileContent: (path: string, content: string) => void;
-    saveActiveFile: () => void;
+    saveFile: (path: string, content: string) => void;
+    setActiveFilepath: (path: string) => void;
+    activeFilepath: string | null;
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
@@ -36,6 +38,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const [files, setFiles] = useState<FileNode[]>([]);
     const [openedFiles, setOpenedFiles] = useState<OpenedFile[]>([]);
     const [activeFile, setActiveFile] = useState<OpenedFile | null>(null);
+    const [activeFilepath, setActiveFilepath] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchFiles = async () => {
@@ -61,8 +64,10 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                 }
                 setOpenedFiles(prev => [...prev, newFile]);
                 setActiveFile(newFile);
+                setActiveFilepath(node.path)
             } else {
                 setActiveFile(existingFile);
+                setActiveFilepath(node.path)
             }
         }
     }, [openedFiles]);
@@ -84,15 +89,15 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         ));
     }, []);
 
-    const saveActiveFile = useCallback(async () => {
-        console.log('saving active file', { activeFile });
+    const saveFile = async (filepath: string, content: string) => {
+        console.log('saveFile', { filepath });
         if (activeFile) {
-            await persistFile(activeFile.node.path, activeFile.content);
+            await persistFile(filepath, content);
             setOpenedFiles(prev => prev.map(f =>
-                f.node.path === activeFile.node.path ? { ...f, isDirty: false } : f
+                f.node.path === filepath ? { ...f, isDirty: false, content } : f
             ));
         }
-    }, [activeFile, setOpenedFiles]);
+    }
 
 
     return (
@@ -104,7 +109,9 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             activeFile,
             setActiveFile,
             updateFileContent,
-            saveActiveFile,
+            saveFile,
+            setActiveFilepath,
+            activeFilepath,
         }}>
             {children}
         </FilesContext.Provider>

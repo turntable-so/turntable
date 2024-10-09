@@ -144,7 +144,7 @@ function Node({ node, style, dragHandle }: { node: any, style: any, dragHandle: 
 }
 
 function EditorContent({ setPromptBoxOpen }: { setPromptBoxOpen: (open: boolean) => void }) {
-    const { activeFile, updateFileContent, saveActiveFile } = useFiles();
+    const { activeFile, updateFileContent, saveFile, activeFilepath } = useFiles();
 
     // Define your custom theme
     const customTheme = {
@@ -188,6 +188,7 @@ function EditorContent({ setPromptBoxOpen }: { setPromptBoxOpen: (open: boolean)
 
     return (
         <Editor
+            key={activeFile?.node.path}
             value={activeFile?.content || ''}
             onChange={(value) => {
                 console.log('onchange', { value, activeFile })
@@ -227,7 +228,7 @@ function EditorContent({ setPromptBoxOpen }: { setPromptBoxOpen: (open: boolean)
                 // Prevent default behavior for cmd+s
                 editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, (e) => {
                     console.log('Cmd+S pressed in Monaco editor');
-                    saveActiveFile();
+                    saveFile(activeFile.node.path, editor.getValue());
                 });
             }}
             theme="mutedTheme"
@@ -246,7 +247,7 @@ function EditorPageContent() {
     const [branches, setBranches] = useState([])
     const [activeBranch, setActiveBranch] = useState('')
     const { ref, width, height } = useResizeObserver();
-    const { files, openedFiles, activeFile, setActiveFile, closeFile } = useFiles();
+    const { files, openedFiles, activeFile, setActiveFile, activeFilepath, closeFile, setActiveFilepath } = useFiles();
 
     const [showLeftSideBar, setShowLeftSidebar] = useState(true)
     const [showRightSideBar, setShowRightSidebar] = useState(false)
@@ -330,6 +331,9 @@ function EditorPageContent() {
         }
     }
 
+    console.log({
+        activeFilepath
+    })
 
 
     const getTablefromSignedUrl = async (signedUrl: string) => {
@@ -507,7 +511,10 @@ function EditorPageContent() {
                                 {openedFiles.map((file: OpenedFile) => (
                                     <div
                                         key={file.node.path}
-                                        onClick={() => setActiveFile(file)}
+                                        onClick={() => {
+                                            setActiveFile(file)
+                                            setActiveFilepath(file.node.path)
+                                        }}
                                         className={`text-sm font-medium border-x-2  px-2 py-1 flex items-center space-x-2 group select-none ${file.node.path === activeFile?.node.path ? 'bg-muted' : ''}`}
                                     >
                                         <div>
