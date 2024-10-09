@@ -1,25 +1,13 @@
 import pytest
-from rest_framework.test import APIClient
 
 from api.serializers import (
     ResourceSerializer,
 )
 from app.models import Repository, Resource, SSHKey
-from fixtures.local_env import create_local_workspace
 
 
 @pytest.mark.django_db
 class TestResourceViews:
-    @pytest.fixture
-    def workspace(self, user):
-        return create_local_workspace(user)
-
-    @pytest.fixture
-    def client(self, user, workspace):
-        client = APIClient()
-        client.force_authenticate(user=user)
-        return client
-
     @pytest.fixture
     def dbt_repository_id(self, workspace):
         ssh_key = SSHKey.generate_deploy_key(workspace)

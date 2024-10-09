@@ -174,12 +174,11 @@ class Branch(models.Model):
             str(self.repository.id),
             str(self.id),
         )
-        if not isolate:
+        if isolate or os.getenv("TEST_ENV") == "true":
+            with tempfile.TemporaryDirectory() as temp_dir:
+                yield os.path.join(temp_dir, path)
+        else:
             yield os.path.join(settings.MEDIA_ROOT, path)
-            return
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            yield os.path.join(temp_dir, path)
 
     @contextmanager
     def repo_context(

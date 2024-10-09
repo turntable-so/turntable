@@ -43,6 +43,7 @@ class ProjectViewSet(viewsets.ViewSet):
     def files(self, request):
         workspace = request.user.current_workspace()
         user_id = request.user.id
+
         # assumes a single repo in the workspace for now
         dbt_details = workspace.get_dbt_details()
         with dbt_details.dbt_repo_context() as (project, _, repo):
@@ -61,6 +62,8 @@ class ProjectViewSet(viewsets.ViewSet):
                     with open(filepath, "w") as file:
                         file.write(request.data.get("contents"))
                     return Response(status=status.HTTP_201_CREATED)
+
+                breakpoint()
 
                 if not os.path.exists(filepath):
                     return Response(status=status.HTTP_404_NOT_FOUND)
