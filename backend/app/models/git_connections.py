@@ -78,7 +78,7 @@ class SSHKey(models.Model):
 
 class Repository(models.Model):
     id = models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True)
-    main_branch_name = models.CharField(max_length=255, null=False)
+    main_branch_name = models.CharField(max_length=255, null=False, default="main")
     git_repo_url = models.URLField(null=False)
 
     # relationships
@@ -128,8 +128,11 @@ class Repository(models.Model):
             try:
                 repo.git.ls_remote(self.git_repo_url)
                 return {"success": True, "result": "Repository connection successful"}
-            except GitCommandError as e:
-                return {"success": False, "error": str(e)}
+            except GitCommandError:
+                return {
+                    "success": False,
+                    "error": "Failed to connect to the repository. Please check your credentials and try again.",
+                }
 
     @contextmanager
     def with_ssh_env(self, env_override: dict[str, str] | None = None):

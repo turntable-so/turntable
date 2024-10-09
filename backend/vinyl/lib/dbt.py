@@ -678,6 +678,7 @@ class DBTProject(object):
         return new_contents
 
     def fast_compile(self, dbt_sql: str):
+        self.mount_manifest()
         if not dbt_sql:
             raise ValueError("dbt_sql is empty")
         contents = self._replace_sources_and_refs(dbt_sql)
@@ -686,19 +687,3 @@ class DBTProject(object):
         if "{{" in contents:
             return None
         return contents
-
-
-class DBTTransition:
-    before: DBTProject
-    after: DBTProject
-    defer: bool
-
-    def __init__(
-        self,
-        before_project: DBTProject,
-        after_project: DBTProject,
-        defer=True,
-    ):
-        self.before = before_project
-        self.after = after_project
-        self.defer = defer

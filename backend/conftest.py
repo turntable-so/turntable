@@ -11,8 +11,10 @@ from fixtures.local_env import (
     create_local_postgres,
     create_local_user,
     create_local_workspace,
+    create_repository_n,
+    create_ssh_key_n,
 )
-from fixtures.staging_env import group_2, group_4, group_5, group_6
+from fixtures.staging_env import group_2, group_3, group_4, group_5
 from workflows.metadata_sync import MetadataSyncWorkflow
 from workflows.utils.debug import ContextDebugger
 
@@ -68,7 +70,11 @@ def user():
 @pytest.fixture
 def local_postgres(user):
     workspace = create_local_workspace(user)
-    return create_local_postgres(workspace)
+    git_repo = None
+    if os.getenv("SSHKEY_0_PUBLIC") and os.getenv("SSHKEY_0_PRIVATE"):
+        ssh_key = create_ssh_key_n(workspace, 0)
+        git_repo = create_repository_n(workspace, 0, ssh_key)
+    return create_local_postgres(workspace, git_repo)
 
 
 @pytest.fixture
@@ -84,22 +90,22 @@ def remote_snowflake(user):
 
 @pytest.fixture
 def remote_databricks(user):
-    return group_4(user)[0]
+    return group_3(user)[0]
 
 
 @pytest.fixture
 def remote_tableau(user):
-    return group_4(user)[1]
+    return group_3(user)[1]
 
 
 @pytest.fixture
 def remote_bigquery(user):
-    return group_5(user)[0]
+    return group_4(user)[0]
 
 
 @pytest.fixture
 def remote_redshift(user):
-    return group_6(user)[0]
+    return group_5(user)[0]
 
 
 @pytest.fixture()
