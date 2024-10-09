@@ -1,12 +1,8 @@
 from urllib.parse import quote, unquote
 
 import pytest
-from django.contrib.auth import get_user_model
 
-from app.models import User
 from app.utils.test_utils import require_env_vars
-
-User = get_user_model()
 
 
 def safe_encode(s):
@@ -78,7 +74,7 @@ class TestProjectViews:
 
         assert response.status_code == 201
 
-    def test_create_directory(self, client):
+    def test_create_file_with_directory(self, client):
         filepath = "models/marts/sales/funnel.sql"
         encoded_filepath = safe_encode(filepath)
         response = client.post(

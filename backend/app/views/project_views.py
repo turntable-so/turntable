@@ -63,8 +63,6 @@ class ProjectViewSet(viewsets.ViewSet):
                         file.write(request.data.get("contents"))
                     return Response(status=status.HTTP_201_CREATED)
 
-                breakpoint()
-
                 if not os.path.exists(filepath):
                     return Response(status=status.HTTP_404_NOT_FOUND)
 
