@@ -7,6 +7,7 @@ from app.models import Repository, Resource, SSHKey
 
 
 @pytest.mark.django_db
+@pytest.mark.usefixtures("force_isolate")
 class TestResourceViews:
     @pytest.fixture
     def dbt_repository_id(self, workspace):

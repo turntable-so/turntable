@@ -14,6 +14,7 @@ def safe_decode(s):
 
 
 @pytest.mark.django_db
+@pytest.mark.usefixtures("force_isolate")
 @require_env_vars("SSHKEY_0_PUBLIC", "SSHKEY_0_PRIVATE")
 class TestProjectViews:
     @pytest.fixture

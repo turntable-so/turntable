@@ -153,6 +153,6 @@ def use_cache(request):
     return request.config.getoption("--use_cache")
 
 
-@pytest.fixture(autouse=True)
-def set_test_env_vars(monkeypatch):
-    monkeypatch.setenv("TEST_ENV", "true")
+@pytest.fixture
+def force_isolate(monkeypatch):
+    monkeypatch.setenv("FORCE_ISOLATE", "true")

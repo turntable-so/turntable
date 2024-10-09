@@ -174,7 +174,7 @@ class Branch(models.Model):
             str(self.repository.id),
             str(self.id),
         )
-        if isolate or os.getenv("TEST_ENV") == "true":
+        if isolate or os.getenv("FORCE_ISOLATE") == "true":
             with tempfile.TemporaryDirectory() as temp_dir:
                 yield os.path.join(temp_dir, path)
         else:
