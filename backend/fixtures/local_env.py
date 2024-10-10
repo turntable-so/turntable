@@ -50,7 +50,9 @@ def create_ssh_key_n(workspace, n):
             return key
 
     return SSHKey.objects.create(
-        workspace=workspace, public_key=public_key, private_key=private_key
+        workspace=workspace,
+        public_key=public_key,
+        private_key=private_key.replace("\n", "\\n"),
     )
 
 
