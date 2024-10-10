@@ -13,7 +13,7 @@ TEST_WORKSPACE_ID = generate_short_uuid()
 
 
 isolate_mark = pytest.mark.parametrize(
-    "isolate", [True, False] if not os.getenv("GITHUB_RUN_ID") else [False]
+    "isolate", [True, False] if not os.getenv("GITHUB_RUN_ID") else [True]
 )
 
 
