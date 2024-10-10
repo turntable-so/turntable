@@ -380,11 +380,7 @@ class DBTProject(object):
                 ]
             )
 
-        if (
-            self.dbt1_5
-            and not force_terminal
-            and not os.getenv("MULTITENANT") == "true"
-        ):
+        if self.dbt1_5 and not force_terminal and not self.multitenant:
             stdout, stderr, success = self.dbt_runner(full_command)
         else:
             stdout, stderr, success = self.dbt_cli(full_command)
