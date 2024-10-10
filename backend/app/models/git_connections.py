@@ -90,6 +90,10 @@ class Repository(models.Model):
             models.Index(fields=["workspace_id"]),
         ]
 
+    @property
+    def repo_name(self):
+        return self.git_repo_url.split("/")[-1].split(".")[0]
+
     @transaction.atomic
     def save(self, *args, **kwargs):
         # save repo
@@ -176,6 +180,7 @@ class Branch(models.Model):
             str(self.workspace.id),
             str(self.repository.id),
             str(self.id),
+            self.repository.repo_name,
         )
         if isolate or os.getenv("FORCE_ISOLATE") == "true":
             with tempfile.TemporaryDirectory() as temp_dir:
