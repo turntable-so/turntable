@@ -76,7 +76,7 @@ def repo_path(
     repo: Repository | None = getattr(obj, "repository")
     project_path = getattr(obj, "project_path")
     if repo is None:
-        if isolate:
+        if isolate or os.getenv("FORCE_ISOLATE") == "true":
             with tempfile.TemporaryDirectory() as temp_dir:
                 temp_project_path = os.path.join(
                     temp_dir, os.path.basename(project_path)

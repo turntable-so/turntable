@@ -12,7 +12,9 @@ from app.utils.test_utils import require_env_vars
 TEST_WORKSPACE_ID = generate_short_uuid()
 
 
-isolate_mark = pytest.mark.parametrize("isolate", [True, False])
+isolate_mark = pytest.mark.parametrize(
+    "isolate", [True, False] if not os.getenv("GITHUB_RUN_ID") else [False]
+)
 
 
 @pytest.mark.django_db

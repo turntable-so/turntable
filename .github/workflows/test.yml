@@ -30,10 +30,7 @@ jobs:
           # Export loaded secrets as environment variables
           export-env: true
         env:
-          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
-          GITHUB_WEBHOOK_SECRET: op://Env/Github/webhook_secret
-          GITHUB_APP_ID: op://Env/Github/app_id
-          GITHUB_PRIVATE_KEY_BASE64: op://Env/Github/key
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}ey
           ENCRYPTION_KEY: op://Env/internal/ENCRYPTION_KEY
           GOOGLE_APPLICATION_CREDENTIALS: op://Env/Google Cloud/service_account_json
           SNOWFLAKE_ACCOUNT: op://Env/Snowflake/account
