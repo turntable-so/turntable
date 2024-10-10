@@ -5,7 +5,7 @@
 !.gitignore
 
 # Git worktrees
-media/ws/
+media/ws/**
 
 # Duckdb files with a few exceptions
 *.duckdb
@@ -112,7 +112,6 @@ venv.bak/
 dmypy.json
 
 # Frontend build
-media/
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can

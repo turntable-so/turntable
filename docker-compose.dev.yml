@@ -90,6 +90,7 @@ services:
     extends:
       file: docker-compose.demo.yml
       service: hatchet-lite
+    attach: false
     environment:
       <<: *hatchet-credentials
 

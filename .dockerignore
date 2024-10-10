@@ -6,7 +6,9 @@
 .cachedir
 .pytest_cache
 .ruff_cache
-.*venv/
+backend/.venv/
+backend/media/ws/**
+
 .env
 private/
 
