@@ -114,7 +114,13 @@ class DBTProject(object):
         dbt_package = f"dbt-{self.dialect.value.lower()}"
         install_package = f"{dbt_package}~={self.version}.0"
         res = subprocess.run(
-            ["uv", "pip", "show", dbt_package, "--python", sys.executable],
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "show",
+                dbt_package,
+            ],
             capture_output=True,
         )
         major_version_in_stdout = (
@@ -125,12 +131,11 @@ class DBTProject(object):
         if res.returncode != 0 or major_version_in_stdout != self.version:
             subprocess.run(
                 [
-                    "uv",
+                    sys.executable,
+                    "-m",
                     "pip",
                     "install",
                     install_package,
-                    "--python",
-                    sys.executable,
                 ],
                 check=True,
             )
@@ -335,7 +340,7 @@ class DBTProject(object):
         cli_args: list[str] | None = None,
         write_json: bool = False,
         dbt_cache: bool = False,
-        force_terminal: bool = False,
+        force_terminal: bool = True,
         defer: bool = False,
         defer_selection: bool = True,
     ) -> tuple[str, str, bool]:
