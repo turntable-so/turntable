@@ -12,11 +12,11 @@ from app.models import (
     ColumnLink,
     DatabricksDetails,
     DBTCoreDetails,
-    GithubInstallation,
     LookerDetails,
     Notebook,
     PostgresDetails,
     RedshiftDetails,
+    Repository,
     Resource,
     ResourceDetails,
     SnowflakeDetails,
@@ -47,21 +47,6 @@ class InvitationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Invitation
         fields = ["id", "email", "inviter_id", "accepted"]
-
-
-class GithubInstallationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = GithubInstallation
-        fields = [
-            "id",
-            "workspace_id",
-            "user_id",
-            "ssh_key",
-            "git_url",
-            "git_repo_type",
-            "main_git_branch",
-            "name",
-        ]
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -163,7 +148,6 @@ class ColumnSerializer(serializers.ModelSerializer):
 
 # minified asset serializers for listing in the asset tree
 class AssetIndexSerializer(serializers.ModelSerializer):
-
     column_count = serializers.IntegerField(read_only=True)
     unused_columns_count = serializers.IntegerField(read_only=True)
 
@@ -288,7 +272,7 @@ class ResourceDetailsSerializer(serializers.ModelSerializer):
 class LookerDetailsSerializer(ResourceDetailsSerializer):
     class Meta:
         model = LookerDetails
-        fields = ["base_url", "client_id", "client_secret", "resource"]
+        fields = ["base_url", "client_id", "client_secret", "resource", "repository_id"]
 
 
 class BigQueryDetailsSerializer(ResourceDetailsSerializer):
@@ -354,9 +338,7 @@ class DBTCoreDetailsSerializer(ResourceDetailsSerializer):
     class Meta:
         model = DBTCoreDetails
         fields = [
-            "git_repo_url",
-            "main_git_branch",
-            "deploy_key",
+            "repository_id",
             "project_path",
             "threads",
             "version",
@@ -397,3 +379,9 @@ class ResourceSerializer(serializers.HyperlinkedModelSerializer):
 
     def get_has_dbt(self, obj):
         return obj.has_dbt
+
+
+class RepositorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Repository
+        fields = ["id", "main_branch_name", "git_repo_url"]

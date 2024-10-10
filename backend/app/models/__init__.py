@@ -1,5 +1,5 @@
 from .editor import DBTQuery
-from .git_connections import GithubInstallation, SSHKey
+from .git_connections import Branch, Repository, SSHKey
 from .metadata import (
     Asset,
     AssetContainer,

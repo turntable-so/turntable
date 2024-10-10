@@ -28,7 +28,6 @@ from app.views import (
     AssetViewSet,
     BlockViewSet,
     ExecuteQueryView,
-    GithubInstallationViewSet,
     HealthCheckViewSet,
     InvitationViewSet,
     LineageViewSet,
@@ -41,6 +40,9 @@ from app.views import (
     WorkspaceGroupViewSet,
     WorkspaceViewSet,
 )
+from app.views.project_views import ProjectViewSet
+from app.views.query_views import DbtQueryPreviewView
+from app.views.settings_view import SettingsView
 
 from .views import CustomUserViewSet, LogoutView, OAuthView
 
@@ -52,7 +54,6 @@ router.register(r"lineage", LineageViewSet, basename="lineage")
 router.register(r"workspace_groups", WorkspaceGroupViewSet, basename="workspace_group")
 router.register(r"invitations", InvitationViewSet, basename="invitation")
 router.register(r"users/invitations", CustomUserViewSet, basename="user")
-router.register(r"github", GithubInstallationViewSet, basename="github")
 router.register(r"notebooks", NotebookViewSet, basename="notebook")
 router.register(r"blocks", BlockViewSet, basename="block")
 router.register(r"healthcheck", HealthCheckViewSet, basename="healthcheck")

@@ -24,6 +24,12 @@ from vinyl.lib.utils.files import adjust_path, cd, file_exists_in_directory, loa
 from vinyl.lib.utils.graph import DAG
 
 
+def run_adjusted_replace(base_pattern_list, replacement, contents):
+    pattern = r"\s*".join(base_pattern_list)
+    adjusted_pattern = pattern
+    return re.sub(adjusted_pattern, replacement, contents)
+
+
 class DBTProject(object):
     compiled_sql_path: str
     manifest_path: str
@@ -41,6 +47,7 @@ class DBTProject(object):
     version: DBTVersion
     version_list: list[int]
     multitenant: bool
+    deferral_target_path: str | None
 
     def __init__(
         self,
@@ -53,12 +60,14 @@ class DBTProject(object):
         catalog_req: bool = False,
         compile_exclusions: list[str] | None = None,
         env_vars: dict[str, str] = {},
+        deferral_target_path: str | None = None,
     ):
         self.dbt_project_dir = adjust_path(dbt_project_dir)
         self.dialect = dialect
         self.version = version
         self.compile_exclusions = compile_exclusions
         self.env_vars = env_vars
+        self.deferral_target_path = deferral_target_path
 
         # set version bool
         self.version_list = [int(v[0]) for v in self.version.split(".")]
@@ -80,6 +89,7 @@ class DBTProject(object):
             self.multitenant = True
         else:
             self.multitenant = False
+            self.install_dbt_if_necessary()
 
         # get profiles-dir
         self.dbt_profiles_dir = (
@@ -100,6 +110,31 @@ class DBTProject(object):
         if not os.path.exists(self.dbt_project_dir):
             raise Exception(f"Project path do not exist: {self.dbt_project_dir}")
 
+    def install_dbt_if_necessary(self):
+        dbt_package = f"dbt-{self.dialect.value.lower()}"
+        install_package = f"{dbt_package}~={self.version}.0"
+        res = subprocess.run(
+            ["uv", "pip", "show", dbt_package, "--python", sys.executable],
+            capture_output=True,
+        )
+        major_version_in_stdout = (
+            (res.stdout.decode().split("\n")[1].split(":")[1].strip().rsplit(".", 1)[0])
+            if res.stdout
+            else None
+        )
+        if res.returncode != 0 or major_version_in_stdout != self.version:
+            subprocess.run(
+                [
+                    "uv",
+                    "pip",
+                    "install",
+                    install_package,
+                    "--python",
+                    sys.executable,
+                ],
+                check=True,
+            )
+
     def generate_target_paths(self):
         if self.target_path:
             self.manifest_path = os.path.join(self.target_path, "manifest.json")
@@ -118,19 +153,23 @@ class DBTProject(object):
             return False
         return True
 
-    def mount_manifest(self, read=True, force_read=False, force_run=False):
+    def mount_manifest(
+        self, read=True, force_read=False, force_run=False, defer: bool = False
+    ):
         if hasattr(self, "manifest") and not force_run and not force_read:
             return "", "", True
         elif force_run or not os.path.exists(self.manifest_path):
-            return self.dbt_parse()
+            return self.dbt_parse(defer=defer)
 
         if read:
             self.manifest = load_orjson(self.manifest_path)
+
         elif (force_read or force_run) and hasattr(self, "manifest"):
             # make sure you don't accidentally read an outdated manifest in the future
             del self.manifest
 
     def build_model_graph(self, include_sources: bool = False, rebuild=False) -> DAG:
+        self.mount_manifest()
         if hasattr(self, "model_graph") and not rebuild:
             return self.model_graph
         # build networkx graph
@@ -145,6 +184,8 @@ class DBTProject(object):
             for k in dag.node_dict
             if k.startswith("metric.")
             or k.startswith("test.")
+            or k.startswith("semantic_model.")
+            or k.startswith("saved_query.")
             or (
                 not include_sources
                 and (k.startswith("source.") or k.startswith("seed."))
@@ -161,19 +202,34 @@ class DBTProject(object):
         predecessor_depth: int | None,
         successor_depth: int | None,
     ) -> list[str]:
+        self.mount_manifest()
         self.build_model_graph(include_sources=False)
         return self.model_graph.get_ancestors_and_descendants(
             node_ids, predecessor_depth, successor_depth
         )
 
-    def mount_catalog(self, read=True, force_run=False, force_read=False):
+    def mount_catalog(
+        self, read=True, force_run=False, force_read=False, defer: bool = False
+    ):
         if hasattr(self, "catalog") and not force_run and not force_read:
             return "", "", True
         elif force_run or not os.path.exists(self.catalog_path):
-            self.dbt_docs_generate()
+            self.dbt_docs_generate(defer=defer)
 
         if read:
-            self.catalog = load_orjson(self.catalog_path)
+            if defer:
+                self.catalog = load_orjson(
+                    os.path.join(self.deferral_target_path, "catalog.json")
+                )
+                new_catalog = load_orjson(self.catalog_path)
+                for key in ["nodes", "sources", "errors"]:
+                    new_val = new_catalog.get(key)
+                    if self.catalog.get(key) is None:
+                        self.catalog[key] = new_val
+                    else:
+                        self.catalog[key].update(new_val)
+            else:
+                self.catalog = load_orjson(self.catalog_path)
         elif (force_read or force_run) and hasattr(self, "catalog"):
             # make sure you don't accidentally read an outdated artifact in the future
             del self.catalog
@@ -279,7 +335,9 @@ class DBTProject(object):
         cli_args: list[str] | None = None,
         write_json: bool = False,
         dbt_cache: bool = False,
-        force_terminal: bool = True,  # for our purposes, terminal execution is preferred due to version isolation
+        force_terminal: bool = False,
+        defer: bool = False,
+        defer_selection: bool = True,
     ) -> tuple[str, str, bool]:
         if cli_args is None:
             cli_args = []
@@ -302,11 +360,27 @@ class DBTProject(object):
 
         full_command += command + cli_args
 
-        if (
-            self.dbt1_5
-            and not force_terminal
-            and not os.getenv("MULTITENANT") == "true"
-        ):
+        if defer and full_command[0] in [
+            "parse",
+            "compile",
+            "docs",
+            "run",
+            "test",
+            "build",
+        ]:
+            if self.deferral_target_path is None:
+                raise Exception("Deferral target path not set")
+            if defer_selection and full_command[0] != "parse":
+                full_command.extend(["-s", "state:modified+"])
+            full_command.extend(
+                [
+                    "--defer",
+                    "--state",
+                    self.deferral_target_path,
+                ]
+            )
+
+        if self.dbt1_5 and not force_terminal and not self.multitenant:
             stdout, stderr, success = self.dbt_runner(full_command)
         else:
             stdout, stderr, success = self.dbt_cli(full_command)
@@ -320,10 +394,12 @@ class DBTProject(object):
 
         return stdout, stderr, success
 
-    def dbt_parse(self) -> tuple[str, str, bool]:
+    def dbt_parse(self, defer: bool = False) -> tuple[str, str, bool]:
         if self.dbt1_5:
-            return self.run_dbt_command(["parse"], write_json=True)
-        return self.run_dbt_command(["parse", "--write-manifest"], write_json=True)
+            return self.run_dbt_command(["parse"], write_json=True, defer=defer)
+        return self.run_dbt_command(
+            ["parse", "--write-manifest"], write_json=True, defer=defer
+        )
 
     def dbt_compile(
         self,
@@ -334,6 +410,8 @@ class DBTProject(object):
         successor_depth: int | None = 0,
         update_manifest=False,
         models_only: bool = False,
+        defer: bool = False,
+        defer_selection: bool = True,
     ) -> tuple[str, str, bool]:
         if not node_ids:
             command = ["compile", "-f"]
@@ -365,21 +443,30 @@ class DBTProject(object):
             command.extend(self.compile_exclusions)
 
         stdout, stderr, success = self.run_dbt_command(
-            command, write_json=write_json, dbt_cache=dbt_cache
+            command,
+            write_json=write_json,
+            dbt_cache=dbt_cache,
+            defer=defer,
+            defer_selection=defer_selection,
         )
         if update_manifest:
-            self.mount_manifest(force_read=True)
+            self.mount_manifest(force_read=True, defer=defer)
         return stdout, stderr, success
 
-    def dbt_docs_generate(self, compile=False) -> tuple[str, str, bool]:
+    def dbt_docs_generate(
+        self, compile=False, defer: bool = False
+    ) -> tuple[str, str, bool]:
         if compile:
             stdout, stderr, success = self.run_dbt_command(
-                ["docs", "generate"], write_json=True, dbt_cache=True
+                ["docs", "generate"], write_json=True, dbt_cache=True, defer=defer
             )
             return stdout, stderr, success
 
         stdout, stderr, success = self.run_dbt_command(
-            ["docs", "generate", "--no-compile"], write_json=True, dbt_cache=True
+            ["docs", "generate", "--no-compile"],
+            write_json=True,
+            dbt_cache=True,
+            defer=defer,
         )
         return stdout, stderr, success
 
@@ -389,6 +476,7 @@ class DBTProject(object):
         force_read: bool = False,
         errors: list[VinylError] = [],
         compile_if_not_found: bool = True,
+        defer: bool = False,
     ) -> tuple[str | None, list[VinylError]]:
         self.mount_manifest(force_read=force_read)
         if node_id in self.manifest["nodes"]:
@@ -416,37 +504,63 @@ class DBTProject(object):
             )
             return None, errors
 
+        if "compiled_code" in node:
+            return node["compiled_code"], errors
+
         compiled_sql_abs_location = os.path.join(
             self.compiled_sql_path,
-            node_id.split(".")[1],
+            node_id.split(".")[1],  # project_name
             node["original_file_path"],
         )
 
-        try:
-            if not os.path.exists(compiled_sql_abs_location) and compile_if_not_found:
-                stdout, stderr, success = self.dbt_compile(
-                    [node_id], write_json=True, dbt_cache=False, update_manifest=False
-                )
+        if os.path.exists(compiled_sql_abs_location):
             with open(compiled_sql_abs_location, "r") as f:
                 out = f.read()
             return out, errors
 
-        except FileNotFoundError:
-            msg = f"Compiled SQL not found for {node_id.split('.')[-1]}"
-            if locals().get("stdout", None):
-                msg += f". DBT output: {stdout}"
-            errors.extend(
-                [
-                    VinylError(
-                        node_id=node_id,
-                        type=VinylErrorType.FILE_NOT_FOUND,
-                        msg=msg,
-                        traceback=traceback.format_exc(),
-                        dialect=self.dialect,
-                    )
-                ]
+        elif defer:
+            # should be in the same file spot in the deferred project. Otherwise, file has changed and would show up in compile above.
+            deferral_compiled_sql_abs_location = os.path.join(
+                self.deferral_target_path,
+                "compiled",
+                node_id.split(".")[1],  # project_name
+                node["original_file_path"],
             )
-            return None, errors
+
+            if os.path.exists(deferral_compiled_sql_abs_location):
+                with open(deferral_compiled_sql_abs_location, "r") as f:
+                    out = f.read()
+                return out, errors
+
+        elif compile_if_not_found:
+            print("compiling")
+            stdout, stderr, success = self.dbt_compile(
+                [node_id],
+                write_json=True,
+                dbt_cache=False,
+                update_manifest=False,
+                defer=defer,
+            )
+
+            with open(compiled_sql_abs_location, "r") as f:
+                out = f.read()
+            return out, errors
+
+        msg = f"Compiled SQL not found for {node_id.split('.')[-1]}"
+        if locals().get("stdout", None):
+            msg += f". DBT output: {stdout}"
+        errors.extend(
+            [
+                VinylError(
+                    node_id=node_id,
+                    type=VinylErrorType.FILE_NOT_FOUND,
+                    msg=msg,
+                    traceback=traceback.format_exc(),
+                    dialect=self.dialect,
+                )
+            ]
+        )
+        return None, errors
 
     def get_profiles_dir(self):
         if "DBT_PROFILES_DIR" in os.environ:
@@ -554,7 +668,7 @@ class DBTProject(object):
                 return None
         return relation_name
 
-    def preview(self, dbt_sql: str, limit: int | None = None):
+    def preview(self, dbt_sql: str, limit: int | None = None, defer: bool = False):
         if not self.dbt1_5:
             raise ValueError("Must use dbt 1.5+ to use show")
         command = [
@@ -575,7 +689,11 @@ class DBTProject(object):
         with tempfile.TemporaryDirectory() as temp_dir:
             command.extend(["--log-path", temp_dir])
             stdout, stderr, success = self.run_dbt_command(
-                command, write_json=False, dbt_cache=False
+                command,
+                write_json=False,
+                dbt_cache=False,
+                defer=defer,
+                defer_selection=False,
             )
             if not success:
                 raise Exception(
@@ -587,25 +705,20 @@ class DBTProject(object):
                 contents = orjson.loads(last_line)
             return contents["data"]["preview"]
 
+    def _replace_sources_and_refs(self, contents):
+        self.mount_manifest()
+        self.get_project_yml_files()
+        try:
+            extracted = py_extract_from_source(contents)
+        except ExtractionError:
+            return contents
 
-def run_adjusted_replace(base_pattern_list, replacement, contents):
-    pattern = r"\s*".join(base_pattern_list)
-    adjusted_pattern = pattern
-    return re.sub(adjusted_pattern, replacement, contents)
-
-
-def replace_sources_and_refs(project: DBTProject, contents):
-    try:
-        project.mount_manifest()
-        project.get_project_yml_files()
-
-        extracted = py_extract_from_source(contents)
         new_contents = contents
-        manifest_info = project.manifest
+        manifest_info = self.manifest
         nodes = manifest_info["nodes"]
         sources = manifest_info["sources"]
-        proj_name = project.dbt_project_yml["name"]
-        macro_dir = os.path.join(project.dbt_project_dir, "macros")
+        proj_name = self.dbt_project_yml["name"]
+        macro_dir = os.path.join(self.dbt_project_dir, "macros")
         # check if user has custom ref macro
         if not file_exists_in_directory("ref.sql", macro_dir):
             for ref in extracted["refs"]:
@@ -623,7 +736,7 @@ def replace_sources_and_refs(project: DBTProject, contents):
                 ]
                 node_id = f"model.{package_name}.{model_name}"
                 if node_id in nodes:
-                    replacement = project.get_relation_name(node_id)
+                    replacement = self.get_relation_name(node_id)
                     new_contents = run_adjusted_replace(
                         base_pattern_list, replacement, new_contents
                     )
@@ -647,22 +760,17 @@ def replace_sources_and_refs(project: DBTProject, contents):
                 ]
                 source_id = f"source.{proj_name}.{source[0]}.{source[1]}"
                 if source_id in sources:
-                    replacement = project.get_relation_name(source_id)
+                    replacement = self.get_relation_name(source_id)
                     new_contents = run_adjusted_replace(
                         base_pattern_list, replacement, new_contents
                     )
         return new_contents
 
-    except ExtractionError:
-        return contents
-
-
-def replace_configs_and_this(
-    project: DBTProject, contents, model_node_string: str | None = None
-):
-    try:
-        project.mount_manifest()
-        project.get_project_yml_files()
+    def _replace_configs_and_this(
+        self, contents: str, model_node_string: str | None = None
+    ):
+        self.mount_manifest()
+        self.get_project_yml_files()
 
         new_contents = contents
         pattern = r"{{\s*config\s*\([\s\S]*?\)\s*}}"
@@ -675,22 +783,60 @@ def replace_configs_and_this(
                 r"this",
                 r"}}",
             ]
-            replacement = project.get_relation_name(model_node_string)
+            replacement = self.get_relation_name(model_node_string)
             new_contents = run_adjusted_replace(
                 base_pattern_list, replacement, new_contents
             )
         return new_contents
 
-    except ExtractionError:
+    def fast_compile(self, dbt_sql: str):
+        self.mount_manifest()
+        if not dbt_sql:
+            raise ValueError("dbt_sql is empty")
+        contents = self._replace_sources_and_refs(dbt_sql)
+        contents = self._replace_configs_and_this(contents)
+        # if there are still jinja vars, then we failed to fast compile
+        if "{{" in contents:
+            return None
         return contents
 
 
-def fast_compile(project: DBTProject, dbt_sql: str):
-    if not dbt_sql:
-        raise ValueError("dbt_sql is empty")
-    contents = replace_sources_and_refs(project, dbt_sql)
-    contents = replace_configs_and_this(project, contents)
-    # if there are still jinja vars, then we failed to fast compile
-    if "{{" in contents:
-        return None
-    return contents
+class DBTTransition:
+    before: DBTProject
+    after: DBTProject
+    defer: bool
+
+    def __init__(
+        self,
+        before_project: DBTProject,
+        after_project: DBTProject,
+    ):
+        self.before = before_project
+        self.after = after_project
+        self.after.deferral_target_path = before_project.target_path
+
+    def docs_generate(self, compile: bool = False, defer: bool = False):
+        self.before.docs_generate(compile=compile)
+        self.after.docs_generate(compile=compile, defer=defer)
+
+    def mount_manifest(
+        self,
+        read: bool = True,
+        force_run: bool = False,
+        force_read: bool = False,
+        defer: bool = False,
+    ):
+        self.before.mount_manifest()
+        self.after.mount_manifest(read=read, force_run=force_run, force_read=force_read)
+
+    def mount_catalog(
+        self,
+        read: bool = False,
+        force_run: bool = False,
+        force_read: bool = False,
+        defer: bool = False,
+    ):
+        self.before.mount_catalog()
+        self.after.mount_catalog(
+            read=read, force_run=force_run, force_read=force_read, defer=defer
+        )

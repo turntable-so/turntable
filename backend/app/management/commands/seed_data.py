@@ -1,3 +1,5 @@
+import os
+
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
@@ -9,6 +11,8 @@ from fixtures.local_env import (
     create_local_postgres,
     create_local_user,
     create_local_workspace,
+    create_repository_n,
+    create_ssh_key_n,
 )
 from workflows.metadata_sync import MetadataSyncWorkflow
 from workflows.utils.debug import WorkflowDebugger
@@ -21,7 +25,11 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         user = create_local_user()
         workspace = create_local_workspace(user)
-        postgres = create_local_postgres(workspace)
+        git_repo = None
+        if os.getenv("SSHKEY_0_PUBLIC") and os.getenv("SSHKEY_0_PRIVATE"):
+            ssh_key = create_ssh_key_n(workspace, 0)
+            git_repo = create_repository_n(workspace, 0, ssh_key)
+        postgres = create_local_postgres(workspace, git_repo)
         metabase = create_local_metabase(workspace)
         if (
             Asset.objects.filter(resource=postgres).count() > 0

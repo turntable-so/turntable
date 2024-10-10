@@ -881,12 +881,12 @@ class DataHubDBParser:
         return nodes
 
     # @pyprofile(save_html=True)
-    def get_db_cll(self):
+    def get_db_cll(self, ignore_ids: list[str] = []):
         self.get_asset_column_dict()
         asset_dict_items = self.asset_dict.items()
         graphs = []
         for j, (k, asset) in enumerate(asset_dict_items):
-            if not asset.sql:
+            if not asset.sql or k in ignore_ids:
                 continue
 
             if os.getenv("DEV") == "true":
