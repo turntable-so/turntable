@@ -154,7 +154,6 @@ class LiveDBTParser:
                     )
                     out.column_dict[column_id] = column
         nx.relabel_nodes(out.asset_graph, out.id_map, copy=False)
-        breakpoint()
         out.asset_id = out.id_map[node_id]
         return out
 
