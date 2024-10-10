@@ -25,6 +25,7 @@ class DBTRunnerWorkflow:
     input structure:
         {
             resource_id: str,
+            branch_id: str | None,
             commands: list[str]
             dbt_resource_id: str | None,
         }
@@ -33,12 +34,17 @@ class DBTRunnerWorkflow:
     @hatchet.step(timeout="30m")
     def run_dbt_commands(self, context: Context):
         resource_id = context.workflow_input()["resource_id"]
+        branch_id = context.workflow_input().get("branch_id")
         dbt_resource_id = context.workflow_input().get("dbt_resource_id")
         resource = Resource.objects.get(id=resource_id)
         dbt_resource = resource.get_dbt_resource(dbt_resource_id)
 
         # Run the dbt commands
-        with dbt_resource.dbt_repo_context() as (dbtproj, project_dir):
+        with dbt_resource.dbt_repo_context(branch_id=branch_id) as (
+            dbtproj,
+            project_dir,
+            _,
+        ):
             ## delete target folder
             if os.path.exists(dbtproj.target_path):
                 shutil.rmtree(dbtproj.target_path)

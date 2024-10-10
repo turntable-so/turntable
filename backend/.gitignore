@@ -1,7 +1,11 @@
-# Hidden files and folders]
+
+# Hidden files and folders
 .*
 .*/
 !.gitignore
+
+# Git worktrees
+media/ws/
 
 # Duckdb files with a few exceptions
 *.duckdb

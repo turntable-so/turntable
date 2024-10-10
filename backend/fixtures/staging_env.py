@@ -5,9 +5,9 @@ from app.models import (
     BigqueryDetails,
     DatabricksDetails,
     DBTCoreDetails,
-    GithubInstallation,
     LookerDetails,
     RedshiftDetails,
+    Repository,
     Resource,
     ResourceType,
     SnowflakeDetails,
@@ -15,6 +15,7 @@ from app.models import (
     User,
     Workspace,
 )
+from fixtures.local_env import create_repository_n, create_ssh_key_n
 from vinyl.lib.dbt_methods import DBTVersion
 
 
@@ -203,7 +204,9 @@ def create_redshift_n(workspace: Workspace, n):
     return resource
 
 
-def create_dbt_n(resource: Resource, n, force_db: bool = False):
+def create_dbt_n(
+    resource: Resource, n, force_db: bool = False, repository: Repository | None = None
+):
     database = os.getenv(f"DBT_{n}_DATABASE")
     schema = os.getenv(f"DBT_{n}_SCHEMA")
     dbt_version = os.getenv(f"DBT_{n}_VERSION")
@@ -211,8 +214,6 @@ def create_dbt_n(resource: Resource, n, force_db: bool = False):
     assert schema, f"must provide DBT_{n}_SCHEMA to use this test"
     assert dbt_version, f"must provide DBT_{n}_VERSION to use this test"
 
-    github_installation_id = os.getenv(f"DBT_{n}_GITHUB_INSTALLATION_ID")
-    github_repo_id = os.getenv(f"DBT_{n}_GITHUB_REPO_ID")
     project_path = os.getenv(f"DBT_{n}_PROJECT_PATH", ".")
 
     if force_db:
@@ -221,38 +222,15 @@ def create_dbt_n(resource: Resource, n, force_db: bool = False):
         else:
             raise ValueError("force_db is only supported for BigQuery resources")
 
-    if github_installation_id:
-        try:
-            github_installation = GithubInstallation.objects.get(
-                id=github_installation_id
-            )
-        except GithubInstallation.DoesNotExist:
-            github_installation = GithubInstallation.objects.create(
-                id=github_installation_id, workspace=resource.workspace
-            )
-
     dbt_major, dbt_minor = dbt_version.split(".")
     other_schemas = os.getenv(f"DBT_{n}_OTHER_SCHEMAS")
     if other_schemas:
         other_schemas = json.loads(other_schemas)
 
-    for dbtres in resource.dbtresource_set.all():
-        dbt_resource_already_created = (
-            (
-                not github_installation_id
-                or dbtres.github_installation == github_installation
-            )
-            and (not github_repo_id or dbtres.github_repo_id == github_repo_id)
-            and (project_path == dbtres.project_path)
-        )
-        if dbt_resource_already_created:
-            return resource
-
     DBTCoreDetails(
         resource=resource,
-        github_installation_id=github_installation_id,
-        github_repo_id=github_repo_id,
-        project_path=os.getenv(f"DBT_{n}_PROJECT_PATH", "."),
+        repository=repository,
+        project_path=project_path,
         threads=os.getenv(f"DBT_{n}_THREADS", 6),
         other_schemas=other_schemas,
         database=database,
@@ -262,25 +240,17 @@ def create_dbt_n(resource: Resource, n, force_db: bool = False):
     return resource
 
 
-def create_looker_n(workspace, n):
+def create_looker_n(workspace, n, git_repo: Repository | None = None):
     looker_secret = os.getenv(f"LOOKER_{n}_SECRET")
     looker_url = os.getenv(f"LOOKER_{n}_URL")
-    github_installation_id = os.getenv(f"LOOKER_{n}_GITHUB_INSTALLATION_ID")
-    github_repo_id = os.getenv(f"LOOKER_{n}_GITHUB_REPO_ID")
     resource_name = os.getenv(f"LOOKER_{n}_RESOURCE_NAME")
 
     assert looker_secret, f"must provide LOOKER_{n}_SECRET to use this test"
-    assert (
-        github_installation_id
-    ), f"must provide LOOKER_{n}_GITHUB_INSTALLATION_ID to use this test"
-    assert github_repo_id, f"must provide LOOKER_{n}_GITHUB_REPO_ID to use this test"
+    assert looker_url, f"must provide LOOKER_{n}_URL to use this test"
     assert resource_name, f"must provide LOOKER_{n}_RESOURCE_NAME to use this test"
+    assert git_repo or os.getenv(f"LOOKER_{n}_project_path")
 
     looker_secret_json = json.loads(looker_secret)
-
-    github_installation, _ = GithubInstallation.objects.update_or_create(
-        id=github_installation_id, workspace=workspace
-    )
 
     looker, _ = Resource.objects.update_or_create(
         name=resource_name, type=ResourceType.BI, workspace=workspace
@@ -291,8 +261,7 @@ def create_looker_n(workspace, n):
             base_url=looker_url,
             client_id=looker_secret_json["client_id"],
             client_secret=looker_secret_json["client_secret"],
-            github_installation=github_installation,
-            github_repo_id=github_repo_id,
+            repository=git_repo,
             project_path=os.getenv(f"LOOKER_{n}_PROJECT_PATH", "."),
         ).save()
 
@@ -335,50 +304,53 @@ def create_tableau_n(workspace, n):
 def group_1(user):
     workspace = create_workspace_n(user, "bigquery", 1)
     bigquery = create_bigquery_n(workspace, 1)
-    create_dbt_n(bigquery, 1)
-    create_dbt_n(bigquery, 2)
+    sshkey1 = create_ssh_key_n(workspace, 1)
+    repository1 = create_repository_n(workspace, 1, sshkey1)
+    sshkey2 = create_ssh_key_n(workspace, 2)
+    repository2 = create_repository_n(workspace, 2, sshkey2)
+    create_dbt_n(bigquery, 1, repository=repository1)
+    create_dbt_n(bigquery, 2, repository=repository2)
     return [bigquery]
 
 
 def group_2(user):
     workspace = create_workspace_n(user, "snowflake", 1)
     snowflake = create_snowflake_n(workspace, 1)
-    create_dbt_n(snowflake, 1)
+    sshkey = create_ssh_key_n(workspace, 1)
+    repository = create_repository_n(workspace, 1, sshkey)
+    create_dbt_n(snowflake, 1, repository=repository)
 
     return [snowflake]
 
 
 def group_3(user):
-    workspace = create_workspace_n(user, "bigquery", 2)
-    bigquery = create_bigquery_n(workspace, 2)
-    create_dbt_n(bigquery, 4)
-    looker = create_looker_n(workspace, 1)
-
-    return [bigquery, looker]
-
-
-def group_4(user):
     workspace = create_workspace_n(user, "databricks", 0)
     databricks = create_databricks_n(workspace, 0)
     tableau = create_tableau_n(workspace, 0)
-    create_dbt_n(databricks, 0)
+    sshkey = create_ssh_key_n(workspace, 0)
+    repository = create_repository_n(workspace, 0, sshkey)
+    create_dbt_n(databricks, 0, repository=repository)
 
     return [databricks, tableau]
 
 
-def group_5(user):
+def group_4(user):
     workspace = create_workspace_n(user, "bigquery", 0)
     bigquery = create_bigquery_n(workspace, 0)
+    sshkey = create_ssh_key_n(workspace, 0)
+    repository = create_repository_n(workspace, 0, sshkey)
     create_dbt_n(
-        bigquery, 0, force_db=True
+        bigquery, 0, force_db=True, repository=repository
     )  # force_db=True to use the same project_id as the bigquery resource. Can't use mydb because it is reserved.
 
     return [bigquery]
 
 
-def group_6(user):
+def group_5(user):
     workspace = create_workspace_n(user, "redshift", 0)
     redshift = create_redshift_n(workspace, 0)
-    create_dbt_n(redshift, 0)
+    sshkey = create_ssh_key_n(workspace, 0)
+    repository = create_repository_n(workspace, 0, sshkey)
+    create_dbt_n(redshift, 0, repository=repository)
 
     return [redshift]

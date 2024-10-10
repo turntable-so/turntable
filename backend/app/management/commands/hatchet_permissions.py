@@ -1,5 +1,6 @@
-from backend.hatchet_initialization.create_db import create_hatchet_db
 from django.core.management.base import BaseCommand
+
+from hatchet_initialization.create_db import create_hatchet_db
 
 
 class Command(BaseCommand):

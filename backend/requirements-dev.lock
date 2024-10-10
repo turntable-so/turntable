@@ -199,7 +199,7 @@ django-cors-headers==4.4.0
 django-health-check==3.18.3
 django-invitations==2.1.0
 django-pgbulk==3.0.0
-django-polymorphic @ git+https://github.com/jazzband/django-polymorphic.git@1039f882b99f97bf657bd958c949ee6a3b00377a#egg=django-polymorphic
+django-polymorphic @ git+https://github.com/jazzband/django-polymorphic.git@1039f882b99f97bf657bd958c949ee6a3b00377a
 django-storages==1.14.3
 django-templated-mail==1.1.1
     # via djoser
@@ -911,7 +911,7 @@ urllib3==2.2.2
     # via sentry-sdk
 uv==0.4.16
     # via dbtx
-uvicorn==0.30.1
+uvicorn==0.31.0
     # via fastapi
     # via sse-starlette
 uvloop==0.19.0

@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
 
 # Register your models here.
 from .models import (
@@ -8,15 +9,11 @@ from .models import (
     Block,
     Column,
     ColumnLink,
-    GithubInstallation,
     Notebook,
     Resource,
+    User,
     Workspace,
 )
-
-from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
-from .models import User
 
 
 class CustomUserAdmin(UserAdmin):
@@ -48,6 +45,5 @@ admin.site.register(Resource)
 admin.site.register(AssetError)
 admin.site.register(Block)
 admin.site.register(Notebook)
-admin.site.register(GithubInstallation)
 admin.site.register(User, CustomUserAdmin)
 admin.site.register(Workspace)

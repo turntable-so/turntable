@@ -1,7 +1,7 @@
 import pytest
 
 from app.core.serialization import bootstrap_project_from_dict
-from app.models import GithubInstallation, Resource
+from app.models import Resource
 
 
 @pytest.mark.django_db
@@ -12,7 +12,6 @@ def test_serialization():
         type="File",
         config={"path": "data/csvs"},
     )
-    github_installation = GithubInstallation.objects.create()
     repository = None
 
     defs_dict = {

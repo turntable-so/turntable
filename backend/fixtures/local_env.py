@@ -4,9 +4,11 @@ from app.models import (
     DBTCoreDetails,
     MetabaseDetails,
     PostgresDetails,
+    Repository,
     Resource,
     ResourceSubtype,
     ResourceType,
+    SSHKey,
     User,
     Workspace,
 )
@@ -37,7 +39,34 @@ def create_local_workspace(user):
         return workspace
 
 
-def create_local_postgres(workspace):
+def create_ssh_key_n(workspace, n):
+    public_key = os.getenv(f"SSHKEY_{n}_PUBLIC")
+    private_key = os.getenv(f"SSHKEY_{n}_PRIVATE")
+    assert public_key, f"must provide SSHKEY_{n}_PUBLIC to use this test"
+    assert private_key, f"must provide SSHKEY_{n}_PRIVATE to use this test"
+    private_key = private_key.replace("\\n", "\n")
+    cur_keys = SSHKey.objects.filter(workspace=workspace)
+    for key in cur_keys:
+        if key.public_key == public_key and key.private_key == private_key:
+            return key
+
+    return SSHKey.objects.create(
+        workspace=workspace,
+        public_key=public_key,
+        private_key=private_key,
+    )
+
+
+def create_repository_n(workspace, n, ssh_key):
+    assert ssh_key, "must provide ssh_key to use this test"
+    git_repo_url = os.getenv(f"GIT_{n}_REPO_URL")
+    assert git_repo_url, f"must provide GIT_{n}_REPO_URL to use this test"
+    return Repository.objects.get_or_create(
+        workspace=workspace, git_repo_url=git_repo_url, ssh_key=ssh_key
+    )[0]
+
+
+def create_local_postgres(workspace, repository: Repository | None = None):
     resource_name = "Test Postgres Resource"
     try:
         resource = Resource.objects.get(
@@ -61,7 +90,10 @@ def create_local_postgres(workspace):
         if resource.dbtresource_set.count() == 0:
             DBTCoreDetails(
                 resource=resource,
-                project_path="fixtures/test_resources/jaffle_shop",
+                project_path=(
+                    "fixtures/test_resources/jaffle_shop" if repository is None else "."
+                ),
+                repository=repository,
                 threads=1,
                 version=DBTVersion.V1_7.value,
                 subtype=ResourceSubtype.DBT,

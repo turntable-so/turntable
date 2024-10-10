@@ -1,6 +1,5 @@
 from .asset_views import AssetViewSet
 from .block_views import BlockViewSet
-from .github_installation_views import GithubInstallationViewSet
 from .healthcheck_views import HealthCheckViewSet
 from .invitation_views import InvitationViewSet
 from .lineage_views import LineageViewSet
