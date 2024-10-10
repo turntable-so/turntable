@@ -31,9 +31,6 @@ jobs:
           export-env: true
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
-          GITHUB_WEBHOOK_SECRET: op://Env/Github/webhook_secret
-          GITHUB_APP_ID: op://Env/Github/app_id
-          GITHUB_PRIVATE_KEY_BASE64: op://Env/Github/key
           ENCRYPTION_KEY: op://Env/internal/ENCRYPTION_KEY
           GOOGLE_APPLICATION_CREDENTIALS: op://Env/Google Cloud/service_account_json
           SNOWFLAKE_ACCOUNT: op://Env/Snowflake/account
@@ -41,6 +38,10 @@ jobs:
           SNOWFLAKE_USER: op://Env/Snowflake/username
           OPENAI_API_KEY: op://Env/OpenAI/key
           HATCHET_CLIENT_TOKEN: op://Env/Hatchet/token
+          SSHKEY_0_PUBLIC: op://Env/GitHub/sshkey_0_public
+          SSHKEY_0_PRIVATE: op://Env/GitHub/sshkey_0_private
+          GIT_0_REPO_URL: op://Env/GitHub/git_0_repo_url
+
 
       - name: Start test resources
         uses: hoverkraft-tech/compose-action@v2.0.1

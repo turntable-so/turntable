@@ -752,6 +752,7 @@ class DBTProject(object):
         return new_contents
 
     def fast_compile(self, dbt_sql: str):
+        self.mount_manifest()
         if not dbt_sql:
             raise ValueError("dbt_sql is empty")
         contents = self._replace_sources_and_refs(dbt_sql)

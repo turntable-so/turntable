@@ -11,8 +11,8 @@ def test_embed():
 
 @pytest.mark.django_db
 def test_table_description(local_postgres):
-    dbt_core_resources = DBTCoreDetails.objects.filter(resource=local_postgres)
-    with dbt_core_resources[0].dbt_repo_context() as (dbtproj, dbt_path, _):
+    dbt_core_resource = DBTCoreDetails.objects.get(resource=local_postgres)
+    with dbt_core_resource.dbt_repo_context() as (dbtproj, dbt_path, _):
         x = get_table_completion(
             dbtproj,
             "model.jaffle_shop.customers",
@@ -24,8 +24,8 @@ def test_table_description(local_postgres):
 
 @pytest.mark.django_db
 def test_column_description(local_postgres):
-    dbt_core_resources = DBTCoreDetails.objects.filter(resource=local_postgres)
-    with dbt_core_resources[0].dbt_repo_context() as (dbtproj, dbt_path, _):
+    dbt_core_resource = DBTCoreDetails.objects.get(resource=local_postgres)
+    with dbt_core_resource.dbt_repo_context() as (dbtproj, dbt_path, _):
         x = get_column_completion(
             dbtproj,
             {"model.jaffle_shop.customers": ["count_lifetime_orders"]},

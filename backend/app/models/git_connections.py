@@ -3,12 +3,13 @@ from __future__ import annotations
 import logging
 import os
 import shutil
-import subprocess
 import tempfile
 import uuid
 from contextlib import contextmanager
-from random import randint
 
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 from django.conf import settings
 from django.db import models, transaction
 from git import Repo as GitRepo
@@ -20,12 +21,34 @@ from app.utils.fields import encrypt
 logger = logging.getLogger(__name__)
 
 
+def generate_rsa_key_pair():
+    # Generate a new RSA key pair
+    key = rsa.generate_private_key(
+        backend=default_backend(), public_exponent=65537, key_size=2048
+    )
+
+    # Serialize the public key
+    public_key = key.public_key().public_bytes(
+        encoding=serialization.Encoding.OpenSSH,
+        format=serialization.PublicFormat.OpenSSH,
+    )
+
+    private_key = key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.TraditionalOpenSSL,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+
+    return public_key.decode("utf-8"), private_key.decode("utf-8")
+
+
 class SSHKey(models.Model):
     # pk
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     # fields
     public_key = models.TextField()
+    # TODO: add encryption to this key
     private_key = encrypt(models.TextField())
 
     # relationships
@@ -37,27 +60,25 @@ class SSHKey(models.Model):
         ]
 
     @classmethod
-    def generate_deploy_key(cls, workspace_id: str):
-        try:
-            ssh_key = SSHKey.objects.get(workspace_id=workspace_id)
-            logger.debug(f"SSH keys already exist for {cls.workspace_id}")
-        except SSHKey.DoesNotExist:
-            public_key, private_key = cls._generate_ssh_rsa()
-            ssh_key = SSHKey.objects.create(
-                workspace_id=cls.workspace_id,
-                public_key=public_key,
-                private_key=private_key,
-            )
-            logger.debug(f"SSH keys generated successfully for {cls.workspace_id}")
+    def generate_deploy_key(cls, workspace: Workspace):
+        ssh_key = cls.objects.filter(workspace=workspace).last()
+        if ssh_key is not None:
+            return ssh_key
 
-        return {
-            "public_key": ssh_key.public_key,
-        }
+        public_key, private_key = generate_rsa_key_pair()
+        ssh_key = SSHKey.objects.create(
+            workspace=workspace,
+            public_key=public_key,
+            private_key=private_key,
+        )
+        logger.debug(f"SSH keys generated successfully for {workspace}")
+
+        return ssh_key
 
 
 class Repository(models.Model):
     id = models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True)
-    main_branch_name = models.CharField(max_length=255, null=False)
+    main_branch_name = models.CharField(max_length=255, null=False, default="main")
     git_repo_url = models.URLField(null=False)
 
     # relationships
@@ -102,59 +123,16 @@ class Repository(models.Model):
     def get_branch(self, branch_id: str) -> Branch:
         return self.branches.get(id=branch_id, workspace=self.workspace)
 
-    def get_branch_by_name(self, branch_name: str) -> Branch:
-        return self.branches.get(branch_name=branch_name, workspace=self.workspace)
-
-    def _run_ssh_command(self, command: list):
-        ssh_key_text = self.ssh_key.private_key
-        private_key_path = str(randint(1000, 9999)) + ".pem"
-
-        # Load the SSH key from the text
-        with open(private_key_path, "w") as f:
-            f.write(ssh_key_text)
-
-        try:
-            subprocess.run(["chmod", "600", private_key_path], check=True)
-            ssh_agent = subprocess.Popen(["ssh-agent", "-s"], stdout=subprocess.PIPE)
-            agent_output = ssh_agent.communicate()[0].decode("utf-8")
-
-            # Extract the SSH agent PID and socket
-            agent_info = dict(
-                line.split("=") for line in agent_output.split(";") if "=" in line
-            )
-            os.environ["SSH_AUTH_SOCK"] = agent_info.get("SSH_AUTH_SOCK", "").strip()
-            os.environ["SSH_AGENT_PID"] = agent_info.get("SSH_AGENT_PID", "").strip()
-
-            # Add the SSH key to the agent
-            subprocess.run(["ssh-add", private_key_path], check=True)
-
-            # Set up the SSH command for git
-            git_command = f"ssh -o StrictHostKeyChecking=no -i {private_key_path}"
-            os.environ["GIT_SSH_COMMAND"] = git_command
-
-            # Execute the git ls-remote command
-            answer = subprocess.run(
-                command,
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-
-            stdout = answer.stdout
-            stderr = answer.stderr
-            returncode = answer.returncode
-            result = stdout if returncode == 0 else stderr
-
-            if returncode != 0:
-                return {"success": False, "error": result}
-            return {"success": True, "result": result}
-        except Exception as e:
-            return {"success": False, "error": str(e)}
-        finally:
-            os.remove(private_key_path)
-
     def test_repo_connection(self):
-        return self._run_ssh_command(command=["git", "ls-remote", self.git_repo_url])
+        with self.main_branch.repo_context() as (repo, env):
+            try:
+                repo.git.ls_remote(self.git_repo_url)
+                return {"success": True, "result": "Repository connection successful"}
+            except GitCommandError:
+                return {
+                    "success": False,
+                    "error": "Failed to connect to the repository. Please check your credentials and try again.",
+                }
 
     @contextmanager
     def with_ssh_env(self, env_override: dict[str, str] | None = None):
@@ -199,12 +177,11 @@ class Branch(models.Model):
             str(self.repository.id),
             str(self.id),
         )
-        if not isolate:
+        if isolate or os.getenv("FORCE_ISOLATE") == "true":
+            with tempfile.TemporaryDirectory() as temp_dir:
+                yield os.path.join(temp_dir, path)
+        else:
             yield os.path.join(settings.MEDIA_ROOT, path)
-            return
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            yield os.path.join(temp_dir, path)
 
     @contextmanager
     def repo_context(

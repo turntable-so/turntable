@@ -5,7 +5,7 @@ import shutil
 import tempfile
 import uuid
 from contextlib import contextmanager
-from typing import Any
+from typing import Any, Generator
 
 import yaml
 from django.contrib.postgres.fields import ArrayField
@@ -72,17 +72,21 @@ def get_sync_config(db_path):
 @contextmanager
 def repo_path(
     obj, isolate: bool = False, branch_id: str | None = None
-) -> tuple[str, Repository | None]:
+) -> Generator[tuple[str, Repository | None], None, None]:
     repo: Repository | None = getattr(obj, "repository")
     project_path = getattr(obj, "project_path")
     if repo is None:
-        # local repo always treated as isolated
-        with tempfile.TemporaryDirectory() as temp_dir:
-            temp_project_path = os.path.join(temp_dir, os.path.basename(project_path))
-            shutil.copytree(project_path, temp_project_path)
-            yield temp_project_path, None
-            return
+        if isolate or os.getenv("FORCE_ISOLATE") == "true":
+            with tempfile.TemporaryDirectory() as temp_dir:
+                temp_project_path = os.path.join(
+                    temp_dir, os.path.basename(project_path)
+                )
+                shutil.copytree(project_path, temp_project_path)
+                yield temp_project_path, None
+                return
 
+        yield project_path, None
+        return
     branch = repo.main_branch if branch_id is None else repo.get_branch(branch_id)
     with branch.repo_context(isolate=isolate) as (git_repo, _):
         project_path = os.path.join(git_repo.working_tree_dir, project_path)
@@ -539,10 +543,6 @@ class DBTCoreDetails(DBTResource):
             self.version = self.version.value
         super().save(*args, **kwargs)
 
-    # Note: legacy context manager
-    # Only supports main branch and is user-less
-    # Unless you're running tenant-agnostic operations, you probably
-    # want to use dbt_context_git_repo below
     @contextmanager
     def dbt_repo_context(self, isolate: bool = False, branch_id: str | None = None):
         env_vars = self.env_vars or {}
