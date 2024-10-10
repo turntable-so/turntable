@@ -25,7 +25,7 @@ from vinyl.lib.connect import (
     RedshiftConnector,
     SnowflakeConnector,
 )
-from vinyl.lib.dbt import DBTProject
+from vinyl.lib.dbt import DBTProject, DBTTransition
 from vinyl.lib.dbt_methods import DBTDialect, DBTVersion
 from vinyl.lib.utils.files import save_orjson
 from vinyl.lib.utils.process import run_and_capture_subprocess
@@ -575,6 +575,26 @@ class DBTCoreDetails(DBTResource):
                         project_path,
                         git_repo,
                     )
+
+    @contextmanager
+    def dbt_transition_context(
+        self, isolate: bool = False, branch_id: str | None = None
+    ):
+        with self.dbt_repo_context(isolate=isolate) as (
+            before,
+            _,
+            _,
+        ):
+            with self.dbt_repo_context(isolate=isolate, branch_id=branch_id) as (
+                after,
+                project_path,
+                git_repo,
+            ):
+                yield (
+                    DBTTransition(before_project=before, after_project=after),
+                    project_path,
+                    git_repo,
+                )
 
     def upload_artifacts(self, branch_id: str | None = None):
         with self.dbt_repo_context(isolate=True, branch_id=branch_id) as (

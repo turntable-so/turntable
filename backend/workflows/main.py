@@ -5,8 +5,8 @@ django.setup()
 
 # rest of imports
 
-from workflows.execute_query import ExecuteQueryWorkflow
 from workflows.execute_dbt_query import DBTQueryPreviewWorkflow
+from workflows.execute_query import ExecuteQueryWorkflow
 from workflows.hatchet import hatchet
 from workflows.metadata_sync import (
     MetadataSyncWorkflow,

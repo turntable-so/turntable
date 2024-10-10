@@ -96,3 +96,16 @@ class TestProjectViews:
         response = client.delete(f"/project/files/?filepath={encoded_filepath}")
 
         assert response.status_code == 204
+
+    def test_get_lineage_view(self, client, encoded_filepath):
+        response = client.get(
+            "/project/lineage/",
+            {
+                "filepath": encoded_filepath,
+                "predecessor_depth": 1,
+                "successor_depth": 1,
+            },
+        )
+        assert response.status_code == 200
+        assert response.json()["lineage"]["asset_links"]
+        assert response.json()["lineage"]["column_links"]

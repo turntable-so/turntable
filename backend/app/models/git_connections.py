@@ -162,6 +162,9 @@ class Branch(models.Model):
     )
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
 
+    class Meta:
+        unique_together = ["branch_name", "repository", "workspace"]
+
     @property
     def is_main(self):
         return self.branch_name == self.repository.main_branch_name

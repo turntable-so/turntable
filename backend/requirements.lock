@@ -274,7 +274,7 @@ idna==3.10
     # via yarl
 ijson==3.3.0
     # via acryl-datahub
-importlib-metadata==8.5.0
+importlib-metadata==6.11.0
     # via litellm
 iniconfig==2.0.0
     # via pytest

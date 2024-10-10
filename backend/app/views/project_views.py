@@ -6,6 +6,8 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from api.serializers import AssetSerializer, LineageSerializer
+from app.core.dbt import LiveDBTParser
 from app.models.git_connections import Branch
 
 
@@ -111,7 +113,6 @@ class ProjectViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["GET", "POST", "PATCH"])
     def branches(self, request):
         workspace = request.user.current_workspace()
-        user_id = request.user.id
         # assumes a single repo in the workspace for now
         dbt_details = workspace.get_dbt_details()
         if not dbt_details:
@@ -163,3 +164,53 @@ class ProjectViewSet(viewsets.ViewSet):
                 return Response({"branch_name": name})
 
         return Response(status=status.HTTP_501_NOT_IMPLEMENTED)
+
+    @action(detail=False, methods=["GET"])
+    def lineage(self, request, branch_id=None):
+        workspace = request.user.current_workspace()
+        dbt_details = workspace.get_dbt_details()
+        filepath = unquote(request.query_params.get("filepath"))
+        predecessor_depth = int(request.query_params.get("predecessor_depth"))
+        successor_depth = int(request.query_params.get("successor_depth"))
+        defer = request.query_params.get("defer", True)
+        with dbt_details.dbt_transition_context(branch_id=branch_id) as (
+            transition,
+            _,
+            repo,
+        ):
+            transition.mount_manifest(defer=defer)
+            transition.mount_catalog(defer=defer)
+
+            node_id = LiveDBTParser.get_node_id_from_filepath(
+                transition.after, filepath, defer
+            )
+            if not node_id:
+                raise ValueError(f"Node at filepath{filepath} not found in manifest")
+
+            dbtparser = LiveDBTParser.parse_project(
+                proj=transition.after,
+                before_proj=transition.before,
+                node_id=node_id,
+                resource=dbt_details.resource,
+                predecessor_depth=predecessor_depth,
+                successor_depth=successor_depth,
+                defer=defer,
+            )
+            lineage, _ = dbtparser.get_lineage()
+            root_asset = None
+            for asset in lineage.assets:
+                if asset.id == lineage.asset_id:
+                    root_asset = asset
+                    break
+            if not root_asset:
+                raise ValueError(f"Root asset not found for {lineage.asset_id}")
+            asset_serializer = AssetSerializer(root_asset, context={"request": request})
+            lineage_serializer = LineageSerializer(
+                lineage, context={"request": request}
+            )
+            return Response(
+                {
+                    "root_asset": asset_serializer.data,
+                    "lineage": lineage_serializer.data,
+                }
+            )
