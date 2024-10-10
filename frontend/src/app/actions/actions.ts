@@ -492,3 +492,53 @@ export async function executeQueryPreview(dbtSql: string) {
   });
   return response.json();
 }
+
+export async function persistFile(filePath: string, fileContents: string) {
+  const response = await fetcher(`/project/files/?filepath=${filePath}`, {
+    cookies,
+    method: "PUT",
+    body: {
+      contents: fileContents,
+    }
+  });
+}
+
+export async function createFile(filePath: string, fileContents: string) {
+  const response = await fetcher(`/project/files/?filepath=${filePath}`, {
+    cookies,
+    method: "POST",
+    body: {
+      contents: fileContents,
+    }
+  });
+  return response.ok
+}
+
+export async function deleteFile(filePath: string) {
+  const response = await fetcher(`/project/files/?filepath=${filePath}`, {
+    cookies,
+    method: "DELETE",
+  });
+  return response.ok
+}
+
+export async function infer({
+  instructions,
+  content,
+  filepath
+}: {
+  instructions: string
+  content: string
+  filepath: string
+}) {
+  const response = await fetcher(`/infer/`, {
+    cookies,
+    method: "POST",
+    body: {
+      instructions,
+      content,
+      filepath
+    }
+  });
+  return response.json();
+}
