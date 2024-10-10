@@ -48,7 +48,7 @@ class Command(BaseCommand):
             resource=postgres_resource,
             project_path="fixtures/test_resources/jaffle_shop",
             threads=1,
-            version=DBTVersion.V1_7.value,
+            version=DBTVersion.V1_8.value,
             subtype=ResourceSubtype.DBT,
             database="mydb",
             schema="dbt_sl_test",

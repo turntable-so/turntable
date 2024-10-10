@@ -95,7 +95,7 @@ def create_local_postgres(workspace, repository: Repository | None = None):
                 ),
                 repository=repository,
                 threads=1,
-                version=DBTVersion.V1_7.value,
+                version=DBTVersion.V1_8.value,
                 subtype=ResourceSubtype.DBT,
                 database="mydb",
                 schema="dbt_sl_test",

@@ -54,7 +54,7 @@ jobs:
         run: |
           rye config --set-bool behavior.use-uv=true
           rye sync --no-lock
-          rye add dbt-postgres~=1.7.0
+          rye add dbt-postgres~=1.8.0
         working-directory: backend
 
       - name: Run tests
