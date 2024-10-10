@@ -3,7 +3,7 @@ import networkx as nx
 from app.core.e2e import DataHubDBParser
 from app.models import Asset, AssetError, Column, Resource
 from app.services.lineage_service import Lineage
-from vinyl.lib.dbt import DBTProject
+from vinyl.lib.dbt import DBTProject, DBTTransition
 
 
 class LiveDBTParser:
@@ -51,16 +51,34 @@ class LiveDBTParser:
         return catalog_node
 
     @classmethod
+    def get_node_id_from_filepath(
+        cls, proj: DBTProject, filepath: str, defer: bool = False
+    ):
+        proj.mount_manifest(defer=defer)
+        for node_id, node in proj.manifest["nodes"].items():
+            if node["original_file_path"] == filepath:
+                return node_id
+        return None
+
+    @classmethod
     def parse_project(
         cls,
         proj: DBTProject,
         node_id: str,
         resource: Resource,
+        before_proj: DBTProject | None = None,
         predecessor_depth: int | None = 1,
         successor_depth: int | None = 1,
         defer: bool = False,
     ):
-        proj.mount_manifest(defer=defer)
+        if before_proj is not None:
+            transition = DBTTransition(before_proj, proj)
+            transition.mount_manifest(defer=defer)
+            transition.mount_catalog(defer=defer)
+        else:
+            proj.mount_manifest(defer=defer)
+            proj.mount_catalog(defer=defer)
+
         proj.build_model_graph()
         all_downstream_nodes = proj.model_graph.get_relatives(
             [node_id], depth=successor_depth
@@ -83,6 +101,15 @@ class LiveDBTParser:
         out.catalog_nodes = list(set(out.lineage_nodes + lineage_parents))
         out.asset_graph = proj.model_graph.subgraph(out.catalog_nodes).to_networkx()
         out.id_map = {}
+
+        # compile sql for relevant nodes
+        if before_proj is not None:
+            before_proj.dbt_compile(
+                [n for n in out.lineage_nodes if n in before_proj.manifest["nodes"]]
+            )
+        proj.dbt_compile(out.lineage_nodes, defer=defer)
+
+        # process nodes
         for node_id in out.catalog_nodes:
             manifest_node = out.get_manifest_node(proj, node_id, defer=defer)
             db_location = (
@@ -105,6 +132,7 @@ class LiveDBTParser:
                 workspace_id=resource.workspace.id,
             )
             compiled_sql, error = proj.get_compiled_sql(node_id, defer=defer, errors=[])
+
             if error:
                 out.asset_errors.append(error)
             else:
@@ -115,7 +143,7 @@ class LiveDBTParser:
             catalog_node = out.get_catalog_node(proj, node_id, defer=defer)
             if catalog_node is not None:
                 for k, v in catalog_node["columns"].items():
-                    column_id = f"urn:li:SchemaField:({asset_id},{k})"
+                    column_id = f"urn:li:schemaField:({asset_id},{k})"
                     column = Column(
                         id=column_id,
                         name=k,
@@ -132,14 +160,15 @@ class LiveDBTParser:
         return out
 
     def filter_out_catalog_nodes(self, obj: Lineage):
-        obj.assets = [asset for asset in obj.assets if asset.id in self.all_nodes]
+        all_node_ids = [v for k, v in self.id_map.items() if k in self.all_nodes]
+        obj.assets = [asset for asset in obj.assets if asset.id in all_node_ids]
         obj.asset_links = [
             link
             for link in obj.asset_links
-            if link.source_id in self.all_nodes and link.target_id in self.all_nodes
+            if link.source_id in all_node_ids and link.target_id in all_node_ids
         ]
         obj.columns = [
-            column for column in obj.columns if column.asset_id in self.all_nodes
+            column for column in obj.columns if column.asset_id in all_node_ids
         ]
         column_ids = [column.id for column in obj.columns]
         obj.column_links = [
@@ -161,6 +190,7 @@ class LiveDBTParser:
         ignore_ids = [self.id_map[k] for k in ignore_dbt_ids]
         parser.get_db_cll(ignore_ids=ignore_ids)
         parser.get_links()
+
         raw_lineage = Lineage(
             asset_id=self.asset_id,
             assets=list(parser.asset_dict.values()),

@@ -590,7 +590,11 @@ class DBTCoreDetails(DBTResource):
                 project_path,
                 git_repo,
             ):
-                yield DBTTransition(before, after), project_path, git_repo
+                yield (
+                    DBTTransition(before_project=before, after_project=after),
+                    project_path,
+                    git_repo,
+                )
 
     def upload_artifacts(self, branch_id: str | None = None):
         with self.dbt_repo_context(isolate=True, branch_id=branch_id) as (

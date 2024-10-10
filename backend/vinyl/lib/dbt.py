@@ -48,7 +48,6 @@ class DBTProject(object):
     version_list: list[int]
     multitenant: bool
     deferral_target_path: str | None
-    defer: bool
 
     def __init__(
         self,
@@ -68,6 +67,7 @@ class DBTProject(object):
         self.version = version
         self.compile_exclusions = compile_exclusions
         self.env_vars = env_vars
+        self.deferral_target_path = deferral_target_path
 
         # set version bool
         self.version_list = [int(v[0]) for v in self.version.split(".")]
@@ -137,6 +137,7 @@ class DBTProject(object):
 
         if read:
             self.manifest = load_orjson(self.manifest_path)
+
         elif (force_read or force_run) and hasattr(self, "manifest"):
             # make sure you don't accidentally read an outdated manifest in the future
             del self.manifest
@@ -196,7 +197,11 @@ class DBTProject(object):
                 )
                 new_catalog = load_orjson(self.catalog_path)
                 for key in ["nodes", "sources", "errors"]:
-                    self.catalog[key].update(new_catalog[key])
+                    new_val = new_catalog.get(key)
+                    if self.catalog.get(key) is None:
+                        self.catalog[key] = new_val
+                    else:
+                        self.catalog[key].update(new_val)
             else:
                 self.catalog = load_orjson(self.catalog_path)
         elif (force_read or force_run) and hasattr(self, "catalog"):
@@ -384,6 +389,7 @@ class DBTProject(object):
         update_manifest=False,
         models_only: bool = False,
         defer: bool = False,
+        defer_selection: bool = True,
     ) -> tuple[str, str, bool]:
         if not node_ids:
             command = ["compile", "-f"]
@@ -415,7 +421,11 @@ class DBTProject(object):
             command.extend(self.compile_exclusions)
 
         stdout, stderr, success = self.run_dbt_command(
-            command, write_json=write_json, dbt_cache=dbt_cache, defer=defer
+            command,
+            write_json=write_json,
+            dbt_cache=dbt_cache,
+            defer=defer,
+            defer_selection=defer_selection,
         )
         if update_manifest:
             self.mount_manifest(force_read=True, defer=defer)
@@ -477,31 +487,37 @@ class DBTProject(object):
 
         compiled_sql_abs_location = os.path.join(
             self.compiled_sql_path,
-            node_id.split(".")[1],
+            node_id.split(".")[1],  # project_name
             node["original_file_path"],
         )
 
-        if not os.path.exists(compiled_sql_abs_location) and compile_if_not_found:
-            stdout, stderr, success = self.dbt_compile(
-                ["node_id"],
-                write_json=True,
-                dbt_cache=False,
-                update_manifest=False,
-                defer=False,
-                defer_selection=False,
-            )
         if os.path.exists(compiled_sql_abs_location):
             with open(compiled_sql_abs_location, "r") as f:
                 out = f.read()
             return out, errors
+        elif compile_if_not_found:
+            stdout, stderr, success = self.dbt_compile(
+                [node_id],
+                write_json=True,
+                dbt_cache=False,
+                update_manifest=False,
+                defer=defer,
+            )
 
-        if defer:
+            with open(compiled_sql_abs_location, "r") as f:
+                out = f.read()
+            return out, errors
+
+        elif defer:
+            # should be in the same file spot in the deferred project. Otherwise, file has changed and would show up in compile above.
             deferral_compiled_sql_abs_location = os.path.join(
                 self.deferral_target_path,
                 "compiled",
-                node_id.split(".")[1],
+                node_id.split(".")[1],  # project_name
                 node["original_file_path"],
             )
+
+            breakpoint()
 
             if os.path.exists(deferral_compiled_sql_abs_location):
                 with open(deferral_compiled_sql_abs_location, "r") as f:
@@ -776,6 +792,10 @@ class DBTTransition:
         self.before = before_project
         self.after = after_project
         self.after.deferral_target_path = before_project.target_path
+
+    def docs_generate(self, compile: bool = False, defer: bool = False):
+        self.before.docs_generate(compile=compile)
+        self.after.docs_generate(compile=compile, defer=defer)
 
     def mount_manifest(
         self,
