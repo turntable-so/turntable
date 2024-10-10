@@ -38,9 +38,9 @@ jobs:
           SNOWFLAKE_USER: op://Env/Snowflake/username
           OPENAI_API_KEY: op://Env/OpenAI/key
           HATCHET_CLIENT_TOKEN: op://Env/Hatchet/token
-          # SSHKEY_0_PUBLIC: op://Env/GitHub/sshkey_0_public
-          # SSHKEY_0_PRIVATE: op://Env/GitHub/sshkey_0_private
-          # GIT_0_REPO_URL: op://Env/GitHub/git_0_repo_url
+          SSHKEY_0_PUBLIC: op://Env/GitHub/sshkey_0_public
+          SSHKEY_0_PRIVATE: op://Env/GitHub/sshkey_0_private
+          GIT_0_REPO_URL: op://Env/GitHub/git_0_repo_url
 
 
       - name: Start test resources
@@ -58,7 +58,7 @@ jobs:
 
       - name: Run tests
         run: |
-          rye run pytest -x
+          rye run pytest
         working-directory: backend
         env:
           POSTGRES_DB: mydb
@@ -80,6 +80,3 @@ jobs:
           LOCAL_DB: "true"
           LOCAL_HOST: "true"
           LOCAL_REDIS: "true"
-          SSHKEY_0_PUBLIC: ${{ secrets.SSHKEY_0_PUBLIC }}
-          SSHKEY_0_PRIVATE: ${{ secrets.SSHKEY_0_PRIVATE }}
-          GIT_0_REPO_URL: ${{ secrets.GIT_0_REPO_URL }}

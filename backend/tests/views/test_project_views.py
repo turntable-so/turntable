@@ -19,7 +19,7 @@ def safe_decode(s):
 class TestProjectViews:
     @pytest.fixture
     def encoded_filepath(self):
-        return safe_encode("models/marts/customer360/customer.sql")
+        return safe_encode("models/marts/customer360/customers.sql")
 
     def test_file_index(self, client):
         response = client.get("/project/files/")
