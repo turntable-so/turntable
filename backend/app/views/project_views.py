@@ -48,11 +48,10 @@ class ProjectViewSet(viewsets.ViewSet):
 
         # assumes a single repo in the workspace for now
         dbt_details = workspace.get_dbt_details()
-        with dbt_details.dbt_repo_context() as (project, _, repo):
+        with dbt_details.dbt_repo_context() as (project, project_path, repo):
             filepath = request.query_params.get("filepath")
             if filepath and len(filepath) > 0:
-                filepath = unquote(filepath)
-                filepath = os.path.join(repo.working_tree_dir, filepath)
+                filepath = os.path.join(project_path, unquote(filepath))
                 if request.method == "POST":
                     if os.path.exists(filepath):
                         return Response(

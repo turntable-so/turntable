@@ -89,7 +89,6 @@ class DBTProject(object):
             self.multitenant = True
         else:
             self.multitenant = False
-            self.install_dbt_if_necessary()
 
         # get profiles-dir
         self.dbt_profiles_dir = (
@@ -117,6 +116,7 @@ class DBTProject(object):
             [
                 sys.executable,
                 "-m",
+                "uv",
                 "pip",
                 "show",
                 dbt_package,
@@ -386,6 +386,7 @@ class DBTProject(object):
             )
 
         if self.dbt1_5 and not force_terminal and not self.multitenant:
+            self.install_dbt_if_necessary()
             stdout, stderr, success = self.dbt_runner(full_command)
         else:
             stdout, stderr, success = self.dbt_cli(full_command)
