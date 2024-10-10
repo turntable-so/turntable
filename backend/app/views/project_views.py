@@ -52,7 +52,6 @@ class ProjectViewSet(viewsets.ViewSet):
             filepath = request.query_params.get("filepath")
             if filepath and len(filepath) > 0:
                 filepath = unquote(filepath)
-                filepath = os.path.join(repo.working_tree_dir, filepath)
                 if request.method == "POST":
                     if os.path.exists(filepath):
                         return Response(
