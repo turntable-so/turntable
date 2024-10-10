@@ -98,14 +98,14 @@ class TestProjectViews:
         assert response.status_code == 204
 
     @pytest.mark.parametrize(
-        "filepath",
+        "filepath_param",
         [
             "models/marts/customer360/customers.sql",
             "models/staging/stg_products.sql",
         ],
     )
-    def test_get_lineage_view(self, client, filepath):
-        encoded_filepath = safe_encode(filepath)
+    def test_get_lineage_view(self, client, filepath_param):
+        encoded_filepath = safe_encode(filepath_param)
         response = client.get(
             "/project/lineage/",
             {
