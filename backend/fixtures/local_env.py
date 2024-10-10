@@ -44,6 +44,7 @@ def create_ssh_key_n(workspace, n):
     private_key = os.getenv(f"SSHKEY_{n}_PRIVATE")
     assert public_key, f"must provide SSHKEY_{n}_PUBLIC to use this test"
     assert private_key, f"must provide SSHKEY_{n}_PRIVATE to use this test"
+    private_key = private_key.replace("\\n", "\n")
     cur_keys = SSHKey.objects.filter(workspace=workspace)
     for key in cur_keys:
         if key.public_key == public_key and key.private_key == private_key:
@@ -52,7 +53,7 @@ def create_ssh_key_n(workspace, n):
     return SSHKey.objects.create(
         workspace=workspace,
         public_key=public_key,
-        private_key=private_key.replace("\n", "\\n"),
+        private_key=private_key,
     )
 
 

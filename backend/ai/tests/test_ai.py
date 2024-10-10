@@ -12,6 +12,7 @@ def test_embed():
 @pytest.mark.django_db
 def test_table_description(local_postgres):
     dbt_core_resource = DBTCoreDetails.objects.get(resource=local_postgres)
+    print(dbt_core_resource.repository.__dict__)
     print(dbt_core_resource.repository.ssh_key.__dict__)
     with dbt_core_resource.dbt_repo_context() as (dbtproj, dbt_path, _):
         x = get_table_completion(
