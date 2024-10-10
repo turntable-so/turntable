@@ -89,6 +89,7 @@ class DBTProject(object):
             self.multitenant = True
         else:
             self.multitenant = False
+            self.install_dbt_if_necessary()
 
         # get profiles-dir
         self.dbt_profiles_dir = (
@@ -108,6 +109,31 @@ class DBTProject(object):
         # validate paths
         if not os.path.exists(self.dbt_project_dir):
             raise Exception(f"Project path do not exist: {self.dbt_project_dir}")
+
+    def install_dbt_if_necessary(self):
+        dbt_package = f"dbt-{self.dialect.value.lower()}"
+        install_package = f"{dbt_package}~={self.version}.0"
+        res = subprocess.run(
+            ["uv", "pip", "show", dbt_package, "--python", sys.executable],
+            capture_output=True,
+        )
+        major_version_in_stdout = (
+            (res.stdout.decode().split("\n")[1].split(":")[1].strip().rsplit(".", 1)[0])
+            if res.stdout
+            else None
+        )
+        if res.returncode != 0 or major_version_in_stdout != self.version:
+            subprocess.run(
+                [
+                    "uv",
+                    "pip",
+                    "install",
+                    install_package,
+                    "--python",
+                    sys.executable,
+                ],
+                check=True,
+            )
 
     def generate_target_paths(self):
         if self.target_path:
@@ -309,7 +335,7 @@ class DBTProject(object):
         cli_args: list[str] | None = None,
         write_json: bool = False,
         dbt_cache: bool = False,
-        force_terminal: bool = True,  # for our purposes, terminal execution is preferred due to version isolation
+        force_terminal: bool = False,
         defer: bool = False,
         defer_selection: bool = True,
     ) -> tuple[str, str, bool]:
@@ -495,7 +521,23 @@ class DBTProject(object):
             with open(compiled_sql_abs_location, "r") as f:
                 out = f.read()
             return out, errors
+
+        elif defer:
+            # should be in the same file spot in the deferred project. Otherwise, file has changed and would show up in compile above.
+            deferral_compiled_sql_abs_location = os.path.join(
+                self.deferral_target_path,
+                "compiled",
+                node_id.split(".")[1],  # project_name
+                node["original_file_path"],
+            )
+
+            if os.path.exists(deferral_compiled_sql_abs_location):
+                with open(deferral_compiled_sql_abs_location, "r") as f:
+                    out = f.read()
+                return out, errors
+
         elif compile_if_not_found:
+            print("compiling")
             stdout, stderr, success = self.dbt_compile(
                 [node_id],
                 write_json=True,
@@ -507,22 +549,6 @@ class DBTProject(object):
             with open(compiled_sql_abs_location, "r") as f:
                 out = f.read()
             return out, errors
-
-        elif defer:
-            # should be in the same file spot in the deferred project. Otherwise, file has changed and would show up in compile above.
-            deferral_compiled_sql_abs_location = os.path.join(
-                self.deferral_target_path,
-                "compiled",
-                node_id.split(".")[1],  # project_name
-                node["original_file_path"],
-            )
-
-            breakpoint()
-
-            if os.path.exists(deferral_compiled_sql_abs_location):
-                with open(deferral_compiled_sql_abs_location, "r") as f:
-                    out = f.read()
-                return out, errors
 
         msg = f"Compiled SQL not found for {node_id.split('.')[-1]}"
         if locals().get("stdout", None):

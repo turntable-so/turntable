@@ -932,7 +932,6 @@ class DataHubDBParser:
                     and len(node.deps) > 0
                     and len(node.errors) == 0
                 ):
-                    breakpoint()
                     vinylerror = VinylError(
                         node_id=k,
                         type=VinylErrorType.NO_LINEAGE_ERROR,

@@ -109,4 +109,3 @@ class TestProjectViews:
         assert response.status_code == 200
         assert response.json()["lineage"]["asset_links"]
         assert response.json()["lineage"]["column_links"]
-        breakpoint()
