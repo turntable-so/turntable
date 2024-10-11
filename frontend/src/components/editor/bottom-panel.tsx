@@ -84,6 +84,7 @@ export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview
     gridRef: any,
     colDefs: any,
     runQueryPreview: any,
+    isLoading: boolean,
 }) {
     const [activeTab, setActiveTab] = useState("lineage");
 
