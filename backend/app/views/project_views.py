@@ -49,6 +49,7 @@ class ProjectViewSet(viewsets.ViewSet):
         # assumes a single repo in the workspace for now
         dbt_details = workspace.get_dbt_details()
         with dbt_details.dbt_repo_context() as (project, project_path, repo):
+            print("project_path", project_path)
             filepath = request.query_params.get("filepath")
             if filepath and len(filepath) > 0:
                 filepath = os.path.join(project_path, unquote(filepath))
@@ -97,15 +98,13 @@ class ProjectViewSet(viewsets.ViewSet):
                                 status=status.HTTP_404_NOT_FOUND,
                             )
 
-            base_path = dbt_details.project_path
-
-            root = get_file_tree(user_id, repo.working_tree_dir, base_path)
+            root = get_file_tree(user_id, repo.working_tree_dir, project_path)
             dirty_changes = repo.index.diff(None)
 
         return Response(
             {
                 "file_index": [root],
-                "dirty_changes": dirty_changes,
+                # "dirty_changes": dirty_changes,
             }
         )
 
@@ -198,6 +197,10 @@ class ProjectViewSet(viewsets.ViewSet):
             lineage, _ = dbtparser.get_lineage()
             root_asset = None
             for asset in lineage.assets:
+                print(
+                    f"asset.id: {asset.id}, lineage.asset_id: {lineage.asset_id}",
+                    flush=True,
+                )
                 if asset.id == lineage.asset_id:
                     root_asset = asset
                     break
