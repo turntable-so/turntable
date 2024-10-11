@@ -115,7 +115,7 @@ export const LineageViewContext = React.createContext<{
     rootAsset: null,
     isLineageLevelSelectorOpen: false,
     setIsLineageLevelSelectorOpen: () => { },
-    setLineageOptionsAndRefetch: () => { }
+    setLineageOptionsAndRefetch: () => { },
 });
 
 type Column = {
@@ -142,11 +142,11 @@ export type Asset = {
 export function LineageViewProvider({
     children,
     startingLineage,
-    rootAsset
+    rootAsset,
 }: {
     children: React.ReactNode;
     startingLineage: Lineage,
-    rootAsset: Asset
+    rootAsset: Asset,
 }) {
     const [isLoading, setIsLoading] = useState(true);
     const [isLoadingColumns, setIsLoadingColumns] = useState(false);
@@ -165,7 +165,6 @@ export function LineageViewProvider({
     });
 
     const { isLineageLoading, setIsLineageLoading } = useAppContext()
-
 
 
     const resetSelections = () => {

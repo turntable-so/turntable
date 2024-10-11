@@ -97,15 +97,13 @@ class ProjectViewSet(viewsets.ViewSet):
                                 status=status.HTTP_404_NOT_FOUND,
                             )
 
-            base_path = dbt_details.project_path
-
-            root = get_file_tree(user_id, repo.working_tree_dir, base_path)
+            root = get_file_tree(user_id, repo.working_tree_dir, project_path)
             dirty_changes = repo.index.diff(None)
 
         return Response(
             {
                 "file_index": [root],
-                "dirty_changes": dirty_changes,
+                # "dirty_changes": dirty_changes,
             }
         )
 
@@ -171,6 +169,7 @@ class ProjectViewSet(viewsets.ViewSet):
         filepath = unquote(request.query_params.get("filepath"))
         predecessor_depth = int(request.query_params.get("predecessor_depth"))
         successor_depth = int(request.query_params.get("successor_depth"))
+        lineage_type = request.query_params.get("lineage_type", "all")
         defer = request.query_params.get("defer", True)
         with dbt_details.dbt_transition_context(branch_id=branch_id) as (
             transition,
@@ -197,12 +196,21 @@ class ProjectViewSet(viewsets.ViewSet):
             )
             lineage, _ = dbtparser.get_lineage()
             root_asset = None
+            column_lookup = {}
+            for asset in lineage.assets:
+                column_lookup[asset.id] = []
+            for column in lineage.columns:
+                column_lookup[column.asset_id].append(column)
+
             for asset in lineage.assets:
                 if asset.id == lineage.asset_id:
                     root_asset = asset
-                    break
+
+                asset.temp_columns = column_lookup[asset.id]
+
             if not root_asset:
                 raise ValueError(f"Root asset not found for {lineage.asset_id}")
+
             asset_serializer = AssetSerializer(root_asset, context={"request": request})
             lineage_serializer = LineageSerializer(
                 lineage, context={"request": request}

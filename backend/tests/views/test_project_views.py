@@ -27,7 +27,6 @@ class TestProjectViews:
 
         assert response.status_code == 200
         assert len(response_json["file_index"]) > 0
-        assert len(response_json["dirty_changes"]) == 0
 
     def test_branches(self, client):
         response = client.get("/project/branches/")
@@ -104,7 +103,7 @@ class TestProjectViews:
             "models/staging/stg_products.sql",
         ],
     )
-    def test_get_lineage_view(self, client, filepath_param):
+    def test_get_project_based_lineage_view(self, client, filepath_param):
         encoded_filepath = safe_encode(filepath_param)
         response = client.get(
             "/project/lineage/",
@@ -115,5 +114,8 @@ class TestProjectViews:
             },
         )
         assert response.status_code == 200
+        for asset in response.json()["lineage"]["assets"]:
+            assert len(asset["columns"]) > 0
+
         assert response.json()["lineage"]["asset_links"]
         assert response.json()["lineage"]["column_links"]
