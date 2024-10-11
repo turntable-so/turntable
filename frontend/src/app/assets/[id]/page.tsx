@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge"
 import LineagePreview from "@/components/lineage/LineagePreview"
 
 
+
 function ColumnsTable({ columns }: {
     columns: {
         name: string
@@ -55,9 +56,62 @@ function ColumnsTable({ columns }: {
     )
 }
 
+const EMBEDDING_KEY = 'a1ed35e2bec9192530c1bd26c3b0248cae3c8acfb0ed54eeb30d816eedac1f42'
+
+const init = {
+    headers: {
+        "Content-Type": "application/json",
+        "X-API-KEY": 'mb_o99vTQQONA30wNK1YpD1dgAHJusblDtyZLcV7igsYk4=',
+    },
+};
+
+const host = "http://metabase:4000";
+
+async function getGroups() {
+    const response = await fetch(`${host}/api/permissions/group`, {
+        ...init,
+    });
+    return response.json();
+}
+
+async function getCards(id: string) {
+    const response = await fetch(`${host}/api/card/${id}`, init);
+    return response.json();
+}
+
+async function makeEmbeddable(id: string) {
+    const response = await fetch(`${host}/api/card/${id}`, {
+        method: 'PUT',
+        headers: init.headers,
+        body: JSON.stringify({
+            enable_embedding: true,
+        })
+    });
+    return response.json();
+}
+
+
 export default async function AssetPage({ params }: { params: { id: string } }) {
 
     const asset = await getAssetPreview(params.id)
+
+    const token = await fetch('/api/metabase')
+
+    const groups = await getGroups()
+    console.log({ groups })
+
+
+
+    const metabaseCardId = decodeURIComponent(params.id).split(',').pop()?.replace(')', '') || '';
+    console.log({ metabaseCardId });
+
+    const cards = await getCards(metabaseCardId)
+    console.log({ cards })
+
+    // const result = await makeEmbeddable('17')
+    // console.log({ result })
+
+
 
 
     return (
