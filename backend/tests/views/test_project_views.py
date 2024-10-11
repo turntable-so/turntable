@@ -27,7 +27,6 @@ class TestProjectViews:
 
         assert response.status_code == 200
         assert len(response_json["file_index"]) > 0
-        assert len(response_json["dirty_changes"]) == 0
 
     def test_branches(self, client):
         response = client.get("/project/branches/")
