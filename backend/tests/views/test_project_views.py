@@ -104,7 +104,7 @@ class TestProjectViews:
             "models/staging/stg_products.sql",
         ],
     )
-    def test_get_lineage_view(self, client, filepath_param):
+    def test_get_project_based_lineage_view(self, client, filepath_param):
         encoded_filepath = safe_encode(filepath_param)
         response = client.get(
             "/project/lineage/",
@@ -115,5 +115,8 @@ class TestProjectViews:
             },
         )
         assert response.status_code == 200
+        for asset in response.json()["lineage"]["assets"]:
+            assert len(asset["columns"]) > 0
+
         assert response.json()["lineage"]["asset_links"]
         assert response.json()["lineage"]["column_links"]

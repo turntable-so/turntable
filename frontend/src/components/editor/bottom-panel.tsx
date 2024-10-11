@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { AgGridReact } from "ag-grid-react";
-import { Loader2, Network, Play, RefreshCcw, Table } from "lucide-react";
+import { Loader2, Network, Play, RefreshCcw, Table as TableIcon } from "lucide-react";
 import { Button } from "../ui/button";
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { Fragment } from "react";
@@ -10,6 +10,74 @@ import { useLineage } from "@/app/contexts/LineageContext";
 import { ErrorBoundary } from "react-error-boundary";
 import { useFiles } from "@/app/contexts/FilesContext";
 import { LineageView } from "../lineage/LineageView";
+import useResizeObserver from "use-resize-observer";
+import {
+    Table,
+    TableBody,
+    TableCaption,
+    TableCell,
+    TableFooter,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table"
+
+
+const SkeletonLoadingTable = () => {
+    return (
+        <div className='w-full flex items-center justify-center'>
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead className="w-[100px]">
+                            <div className="animate-pulse h-4 bg-gray-200 rounded"></div>
+                        </TableHead>
+                        <TableHead>
+                            <div className="animate-pulse h-4 bg-gray-200 rounded"></div>
+                        </TableHead>
+                        <TableHead>
+                            <div className="animate-pulse h-4 bg-gray-200 rounded"></div>
+                        </TableHead>
+                        <TableHead className="text-right">
+                            <div className="animate-pulse h-4 bg-gray-200 rounded"></div>
+                        </TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {Array.from({ length: 20 }).map((_, i) => (
+                        <TableRow key={i}>
+                            <TableCell className="">
+                                <div className="animate-pulse h-4 bg-gray-200 rounded"></div>
+                            </TableCell>
+                            <TableCell className="">
+                                <div className="animate-pulse h-4 bg-gray-200 rounded"></div>
+                            </TableCell>
+                            <TableCell className="">
+                                <div className="animate-pulse h-4 bg-gray-200 rounded"></div>
+                            </TableCell>
+                            <TableCell className="">
+                                <div className="animate-pulse h-4 bg-gray-200 rounded"></div>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+        </div>
+    )
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview, isLoading: isQueryLoading }: {
     rowData: any,
@@ -30,6 +98,7 @@ export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview
         }
     }, [activeFile, activeTab, fetchFileBasedLineage])
 
+    const { ref: bottomPanelRef, width: bottomPanelWidth, height: bottomPanelHeight } = useResizeObserver();
 
     console.log({ lineageData })
 
@@ -46,7 +115,7 @@ export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview
                             Lineage
                         </TabsTrigger>
                         <TabsTrigger value="results">
-                            <Table className="h-4 w-4 mr-2" />
+                            <TableIcon className="h-4 w-4 mr-2" />
                             Preview
                         </TabsTrigger>
                     </TabsList>
@@ -79,34 +148,42 @@ export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview
                 </div>
             </div >
             <Panel defaultSize={40} className='border-t flex items-center justify-center'>
-                <div className="flex flex-col w-full h-full flex-grow-1">
+                <div className="flex flex-col w-full h-full flex-grow-1" ref={bottomPanelRef}>
                     {activeTab === "results" && (
-                        <AgGridReact
-                            className="ag-theme-custom"
-                            ref={gridRef}
-                            suppressRowHoverHighlight={true}
-                            columnHoverHighlight={true}
-                            rowData={rowData}
-                            pagination={true}
-                            // @ts-ignore
-                            columnDefs={colDefs}
-                        />
+                        isQueryLoading ? (
+                            <SkeletonLoadingTable />
+                        ) : (
+                            <AgGridReact
+                                className="ag-theme-custom"
+                                ref={gridRef}
+                                suppressRowHoverHighlight={true}
+                                columnHoverHighlight={true}
+                                rowData={rowData}
+                                pagination={true}
+                                // @ts-ignore
+                                columnDefs={colDefs}
+                            />
+                        )
                     )}
                     {activeTab === "lineage" && (
-                        <div>
-                            {/* <ErrorBoundary FallbackComponent={() => (
+                        <div className="h-full">
+                            <ErrorBoundary FallbackComponent={() => (
                                 <div>Something went wrong</div>
-                            )}> */}
-                            <>
-                                {lineageData && lineageData[activeFile?.node.path] && lineageData[activeFile?.node.path].isLoading ? (
-                                    <div className='flex items-center justify-center text-gray-300'><Loader2 className='h-6 w-6 animate-spin' /></div>
-                                ) : (
-                                    lineageData && lineageData[activeFile?.node.path] && lineageData[activeFile?.node.path].data && (
-                                        <LineageView key={activeFile?.node.path} lineage={lineageData[activeFile?.node.path].data.lineage} rootAsset={lineageData[activeFile?.node.path].data.root_asset} style={{ height: '600px' }} />
-                                    )
-                                )}
-                            </>
-                            {/* </ErrorBoundary> */}
+                            )}>
+                                <>
+                                    {lineageData && lineageData[activeFile?.node.path || ''] && lineageData[activeFile?.node.path || ''].isLoading ? (
+                                        <div className='w-full bg-gray-200 flex items-center justify-center' style={{ height: bottomPanelHeight }}>
+                                            <Loader2 className='h-6 w-6 animate-spin opacity-50' />
+                                        </div>
+                                    ) : (
+                                        lineageData && lineageData[activeFile?.node.path || ''] && lineageData[activeFile?.node.path || ''].data && (
+                                            <LineageView
+                                                key={activeFile?.node.path
+                                                } lineage={lineageData[activeFile?.node.path || ''].data.lineage} rootAsset={lineageData[activeFile?.node.path || ''].data.root_asset} style={{ height: bottomPanelHeight, }} />
+                                        )
+                                    )}
+                                </>
+                            </ErrorBoundary>
                         </div>
                     )}
                 </div>

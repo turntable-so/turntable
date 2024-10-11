@@ -49,7 +49,6 @@ class ProjectViewSet(viewsets.ViewSet):
         # assumes a single repo in the workspace for now
         dbt_details = workspace.get_dbt_details()
         with dbt_details.dbt_repo_context() as (project, project_path, repo):
-            print("project_path", project_path)
             filepath = request.query_params.get("filepath")
             if filepath and len(filepath) > 0:
                 filepath = os.path.join(project_path, unquote(filepath))
@@ -170,6 +169,7 @@ class ProjectViewSet(viewsets.ViewSet):
         filepath = unquote(request.query_params.get("filepath"))
         predecessor_depth = int(request.query_params.get("predecessor_depth"))
         successor_depth = int(request.query_params.get("successor_depth"))
+        lineage_type = request.query_params.get("lineage_type", "all")
         defer = request.query_params.get("defer", True)
         with dbt_details.dbt_transition_context(branch_id=branch_id) as (
             transition,
@@ -196,16 +196,21 @@ class ProjectViewSet(viewsets.ViewSet):
             )
             lineage, _ = dbtparser.get_lineage()
             root_asset = None
+            column_lookup = {}
             for asset in lineage.assets:
-                print(
-                    f"asset.id: {asset.id}, lineage.asset_id: {lineage.asset_id}",
-                    flush=True,
-                )
+                column_lookup[asset.id] = []
+            for column in lineage.columns:
+                column_lookup[column.asset_id].append(column)
+
+            for asset in lineage.assets:
                 if asset.id == lineage.asset_id:
                     root_asset = asset
-                    break
+
+                asset.temp_columns = column_lookup[asset.id]
+
             if not root_asset:
                 raise ValueError(f"Root asset not found for {lineage.asset_id}")
+
             asset_serializer = AssetSerializer(root_asset, context={"request": request})
             lineage_serializer = LineageSerializer(
                 lineage, context={"request": request}

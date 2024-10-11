@@ -165,7 +165,7 @@ class AssetIndexSerializer(serializers.ModelSerializer):
 
 
 class AssetSerializer(serializers.ModelSerializer):
-    columns = ColumnSerializer(many=True, read_only=True)
+    columns = serializers.SerializerMethodField()
     dataset = serializers.SerializerMethodField()
     schema = serializers.SerializerMethodField()
     table_name = serializers.SerializerMethodField()
@@ -211,6 +211,12 @@ class AssetSerializer(serializers.ModelSerializer):
 
     def get_resource_type(self, db):
         return db.resource_type
+
+    def get_columns(self, obj):
+        temp_columns = getattr(obj, "temp_columns", None)
+        if temp_columns is not None:
+            return ColumnSerializer(temp_columns, many=True).data
+        return ColumnSerializer(obj.columns, many=True).data
 
 
 class AssetLinkSerializer(serializers.ModelSerializer):
