@@ -110,15 +110,13 @@ class LiveDBTParser:
         proj.dbt_compile(out.lineage_nodes, defer=defer)
 
         # process nodes
-        for node_id in out.catalog_nodes:
-            manifest_node = out.get_manifest_node(proj, node_id, defer=defer)
-            db_location = (
-                proj.get_relation_name(node_id).replace('"', "").replace("`", "")
-            )
+        for nid in out.catalog_nodes:
+            manifest_node = out.get_manifest_node(proj, nid, defer=defer)
+            db_location = proj.get_relation_name(nid).replace('"', "").replace("`", "")
             if not db_location:
                 continue
             asset_id = f"urn:li:dataset:(urn:li:dataPlatform:{proj.dialect.value},{db_location},PROD)"
-            out.id_map[node_id] = asset_id
+            out.id_map[nid] = asset_id
             asset = Asset(
                 id=asset_id,
                 name=manifest_node.get("name"),
@@ -126,12 +124,12 @@ class LiveDBTParser:
                 materialization=manifest_node.get("config", {}).get("materialized"),
                 tags=manifest_node.get("tags"),
                 type=manifest_node.get("resource_type"),
-                unique_name=node_id,
+                unique_name=nid,
                 db_location=db_location.split("."),
                 resource_id=resource.id,
                 workspace_id=resource.workspace.id,
             )
-            compiled_sql, error = proj.get_compiled_sql(node_id, defer=defer, errors=[])
+            compiled_sql, error = proj.get_compiled_sql(nid, defer=defer, errors=[])
 
             if error:
                 out.asset_errors.append(error)
@@ -140,7 +138,7 @@ class LiveDBTParser:
             out.asset_dict[asset_id] = asset
 
             # build column info
-            catalog_node = out.get_catalog_node(proj, node_id, defer=defer)
+            catalog_node = out.get_catalog_node(proj, nid, defer=defer)
             if catalog_node is not None:
                 for k, v in catalog_node["columns"].items():
                     column_id = f"urn:li:schemaField:({asset_id},{k})"
