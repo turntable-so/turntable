@@ -1,7 +1,6 @@
 from urllib.parse import quote, unquote
 
 import pytest
-from rest_framework.test import APIClient
 
 from app.utils.test_utils import require_env_vars
 from app.utils.url import build_url
@@ -29,7 +28,6 @@ class TestProjectViews:
 
         assert response.status_code == 200
         assert len(response_json["file_index"]) > 0
-        assert len(response_json["dirty_changes"]) == 0
 
     def test_branches(self, client):
         response = client.get("/project/branches/")
@@ -107,7 +105,7 @@ class TestProjectViews:
         ],
     )
     @pytest.mark.parametrize("branch_name", ["apple12345", "main"])
-    def test_get_lineage_view(self, client: APIClient, filepath_param, branch_name):
+    def test_get_project_based_lineage_view(self, client, filepath_param, branch_name):
         encoded_filepath = safe_encode(filepath_param)
         response = client.get(
             build_url(

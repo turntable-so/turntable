@@ -542,3 +542,20 @@ export async function infer({
   });
   return response.json();
 }
+
+export async function getProjectBasedLineage({
+  filePath,
+  successor_depth,
+  predecessor_depth,
+}: {
+  filePath: string;
+  successor_depth: number;
+  predecessor_depth: number;
+}) {
+  const encodedPath = encodeURIComponent(filePath);
+  const response = await fetcher(`/project/lineage/?filepath=${encodedPath}&predecessor_depth=${predecessor_depth}&successor_depth=${successor_depth}`, {
+    cookies,
+    method: "GET",
+  });
+  return response.json();
+} 
