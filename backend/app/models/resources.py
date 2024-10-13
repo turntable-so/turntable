@@ -563,18 +563,17 @@ class DBTCoreDetails(DBTResource):
                     )
                     adj_profile_contents = {profile_name: profile_contents}
                     yaml.dump(adj_profile_contents, f)
-                with open(dbt_profiles_path, "r") as f:
-                    yield (
-                        DBTProject(
-                            project_path,
-                            DBTDialect._value2member_map_[dialect_str],
-                            self.version,
-                            dbt_profiles_dir=dbt_profiles_dir,
-                            env_vars={} if env_vars is None else env_vars,
-                        ),
+                yield (
+                    DBTProject(
                         project_path,
-                        git_repo,
-                    )
+                        DBTDialect._value2member_map_[dialect_str],
+                        self.version,
+                        dbt_profiles_dir=dbt_profiles_dir,
+                        env_vars={} if env_vars is None else env_vars,
+                    ),
+                    project_path,
+                    git_repo,
+                )
 
     @contextmanager
     def dbt_transition_context(

@@ -1,7 +1,10 @@
 import os
+import shlex
 import shutil
 from urllib.parse import unquote
 
+from django.contrib.auth import get_user_model
+from django.http import StreamingHttpResponse
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -165,13 +168,29 @@ class ProjectViewSet(viewsets.ViewSet):
         return Response(status=status.HTTP_501_NOT_IMPLEMENTED)
 
     @action(detail=False, methods=["GET"])
-    def lineage(self, request, branch_id=None):
+    def lineage(self, request):
         workspace = request.user.current_workspace()
         dbt_details = workspace.get_dbt_details()
         filepath = unquote(request.query_params.get("filepath"))
         predecessor_depth = int(request.query_params.get("predecessor_depth"))
         successor_depth = int(request.query_params.get("successor_depth"))
         defer = request.query_params.get("defer", True)
+        branch_name = request.query_params.get("branch_name")
+        if branch_name:
+            try:
+                branch_id = Branch.objects.get(
+                    workspace=workspace,
+                    repository=dbt_details.repository,
+                    branch_name=branch_name,
+                ).id
+            except Branch.DoesNotExist:
+                return Response(
+                    {"error": f"Branch {branch_name} not found"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+        else:
+            branch_id = None
+
         with dbt_details.dbt_transition_context(branch_id=branch_id) as (
             transition,
             _,
@@ -213,3 +232,38 @@ class ProjectViewSet(viewsets.ViewSet):
                     "lineage": lineage_serializer.data,
                 }
             )
+
+    @action(detail=False, methods=["POST"])
+    def stream_dbt_command(self, request):
+        User = get_user_model()
+        request.user = User.objects.first()
+        workspace = request.user.current_workspace()
+        dbt_details = workspace.get_dbt_details()
+        command = request.data.get("command")
+        branch_name = request.query_params.get("branch_name")
+        if branch_name:
+            try:
+                branch_id = Branch.objects.get(
+                    workspace=workspace,
+                    repository=dbt_details.repository,
+                    branch_name=branch_name,
+                ).id
+            except Branch.DoesNotExist:
+                return Response(
+                    {"error": f"Branch {branch_name} not found"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+        else:
+            branch_id = None
+
+        def command_runner(command):
+            with dbt_details.dbt_repo_context(branch_id=branch_id) as (
+                transition,
+                _,
+                repo,
+            ):
+                yield from transition.stream_dbt_command(command)
+
+        return StreamingHttpResponse(
+            command_runner(shlex.split(command)), content_type="text/event-stream"
+        )

@@ -7,7 +7,7 @@ import tempfile
 import traceback
 from dataclasses import make_dataclass
 from io import StringIO
-from typing import Any
+from typing import Any, Generator
 
 import orjson
 import yaml
@@ -307,7 +307,7 @@ class DBTProject(object):
         # Return captured output along with function's result
         return captured_stdout, captured_stderr, result.success
 
-    def dbt_cli(self, command: list[str]) -> tuple[str, str, bool]:
+    def _dbt_cli_env(self):
         env = {
             **os.environ.copy(),
             **{"DBT_PROFILES_DIR": self.dbt_profiles_dir},
@@ -317,24 +317,56 @@ class DBTProject(object):
         }
         if self.dbt1_5:
             env["DBT_PROJECT_DIR"] = self.dbt_project_dir
+            cwd = None
+        else:
+            cwd = self.dbt_project_dir
+        return env, cwd
 
-        result = subprocess.run(
-            [
-                "dbtx",
-                *command,
-            ],
-            capture_output=True,
+    def dbt_cli(self, command: list[str]) -> tuple[str, str, bool]:
+        env, cwd = self._dbt_cli_env()
+        out = subprocess.run(
+            ["dbtx", *command], env=env, cwd=cwd, text=True, capture_output=True
+        )
+        success = self.check_command_success(out.stdout, out.stderr)
+
+        return out.stdout, out.stderr, success
+
+    def dbt_cli_stream(
+        self, command: list[str]
+    ) -> Generator[str, None, tuple[str, str, bool]]:
+        env, cwd = self._dbt_cli_env()
+
+        stdouts = []
+        process = subprocess.Popen(
+            ["dbtx", *command],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             env=env,
             text=True,
-            cwd=self.dbt_project_dir if not self.dbt1_5 else None,
+            cwd=cwd,
         )
-        success = not DBTError.has_dbt_error(
-            result.stdout
-        ) and not DBTError.has_dbt_error(result.stderr)
+        for stdout_line in iter(process.stdout.readline, ""):
+            stdouts.append(stdout_line)
+            yield stdout_line
 
-        return result.stdout, result.stderr, success
+        stdout = "\n".join(stdouts)
+        stderr = process.stderr.read()
 
-    def run_dbt_command(
+        success = self.check_command_success(stdout, stderr)
+        yield success
+
+    @classmethod
+    def check_command_success(cls, stdout: str, stderr: str) -> bool:
+        success = not DBTError.has_dbt_error(stdout) and not DBTError.has_dbt_error(
+            stderr
+        )
+        if len(stderr) > 0:
+            installation_pattern = r"^Installed \d+ packages? in \d+(?:\.\d+)?\s*\w+$"
+            if not re.match(installation_pattern, stderr.strip()):
+                success = False
+        return success
+
+    def get_dbt_command(
         self,
         command: list[str],
         cli_args: list[str] | None = None,
@@ -385,20 +417,59 @@ class DBTProject(object):
                 ]
             )
 
+        return full_command
+
+    def run_dbt_command(
+        self,
+        command: list[str],
+        cli_args: list[str] | None = None,
+        write_json: bool = False,
+        dbt_cache: bool = False,
+        force_terminal: bool = False,
+        defer: bool = False,
+        defer_selection: bool = True,
+    ) -> tuple[str, str, bool]:
+        full_command = self.get_dbt_command(
+            command,
+            cli_args,
+            write_json,
+            dbt_cache,
+            force_terminal,
+            defer,
+            defer_selection,
+        )
         if self.dbt1_5 and not force_terminal and not self.multitenant:
             self.install_dbt_if_necessary()
-            stdout, stderr, success = self.dbt_runner(full_command)
+            return self.dbt_runner(full_command)
+
         else:
-            stdout, stderr, success = self.dbt_cli(full_command)
+            return self.dbt_cli(full_command)
 
-        print(stdout, stderr, success)
-
-        if len(stderr) > 0:
-            installation_pattern = r"^Installed \d+ packages? in \d+(?:\.\d+)?\s*\w+$"
-            if not re.match(installation_pattern, stderr.strip()):
-                success = False
-
-        return stdout, stderr, success
+    def stream_dbt_command(
+        self,
+        command: list[str],
+        cli_args: list[str] | None = None,
+        write_json: bool = False,
+        dbt_cache: bool = False,
+        force_terminal: bool = False,
+        defer: bool = False,
+        defer_selection: bool = True,
+    ) -> Generator[str, None, tuple[str, str, bool]]:
+        full_command = self.get_dbt_command(
+            command,
+            cli_args,
+            write_json,
+            dbt_cache,
+            force_terminal,
+            defer,
+            defer_selection,
+        )
+        if self.dbt1_5 and not force_terminal and not self.multitenant:
+            # self.install_dbt_if_necessary()
+            # TODO: make streaming work for python api
+            yield from self.dbt_cli_stream(full_command)
+        else:
+            yield from self.dbt_cli_stream(full_command)
 
     def dbt_parse(self, defer: bool = False) -> tuple[str, str, bool]:
         if self.dbt1_5:

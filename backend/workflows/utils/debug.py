@@ -1,4 +1,9 @@
+from __future__ import annotations
+
 import inspect
+import os
+import threading
+import time
 import uuid
 
 import networkx as nx
@@ -10,6 +15,7 @@ class ContextDebugger:
     def __init__(self, data):
         data.setdefault("workflow_run_id", uuid.uuid4())
         self.data = data
+        self.stream = []
 
     def workflow_run_id(self):
         return self.data.get("workflow_run_id")
@@ -22,6 +28,37 @@ class ContextDebugger:
 
     def log(self, message):
         print(message)
+
+    def put_stream(self, message):
+        self.stream.append(message)
+
+
+def run_workflow(workflow, input: dict):
+    if os.getenv("TEST_ENV"):
+        debugger = WorkflowDebugger(workflow, input)
+        thread = threading.Thread(target=debugger.run)
+        thread.start()
+        return debugger.context.workflow_run_id(), debugger, thread
+
+    else:
+        from workflows.hatchet import hatchet
+
+        return hatchet.admin.run_workflow(workflow.__name__, input), None, None
+
+
+def listen_to_stream(
+    run_id: str, debugger: WorkflowDebugger | None, thread: threading.Thread
+):
+    if os.getenv("TEST_ENV"):
+        while thread.is_alive():
+            time.sleep(0.1)
+            stream = debugger.context.stream
+            if stream:
+                yield stream
+    else:
+        from workflows.hatchet import hatchet
+
+        yield from hatchet.listener.stream(run_id)
 
 
 def spawn_workflow(context, workflow, input: dict, key: str | None = None):
@@ -102,3 +139,57 @@ class WorkflowDebugger:
 
     def result(self):
         return self.context.data["parents"] or {}
+
+
+if __name__ == "__main__":
+    import django
+    from django.conf import settings
+    from rest_framework.test import APIClient
+
+    django.setup()
+
+    settings.ALLOWED_HOSTS = ["*"]
+
+    client = APIClient()
+    response = client.get("/project/run_dbt_command/", {"commands": ["ls"]})
+    breakpoint()
+    # print([c for c in response.streaming_content])
+    for chunk in response.streaming_content:
+        print(chunk.decode("utf-8"), end="", flush=True)
+
+    # response = client.post(
+    #     "/project/run_dbt_command/", {"commands": ["select * from customers"]}
+    # )
+
+    # start_time = time.time()
+    # end_time = start_time + 10  # Run for 10 seconds
+
+    # def get_latest_stream(response: StreamingHttpResponse):
+    #     content = b""
+    #     for chunk in response.streaming_content:
+    #         if chunk:
+    #             content += chunk
+    #     return content.decode("utf-8")
+
+    # # Initialize an iterator for the streaming content
+    # content_iterator = iter(response.streaming_content)
+
+    # while time.time() < end_time:
+    #     try:
+    #         chunk = next(content_iterator)
+    #         print(chunk.decode("utf-8"), end="", flush=True)
+    #     except StopIteration:
+    #         break
+    #     time.sleep(0.1)
+
+    # print("\nChecking for more content after a delay...")
+    # time.sleep(5)  # Wait for 5 seconds
+
+    # new_content = get_latest_stream(response)
+    # if new_content:
+    #     print("New content found:")
+    #     print(new_content)
+    # else:
+    #     print("No new content.")
+
+    # # No need to explicitly close the response as APIClient handles this
