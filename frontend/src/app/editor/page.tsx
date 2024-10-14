@@ -23,6 +23,7 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import React from 'react'
 import BottomPanel from '@/components/editor/bottom-panel'
 import { LineageProvider } from '../contexts/LineageContext'
+import AiSidebarChat from '@/components/editor/ai-sidebar-chat'
 
 
 const PromptBox = ({ setPromptBoxOpen }: { setPromptBoxOpen: (open: boolean) => void }) => {
@@ -808,7 +809,9 @@ function EditorPageContent() {
                     <Fragment>
                         <PanelResizeHandle className="border-l w-1 bg-transparent hover:bg-gray-300 hover:cursor-col-resize transition-colors" />
                         <Panel defaultSize={rightWidth} minSize={25} maxSize={60} onResize={setRightWidth}>
-                            <div className="h-full p-4 flex items-center justify-center">Coming soon...</div>
+                            <div className="h-full p-4 flex items-center justify-center">
+                                <AiSidebarChat />
+                            </div>
                         </Panel>
                     </Fragment>
                 )
