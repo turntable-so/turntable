@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import inspect
 import uuid
 
@@ -10,6 +12,7 @@ class ContextDebugger:
     def __init__(self, data):
         data.setdefault("workflow_run_id", uuid.uuid4())
         self.data = data
+        self.stream = []
 
     def workflow_run_id(self):
         return self.data.get("workflow_run_id")
@@ -22,6 +25,10 @@ class ContextDebugger:
 
     def log(self, message):
         print(message)
+
+    def put_stream(self, message):
+        print(message)
+        self.stream.append(message)
 
 
 def spawn_workflow(context, workflow, input: dict, key: str | None = None):

@@ -9,8 +9,7 @@ from pgvector.django import VectorField
 
 from app.models.resources import Resource
 from app.models.workspace import Workspace
-from app.utils.urns import UrnAdjuster
-from django.db.models import Exists, OuterRef
+from app.utils.urn import UrnAdjuster
 
 
 class AssetContainer(models.Model):
@@ -228,7 +227,7 @@ class Column(models.Model):
     def is_unused(self):
         from app.models.metadata import (
             ColumnLink,
-        )  # Import here to avoid circular imports
+        )
 
         return not ColumnLink.objects.filter(Q(source=self)).exists()
 
