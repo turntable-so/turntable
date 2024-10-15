@@ -1,9 +1,6 @@
 from __future__ import annotations
 
 import inspect
-import os
-import threading
-import time
 import uuid
 
 import networkx as nx
@@ -30,35 +27,8 @@ class ContextDebugger:
         print(message)
 
     def put_stream(self, message):
+        print(message)
         self.stream.append(message)
-
-
-def run_workflow(workflow, input: dict):
-    if os.getenv("TEST_ENV"):
-        debugger = WorkflowDebugger(workflow, input)
-        thread = threading.Thread(target=debugger.run)
-        thread.start()
-        return debugger.context.workflow_run_id(), debugger, thread
-
-    else:
-        from workflows.hatchet import hatchet
-
-        return hatchet.admin.run_workflow(workflow.__name__, input), None, None
-
-
-def listen_to_stream(
-    run_id: str, debugger: WorkflowDebugger | None, thread: threading.Thread
-):
-    if os.getenv("TEST_ENV"):
-        while thread.is_alive():
-            time.sleep(0.1)
-            stream = debugger.context.stream
-            if stream:
-                yield stream
-    else:
-        from workflows.hatchet import hatchet
-
-        yield from hatchet.listener.stream(run_id)
 
 
 def spawn_workflow(context, workflow, input: dict, key: str | None = None):

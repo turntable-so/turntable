@@ -15,7 +15,7 @@ def safe_decode(s):
 
 
 @pytest.mark.django_db
-@pytest.mark.usefixtures("force_isolate", "local_postgres")
+@pytest.mark.usefixtures("force_isolate", "bypass_hatchet", "local_postgres")
 @require_env_vars("SSHKEY_0_PUBLIC", "SSHKEY_0_PRIVATE")
 class TestProjectViews:
     @pytest.fixture
