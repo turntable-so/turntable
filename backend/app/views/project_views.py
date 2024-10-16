@@ -98,12 +98,14 @@ class ProjectViewSet(viewsets.ViewSet):
                             )
 
             root = get_file_tree(user_id, repo.working_tree_dir, project_path)
-            dirty_changes = repo.index.diff(None)
+            dirty_changes = [item.a_path for item in repo.index.diff(None)]
+            untracked_changes = [item.a_path for item in repo.index.diff("Head")]
 
         return Response(
             {
                 "file_index": [root],
-                # "dirty_changes": dirty_changes,
+                "dirty_changes": dirty_changes,
+                "untracked_changes": untracked_changes,
             }
         )
 

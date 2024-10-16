@@ -277,13 +277,13 @@ function Node({ node, style, dragHandle, tree }: { node: any, style: any, dragHa
                                     <Ellipsis className='mr-1 size-4' />
                                 </div>
                             </PopoverTrigger>
-                            <PopoverContent className="w-40 p-0" onClick={(e) => e.stopPropagation()}>
+                            <PopoverContent className="w-fit p-0" onClick={(e) => e.stopPropagation()}>
                                 <div className='w-full'>
                                     {/* <Button className='w-full' variant="ghost" size="sm" onClick={handleRename}>
                                         <Pencil className="mr-2 h-3 w-3" />
                                         Rename
                                     </Button> */}
-                                    <Button className='w-full' variant="ghost" size="sm" onClick={handleDelete}>
+                                    <Button variant="ghost" size="sm" onClick={handleDelete}>
                                         <Trash className="mr-2 h-3 w-3" />
                                         Delete
                                     </Button>
@@ -588,6 +588,8 @@ function EditorPageContent() {
     const onDelete = ({ ids }: { ids: string[] }) => {
         console.log('deleting!', { ids, })
     };
+
+
 
 
 

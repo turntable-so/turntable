@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
-import { createFile, deleteFile, fetchFileContents, getFileIndex, persistFile } from '../actions/actions';
+import { createFile, deleteFile, fetchFileContents, getBranches, getFileIndex, persistFile } from '../actions/actions';
 
 export type FileNode = {
     name: string;
@@ -45,8 +45,8 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const [searchFileIndex, setSearchFileIndex] = useState<FileNode[]>([]);
 
     const fetchFiles = async () => {
-        const { dirty_changes, file_index } = await getFileIndex()
-        console.log({ file_index })
+        const { dirty_changes, file_index, untracked_changes } = await getFileIndex()
+        console.log({ file_index, dirty_changes, untracked_changes })
         const fileIndex = file_index.map((file: FileNode) => ({ ...file }))
         setFiles(fileIndex)
         const flattenFileIndex = (files: FileNode[]): FileNode[] => {
@@ -66,9 +66,17 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         setSearchFileIndex(searchableFiles)
     }
 
+    const fetchBranches = async () => {
+        const branches = await getBranches()
+        console.log({ branches })
+    }
+
     useEffect(() => {
         fetchFiles()
+        fetchBranches()
     }, [])
+
+
 
     const openFile = useCallback(async (node: FileNode) => {
         console.log('openFile', { node })
@@ -122,6 +130,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             setOpenedFiles(prev => prev.map(f =>
                 f.node.path === filepath ? { ...f, isDirty: false, content } : f
             ));
+            fetchFiles()
         }
     }
 

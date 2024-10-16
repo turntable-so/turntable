@@ -34,6 +34,7 @@ class TestProjectViews:
 
         assert response.status_code == 200
         assert branches["active_branch"] == "main"
+        breakpoint()
         assert len(branches["branches"]) > 0
 
     def test_create_branch(self, client):

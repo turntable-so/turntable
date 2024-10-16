@@ -263,6 +263,13 @@ class Branch(models.Model):
             repo.git.checkout(self.branch_name, env=env)
             return self.branch_name
 
+    def fetch_origin(
+        self,
+    ) -> str:
+        with self.repo_context() as (repo, env):
+            repo.remotes.origin.fetch(env=env)
+            return True
+
     def git_pull(
         self,
         isolate: bool = False,

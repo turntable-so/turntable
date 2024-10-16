@@ -6,6 +6,7 @@ from django.db import transaction
 from app.models import (
     Asset,
 )
+from app.models.git_connections import SSHKey
 from fixtures.local_env import (
     create_local_metabase,
     create_local_postgres,
@@ -25,10 +26,8 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         user = create_local_user()
         workspace = create_local_workspace(user)
-        git_repo = None
-        if os.getenv("SSHKEY_0_PUBLIC") and os.getenv("SSHKEY_0_PRIVATE"):
-            ssh_key = create_ssh_key_n(workspace, 0)
-            git_repo = create_repository_n(workspace, 0, ssh_key)
+        ssh_key = create_ssh_key_n(workspace, 0)
+        git_repo = create_repository_n(workspace, 0, ssh_key)
         postgres = create_local_postgres(workspace, git_repo)
         metabase = create_local_metabase(workspace)
         if (

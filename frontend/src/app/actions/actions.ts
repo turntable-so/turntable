@@ -557,5 +557,19 @@ export async function getProjectBasedLineage({
     cookies,
     method: "GET",
   });
-  return response.json();
-} 
+  if (response.ok) {
+    const data = await response.json()
+    return {
+      lineage: data.lineage,
+      root_asset: data.root_asset,
+      error: null
+    }
+  } else {
+    return {
+      lineage: null,
+      root_asset: null,
+      error: 'something went wrong'
+    }
+  }
+}
+
