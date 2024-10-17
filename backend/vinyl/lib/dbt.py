@@ -1,6 +1,7 @@
 ## NOTE: can't name this file `dbt.py` or weird import errors will ensue.
 import os
 import re
+import select
 import subprocess
 import sys
 import tempfile
@@ -337,6 +338,7 @@ class DBTProject(object):
         env, cwd = self._dbt_cli_env()
 
         stdouts = []
+        stderrs = []
         process = subprocess.Popen(
             ["dbtx", *command],
             stdout=subprocess.PIPE,
@@ -345,15 +347,30 @@ class DBTProject(object):
             text=True,
             cwd=cwd,
         )
-        for stdout_line in iter(process.stdout.readline, ""):
-            stdouts.append(stdout_line)
-            yield stdout_line
+        while process.poll() is None:
+            ready, _, _ = select.select([process.stdout, process.stderr], [], [], 0.1)
+            for stream in ready:
+                line = stream.readline()
+                if line:
+                    if stream == process.stdout:
+                        stdouts.append(line)
+                    else:
+                        stderrs.append(line)
+                    yield line
 
-        stdout = "\n".join(stdouts)
-        stderr = process.stderr.read()
+        # Read any remaining output
+        for line in process.stdout:
+            stdouts.append(line)
+            yield line
+        for line in process.stderr:
+            stderrs.append(line)
+            yield line
+
+        stdout = "".join(stdouts)
+        stderr = "".join(stderrs)
 
         success = self.check_command_success(stdout, stderr)
-        yield success
+        yield f"{success}\n"
 
     @classmethod
     def check_command_success(cls, stdout: str, stderr: str) -> bool:
@@ -425,7 +442,7 @@ class DBTProject(object):
         cli_args: list[str] | None = None,
         write_json: bool = False,
         dbt_cache: bool = False,
-        force_terminal: bool = False,
+        force_terminal: bool = True,
         defer: bool = False,
         defer_selection: bool = True,
     ) -> tuple[str, str, bool]:
