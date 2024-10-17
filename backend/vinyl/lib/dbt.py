@@ -347,12 +347,13 @@ class DBTProject(object):
         )
         for stdout_line in iter(process.stdout.readline, ""):
             stdouts.append(stdout_line)
-            yield stdout_line
+            # yield stdout_line
 
         stdout = "\n".join(stdouts)
         stderr = process.stderr.read()
 
         success = self.check_command_success(stdout, stderr)
+        yield "apple"
         yield success
 
     @classmethod

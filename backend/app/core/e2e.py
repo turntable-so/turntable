@@ -760,6 +760,8 @@ class DataHubDBParser:
                     workspace_id=self.workspace_id,
                     source_id=u,
                     target_id=v,
+                    source_resource_id=self.asset_dict[u].resource_id,
+                    target_resource_id=self.asset_dict[v].resource_id,
                 )
             )
         for u, v, data in self.column_graph.edges(data=True):

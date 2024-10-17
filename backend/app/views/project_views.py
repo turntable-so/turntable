@@ -6,6 +6,7 @@ from urllib.parse import unquote
 from django.http import StreamingHttpResponse
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from api.serializers import AssetSerializer, LineageSerializer
@@ -44,6 +45,8 @@ def get_file_tree(user_id: str, path: str, base_path: str):
 
 
 class ProjectViewSet(viewsets.ViewSet):
+    PERMISSION_CLASSES = [AllowAny]
+
     @action(detail=False, methods=["GET", "POST", "PUT", "DELETE"])
     def files(self, request):
         workspace = request.user.current_workspace()

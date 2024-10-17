@@ -307,6 +307,8 @@ FROM traversed
     target = models.ForeignKey(
         Asset, on_delete=models.CASCADE, related_name="target_links"
     )
+    source_resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
+    target_resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
 
     def adjust_urns(self):
         adjuster = UrnAdjuster(self.workspace.id)
@@ -380,6 +382,58 @@ FROM traversed
             )
             assets = {item for row in cursor.fetchall() for item in row}
         return list(assets - set([asset_id]))
+
+    @classmethod
+    def dynamic_successors(
+        cls, workspace_id: str, asset_depth_dict: dict[int, list[str]], exclude_resource
+    ):
+        params = []
+        query = """
+WITH RECURSIVE traversed AS (
+    SELECT
+        source_id,
+        target_id,
+        CASE WHEN """
+
+        # add depths
+        for depth, assets in asset_depth_dict.items():
+            query += "source_id IN ("
+            query += ",".join(["%s" for asset in assets])
+            params.extend(assets)
+            query += ") THEN %s ELSE NULL END AS depth"
+            params.append(depth)
+
+        # add conditions
+        query += """
+    FROM app_assetlink as a
+    WHERE a.source_id IN ("""
+        query += ",".join(["%s" for asset in assets])
+        params.extend(assets)
+        query += ") and a.workspace_id = %s"
+        params.append(workspace_id)
+
+        return query, params
+
+        # if BI_only:
+        #     query += " AND a.type in ("
+        # query +=
+
+    #         query += """
+
+    # #     UNION ALL
+
+    # #     SELECT
+    # #         a.source_id,
+    # #         a.target_id,
+    # #         t.depth + 1
+    # #     FROM traversed as t
+    # #     JOIN app_assetlink as a ON a.source_id = t.target_id
+    # #     where t.depth <= %(successor_depth)s and a.workspace_id = %(workspace_id)s
+    # # )
+    # # SELECT
+    # #     source_id,
+    # #     target_id
+    # # FROM traversed
 
     def get_resource_ids(self) -> set[str]:
         return set([self.source.resource.id, self.target.resource.id])
