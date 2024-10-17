@@ -9,7 +9,12 @@ from workflows.utils.debug import ContextDebugger, WorkflowDebugger
 
 
 def run_test_sync(
-    resources, recache: bool, use_cache: bool = False, db_read_path: str | None = None
+    resources,
+    recache: bool,
+    use_cache: bool = False,
+    db_read_path: str | None = None,
+    produce_columns: bool = False,
+    produce_column_links: bool = False,
 ):
     for resource in resources:
         input = {
@@ -24,7 +29,7 @@ def run_test_sync(
         else:
             WorkflowDebugger(MetadataSyncWorkflow, input).run()
 
-    assert_ingest_output(resources)
+    assert_ingest_output(resources, produce_columns, produce_column_links)
 
     # recache datahub_dbs if successful and arg is passed
     if recache:
@@ -67,3 +72,15 @@ def test_redshift_sync(remote_redshift, recache: bool, use_cache: bool):
 @require_env_vars("TABLEAU_0_USERNAME")
 def test_tableau_sync(remote_tableau, recache: bool, use_cache: bool):
     run_test_sync([remote_tableau], recache, use_cache)
+
+
+@pytest.mark.django_db
+@require_env_vars("POWERBI_0_RESOURCE_NAME")
+def test_powerbi_sync(remote_powerbi, recache: bool, use_cache: bool):
+    run_test_sync(
+        [remote_powerbi],
+        recache,
+        use_cache,
+        produce_columns=False,
+        produce_column_links=False,
+    )
