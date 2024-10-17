@@ -6,6 +6,7 @@ from app.models import (
     DatabricksDetails,
     DBTCoreDetails,
     LookerDetails,
+    PowerBIDetails,
     RedshiftDetails,
     Repository,
     Resource,
@@ -300,6 +301,39 @@ def create_tableau_n(workspace, n):
     return resource
 
 
+def create_powerbi_n(workspace, n):
+    resource_name = os.getenv(f"POWERBI_{n}_RESOURCE_NAME")
+    client_id = os.getenv(f"POWERBI_{n}_CLIENT_ID")
+    client_secret = os.getenv(f"POWERBI_{n}_CLIENT_SECRET")
+    tenant_id = os.getenv(f"POWERBI_{n}_TENANT_ID")
+    workspace_id = os.getenv(f"POWERBI_{n}_WORKSPACE_ID")
+
+    assert resource_name, f"must provide POWERBI_{n}_RESOURCE_NAME to use this test"
+    assert client_id, f"must provide POWERBI_{n}_CLIENT_ID to use this test"
+    assert client_secret, f"must provide POWERBI_{n}_CLIENT_SECRET to use this test"
+    assert tenant_id, f"must provide POWERBI_{n}_TENANT_ID to use this test"
+
+    try:
+        resource = Resource.objects.get(workspace=workspace, type=ResourceType.BI)
+    except Resource.DoesNotExist:
+        resource = Resource.objects.create(
+            workspace=workspace, type=ResourceType.BI, name=resource_name
+        )
+
+    if not hasattr(resource, "details") or not isinstance(
+        resource.details, PowerBIDetails
+    ):
+        PowerBIDetails(
+            resource=resource,
+            client_id=client_id,
+            client_secret=client_secret,
+            powerbi_tenant_id=tenant_id,
+            powerbi_workspace_id=workspace_id,
+        ).save()
+
+    return resource
+
+
 ### GROUPS
 def group_1(user):
     workspace = create_workspace_n(user, "bigquery", 1)
@@ -343,7 +377,8 @@ def group_4(user):
         bigquery, 0, force_db=True, repository=repository
     )  # force_db=True to use the same project_id as the bigquery resource. Can't use mydb because it is reserved.
 
-    return [bigquery]
+    powerbi = create_powerbi_n(workspace, 0)
+    return [bigquery, powerbi]
 
 
 def group_5(user):
@@ -354,3 +389,12 @@ def group_5(user):
     create_dbt_n(redshift, 0, repository=repository)
 
     return [redshift]
+
+
+def group_6(user):
+    workspace = create_workspace_n(user, "bigquery", 3)
+    bigquery = create_bigquery_n(workspace, 3)
+    sshkey = create_ssh_key_n(workspace, 3)
+    repository = create_repository_n(workspace, 3, sshkey)
+    create_dbt_n(bigquery, 5, repository=repository)
+    return [bigquery]

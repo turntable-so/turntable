@@ -8,6 +8,7 @@ from api.serializers import (
     DBTCoreDetailsSerializer,
     MetabaseDetailsSerializer,
     PostgresDetailsSerializer,
+    PowerBIDetailsSerializer,
     RedshiftDetailsSerializer,
     ResourceSerializer,
     SnowflakeDetailsSerializer,
@@ -20,6 +21,7 @@ from app.models.resources import (
     DBTResource,
     MetabaseDetails,
     PostgresDetails,
+    PowerBIDetails,
     RedshiftDetails,
     ResourceDetails,
     ResourceSubtype,
@@ -146,6 +148,12 @@ class TableauResourceService(ResourceServiceHelper):
     subtype = ResourceSubtype.TABLEAU
     serializer = TableauDetailsSerializer
     details_obj = TableauDetails
+
+
+class PowerBIResourceService(ResourceServiceHelper):
+    subtype = ResourceSubtype.POWERBI
+    serializer = PowerBIDetailsSerializer
+    details_obj = PowerBIDetails
 
 
 class DBTResourceService(ResourceServiceHelper):

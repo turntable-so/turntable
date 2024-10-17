@@ -18,6 +18,7 @@ class AssetContainer(models.Model):
         PROJECT = "project"
         DATABASE = "database"
         SCHEMA = "schema"
+        WORKSPACE = "workspace"
 
     # pk
     id = models.CharField(max_length=255, primary_key=True, editable=False)

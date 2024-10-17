@@ -47,6 +47,7 @@ class ResourceSubtype(models.TextChoices):
     LOOKER = "looker", "Looker"
     TABLEAU = "tableau", "Tableau"
     METABASE = "metabase", "Metabase"
+    POWERBI = "powerbi", "PowerBI"
     BIGQUERY = "bigquery", "BigQuery"
     SNOWFLAKE = "snowflake", "Snowflake"
     POSTGRES = "postgres", "Postgres"
@@ -187,10 +188,6 @@ class ResourceDetails(PolymorphicModel):
         indexes = [
             models.Index(fields=["resource_id"]),
         ]
-
-    @property
-    def venv_path(self):
-        pass
 
     @property
     def datahub_extras(self) -> list[str]:
@@ -385,10 +382,6 @@ class LookerDetails(ResourceDetails):
     )
 
     @property
-    def venv_path(self):
-        return ".lookervenv"
-
-    @property
     def datahub_extras(self):
         return ["looker", "lookml"]
 
@@ -458,10 +451,6 @@ class TableauDetails(ResourceDetails):
     password = encrypt(models.CharField(max_length=255, blank=False))
 
     @property
-    def venv_path(self):
-        return ".tableauvenv"
-
-    @property
     def datahub_extras(self):
         return ["tableau"]
 
@@ -493,10 +482,6 @@ class MetabaseDetails(ResourceDetails):
     connect_uri = encrypt(models.CharField(blank=False, max_length=255))
 
     @property
-    def venv_path(self):
-        return ".metabasevenv"
-
-    @property
     def datahub_extras(self):
         return ["metabase"]
 
@@ -511,6 +496,41 @@ class MetabaseDetails(ResourceDetails):
                         "connect_uri": self.connect_uri,
                         "username": self.username,
                         "password": self.password,
+                    },
+                },
+                "sink": get_sync_config(db_path),
+            }
+            with open(config_path, "w") as f:
+                yaml.dump(config, f)
+            yield [config_path], db_path
+
+
+class PowerBIDetails(ResourceDetails):
+    subtype = models.CharField(max_length=255, default=ResourceSubtype.POWERBI)
+    client_id = encrypt(models.CharField(max_length=255, blank=False))
+    client_secret = encrypt(models.CharField(max_length=255, blank=False))
+    powerbi_workspace_id = encrypt(models.CharField(max_length=255, blank=False))
+    powerbi_tenant_id = encrypt(models.CharField(max_length=255, blank=False))
+
+    @property
+    def datahub_extras(self):
+        return ["powerbi"]
+
+    @contextmanager
+    def datahub_yaml_path(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            db_path, config_path = self.db_config_paths(temp_dir)
+            config = {
+                "source": {
+                    "type": "powerbi",
+                    "config": {
+                        "client_id": self.client_id,
+                        "client_secret": self.client_secret,
+                        "workspace_id_pattern": {"allow": [self.powerbi_workspace_id]},
+                        "tenant_id": self.powerbi_tenant_id,
+                        "extract_dashboards": True,
+                        "profiling": {"enabled": False},
+                        "extract_column_level_lineage": True,
                     },
                 },
                 "sink": get_sync_config(db_path),
@@ -771,10 +791,6 @@ class PostgresDetails(DBDetails):
         return False
 
     @property
-    def venv_path(self):
-        return ".postgresvenv"
-
-    @property
     def datahub_extras(self):
         return ["postgres", "dbt"]
 
@@ -834,10 +850,6 @@ class RedshiftDetails(DBDetails):
     @property
     def requires_start_date(self):
         return False
-
-    @property
-    def venv_path(self):
-        return ".redshiftvenv"
 
     @property
     def datahub_extras(self):
@@ -913,10 +925,6 @@ class BigqueryDetails(DBDetails):
         return "dataset"
 
     @property
-    def venv_path(self):
-        return ".bigqueryvenv"
-
-    @property
     def datahub_extras(self):
         return ["bigquery", "dbt"]
 
@@ -972,10 +980,6 @@ class SnowflakeDetails(DBDetails):
     username = encrypt(models.CharField(max_length=255, blank=False))
     password = encrypt(models.CharField(max_length=255, blank=False))
     role = models.CharField(max_length=255, blank=False)
-
-    @property
-    def venv_path(self):
-        return ".snowflakevenv"
 
     @property
     def datahub_extras(self):
@@ -1038,10 +1042,6 @@ class DatabricksDetails(DBDetails):
     http_path = encrypt(models.CharField(max_length=255, blank=False))
 
     @property
-    def venv_path(self):
-        return ".databricksvenv"
-
-    @property
     def datahub_extras(self):
         return ["databricks", "dbt"]
 
@@ -1096,10 +1096,6 @@ class DuckDBDetails(DBDetails):
     subtype = models.CharField(max_length=255, default=ResourceSubtype.DUCKDB)
     # NOTE: only works for duckdb files in the docker container for now, not S3
     path = encrypt(models.TextField(blank=False))
-
-    @property
-    def venv_path(self):
-        return ".duckdbvenv"
 
     @property
     def datahub_extras(self):

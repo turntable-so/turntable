@@ -20,6 +20,7 @@ from .resources import (
     LookerDetails,
     MetabaseDetails,
     PostgresDetails,
+    PowerBIDetails,
     RedshiftDetails,
     Resource,
     ResourceDetails,
