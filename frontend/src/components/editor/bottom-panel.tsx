@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import { AgGridReact } from "ag-grid-react";
-import { Loader2, Network, Play, RefreshCcw, Table as TableIcon } from "lucide-react";
+import { Loader2, Network, Play, RefreshCcw, Table as TableIcon, Terminal as TerminalIcon, CircleX as CircleXIcon } from "lucide-react";
 import { Button } from "../ui/button";
-import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
+import { Panel, PanelResizeHandle } from 'react-resizable-panels'
 import { Fragment } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs"
-import LineagePreview from "../lineage/LineagePreview";
+import { Tabs, TabsList, TabsTrigger } from "../ui/tabs"
 import { useLineage } from "@/app/contexts/LineageContext";
 import { ErrorBoundary } from "react-error-boundary";
 import { useFiles } from "@/app/contexts/FilesContext";
@@ -14,13 +13,13 @@ import useResizeObserver from "use-resize-observer";
 import {
     Table,
     TableBody,
-    TableCaption,
     TableCell,
-    TableFooter,
     TableHead,
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
+import CommandPanelContent from "./command-panel";
+import { useLocalStorage } from 'usehooks-ts';
 
 
 const SkeletonLoadingTable = () => {
@@ -86,7 +85,7 @@ export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview
     runQueryPreview: any,
     isLoading: boolean,
 }) {
-    const [activeTab, setActiveTab] = useState("lineage");
+    const [activeTab, setActiveTab] = useLocalStorage<"lineage" | "results" | "command">("bottom-panel-tab", "lineage");
 
     const { fetchFileBasedLineage, lineageData } = useLineage()
     const { activeFile } = useFiles()
@@ -118,6 +117,10 @@ export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview
                         <TabsTrigger value="results">
                             <TableIcon className="h-4 w-4 mr-2" />
                             Preview
+                        </TabsTrigger>
+                        <TabsTrigger value="command">
+                            <TerminalIcon className="h-4 w-4 mr-2" />
+                            Command
                         </TabsTrigger>
                     </TabsList>
                 </Tabs>
@@ -187,6 +190,7 @@ export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview
                             </ErrorBoundary>
                         </div>
                     )}
+                    {activeTab === "command" && <CommandPanelContent />}
                 </div>
             </Panel>
         </Fragment >

@@ -21,6 +21,7 @@ from app.views.settings_view import SettingsView
 from app.views.inference_views import InferenceView
 from app.views.project_views import ProjectViewSet
 from app.views.query_views import DbtQueryPreviewView
+from app.views.stream import StreamDBTCommandView
 from rest_framework import routers
 
 from app.consumers import WorkflowRunConsumer
@@ -110,4 +111,5 @@ urlpatterns = [
     path("settings/", SettingsView.as_view(), name="settings"),
     path("infer/", InferenceView.as_view(), name="inference"),
     path("", include(router.urls)),
+    path('stream-dbt-command', StreamDBTCommandView.as_view(), name='stream-dbt-command'),
 ]
