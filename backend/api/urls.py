@@ -109,7 +109,6 @@ urlpatterns = [
         AssetViewSet.as_view({"get": "retrieve"}),
         name="asset-detail",
     ),
-    path("ws/subscribe/<str:workspace_id>/", WorkflowRunConsumer.as_asgi()),
     path(
         "infer/stream",
         StreamingInferenceConsumer.as_asgi(),

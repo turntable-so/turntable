@@ -1,14 +1,17 @@
 # File: api/views/execute_query.py
 
+import asyncio
 import json
 import os
+import uuid
 
-from adrf.views import APIView
+from django.views import View
 from asgiref.sync import sync_to_async
-from django.http import JsonResponse
+from django.http import JsonResponse, StreamingHttpResponse
 from app.models.workspace import Workspace
 from litellm import completion
-
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 from rest_framework import status
 from rest_framework.response import Response
 
@@ -122,31 +125,61 @@ def edit_file(filepath: str, instruction: str, content: str):
     return extracted_sql
 
 
-class InferenceView(APIView):
-    def post(self, request):
+sessions = {}
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class InferenceView(View):
+    content_negotiation_class = None  # Disable content negotiation
+
+    async def post(self, request):
         # Extract instructions from the request
-        filepath = request.data.get("filepath")
-        instructions = request.data.get("instructions")
-        content = request.data.get("content")
+        data = json.loads(request.body)
+        instructions = data.get("instructions")
 
         if not instructions:
             return Response(
-                {"error": "No instructions provided"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        if not content:
-            return Response(
-                {"error": "No content provided"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        if not filepath:
-            return Response(
-                {"error": "No filepath provided"},
+                {"error": "Instructions are required"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Call the LLM for inference
-        generated_content = edit_file(filepath, instructions, content)
+        # Generate a unique session ID
+        session_id = str(uuid.uuid4())
 
-        # Extract the generated content from the response
-        return Response({"content": generated_content}, status=status.HTTP_200_OK)
+        # Store the session information
+        sessions[session_id] = {
+            "instructions": instructions,
+        }
+
+        return JsonResponse(
+            {
+                "session_token": session_id,
+            }
+        )
+
+    async def get(self, request):
+        session_id = request.GET.get("session_id")
+
+        # Check if the session ID exists
+        if session_id not in sessions:
+            return Response(
+                {"error": "Invalid session ID"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        session_info = sessions[session_id]
+        instructions = session_info["instructions"]
+
+        # Generate the response based on the instructions
+        # response = infer(instructions)
+        async def generate():
+            for i in range(10):
+                chunk = f"Chunk {i + 1}: This is some generated content."
+                print(chunk, flush=True)
+                yield f"data: {json.dumps({'content': chunk})}\n\n"
+                await asyncio.sleep(0.5)  # Asynchronous sleep
+            yield "data: [DONE]\n\n"
+
+        response = StreamingHttpResponse(generate(), content_type="text/event-stream")
+        response["Cache-Control"] = "no-cache"
+        response["X-Accel-Buffering"] = "no"
+        return response

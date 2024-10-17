@@ -4,7 +4,7 @@ import { useState, useEffect, Fragment, useCallback, useRef } from 'react'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { executeQueryPreview, getBranches, infer } from '../actions/actions'
 import useResizeObserver from "use-resize-observer";
-import { Box, Check, ChevronDown, ChevronRight, CircleArrowUp, Ellipsis, File, FileText, Folder, FolderOpen, GitBranch, Loader2, PanelBottom, PanelLeft, PanelRight, Pencil, Play, Plus, Trash, X } from 'lucide-react'
+import { Box, Check, ChevronDown, ChevronRight, CircleArrowUp, Ellipsis, File, FileText, Folder, FolderOpen, GitBranch, Loader2, PanelBottom, PanelLeft, PanelRight, Pencil, Play, Plus, Sparkles, Trash, X } from 'lucide-react'
 import Editor, { DiffEditor } from '@monaco-editor/react';
 import { FilesProvider, useFiles, FileNode, OpenedFile } from '../contexts/FilesContext';
 import { Button } from '@/components/ui/button'
@@ -655,8 +655,13 @@ function EditorPageContent() {
                             )}
                         >
                             <div className="flex items-center w-full px-4">
-                                <div className="w-1/4">
-                                    {/* Left column content */}
+                                <div className="w-1/4 flex justify-center">
+                                    {/* <Button className="flex items-center space-x-1 w-fit">
+                                        <Sparkles className='size-3' />
+                                        <div>
+                                            Edit
+                                        </div>
+                                    </Button> */}
                                 </div>
                                 <div className="w-full relative z-50">
                                     <Input
@@ -809,7 +814,7 @@ function EditorPageContent() {
                     <Fragment>
                         <PanelResizeHandle className="border-l w-1 bg-transparent hover:bg-gray-300 hover:cursor-col-resize transition-colors" />
                         <Panel defaultSize={rightWidth} minSize={25} maxSize={60} onResize={setRightWidth}>
-                            <div className="h-full p-4 flex items-center justify-center">
+                            <div className="h-full overflow-y-scroll">
                                 <AiSidebarChat />
                             </div>
                         </Panel>

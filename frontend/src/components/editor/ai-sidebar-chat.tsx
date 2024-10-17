@@ -1,108 +1,108 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
-
-interface Message {
-    role: 'user' | 'assistant';
-    content: string;
-}
+import { Loader2 } from 'lucide-react';
+import Markdown from 'react-markdown'
+import { submitEcho } from '@/app/actions/actions';
+import { toast } from 'sonner';
+const ApiHost = true ? "http://localhost:8000" : process.env.BACKEND_HOST;
 
 export default function AiSidebarChat() {
-    const [question, setQuestion] = useState('');
-    const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
-    const socketRef = useRef<WebSocket | null>(null);
+    const [input, setInput] = useState('');
     const [currentResponse, setCurrentResponse] = useState('');
+    const [error, setError] = useState<string | null>(null);
+    const ws = useRef<WebSocket | null>(null);
 
-    useEffect(() => {
-        // Create a WebSocket connection
-        socketRef.current = new WebSocket('ws://localhost:8000/infer/stream');
+    const connectWebSocket = () => {
+        console.log(`connecting to ws://${ApiHost}/ws/echo/123`)
+        ws.current = new WebSocket(`ws://localhost:8000/ws/echo/123/`);
 
-        socketRef.current.onopen = () => {
-            console.log('WebSocket Connected');
+        // ws.current = new WebSocket('ws://localhost:8000/ws/subscribe/0/')
+
+
+        ws.current.onopen = () => {
+            toast.success('WebSocket connected');
+            console.log('WebSocket connected');
         };
 
-        socketRef.current.onmessage = (event) => {
+        ws.current.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            console.log('Received from server:', data);
-            if (data.type === "message_chunk") {
-                setCurrentResponse(prev => {
-                    const updated = prev + data.content;
-                    console.log('Current response:', updated);
-                    return updated;
-                });
-            } else if (data.type === "message_end") {
-                // setMessages(prevMessages => {
-                //     const updatedMessages = [
-                //         ...prevMessages,
-                //         { role: 'assistant', content: currentResponse + data.content }
-                //     ];
-                //     console.log('Updated messages:', updatedMessages);
-                //     return updatedMessages;
-                // });
-                // setCurrentResponse('');
+            console.log({ data })
+            if (data.type === 'message_chunk') {
+                setCurrentResponse(prev => prev + data.content);
+            } else if (data.type === 'message_end') {
+                setIsLoading(false);
             }
         };
 
-        socketRef.current.onclose = () => {
-            console.log('WebSocket Disconnected');
+        ws.current.onerror = (error) => {
+            console.error('WebSocket error:', error);
+            setError('WebSocket connection error. Please try again.');
+            setIsLoading(false);
         };
 
-        // Cleanup on component unmount
+        ws.current.onclose = () => {
+            console.log('WebSocket disconnected');
+        };
+
+    };
+
+    useEffect(() => {
+        connectWebSocket()
         return () => {
-            if (socketRef.current) {
-                socketRef.current.close();
+            if (ws.current) {
+                ws.current.close();
             }
         };
     }, []);
 
-    // useEffect(() => {
-    //     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    // }, [messages]);
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsLoading(true);
+        setCurrentResponse('');
+        setError(null);
 
-    const handleSubmit = () => {
-        if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-            setIsLoading(true);
-            socketRef.current.send(JSON.stringify({ message: question }));
-            setMessages(prevMessages => {
-                const updatedMessages = [
-                    ...prevMessages,
-                    { role: 'user', content: question }
-                ];
-                console.log('Updated messages after user input:', updatedMessages);
-                return updatedMessages;
-            });
-            setQuestion('');
+        try {
+            if (ws.current?.readyState === WebSocket.OPEN) {
+                ws.current.send(JSON.stringify({ type: 'message', content: input }));
+            } else {
+                throw new Error('WebSocket is not connected');
+            }
+        } catch (err) {
+            console.error('Message submission failed:', err);
+            setError('Failed to send message. Please try again.');
             setIsLoading(false);
-        } else {
-            console.error('WebSocket is not connected');
         }
     };
 
     return (
-        <div className="w-full space-y-2">
-            <div className="max-h-60 overflow-y-auto mb-4">
-                {/* {messages.map((message, index) => (
-                    <div key={index} className={`p-2 ${message.role === 'user' ? 'bg-blue-100' : 'bg-gray-100'} rounded mb-2`}>
-                        <strong>{message.role === 'user' ? 'You:' : 'AI:'}</strong> {message.content}
-                    </div>
-                ))}
-                <div ref={messagesEndRef} /> */}
-                {currentResponse}
+        <div className="p-4 flex flex-col overflow-y-scroll">
+            <div className="space-y-2">
+                <Textarea
+                    placeholder="Ask a question..."
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                />
+                <Button
+                    className='float-right'
+                    onClick={handleSubmit}
+                    disabled={isLoading || !input.trim()}
+                >
+                    {isLoading ? 'Sending...' : 'Send'}
+                </Button>
             </div>
-            <Textarea
-                placeholder="Ask a question..."
-                value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-            />
-            <Button
-                className='float-right'
-                onClick={handleSubmit}
-                disabled={isLoading || !question.trim()}
-            >
-                {isLoading ? 'Sending...' : 'Send'}
-            </Button>
+            <div className="overflow-y-scroll space-y-4 mt-4">
+                {isLoading && (
+                    <div className='flex items-center justify-center'>
+                        <Loader2 className='text-muted-foreground animate-spin h-5 w-5' />
+                    </div>
+                )}
+                {error && (
+                    <div className="text-red-500">{error}</div>
+                )}
+                <Markdown>{currentResponse}</Markdown>
+            </div>
         </div>
     );
 }

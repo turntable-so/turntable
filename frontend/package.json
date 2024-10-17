@@ -83,6 +83,7 @@
     "react-error-boundary": "^4.0.13",
     "react-hook-form": "^7.52.0",
     "react-hotkeys-hook": "^4.5.0",
+    "react-markdown": "^9.0.1",
     "react-modal": "^3.16.1",
     "react-moveable": "^0.56.0",
     "react-resizable-panels": "^2.0.16",
