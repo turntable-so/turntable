@@ -558,4 +558,26 @@ export async function getProjectBasedLineage({
     method: "GET",
   });
   return response.json();
-} 
+}
+
+export async function submitInference(instructions: string) {
+  const response = await fetcher(`/infer/`, {
+    cookies,
+    method: "POST",
+    body: {
+      instructions
+    }
+  });
+  return response.json()
+}
+
+export async function submitEcho(message: string) {
+  const response = await fetcher(`/api/echo/`, {
+    cookies,
+    method: "POST",
+    body: {
+      message
+    }
+  });
+  return response.json()
+}

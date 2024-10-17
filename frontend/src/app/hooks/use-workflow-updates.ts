@@ -16,8 +16,13 @@ const useWorkflowUpdates = (workspaceId: string) => {
     const connectWebSocket = () => {
         // Construct the WebSocket URL
         const base = new URL(baseUrl).host;
+        // const socketUrl = `${protocol}://${base}/ws/subscribe/${workspaceId}/`;
         const socketUrl = `${protocol}://${base}/ws/subscribe/${workspaceId}/`;
+
         console.log(`Attempting to connect to ${socketUrl}`);
+        console.log({
+            socketUrl
+        })
 
         const socket = new WebSocket(socketUrl);
         socketRef.current = socket;

@@ -11,8 +11,11 @@ import json
 import os
 
 from django.core.asgi import get_asgi_application
-from django.urls import re_path
-from app.consumers import WorkflowRunConsumer
+from django.urls import path, re_path
+from app.consumers import (
+    ChatInferenceConsumer,
+    WorkflowRunConsumer,
+)
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 from channels.generic.websocket import AsyncWebsocketConsumer
@@ -34,19 +37,25 @@ class RealtimeNotificationConsumer(AsyncWebsocketConsumer):
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "api.settings")
 
+django_asgi_app = get_asgi_application()
+
+
 application = ProtocolTypeRouter(
     {
         "http": get_asgi_application(),
-        "websocket": 
-            AuthMiddlewareStack(
-                URLRouter(
-                    [
-                        re_path(
-                            r"^ws/subscribe/(?P<workspace_id>[^/]+)/$",
-                            WorkflowRunConsumer.as_asgi(),
-                        ),
-                    ]
-                )
+        "websocket": AuthMiddlewareStack(
+            URLRouter(
+                [
+                    re_path(
+                        r"^ws/subscribe/(?P<workspace_id>[^/]+)/$",
+                        WorkflowRunConsumer.as_asgi(),
+                    ),
+                    re_path(
+                        r"^ws/echo/(?P<workspace_id>\w+)/$",
+                        ChatInferenceConsumer.as_asgi(),
+                    ),
+                ]
             )
+        ),
     }
 )
