@@ -87,6 +87,7 @@
     "react-modal": "^3.16.1",
     "react-moveable": "^0.56.0",
     "react-resizable-panels": "^2.0.16",
+    "react-syntax-highlighter": "^15.6.1",
     "react-window": "^1.8.10",
     "reactflow": "^11.11.0",
     "recharts": "^2.12.7",

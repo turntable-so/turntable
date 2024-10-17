@@ -13,8 +13,7 @@ import os
 from django.core.asgi import get_asgi_application
 from django.urls import path, re_path
 from app.consumers import (
-    StreamingInferenceConsumer,
-    TestStreamingInference,
+    ChatInferenceConsumer,
     WorkflowRunConsumer,
 )
 from channels.routing import ProtocolTypeRouter, URLRouter
@@ -52,12 +51,8 @@ application = ProtocolTypeRouter(
                         WorkflowRunConsumer.as_asgi(),
                     ),
                     re_path(
-                        r"^infer/stream/$",
-                        StreamingInferenceConsumer.as_asgi(),
-                    ),
-                    re_path(
                         r"^ws/echo/(?P<workspace_id>\w+)/$",
-                        TestStreamingInference.as_asgi(),
+                        ChatInferenceConsumer.as_asgi(),
                     ),
                 ]
             )

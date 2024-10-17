@@ -24,7 +24,7 @@ from app.views.query_views import DbtQueryPreviewView
 from rest_framework import routers
 
 from app.consumers import (
-    StreamingInferenceConsumer,
+    ChatInferenceConsumer,
     WorkflowRunConsumer,
 )
 from app.views import (
@@ -111,7 +111,7 @@ urlpatterns = [
     ),
     path(
         "infer/stream",
-        StreamingInferenceConsumer.as_asgi(),
+        ChatInferenceConsumer.as_asgi(),
     ),
     path("settings/", SettingsView.as_view(), name="settings"),
     path("infer/", InferenceView.as_view(), name="inference"),
