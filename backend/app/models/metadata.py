@@ -9,7 +9,7 @@ from pgvector.django import VectorField
 
 from app.models.resources import Resource
 from app.models.workspace import Workspace
-from app.utils.urns import UrnAdjuster
+from app.utils.urn import UrnAdjuster
 
 
 class AssetContainer(models.Model):

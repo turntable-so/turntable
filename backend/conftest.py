@@ -163,6 +163,11 @@ def use_cache(request):
     return request.config.getoption("--use_cache")
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def force_isolate(monkeypatch):
     monkeypatch.setenv("FORCE_ISOLATE", "true")
+
+
+@pytest.fixture
+def bypass_hatchet(monkeypatch):
+    monkeypatch.setenv("BYPASS_HATCHET", "true")

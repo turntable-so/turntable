@@ -4,6 +4,7 @@ import shutil
 from hatchet_sdk import Context
 
 from app.models import Resource
+from app.models.resources import DBTCoreDetails
 from vinyl.lib.utils.files import load_orjson
 from workflows.hatchet import hatchet
 from workflows.utils.log import inject_workflow_run_logging
@@ -18,8 +19,8 @@ def return_helper(success, stdouts, stderrs, run_results):
     }
 
 
+@hatchet.workflow(on_events=["run_dbt_command"], timeout="30m")
 @inject_workflow_run_logging(hatchet)
-@hatchet.workflow(on_events=["metadata_sync"], timeout="15m")
 class DBTRunnerWorkflow:
     """
     input structure:
@@ -66,3 +67,32 @@ class DBTRunnerWorkflow:
                 if not success:
                     return return_helper(False, stdouts, stderrs, run_results)
             return return_helper(True, stdouts, stderrs, run_results)
+
+
+@hatchet.workflow(on_events=["stream_dbt_command"], timeout="10m")
+@inject_workflow_run_logging(hatchet)
+class DBTStreamerWorkflow:
+    """
+    input structure:
+        {
+            command: str,
+            branch_id: str | None,
+            resource_id: str,
+            dbt_resource_id: str,
+        }
+    """
+
+    @hatchet.step(timeout="10m")
+    def stream_dbt_command(self, context: Context):
+        branch_id = context.workflow_input().get("branch_id")
+        dbt_resource_id = context.workflow_input().get("dbt_resource_id")
+        dbt_resource = DBTCoreDetails.objects.get(id=dbt_resource_id)
+        command = context.workflow_input()["command"]
+
+        with dbt_resource.dbt_transition_context(branch_id=branch_id) as (
+            transition,
+            project_dir,
+            _,
+        ):
+            for line in transition.after.stream_dbt_command(command):
+                context.put_stream(line)
