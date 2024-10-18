@@ -107,50 +107,56 @@ def lineage_ascii(edges):
 
 def build_context(related_assets: List[str], instructions: str, asset_links: List[str]):
     # map each id to a schema (with name, type and description)
-    assets = Asset.objects.filter(id__in=related_assets)
+    if related_assets and len(related_assets) > 0:
+        assets = Asset.objects.filter(id__in=related_assets)
 
-    dbt_details = assets[0].resource.dbtresource_set.first()
-    with dbt_details.dbt_transition_context() as (
-        transition,
-        _,
-        repo,
-    ):
-        transition.mount_manifest(defer=True)
-        asset_mds = []
-        # schemas
-        for asset in assets:
-            # find each file for the related assets
-            with open(
-                os.path.join(
-                    repo.working_tree_dir,
-                    "models",
-                    transition.after.manifest.get("nodes")
-                    .get(asset.unique_name.lower())
-                    .get("path"),
-                )
-            ) as file:
-                contents = file.read()
-                asset_mds.append(asset_md(asset, contents))
+        dbt_details = assets[0].resource.dbtresource_set.first()
+        with dbt_details.dbt_transition_context() as (
+            transition,
+            _,
+            repo,
+        ):
+            transition.mount_manifest(defer=True)
+            asset_mds = []
+            # schemas
+            for asset in assets:
+                # find each file for the related assets
+                with open(
+                    os.path.join(
+                        repo.working_tree_dir,
+                        "models",
+                        transition.after.manifest.get("nodes")
+                        .get(asset.unique_name.lower())
+                        .get("path"),
+                    )
+                ) as file:
+                    contents = file.read()
+                    asset_mds.append(asset_md(asset, contents))
 
-        # lineage information
-        edges = []
-        for link in asset_links:
-            source_model = extract_model_name(link["source_id"])
-            target_model = extract_model_name(link["target_id"])
-            edges.append({"source": source_model, "target": target_model})
+            # lineage information
+            edges = []
+            for link in asset_links:
+                source_model = extract_model_name(link["source_id"])
+                target_model = extract_model_name(link["target_id"])
+                edges.append({"source": source_model, "target": target_model})
 
-        lineage_md = f"""
-# Model lineage
-IMPORTANT: keep in mind how these are connected to each other. You may need to add or modify this structure to complete a task.
-{lineage_ascii(edges)}
-"""
-        assets = "\n".join(asset_mds)
-        # file contents
-        output = f"""{lineage_md}
-{assets}
+            lineage_md = f"""
+    # Model lineage
+    IMPORTANT: keep in mind how these are connected to each other. You may need to add or modify this structure to complete a task.
+    {lineage_ascii(edges)}
+    """
+            assets = "\n".join(asset_mds)
+            # file contents
+            output = f"""{lineage_md}
+    {assets}
+    User Instructions: {instructions}
+    """
+            return output
+    else:
+
+        return f"""
 User Instructions: {instructions}
 """
-        return output
 
 
 class RelatedAsset(BaseModel):

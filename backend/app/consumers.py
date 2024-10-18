@@ -96,9 +96,13 @@ class ChatInferenceConsumer(AsyncWebsocketConsumer):
         print(f"Received message: {data}")
 
         if data.get("type") == "completion":
-
+            related_assets = data.get("related_assets")
+            if related_assets and len(related_assets) > 0:
+                related_assets = ["0:" + id for id in related_assets]
+            else:
+                related_assets = []
             prompt = await sync_to_async(build_context)(
-                related_assets=["0:" + id for id in data.get("related_assets")],
+                related_assets=related_assets,
                 instructions=data.get("instructions"),
                 asset_links=data.get("asset_links"),
             )

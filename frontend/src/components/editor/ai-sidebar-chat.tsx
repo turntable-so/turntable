@@ -8,7 +8,8 @@ import { Badge } from '../ui/badge';
 import { useLineage } from '@/app/contexts/LineageContext';
 const ApiHost = true ? "http://localhost:8000" : process.env.BACKEND_HOST;
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { dark } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import { vs } from 'react-syntax-highlighter/dist/esm/styles/prism'
+
 
 export default function AiSidebarChat() {
     const [isLoading, setIsLoading] = useState(false);
@@ -84,15 +85,13 @@ export default function AiSidebarChat() {
 
 
 
-
-
     console.log({ lineageData })
     console.log({ activeFile })
     const visibleLineage = lineageData[activeFile?.node.path || '']
     console.log({ visibleLineage })
     return (
         <div className="p-4 flex flex-col overflow-y-scroll">
-            <div className="space-y-2 relative focus-within:border focus-within:border-primary rounded-md">
+            <div className="space-y-2 relative bg-muted p-1 rounded">
                 <Badge variant="outline" className='text-xs text-muted-foreground'>
                     {activeFile?.node.name} (Current file)
                 </Badge>
@@ -120,18 +119,13 @@ export default function AiSidebarChat() {
                 </Button>
             </div>
             <div className="overflow-y-scroll overflow-x-hidden space-y-4 mt-4">
-                {isLoading && (
-                    <div className='flex items-center justify-center'>
-                        <Loader2 className='text-muted-foreground animate-spin h-5 w-5' />
-                    </div>
-                )}
                 {error && (
                     <div className="text-red-500">{error}</div>
                 )}
                 <Markdown
                     children={currentResponse}
                     components={{
-                        code(props) {
+                        code(props: any) {
                             const { children, className, node, ...rest } = props
                             const match = /language-(\w+)/.exec(className || '')
                             return match ? (
@@ -140,7 +134,13 @@ export default function AiSidebarChat() {
                                     PreTag="div"
                                     children={String(children).replace(/\n$/, '')}
                                     language={match[1]}
-                                    style={dark}
+                                    style={vs}
+                                    customStyle={{
+                                        fontSize: '18px',
+                                        background: 'gray-100'
+                                    }}
+                                    wrapLines={true}
+                                    wrapLongLines={true}
                                 />
                             ) : (
                                 <code {...rest} className={className}>
@@ -150,6 +150,7 @@ export default function AiSidebarChat() {
                         }
                     }}
                 />
+                <div className='h-12' />
             </div>
         </div >
     );
