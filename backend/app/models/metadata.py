@@ -307,8 +307,13 @@ FROM traversed
     target = models.ForeignKey(
         Asset, on_delete=models.CASCADE, related_name="target_links"
     )
-    source_resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
-    target_resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
+
+    source_resource = models.ForeignKey(
+        Resource, on_delete=models.CASCADE, related_name="source_resources", null=True
+    )
+    target_resource = models.ForeignKey(
+        Resource, on_delete=models.CASCADE, related_name="target_resources", null=True
+    )
 
     def adjust_urns(self):
         adjuster = UrnAdjuster(self.workspace.id)
@@ -385,23 +390,33 @@ FROM traversed
 
     @classmethod
     def dynamic_successors(
-        cls, workspace_id: str, asset_depth_dict: dict[int, list[str]], exclude_resource
+        cls,
+        workspace_id: str,
+        asset_depth_dict: dict[int, list[str]],
+        max_depth: int,
+        exclude_resource_ids: list[str],
     ):
+        if max(asset_depth_dict.keys()) == 0:
+            return []
+
         params = []
         query = """
 WITH RECURSIVE traversed AS (
     SELECT
         source_id,
         target_id,
-        CASE WHEN """
+        CASE """
 
         # add depths
         for depth, assets in asset_depth_dict.items():
-            query += "source_id IN ("
-            query += ",".join(["%s" for asset in assets])
-            params.extend(assets)
-            query += ") THEN %s ELSE NULL END AS depth"
-            params.append(depth)
+            if len(assets) > 0 and max_depth - depth > 0:
+                query += "WHEN source_id IN ("
+                query += ",".join(["%s" for asset in assets])
+                params.extend(assets)
+                query += ") THEN %s "
+                params.append(depth + 1)
+
+        query += "ELSE NULL END AS depth"
 
         # add conditions
         query += """
@@ -411,29 +426,44 @@ WITH RECURSIVE traversed AS (
         params.extend(assets)
         query += ") and a.workspace_id = %s"
         params.append(workspace_id)
+        if exclude_resource_ids:
+            query += " AND a.target_resource_id NOT IN ("
+            query += ",".join(["%s" for resource_id in exclude_resource_ids]) + ") "
 
-        return query, params
+        # add union
+        query += """
+    UNION ALL
 
-        # if BI_only:
-        #     query += " AND a.type in ("
-        # query +=
+    SELECT
+        a.source_id,
+        a.target_id,
+        t.depth + 1
+    FROM traversed as t
+    JOIN app_assetlink as a ON a.source_id = t.target_id
+    WHERE t.depth <= %s and a.workspace_id = %s
+"""
+        params.append(max_depth)
+        params.append(workspace_id)
 
-    #         query += """
+        if exclude_resource_ids:
+            query += " AND a.target_resource_id NOT IN ("
+            query += ",".join(["%s" for resource_id in exclude_resource_ids])
+            params.extend(exclude_resource_ids)
+            query += ") "
 
-    # #     UNION ALL
+        query += """
+)
 
-    # #     SELECT
-    # #         a.source_id,
-    # #         a.target_id,
-    # #         t.depth + 1
-    # #     FROM traversed as t
-    # #     JOIN app_assetlink as a ON a.source_id = t.target_id
-    # #     where t.depth <= %(successor_depth)s and a.workspace_id = %(workspace_id)s
-    # # )
-    # # SELECT
-    # #     source_id,
-    # #     target_id
-    # # FROM traversed
+SELECT
+    source_id,
+    target_id
+FROM traversed
+"""
+
+        with connection.cursor() as cursor:
+            cursor.execute(query, params)
+            assets = {item for row in cursor.fetchall() for item in row}
+        return list(assets)
 
     def get_resource_ids(self) -> set[str]:
         return set([self.source.resource.id, self.target.resource.id])

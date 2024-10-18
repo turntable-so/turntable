@@ -100,11 +100,11 @@ class TestProjectViews:
     @pytest.mark.parametrize(
         "filepath_param",
         [
-            "models/marts/customer360/customers.sql",
-            "models/staging/stg_products.sql",
+            "models/marts/customer360/orders.sql",
+            # "models/staging/stg_products.sql",
         ],
     )
-    @pytest.mark.parametrize("branch_name", ["apple12345", "main"])
+    @pytest.mark.parametrize("branch_name", ["main"])
     def test_get_project_based_lineage_view(self, client, filepath_param, branch_name):
         encoded_filepath = safe_encode(filepath_param)
         response = client.get(

@@ -426,7 +426,7 @@ class DBTProject(object):
         cli_args: list[str] | None = None,
         write_json: bool = False,
         dbt_cache: bool = False,
-        force_terminal: bool = False,
+        force_terminal: bool = True,
         defer: bool = False,
         defer_selection: bool = True,
     ) -> tuple[str, str, bool]:

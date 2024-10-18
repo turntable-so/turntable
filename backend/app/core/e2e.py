@@ -883,7 +883,11 @@ class DataHubDBParser:
         return nodes
 
     # @pyprofile(save_html=True)
-    def get_db_cll(self, ignore_ids: list[str] = []):
+    def get_db_cll(
+        self,
+        ignore_ids: list[str] = [],
+        lineage_types: list[ColumnLink.LineageType] = [],
+    ):
         self.get_asset_column_dict()
         asset_dict_items = self.asset_dict.items()
         graphs = []
@@ -894,7 +898,11 @@ class DataHubDBParser:
             if os.getenv("DEV") == "true":
                 print(j, k)
 
-            ltypes = [ltype for ltype in ColumnLink.LineageType]
+            ltypes = (
+                [ltype for ltype in ColumnLink.LineageType]
+                if lineage_types == []
+                else lineage_types
+            )
 
             nodes = self.get_ast_nodes(k, asset, ltypes)
             graph_it = nx.MultiDiGraph()
