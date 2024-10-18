@@ -24,6 +24,8 @@ def run_test_sync(
         else:
             WorkflowDebugger(MetadataSyncWorkflow, input).run()
 
+    breakpoint()
+
     assert_ingest_output(resources)
 
     # recache datahub_dbs if successful and arg is passed
