@@ -12,7 +12,7 @@ from api.serializers import AssetSerializer, LineageSerializer
 from app.core.dbt import LiveDBTParser
 from app.models.git_connections import Branch
 from workflows.dbt_runner import DBTStreamerWorkflow
-from asgiref.sync import sync_to_async
+from asgiref.sync import async_to_sync
 
 
 def _build_file_tree(user_id: str, path: str, base_path: str):

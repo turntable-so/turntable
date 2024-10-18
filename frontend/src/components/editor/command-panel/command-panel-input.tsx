@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { COMMAND_OPTIONS } from "./command-options";
-import { CommandPanelState } from "./types";
+import { Command, CommandPanelState } from "./types";
 import CommandPanelActionBtn from "./command-panel-action-btn";
 import { type InputProps } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -25,7 +25,13 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
   },
 );
 
-export default function CommandPanelInput() {
+type CommandPanelInputProps = {
+  addCommandToHistory: (newCommand: Command) => void;
+  updateCommandLogById: (id: string, newLog: string) => void;
+  setSelectedCommandIndex: (index: number) => void;
+}
+
+export default function CommandPanelInput({ addCommandToHistory, updateCommandLogById, setSelectedCommandIndex }: CommandPanelInputProps) {
   const [commandPanelState, setCommandPanelState] = useState<CommandPanelState>("idling");
   const [inputValue, setInputValue] = useState<string>("");
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
@@ -131,12 +137,12 @@ export default function CommandPanelInput() {
       {isDropdownOpen && (
         <div
           ref={dropdownRef}
-          className="absolute top-full left-0 w-full bg-white border border-gray-300 rounded-md mt-1 z-10"
+          className="absolute top-full left-0 w-1/3 bg-white border border-gray-300 rounded-md mt-1 z-10"
         >
           {filteredOptions.map((option, index) => (
             <div
               key={index}
-              className={`p-2 cursor-pointer text-sm ${
+              className={`py-2 px-4 cursor-pointer text-sm ${
                 index === highlightedIndex ? "bg-gray-100" : "hover:bg-gray-100"
               }`}
               onMouseDown={(e) => {
@@ -151,7 +157,14 @@ export default function CommandPanelInput() {
           ))}
         </div>
       )}
-      <CommandPanelActionBtn commandPanelState={commandPanelState} inputValue={inputValue} />
+      <CommandPanelActionBtn 
+        commandPanelState={commandPanelState} 
+        inputValue={inputValue} 
+        setCommandPanelState={setCommandPanelState} 
+        addCommandToHistory={addCommandToHistory} 
+        updateCommandLogById={updateCommandLogById}
+        setSelectedCommandIndex={setSelectedCommandIndex}
+      />
     </div>
   );
 }

@@ -7,35 +7,31 @@ import { Command } from "./types";
 
 export default function CommandPanelContent() {
   const [selectedCommandIndex, setSelectedCommandIndex] = useState<number>(0);
-  const [commandHistory, setCommandHistory] = useLocalStorage<Command[]>('command-history', [
-    {
-      id: "1729184640",
-      command: 'dbt run',
-      status: 'failed',
-      time: '2:27pm',
-      log: '\x1b[30mblack\x1b[37mred'
-    },
-    {
-      id: "1729184639",
-      command: 'dbt run',
-      status: 'success',
-      time: '2:26pm',
-      duration: '2s',
-      log: '\x1b[30mblack\x1b[37mwhite'
-    },
-    {
-      id: "1729184638",
-      command: 'dbt run',
-      status: 'running',
-      time: '2:25pm'
-    },
-  ]);
+  const [commandHistory, setCommandHistory] = useLocalStorage<Command[]>('command-history', []);
+
+  const addCommandToHistory = (newCommand: Command) => {
+    setCommandHistory([newCommand, ...commandHistory]);
+  }
+
+  const updateCommandLogById = (id: string, newLog: string) => {
+    setCommandHistory(prevHistory => {
+      const index = prevHistory.findIndex(command => command.id === id);
+      if (index === -1) return prevHistory;
+      const newHistory = [...prevHistory];
+      const existingLog = newHistory[index].log || '';
+      newHistory[index] = { 
+        ...newHistory[index], 
+        log: existingLog ? `${existingLog}\n${newLog}` : newLog 
+      };
+      return newHistory;
+    });
+  }
 
   return (
     <div className="flex flex-col h-full p-4 gap-6">
       <div className="flex flex-col gap-2">
           <p className="text-muted-foreground font-semibold">Run a dbt command</p>
-          <CommandPanelInput />
+          <CommandPanelInput addCommandToHistory={addCommandToHistory} updateCommandLogById={updateCommandLogById} setSelectedCommandIndex={setSelectedCommandIndex} />
       </div>
       <div className="flex flex-col gap-2">
       <p className="text-muted-foreground font-semibold">Command History</p>

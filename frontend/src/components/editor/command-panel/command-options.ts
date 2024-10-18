@@ -1,1 +1,1 @@
-export const COMMAND_OPTIONS = ["run", "test", "compile", "docs generate"];
+export const COMMAND_OPTIONS = ["run", "test", "ls", "compile", "docs generate"];
