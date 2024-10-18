@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="2023fc25-d920-44d0-8976-6f5bc726e837" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/../backend/app/consumers.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/app/consumers.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../backend/fixtures/test_resources/metabase/metabase.db/metabase.db.mv.db" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/fixtures/test_resources/metabase/metabase.db/metabase.db.mv.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../backend/vinyl/lib/dbt.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/vinyl/lib/dbt.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/hooks/use-websocket.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/hooks/use-websocket.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/auth.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/editor/bottom-panel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/editor/bottom-panel.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/editor/command-panel/command-list.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/editor/command-panel/command-log.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/editor/command-panel/command-log.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/editor/command-panel/command-options.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/editor/command-panel/command-panel-action-btn.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/editor/command-panel/command-panel-action-btn.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/editor/command-panel/command-panel-content.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/editor/command-panel/command-panel-content.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/editor/command-panel/command-panel-input.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/editor/command-panel/command-panel-input.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/editor/command-panel/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/editor/command-panel/index.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/editor/command-panel/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/editor/command-panel/types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/layout/FullWidthPageLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/layout/FullWidthPageLayout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/middleware.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/middleware.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/yarn.lock" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 4
+}]]></component>
+  <component name="ProjectId" id="2ncj3ytUsMYkRSoFNCYAxAwYNHy" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "sami/command-panel",
+    "last_opened_file_path": "/Users/sami/Desktop/turntable/frontend",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "yarn",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-5c90d61e3bab-JavaScript-PY-242.23339.19" />
+        <option value="bundled-python-sdk-0029f7779945-399fe30bd8c1-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-242.23339.19" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="2023fc25-d920-44d0-8976-6f5bc726e837" name="Changes" comment="" />
+      <created>1729279063637</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1729279063637</updated>
+      <workItem from="1729279064694" duration="1684000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>

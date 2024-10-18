@@ -370,7 +370,8 @@ class DBTProject(object):
         stderr = "".join(stderrs)
 
         success = self.check_command_success(stdout, stderr)
-        yield f"{success}\n"
+        success_str = "PROCESS_STREAM_SUCCESS" if success else "PROCESS_STREAM_ERROR"
+        yield f"{success_str}\n"
 
     @classmethod
     def check_command_success(cls, stdout: str, stderr: str) -> bool:
@@ -389,7 +390,6 @@ class DBTProject(object):
         cli_args: list[str] | None = None,
         write_json: bool = False,
         dbt_cache: bool = False,
-        force_terminal: bool = True,
         defer: bool = False,
         defer_selection: bool = True,
     ) -> tuple[str, str, bool]:
@@ -451,7 +451,6 @@ class DBTProject(object):
             cli_args,
             write_json,
             dbt_cache,
-            force_terminal,
             defer,
             defer_selection,
         )
@@ -477,7 +476,6 @@ class DBTProject(object):
             cli_args,
             write_json,
             dbt_cache,
-            force_terminal,
             defer,
             defer_selection,
         )

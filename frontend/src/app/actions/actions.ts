@@ -16,7 +16,6 @@ type CookiesContext = {
 };
 
 
-
 export async function createWorkspace(body: FormData) {
   const response = await fetcher(
     '/workspaces/',
@@ -469,6 +468,17 @@ export async function getFileIndex() {
   const response = await fetcher(`/project/files/`, {
     cookies,
     method: "GET",
+  });
+  return response.json();
+}
+
+export async function runDbtCommand(command: string) {
+  const response = await fetcher(`/project/stream_dbt_command/`, {
+    cookies,
+    method: "POST",
+    body: {
+      command,
+    }
   });
   return response.json();
 }
