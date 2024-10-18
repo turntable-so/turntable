@@ -18,7 +18,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import CommandPanelContent from "./command-panel";
+import CommandPanelWrapper from "./command-panel";
 import { useLocalStorage } from 'usehooks-ts';
 
 
@@ -190,7 +190,7 @@ export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview
                             </ErrorBoundary>
                         </div>
                     )}
-                    {activeTab === "command" && <CommandPanelContent />}
+                    {activeTab === "command" && <CommandPanelWrapper />}
                 </div>
             </Panel>
         </Fragment >

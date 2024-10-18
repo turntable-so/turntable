@@ -1,3 +1,3 @@
-import CommandPanelContent from "./command-panel-content";
+import CommandPanelWrapper from "./wrapper";
 
-export default CommandPanelContent;
+export default CommandPanelWrapper;

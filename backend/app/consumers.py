@@ -38,10 +38,7 @@ class DBTCommandConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         from app.models.workspace import Workspace
 
-        #  TODO: gotta figure out how to do auth
-        # if self.scope["user"].is_anonymous:
-        #     await self.close(code=4001, reason="User not authenticated")
-        #     return
+        print(f"WebSocket connected for user: {self.scope['user']}")
 
         await self.accept()
         logger.info(f"WebSocket connected for user: {self.scope['user']}")
@@ -66,8 +63,6 @@ class DBTCommandConsumer(AsyncWebsocketConsumer):
         from workflows.dbt_runner import DBTStreamerWorkflow
 
         data = json.loads(text_data)
-        print(f"Received message: {data}")
-
         command = data.get("command")
         branch_name = data.get("branch_name")
 
@@ -106,4 +101,9 @@ class DBTCommandConsumer(AsyncWebsocketConsumer):
 
         async for event in listener:
             if event.payload and event.type == "STEP_RUN_EVENT_TYPE_STREAM":
-                await self.send(text_data=json.dumps(dict(event="update", payload=event.payload)))
+                if event.payload.startswith("PROCESS_STREAM_SUCCESS"):
+                    await self.close()
+                elif event.payload.startswith("PROCESS_STREAM_ERROR"):
+                    await self.close(code=4001, reason="Error running dbt command")
+                else:
+                    await self.send(text_data=event.payload)

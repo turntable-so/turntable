@@ -8,5 +8,5 @@ export type Command = {
     status: CommandStatus;
     time: string;
     duration?: string;
-    log?: string;
+    logs?: string[];
 }

@@ -1,40 +1,52 @@
+import { useEffect, useRef } from "react";
 import { CircleX as CircleXIcon, Command as PlayIcon, CornerDownLeft } from "lucide-react";
 import { Button } from "../../ui/button";
-import { Command, CommandPanelState } from "./types";
 import { useWebSocket } from "@/app/hooks/use-websocket";
-import { useEffect, useRef } from "react";
+import { useCommandPanelContext } from "./context";
+import getUrl from "@/app/url";
+import useSession from "@/app/hooks/use-session";
+import { AuthActions } from "@/lib/auth";
+
+const baseUrl = getUrl();
+const base = new URL(baseUrl).host;
+const protocol = process.env.NODE_ENV === 'development' ? 'ws' : 'wss';
 
 type CommandPanelActionBtnProps = { 
-    commandPanelState: CommandPanelState;
     inputValue: string;
-    setCommandPanelState: (state: CommandPanelState) => void;
-    addCommandToHistory: (newCommand: Command) => void;
-    updateCommandLogById: (id: string, newLog: string) => void;
-    setSelectedCommandIndex: (index: number) => void;
+    setInputValue: (value: string) => void;
+    onRunCommand: () => void;
 }
 
-export default function CommandPanelActionBtn({ commandPanelState, inputValue, setCommandPanelState, addCommandToHistory, updateCommandLogById, setSelectedCommandIndex }: CommandPanelActionBtnProps) {
-    const newCommandIdRef = useRef<string | null>(null);
+export default function CommandPanelActionBtn({ inputValue, setInputValue, onRunCommand }: CommandPanelActionBtnProps) {
+    const { getToken } = AuthActions();
+    const accessToken = getToken("access");
     
-    // TODO: make this dynamic
-    const { startWebSocket, sendMessage } = useWebSocket('ws://localhost:8000/ws/dbt_command/1/', {
+    const session = useSession();
+    const { commandPanelState, setCommandPanelState, addCommandToHistory, updateCommandLogById, setSelectedCommandIndex, updateCommandById } = useCommandPanelContext();
+    const newCommandIdRef = useRef<string | null>(null);
+
+    
+    const { startWebSocket, sendMessage } = useWebSocket(`${protocol}://${base}/ws/dbt_command/${session.user.current_workspace.id}/?token=${accessToken}`, {
         onOpen: () => {
             sendMessage(JSON.stringify({ command: inputValue }));
+            setInputValue("");
         },
         onMessage: (event) => {
             console.log('Received:', event.data);
-            const message = JSON.parse(event.data) as { event: "update"; payload: string; };
             console.log('newCommandId:', newCommandIdRef.current);
-            updateCommandLogById(newCommandIdRef.current, message.payload);
+            updateCommandLogById(newCommandIdRef.current, event.data);
         },
         onError: (event) => {
             console.error('WebSocket error:', event);
             updateCommandLogById(newCommandIdRef.current, `WebSocket error: ${event}`);
             setCommandPanelState("idling");
+            updateCommandById(newCommandIdRef.current, { status: "failed" });
         },
         onClose: () => {
             setCommandPanelState("idling");
-        }
+            updateCommandById(newCommandIdRef.current, { status: "success", duration: `${Math.round((Date.now() - parseInt(newCommandIdRef.current)) / 1000)}s` });
+        },
+        timeout: 2000,
     });
 
     const handleRunCommand = () => {
@@ -55,6 +67,7 @@ export default function CommandPanelActionBtn({ commandPanelState, inputValue, s
             time: new Date().toLocaleTimeString()
         });
         setSelectedCommandIndex(0);
+        onRunCommand(); // Call the onRunCommand prop
     };
 
     const handleCommandEnterShortcut = () => {

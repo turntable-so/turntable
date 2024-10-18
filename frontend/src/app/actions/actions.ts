@@ -15,8 +15,6 @@ type CookiesContext = {
   cookies: any | undefined;
 };
 
-console.log("cookies: ", cookies());
-
 
 export async function createWorkspace(body: FormData) {
   const response = await fetcher(

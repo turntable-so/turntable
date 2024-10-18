@@ -1,43 +1,19 @@
 import React, { useState, useEffect, useRef } from "react";
-import { COMMAND_OPTIONS } from "./command-options";
-import { Command, CommandPanelState } from "./types";
+import { getCommandOptions, addRecentCommand } from "./options";
 import CommandPanelActionBtn from "./command-panel-action-btn";
-import { type InputProps } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import CommandInput from "./command-input";
 
-const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, ...props }, ref) => {
-    return (
-      <div
-        className={cn(
-          "flex h-10 w-full items-center rounded-md border border-input bg-white pl-3 text-sm ring-offset-background focus-within:ring-1 focus-within:ring-ring focus-within:ring-offset-2",
-          className,
-        )}
-      >
-        <p className="text-muted-foreground font-semibold">dbt</p>
-        <input
-          {...props}
-          ref={ref}
-          className="w-full p-2 placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-        />
-      </div>
-    );
-  },
-);
-
-type CommandPanelInputProps = {
-  addCommandToHistory: (newCommand: Command) => void;
-  updateCommandLogById: (id: string, newLog: string) => void;
-  setSelectedCommandIndex: (index: number) => void;
-}
-
-export default function CommandPanelInput({ addCommandToHistory, updateCommandLogById, setSelectedCommandIndex }: CommandPanelInputProps) {
-  const [commandPanelState, setCommandPanelState] = useState<CommandPanelState>("idling");
+export default function CommandPanelInput() {
   const [inputValue, setInputValue] = useState<string>("");
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [commandOptions, setCommandOptions] = useState<string[]>([]);
+
+  useEffect(() => {
+    setCommandOptions(getCommandOptions());
+  }, []);
 
   const handleInputClick = () => {
     setIsDropdownOpen(true);
@@ -66,18 +42,17 @@ export default function CommandPanelInput({ addCommandToHistory, updateCommandLo
     return inputIndex === input.length;
   };
 
-  const filteredOptions = COMMAND_OPTIONS.filter((option) => fuzzyMatch(inputValue, option));
+  const filteredOptions = commandOptions.filter((option) => fuzzyMatch(inputValue, option));
 
-  // Focus the input on mount
-  useEffect(() => {
+  const focusInputOnMount = () => {
     const timer = setTimeout(() => {
       inputRef.current?.focus();
     }, 0);
     return () => clearTimeout(timer);
-  }, []);
+  }
+  useEffect(focusInputOnMount, []);
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
+  const setListenerOnClickOutside = () => {
     function handleClickOutside(event: MouseEvent) {
       if (
         dropdownRef.current &&
@@ -92,16 +67,25 @@ export default function CommandPanelInput({ addCommandToHistory, updateCommandLo
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  }
+  useEffect(setListenerOnClickOutside, []);
 
-  // Reset highlighted index when input value changes
-  useEffect(() => {
+  const resetHighlightedIndexOnInputChange = () => {
     setHighlightedIndex(-1);
-  }, [inputValue]);
+  }
+  useEffect(resetHighlightedIndexOnInputChange, [inputValue]);
+
+  const handleRunCommand = () => {
+    if (inputValue.trim()) {
+      addRecentCommand(inputValue.trim());
+      setCommandOptions(getCommandOptions());
+      // ... existing run command logic ...
+    }
+  };
 
   return (
     <div className="flex flex-row gap-2 relative items-center">
-      <Input
+      <CommandInput
         ref={inputRef}
         value={inputValue}
         onChange={(e) => {
@@ -158,12 +142,9 @@ export default function CommandPanelInput({ addCommandToHistory, updateCommandLo
         </div>
       )}
       <CommandPanelActionBtn 
-        commandPanelState={commandPanelState} 
         inputValue={inputValue} 
-        setCommandPanelState={setCommandPanelState} 
-        addCommandToHistory={addCommandToHistory} 
-        updateCommandLogById={updateCommandLogById}
-        setSelectedCommandIndex={setSelectedCommandIndex}
+        setInputValue={setInputValue} 
+        onRunCommand={handleRunCommand}
       />
     </div>
   );
