@@ -101,9 +101,11 @@ class DBTCommandConsumer(AsyncWebsocketConsumer):
 
         async for event in listener:
             if event.payload and event.type == "STEP_RUN_EVENT_TYPE_STREAM":
+                print("EVENT PAYLOAD: ", event.payload)
+                await self.send(text_data=event.payload)
+
                 if event.payload.startswith("PROCESS_STREAM_SUCCESS"):
+                    print("WOOHOO!")
                     await self.close()
                 elif event.payload.startswith("PROCESS_STREAM_ERROR"):
                     await self.close(code=4001, reason="Error running dbt command")
-                else:
-                    await self.send(text_data=event.payload)

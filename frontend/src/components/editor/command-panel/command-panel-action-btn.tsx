@@ -25,7 +25,7 @@ export default function CommandPanelActionBtn({ inputValue, setInputValue, onRun
     const { commandPanelState, setCommandPanelState, addCommandToHistory, updateCommandLogById, setSelectedCommandIndex, updateCommandById } = useCommandPanelContext();
     const newCommandIdRef = useRef<string | null>(null);
 
-    
+    // TODO: pass in branch id when we support branches
     const { startWebSocket, sendMessage } = useWebSocket(`${protocol}://${base}/ws/dbt_command/${session.user.current_workspace.id}/?token=${accessToken}`, {
         onOpen: () => {
             sendMessage(JSON.stringify({ command: inputValue }));
@@ -33,8 +33,16 @@ export default function CommandPanelActionBtn({ inputValue, setInputValue, onRun
         },
         onMessage: (event) => {
             console.log('Received:', event.data);
-            console.log('newCommandId:', newCommandIdRef.current);
-            updateCommandLogById(newCommandIdRef.current, event.data);
+
+            if (event.data === "PROCESS_STREAM_SUCCESS") {
+                setCommandPanelState("idling");
+                updateCommandById(newCommandIdRef.current, { status: "success", duration: `${Math.round((Date.now() - parseInt(newCommandIdRef.current)) / 1000)}s` });
+            } else if (event.data === "PROCESS_STREAM_ERROR") {
+                setCommandPanelState("idling");
+                updateCommandById(newCommandIdRef.current, { status: "failed" });
+            } else {
+                updateCommandLogById(newCommandIdRef.current, event.data);
+            }
         },
         onError: (event) => {
             console.error('WebSocket error:', event);
@@ -46,7 +54,6 @@ export default function CommandPanelActionBtn({ inputValue, setInputValue, onRun
             setCommandPanelState("idling");
             updateCommandById(newCommandIdRef.current, { status: "success", duration: `${Math.round((Date.now() - parseInt(newCommandIdRef.current)) / 1000)}s` });
         },
-        timeout: 2000,
     });
 
     const handleRunCommand = () => {

@@ -76,10 +76,10 @@ export default function CommandPanelInput() {
   useEffect(resetHighlightedIndexOnInputChange, [inputValue]);
 
   const handleRunCommand = () => {
-    if (inputValue.trim()) {
-      addRecentCommand(inputValue.trim());
+    const trimmedInputValue = inputValue.trim();
+    if (trimmedInputValue) {
+      addRecentCommand(trimmedInputValue);
       setCommandOptions(getCommandOptions());
-      // ... existing run command logic ...
     }
   };
 

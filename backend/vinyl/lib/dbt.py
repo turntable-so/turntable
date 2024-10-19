@@ -371,6 +371,7 @@ class DBTProject(object):
 
         success = self.check_command_success(stdout, stderr)
         success_str = "PROCESS_STREAM_SUCCESS" if success else "PROCESS_STREAM_ERROR"
+        print("YIELDING line: ", f"{success_str}\n")
         yield f"{success_str}\n"
 
     @classmethod

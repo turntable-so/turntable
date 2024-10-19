@@ -9,7 +9,14 @@ export default function CommandPanelContent() {
   return (
     <div className="flex flex-col h-full p-4 gap-6">
       <div className="flex flex-col gap-2">
+
+        <div>
         <p className="text-muted-foreground font-semibold">Run a dbt command</p>
+        <p className="text-muted-foreground">
+          Please do not refresh the page while a command is running.
+        </p>
+
+        </div>
         <CommandPanelInput />
       </div>
 
