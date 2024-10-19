@@ -179,4 +179,4 @@ class TestProjectViews:
                 print(c)
                 out += c
             assert response.status_code == 200
-            assert out.endswith("\nTrue")
+            assert out.endswith("\nTrue\n")
