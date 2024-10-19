@@ -101,7 +101,9 @@ class Repository(models.Model):
 
         # create main branch
         Branch.objects.get_or_create(
-            repository=self, branch_name=self.main_branch_name, workspace=self.workspace
+            repository=self,
+            branch_name=self.main_branch_name,
+            workspace=self.workspace,
         )
 
     # override main branch id. Useful for tests

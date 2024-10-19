@@ -12,8 +12,8 @@ from rest_framework.response import Response
 
 from api.serializers import AssetSerializer, LineageSerializer
 from app.core.dbt import LiveDBTParser
-from app.models import AssetLink, Branch, ColumnLink
-from app.services.lineage_service import Lineage, LineageService
+from app.models import Branch, ColumnLink
+from app.services.lineage_service import LineageService
 from workflows.dbt_runner import DBTStreamerWorkflow
 
 
@@ -182,21 +182,8 @@ class ProjectViewSet(viewsets.ViewSet):
         )
         defer = request.query_params.get("defer", True)
         e2e = request.query_params.get("e2e", True)
-        branch_name = request.query_params.get("branch_name")
-        if branch_name:
-            try:
-                branch_id = Branch.objects.get(
-                    workspace=workspace,
-                    repository=dbt_details.repository,
-                    branch_name=branch_name,
-                ).id
-            except Branch.DoesNotExist:
-                return Response(
-                    {"error": f"Branch {branch_name} not found"},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-        else:
-            branch_id = None
+        branch_id = request.query_params.get("branch_id")
+        branch = Branch.objects.get(id=branch_id, workspace=workspace)
 
         with dbt_details.dbt_transition_context(branch_id=branch_id) as (
             transition,
@@ -227,6 +214,11 @@ class ProjectViewSet(viewsets.ViewSet):
                 lineage_types=[lineage_type]
             )
 
+            # adjust urns
+            lineage_service = LineageService(workspace.id)
+            lineage = lineage_service.adjust_urns(lineage)
+            nx.relabel_nodes(asset_graph, lineage_service.adjuster.adjust, copy=False)
+
             # get root asset
             root_asset = None
             for asset in lineage.assets:
@@ -237,60 +229,22 @@ class ProjectViewSet(viewsets.ViewSet):
                 raise ValueError(f"Root asset not found for {lineage.asset_id}")
 
             if e2e:
-                # rename instances to prod ids
-                asset_id_map, column_id_map = LineageService.get_prod_names(
-                    lineage, branch_name, dbt_details.schema
+                lineage = lineage_service.enrich_lineage_with_e2e(
+                    lineage,
+                    asset_graph,
+                    root_asset,
+                    branch.branch_name,
+                    dbt_details.schema,
                 )
-
-                lineage = LineageService.replace_names(
-                    lineage, asset_id_map, column_id_map
-                )
-                asset_graph = nx.relabel_nodes(asset_graph, asset_id_map, copy=False)
-
-                asset_depth_dict = {}
-
-                # get e2e lineage
-                layers = nx.bfs_layers(asset_graph, [root_asset.id])
-                for i in range(successor_depth):
-                    asset_depth_dict[i] = next(layers)
-
-                BI_successors = AssetLink.dynamic_successors(
-                    workspace_id=workspace.id,
-                    asset_depth_dict=asset_depth_dict,
-                    max_depth=successor_depth,
-                    exclude_resource_ids=[dbt_details.resource.id],
-                )
-
-                # rename instances to dev ids
-                e2e_lineage = LineageService.get_lineage_object(
-                    asset_id=root_asset.id,
-                    assets_to_filter=BI_successors,
-                    workspace_id=workspace.id,
-                    lineage_type=lineage_type,
-                )
-                e2e_lineage = LineageService.replace_names(
-                    e2e_lineage, asset_id_map, column_id_map, inverse=True
-                )
-                lineage = Lineage(
-                    asset_id=root_asset.id,
-                    assets=lineage.assets
-                    + [a for a in e2e_lineage.assets if a not in lineage.assets],
-                    columns=lineage.columns
-                    + [c for c in e2e_lineage.columns if c not in lineage.columns],
-                    column_links=lineage.column_links
-                    + [
-                        c
-                        for c in e2e_lineage.column_links
-                        if c not in lineage.column_links
-                    ],
-                )
-
             # prepare serialized response
             column_lookup = {}
-            for asset in lineage.assets:
-                asset.temp_columns = column_lookup[asset.id]
             for column in lineage.columns:
                 column_lookup.setdefault(column.asset_id, []).append(column)
+            for asset in lineage.assets:
+                if asset.id in column_lookup:
+                    asset.temp_columns = column_lookup[asset.id]
+                else:
+                    asset.temp_columns = []
 
             asset_serializer = AssetSerializer(root_asset, context={"request": request})
             lineage_serializer = LineageSerializer(

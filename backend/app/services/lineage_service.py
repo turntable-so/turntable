@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict
 
 from app.models import Asset, AssetLink, Column, ColumnLink
 from app.utils.obj import convert_to_dict, make_values_serializable
+from app.utils.urn import UrnAdjuster
 
 cache = caches["default"]
 
@@ -40,6 +41,7 @@ class Lineage(BaseModel):
 class LineageService:
     def __init__(self, workspace_id: str):
         self.workspace_id = workspace_id
+        self.adjuster = UrnAdjuster(workspace_id)
 
     def validate_json_format(json_data):
         if not isinstance(json_data, dict):
@@ -104,17 +106,25 @@ class LineageService:
             column_links=column_links,
         )
 
-    @classmethod
-    def get_prod_names(cls, lineage: Lineage, dev_schema: str, prod_schema: str):
+    def adjust_urns(self, lineage: Lineage):
+        lineage.asset_id = self.adjuster.adjust(lineage.asset_id)
+        lineage.assets = [a.adjust_urns() for a in lineage.assets]
+        lineage.asset_links = [al.adjust_urns() for al in lineage.asset_links]
+        lineage.columns = [c.adjust_urns() for c in lineage.columns]
+        lineage.column_links = [cl.adjust_urns() for cl in lineage.column_links]
+
+        return lineage
+
+    def get_prod_names(self, lineage: Lineage, dev_schema: str, prod_schema: str):
         asset_id_map = {}
         for asset in lineage.assets:
-            dataset_urn = DatasetUrn.from_string(asset.id)
+            dataset_urn = DatasetUrn.from_string(self.adjuster.reverse(asset.id))
             name = dataset_urn.name
             platform = dataset_urn.platform
             name = name.replace(f".{dev_schema}_", f".{prod_schema}_").replace(
                 f".{dev_schema}.", f".{prod_schema}."
             )
-            adj_urn = f"urn:li:dataset:({platform},{name},PROD)"
+            adj_urn = self.adjuster.adjust(f"urn:li:dataset:({platform},{name},PROD)")
             asset_id_map[asset.id] = adj_urn
         column_id_map = {}
         for column in lineage.columns:
@@ -124,9 +134,8 @@ class LineageService:
 
         return asset_id_map, column_id_map
 
-    @classmethod
     def replace_names(
-        cls,
+        self,
         lineage: Lineage,
         asset_id_map: dict[str, str],
         column_id_map: dict[str, str],
@@ -154,7 +163,7 @@ class LineageService:
         return lineage
 
     def enrich_lineage_with_e2e(
-        cls,
+        self,
         dbt_lineage: Lineage,
         asset_graph: nx.DiGraph,
         root_asset: Asset,
@@ -163,14 +172,11 @@ class LineageService:
         lineage_type: ColumnLink.LineageType = ColumnLink.LineageType.ALL,
         depth: int = 1,
     ):
-        asset_id_map, column_id_map = LineageService.get_prod_names(
+        asset_id_map, column_id_map = self.get_prod_names(
             dbt_lineage, dev_schema, prod_schema
         )
-
-        dbt_lineage = LineageService.replace_names(
-            dbt_lineage, asset_id_map, column_id_map
-        )
-        asset_graph = nx.relabel_nodes(asset_graph, asset_id_map, copy=False)
+        dbt_lineage = self.replace_names(dbt_lineage, asset_id_map, column_id_map)
+        nx.relabel_nodes(asset_graph, asset_id_map, copy=False)
 
         asset_depth_dict = {}
 
@@ -186,7 +192,7 @@ class LineageService:
             exclude_resource_ids=[root_asset.resource_id],
         )
 
-        e2e_lineage = LineageService.get_lineage_object(
+        e2e_lineage = self.get_lineage_object(
             asset_id=root_asset.id,
             assets_to_filter=BI_successors,
             workspace_id=root_asset.workspace_id,
@@ -194,7 +200,7 @@ class LineageService:
         )
 
         # rename instances to dev ids
-        e2e_lineage = LineageService.replace_names(
+        e2e_lineage = self.replace_names(
             e2e_lineage, asset_id_map, column_id_map, inverse=True
         )
 
@@ -202,11 +208,14 @@ class LineageService:
         dbt_lineage.assets = dbt_lineage.assets + [
             a for a in e2e_lineage.assets if a not in dbt_lineage.assets
         ]
+        dbt_lineage.asset_links = dbt_lineage.asset_links + [
+            al for al in e2e_lineage.asset_links if al not in dbt_lineage.asset_links
+        ]
         dbt_lineage.columns = dbt_lineage.columns + [
             c for c in e2e_lineage.columns if c not in dbt_lineage.columns
         ]
         dbt_lineage.column_links = dbt_lineage.column_links + [
-            c for c in e2e_lineage.column_links if c not in dbt_lineage.column_links
+            cl for cl in e2e_lineage.column_links if cl not in dbt_lineage.column_links
         ]
 
         return dbt_lineage
