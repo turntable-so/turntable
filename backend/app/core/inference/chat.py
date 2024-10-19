@@ -33,6 +33,21 @@ Rules:
 - You may reference parts of the cntext that was passed in
 - You will only respond in markdown, using headers, paragraph, bulleted lists and sql/dbt code blocks if needed for the best answer quality possible
 - IMPORTANT: make sure all generate sql, dbt jinja examples or included code blocks are syntactically correct and will run on the target database postgres
+
+"""
+
+EDIT_PROMPT_SYSTEM = """
+You are an expert data analyst and data engineer who is a world expert at dbt (data build tool.
+You have mastery in writing sql, jinja, dbt macros and architecturing data pipelines using marts, star schema architecures and designs for efficient and effective analytics data pipelines.
+
+You are given a dbt model file and a user request to edit the file.
+
+Rules:
+- You will only respond with the modified file contents. No markdown or natural language will be accepted except as comments
+- IMPORTANT: make sure all generate sql, dbt jinja examples or included code blocks are syntactically correct and will run on the target database postgres
+- IMPORTANT: only respond with the full modified file contents, no markdown allowed and no backticks
+- You will be given context for tables upstream and downstream of a current_file. current_file is the file to edit and no other files.
+- You are not allowed to tamper with the existing formatting
 """
 
 
@@ -105,7 +120,12 @@ def lineage_ascii(edges):
     return ascii_graph
 
 
-def build_context(related_assets: List[str], instructions: str, asset_links: List[str]):
+def build_context(
+    related_assets: List[str],
+    instructions: str,
+    asset_links: List[str],
+    current_file: str = None,
+):
     # map each id to a schema (with name, type and description)
     if related_assets and len(related_assets) > 0:
         assets = Asset.objects.filter(id__in=related_assets)
@@ -150,6 +170,13 @@ def build_context(related_assets: List[str], instructions: str, asset_links: Lis
             output = f"""{lineage_md}
     {assets}
     User Instructions: {instructions}
+    """
+            if current_file:
+                output += f"""
+Current File:
+```sql
+{current_file}
+```
     """
             return output
     else:

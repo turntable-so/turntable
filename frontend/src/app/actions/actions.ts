@@ -522,26 +522,6 @@ export async function deleteFile(filePath: string) {
   return response.ok
 }
 
-export async function infer({
-  instructions,
-  content,
-  filepath
-}: {
-  instructions: string
-  content: string
-  filepath: string
-}) {
-  const response = await fetcher(`/infer/`, {
-    cookies,
-    method: "POST",
-    body: {
-      instructions,
-      content,
-      filepath
-    }
-  });
-  return response.json();
-}
 
 export async function getProjectBasedLineage({
   filePath,
@@ -560,16 +540,6 @@ export async function getProjectBasedLineage({
   return response.json();
 }
 
-export async function submitInference(instructions: string) {
-  const response = await fetcher(`/infer/`, {
-    cookies,
-    method: "POST",
-    body: {
-      instructions
-    }
-  });
-  return response.json()
-}
 
 export async function submitEcho(message: string) {
   const response = await fetcher(`/api/echo/`, {

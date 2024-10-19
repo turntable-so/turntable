@@ -106,7 +106,7 @@ export default function AiSidebarChat() {
                 )}
                 <Textarea
                     placeholder='Ask anything'
-                    className='bg-transparent shadow-none border-none outline-none ring-0 resize-none w-full focus:outline-none focus:ring-0 focus:border-none'
+                    className='bg-transparent shadow-none border-none outline-none ring-0 resize-none w-full focus:outline-none focus:ring-0 focus:border-none focus:ring-offset-0 !border-0'
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                 />
