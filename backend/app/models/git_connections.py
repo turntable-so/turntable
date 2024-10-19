@@ -207,8 +207,8 @@ class Branch(models.Model):
                 return
 
         with self._code_repo_path(isolate) as path:
-            if os.path.exists(path) and ".git" in os.listdir(path):
-                with self.repository.with_ssh_env(env_override) as env:
+            with self.repository.with_ssh_env(env_override) as env:
+                if os.path.exists(path) and ".git" in os.listdir(path):
                     gitrepo = GitRepo(path)
                     with gitrepo.git.custom_environment(
                         GIT_SSH_COMMAND=env["GIT_SSH_COMMAND"]
@@ -216,7 +216,6 @@ class Branch(models.Model):
                         yield gitrepo, env
                         return
 
-            with self.repository.with_ssh_env(env_override) as env:
                 repo = GitRepo.clone_from(self.repository.git_repo_url, path, env=env)
 
                 # Fetch the latest changes from the remote
