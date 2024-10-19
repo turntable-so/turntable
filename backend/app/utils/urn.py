@@ -24,3 +24,8 @@ class UrnAdjuster:
             cur_k = getattr(obj, k)
             new_k = self.adjust(cur_k)
             setattr(obj, k, new_k)
+
+    def reverse(self, urn: str):
+        if not self.is_adjusted(urn):
+            return urn
+        return urn.split(self.JOIN_KEY, 1)[1]

@@ -3,14 +3,17 @@ import shlex
 import shutil
 from urllib.parse import unquote
 
+import networkx as nx
 from django.http import StreamingHttpResponse
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from api.serializers import AssetSerializer, LineageSerializer
 from app.core.dbt import LiveDBTParser
-from app.models.git_connections import Branch
+from app.models import Branch, ColumnLink
+from app.services.lineage_service import LineageService
 from workflows.dbt_runner import DBTStreamerWorkflow
 
 
@@ -44,6 +47,8 @@ def get_file_tree(user_id: str, path: str, base_path: str):
 
 
 class ProjectViewSet(viewsets.ViewSet):
+    PERMISSION_CLASSES = [AllowAny]
+
     @action(detail=False, methods=["GET", "POST", "PUT", "DELETE"])
     def files(self, request):
         workspace = request.user.current_workspace()
@@ -172,29 +177,20 @@ class ProjectViewSet(viewsets.ViewSet):
         filepath = unquote(request.query_params.get("filepath"))
         predecessor_depth = int(request.query_params.get("predecessor_depth"))
         successor_depth = int(request.query_params.get("successor_depth"))
-        lineage_type = request.query_params.get("lineage_type", "all")
+        lineage_type = ColumnLink.LineageType(
+            request.query_params.get("lineage_type", "all")
+        )
         defer = request.query_params.get("defer", True)
-        branch_name = request.query_params.get("branch_name")
-        if branch_name:
-            try:
-                branch_id = Branch.objects.get(
-                    workspace=workspace,
-                    repository=dbt_details.repository,
-                    branch_name=branch_name,
-                ).id
-            except Branch.DoesNotExist:
-                return Response(
-                    {"error": f"Branch {branch_name} not found"},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-        else:
-            branch_id = None
+        e2e = request.query_params.get("e2e", True)
+        branch_id = request.query_params.get("branch_id")
+        branch = Branch.objects.get(id=branch_id, workspace=workspace)
 
         with dbt_details.dbt_transition_context(branch_id=branch_id) as (
             transition,
             _,
             repo,
         ):
+            # mount manifest and catalog
             transition.mount_manifest(defer=defer)
             transition.mount_catalog(defer=defer)
 
@@ -204,6 +200,7 @@ class ProjectViewSet(viewsets.ViewSet):
             if not node_id:
                 raise ValueError(f"Node at filepath{filepath} not found in manifest")
 
+            # get lineage
             dbtparser = LiveDBTParser.parse_project(
                 proj=transition.after,
                 before_proj=transition.before,
@@ -213,22 +210,41 @@ class ProjectViewSet(viewsets.ViewSet):
                 successor_depth=successor_depth,
                 defer=defer,
             )
-            lineage, _ = dbtparser.get_lineage()
-            root_asset = None
-            column_lookup = {}
-            for asset in lineage.assets:
-                column_lookup[asset.id] = []
-            for column in lineage.columns:
-                column_lookup[column.asset_id].append(column)
+            lineage, _, asset_graph = dbtparser.get_lineage(
+                lineage_types=[lineage_type]
+            )
 
+            # adjust urns
+            lineage_service = LineageService(workspace.id)
+            lineage = lineage_service.adjust_urns(lineage)
+            nx.relabel_nodes(asset_graph, lineage_service.adjuster.adjust, copy=False)
+
+            # get root asset
+            root_asset = None
             for asset in lineage.assets:
                 if asset.id == lineage.asset_id:
                     root_asset = asset
 
-                asset.temp_columns = column_lookup[asset.id]
-
             if not root_asset:
                 raise ValueError(f"Root asset not found for {lineage.asset_id}")
+
+            if e2e:
+                lineage = lineage_service.enrich_lineage_with_e2e(
+                    lineage,
+                    asset_graph,
+                    root_asset,
+                    branch.branch_name,
+                    dbt_details.schema,
+                )
+            # prepare serialized response
+            column_lookup = {}
+            for column in lineage.columns:
+                column_lookup.setdefault(column.asset_id, []).append(column)
+            for asset in lineage.assets:
+                if asset.id in column_lookup:
+                    asset.temp_columns = column_lookup[asset.id]
+                else:
+                    asset.temp_columns = []
 
             asset_serializer = AssetSerializer(root_asset, context={"request": request})
             lineage_serializer = LineageSerializer(

@@ -1,6 +1,10 @@
 import os
+import uuid
+
+from django.db import transaction
 
 from app.models import (
+    Branch,
     DBTCoreDetails,
     MetabaseDetails,
     PostgresDetails,
@@ -60,10 +64,32 @@ def create_ssh_key_n(workspace, n):
 def create_repository_n(workspace, n, ssh_key):
     assert ssh_key, "must provide ssh_key to use this test"
     git_repo_url = os.getenv(f"GIT_{n}_REPO_URL")
+    main_branch_name = os.getenv(f"GIT_{n}_MAIN_BRANCH_NAME", "main")
     assert git_repo_url, f"must provide GIT_{n}_REPO_URL to use this test"
-    return Repository.objects.get_or_create(
-        workspace=workspace, git_repo_url=git_repo_url, ssh_key=ssh_key
-    )[0]
+
+    repository_id = uuid.uuid5(uuid.NAMESPACE_URL, git_repo_url)
+    main_branch_id = uuid.uuid5(
+        uuid.NAMESPACE_URL, f"{git_repo_url}:{main_branch_name}"
+    )
+    try:
+        return Repository.objects.get(id=repository_id)
+    except Repository.DoesNotExist:
+        with transaction.atomic():
+            branch = Branch(
+                id=main_branch_id,
+                repository_id=repository_id,
+                branch_name=main_branch_name,
+                workspace=workspace,
+            )
+            repository = Repository(
+                id=repository_id,
+                workspace=workspace,
+                git_repo_url=git_repo_url,
+                ssh_key=ssh_key,
+            )
+            branch.save()
+            repository.save()
+        return repository
 
 
 def create_local_postgres(workspace, repository: Repository | None = None):

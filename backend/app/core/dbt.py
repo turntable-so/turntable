@@ -1,7 +1,7 @@
 import networkx as nx
 
 from app.core.e2e import DataHubDBParser
-from app.models import Asset, AssetError, Column, Resource
+from app.models import Asset, AssetError, Column, ColumnLink, Resource
 from app.services.lineage_service import Lineage
 from vinyl.lib.dbt import DBTProject, DBTTransition
 
@@ -178,6 +178,7 @@ class LiveDBTParser:
 
     def get_lineage(
         self,
+        lineage_types: list[ColumnLink.LineageType] = [],
     ) -> tuple[Lineage, list[AssetError]]:
         parser = DataHubDBParser(resource=self.resource)
         parser.asset_dict = self.asset_dict
@@ -186,7 +187,7 @@ class LiveDBTParser:
         parser.asset_errors = self.asset_errors
         ignore_dbt_ids = set(self.catalog_nodes) - set(self.lineage_nodes)
         ignore_ids = [self.id_map[k] for k in ignore_dbt_ids]
-        parser.get_db_cll(ignore_ids=ignore_ids)
+        parser.get_db_cll(ignore_ids=ignore_ids, lineage_types=lineage_types)
         parser.get_links()
 
         raw_lineage = Lineage(
@@ -196,4 +197,8 @@ class LiveDBTParser:
             columns=list(parser.column_dict.values()),
             column_links=parser.column_links,
         )
-        return self.filter_out_catalog_nodes(raw_lineage), parser.asset_errors
+        return (
+            self.filter_out_catalog_nodes(raw_lineage),
+            parser.asset_errors,
+            parser.asset_graph,
+        )

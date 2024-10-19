@@ -30,11 +30,12 @@ def require_env_vars(*required_vars):
     return decorator
 
 
-def assert_ingest_output(resources, columns=True, column_links=True):
+def assert_ingest_output(resources, containers=True, columns=True, column_links=True):
     ## all tables have records
     assert Asset.objects.count() > 0
-    assert AssetContainer.objects.count() > 0
     assert AssetLink.objects.count() > 0
+    if containers:
+        assert AssetContainer.objects.count() > 0
     if columns:
         assert Column.objects.count() > 0
     if column_links:
@@ -46,7 +47,7 @@ def assert_ingest_output(resources, columns=True, column_links=True):
 
     ## all resources represented in assets
     for resource in resources:
-        assert resource.asset_set.count() > 0
+        assert Asset.objects.filter(resource=resource).count() > 0
 
     ## at least one asset link across resources if multiple resources used
     if len(resources) > 1:
@@ -59,8 +60,10 @@ def assert_ingest_output(resources, columns=True, column_links=True):
 
     ## all connected db assets have a column link
     if column_links:
-        db_assets = Asset.objects.filter(resource__type=ResourceType.DB).values_list(
-            "id", flat=True
+        db_assets = (
+            Asset.objects.prefetch_related("resources")
+            .filter(resource__type=ResourceType.DB)
+            .values_list("id", flat=True)
         )
         db_assets_with_asset_links = set()
         for al in AssetLink.objects.all():
@@ -68,10 +71,10 @@ def assert_ingest_output(resources, columns=True, column_links=True):
                 if id in db_assets:
                     db_assets_with_asset_links.add(id)
             db_assets_with_column_links = set()
-            for cl in ColumnLink.objects.all():
-                for id in [cl.source.asset.id, cl.target.asset.id]:
-                    if id in db_assets:
-                        db_assets_with_column_links.add(id)
+        for cl in ColumnLink.objects.all():
+            for id in [cl.source.asset.id, cl.target.asset.id]:
+                if id in db_assets:
+                    db_assets_with_column_links.add(id)
         assert db_assets_with_asset_links == db_assets_with_column_links
 
     ## check at least one db asset has a tag/description
@@ -89,4 +92,5 @@ def assert_ingest_output(resources, columns=True, column_links=True):
     assert ColumnLink.objects.filter(workspace_id=None).count() == 0
 
     ## at least one asset has a container
-    assert Asset.objects.filter(containermembership__isnull=False).count() > 0
+    if containers:
+        assert Asset.objects.filter(containermembership__isnull=False).count() > 0
