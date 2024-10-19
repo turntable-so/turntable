@@ -208,8 +208,13 @@ class Branch(models.Model):
 
         with self._code_repo_path(isolate) as path:
             if os.path.exists(path) and ".git" in os.listdir(path):
-                yield GitRepo(path), env_override
-                return
+                with self.repository.with_ssh_env(env_override) as env:
+                    gitrepo = GitRepo(path)
+                    with gitrepo.git.custom_environment(
+                        GIT_SSH_COMMAND=env["GIT_SSH_COMMAND"]
+                    ):
+                        yield gitrepo, env
+                        return
 
             with self.repository.with_ssh_env(env_override) as env:
                 repo = GitRepo.clone_from(self.repository.git_repo_url, path, env=env)
