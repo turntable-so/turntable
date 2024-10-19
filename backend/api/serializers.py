@@ -3,6 +3,7 @@ from djoser.serializers import UserCreateSerializer, UserSerializer
 from invitations.utils import get_invitation_model
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
+
 from app.models import (
     Asset,
     AssetLink,
@@ -15,6 +16,7 @@ from app.models import (
     LookerDetails,
     Notebook,
     PostgresDetails,
+    PowerBIDetails,
     RedshiftDetails,
     Repository,
     Resource,
@@ -321,6 +323,17 @@ class MetabaseDetailsSerializer(ResourceDetailsSerializer):
     class Meta:
         model = MetabaseDetails
         fields = ["username", "password", "connect_uri"]
+
+
+class PowerBIDetailsSerializer(ResourceDetailsSerializer):
+    class Meta:
+        model = PowerBIDetails
+        fields = [
+            "client_id",
+            "client_secret",
+            "tenant_id",
+            "powerbi_workspace_id",
+        ]
 
 
 class DBTVersionField(serializers.ChoiceField):
