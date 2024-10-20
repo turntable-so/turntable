@@ -130,10 +130,9 @@ export default function CommandPanelInput() {
                 index === highlightedIndex ? "bg-gray-100" : "hover:bg-gray-100"
               }`}
               onMouseDown={(e) => {
-                e.preventDefault(); // Prevent focus shift
+                e.preventDefault();
                 handleOptionClick(option);
               }}
-              // Use onMouseEnter to update highlightedIndex when hovering
               onMouseEnter={() => setHighlightedIndex(index)}
             >
               {option}
