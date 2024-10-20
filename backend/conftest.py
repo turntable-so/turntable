@@ -15,7 +15,7 @@ from fixtures.local_env import (
     create_repository_n,
     create_ssh_key_n,
 )
-from fixtures.staging_env import group_2, group_3, group_4, group_5
+from fixtures.staging_env import group_2, group_3, group_4, group_5, group_6
 from workflows.metadata_sync import MetadataSyncWorkflow
 from workflows.utils.debug import ContextDebugger
 
@@ -115,8 +115,18 @@ def remote_bigquery(user):
 
 
 @pytest.fixture
+def remote_powerbi(user):
+    return group_4(user)[1]
+
+
+@pytest.fixture
 def remote_redshift(user):
     return group_5(user)[0]
+
+
+@pytest.fixture
+def turntable_dbt(user):
+    return group_6(user)[0]
 
 
 @pytest.fixture
@@ -153,6 +163,11 @@ def use_cache(request):
     return request.config.getoption("--use_cache")
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def force_isolate(monkeypatch):
     monkeypatch.setenv("FORCE_ISOLATE", "true")
+
+
+@pytest.fixture
+def bypass_hatchet(monkeypatch):
+    monkeypatch.setenv("BYPASS_HATCHET", "true")

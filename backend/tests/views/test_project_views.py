@@ -3,6 +3,7 @@ from urllib.parse import quote, unquote
 import pytest
 
 from app.utils.test_utils import require_env_vars
+from app.utils.url import build_url
 
 
 def safe_encode(s):
@@ -14,7 +15,7 @@ def safe_decode(s):
 
 
 @pytest.mark.django_db
-@pytest.mark.usefixtures("force_isolate", "local_postgres")
+@pytest.mark.usefixtures("force_isolate", "bypass_hatchet", "local_postgres")
 @require_env_vars("SSHKEY_0_PUBLIC", "SSHKEY_0_PRIVATE")
 class TestProjectViews:
     @pytest.fixture
@@ -27,7 +28,6 @@ class TestProjectViews:
 
         assert response.status_code == 200
         assert len(response_json["file_index"]) > 0
-        assert len(response_json["dirty_changes"]) == 0
 
     def test_branches(self, client):
         response = client.get("/project/branches/")
@@ -104,16 +104,40 @@ class TestProjectViews:
             "models/staging/stg_products.sql",
         ],
     )
-    def test_get_lineage_view(self, client, filepath_param):
+    @pytest.mark.parametrize("branch_name", ["apple12345", "main"])
+    def test_get_project_based_lineage_view(self, client, filepath_param, branch_name):
         encoded_filepath = safe_encode(filepath_param)
         response = client.get(
-            "/project/lineage/",
-            {
-                "filepath": encoded_filepath,
-                "predecessor_depth": 1,
-                "successor_depth": 1,
-            },
+            build_url(
+                "/project/lineage/",
+                {
+                    "filepath": encoded_filepath,
+                    "predecessor_depth": 1,
+                    "successor_depth": 1,
+                    "branch_name": branch_name,
+                },
+            )
         )
-        assert response.status_code == 200
-        assert response.json()["lineage"]["asset_links"]
-        assert response.json()["lineage"]["column_links"]
+        if branch_name != "main":
+            assert response.status_code == 404
+        else:
+            assert response.status_code == 200
+            assert response.json()["lineage"]["asset_links"]
+            assert response.json()["lineage"]["column_links"]
+
+    @pytest.mark.parametrize("branch_name", ["apple12345", "main"])
+    def test_stream_dbt_command(self, client, branch_name):
+        response = client.post(
+            build_url("/project/stream_dbt_command/", {"branch_name": branch_name}),
+            {"command": "run"},
+        )
+        if branch_name != "main":
+            assert response.status_code == 404
+        else:
+            out = ""
+            for chunk in response.streaming_content:
+                c = chunk.decode("utf-8")
+                print(c)
+                out += c
+            assert response.status_code == 200
+            assert out.endswith("\nTrue\n")

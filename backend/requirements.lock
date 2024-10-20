@@ -242,7 +242,7 @@ h11==0.14.0
     # via uvicorn
 h2==4.1.0
     # via httpx
-hatchet-sdk==0.38.0
+hatchet-sdk==0.38.3
 hishel==0.0.32
     # via githubkit
 hpack==4.0.0

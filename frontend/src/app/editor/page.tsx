@@ -21,6 +21,8 @@ import { Textarea } from '@/components/ui/textarea'
 import FileSearchCommand from '@/components/editor/FileSearchCommand'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import React from 'react'
+import BottomPanel from '@/components/editor/bottom-panel'
+import { LineageProvider } from '../contexts/LineageContext'
 
 
 const PromptBox = ({ setPromptBoxOpen }: { setPromptBoxOpen: (open: boolean) => void }) => {
@@ -790,34 +792,13 @@ function EditorPageContent() {
                                     <EditorContent setPromptBoxOpen={setPromptBoxOpen} containerWidth={topBarWidth as number} />
                                 </Panel>
                                 {showBottomPanel && (
-                                    <Fragment>
-                                        <PanelResizeHandle className="h-1 bg-gray hover:bg-gray-300 hover:cursor-col-resize  transition-colors" />
-                                        <div className='h-10 bg-muted border-t-2 flex justify-end items-center px-4'>
-                                            <Button size='sm'
-                                                onClick={runQueryPreview}
-                                                disabled={isLoading}
-                                                variant='outline'
-                                            >
-                                                {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Play className="h-4 w-4 mr-2" />}
-                                                Preview Query
-                                            </Button>
-                                        </div>
-                                        <Panel defaultSize={40} className='border-t flex items-center justify-center'>
-
-                                            <div className="flex flex-col w-full h-full flex-grow-1">
-                                                <AgGridReact
-                                                    className="ag-theme-custom"
-                                                    ref={gridRef}
-                                                    suppressRowHoverHighlight={true}
-                                                    columnHoverHighlight={true}
-                                                    rowData={rowData}
-                                                    pagination={true}
-                                                    // @ts-ignore
-                                                    columnDefs={colDefs}
-                                                />
-                                            </div>
-                                        </Panel>
-                                    </Fragment>
+                                    <BottomPanel
+                                        rowData={rowData}
+                                        gridRef={gridRef}
+                                        colDefs={colDefs}
+                                        runQueryPreview={runQueryPreview}
+                                        isLoading={isLoading}
+                                    />
                                 )}
                             </PanelGroup>
                         </div>
@@ -857,7 +838,9 @@ function EditorPageContent() {
 export default function EditorPage() {
     return (
         <FilesProvider>
-            <EditorPageContent />
+            <LineageProvider>
+                <EditorPageContent />
+            </LineageProvider>
         </FilesProvider>
     )
 }
