@@ -371,7 +371,7 @@ class DBTProject(object):
 
         success = self.check_command_success(stdout, stderr)
         success_str = "PROCESS_STREAM_SUCCESS" if success else "PROCESS_STREAM_ERROR"
-        yield f"{success_str}\n"
+        yield success_str
 
     @classmethod
     def check_command_success(cls, stdout: str, stderr: str) -> bool:
@@ -932,3 +932,4 @@ class DBTTransition:
         self.after.mount_catalog(
             read=read, force_run=force_run, force_read=force_read, defer=defer
         )
+

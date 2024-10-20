@@ -34,7 +34,6 @@ class JWTAuthMiddleware:
         except (InvalidToken, TokenError) as e:
             raise e
         
-        # Token is valid, decode it
         decoded_data = jwt_decode(token, settings.SECRET_KEY, algorithms=["HS256"])
         scope["user"] = await get_user(validated_token=decoded_data)
 

@@ -156,8 +156,3 @@ def use_cache(request):
 @pytest.fixture
 def force_isolate(monkeypatch):
     monkeypatch.setenv("FORCE_ISOLATE", "true")
-
-
-@pytest.fixture
-def bypass_hatchet(monkeypatch):
-    monkeypatch.setenv("BYPASS_HATCHET", "true")

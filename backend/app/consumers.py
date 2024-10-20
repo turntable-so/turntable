@@ -43,14 +43,13 @@ class DBTCommandConsumer(AsyncWebsocketConsumer):
         await self.accept()
         logger.info(f"WebSocket connected for user: {self.scope['user']}")
 
-        # TODO: we shouldn't be using the route to get the workspace id cause then
-        # anyone can try to connect to it
-        # we should be passing in a token to the websocket that has the workspace id in it
         self.workspace_id = self.scope["url_route"]["kwargs"]["workspace_id"]
         if self.workspace_id is None:
             await self.close(code=4001, reason="Workspace ID is required")
             return
         
+        # TODO: check if the user has access to this workspace
+
         self.workspace = await sync_to_async(Workspace.objects.get)(id=self.workspace_id)
         self.dbt_details = await sync_to_async(self.workspace.get_dbt_details)()
 
@@ -103,8 +102,9 @@ class DBTCommandConsumer(AsyncWebsocketConsumer):
         async for event in listener:
             if event.payload and event.type == "STEP_RUN_EVENT_TYPE_STREAM":
                 await self.send(text_data=event.payload)
+            else:
+                print(f"Skipped event: {event}")
 
-                if event.payload.startswith("PROCESS_STREAM_SUCCESS"):
-                    await self.close()
-                elif event.payload.startswith("PROCESS_STREAM_ERROR"):
-                    await self.close(code=4001, reason="Error running dbt command")
+        # Assume success if we've reached the end of the event stream
+        await self.send(text_data="PROCESS_STREAM_SUCCESS")
+        await self.close()
