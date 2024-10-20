@@ -28,7 +28,6 @@ export function useWebSocket(url: string, options?: UseWebSocketOptions) {
       setIsConnected(true);
       options?.onOpen?.(event);
 
-      // Start the timeout timer on open
       if (options?.timeout) {
         if (timeoutIdRef.current) {
           clearTimeout(timeoutIdRef.current);

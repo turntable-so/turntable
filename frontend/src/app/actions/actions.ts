@@ -472,17 +472,6 @@ export async function getFileIndex() {
   return response.json();
 }
 
-export async function runDbtCommand(command: string) {
-  const response = await fetcher(`/project/stream_dbt_command/`, {
-    cookies,
-    method: "POST",
-    body: {
-      command,
-    }
-  });
-  return response.json();
-}
-
 export async function fetchFileContents(path: string) {
   const encodedPath = encodeURIComponent(path);
   const response = await fetcher(`/project/files/?filepath=${encodedPath}`, {
