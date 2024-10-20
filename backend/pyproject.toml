@@ -118,7 +118,6 @@ dev-dependencies = [
     "google-cloud-storage>=2.17.0",
     "google-cloud-dataproc>=5.9.3",
     "pytest-django>=4.8.0",
-    "dbt-postgres>=1.8.2",
     "harlequin>=1.23.1",
 ]
 

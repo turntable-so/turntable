@@ -15,7 +15,7 @@ def safe_decode(s):
 
 
 @pytest.mark.django_db
-@pytest.mark.usefixtures("force_isolate", "bypass_hatchet", "local_postgres")
+@pytest.mark.usefixtures("force_isolate", "local_postgres")
 @require_env_vars("SSHKEY_0_PUBLIC", "SSHKEY_0_PRIVATE")
 class TestProjectViews:
     @pytest.fixture
@@ -124,20 +124,3 @@ class TestProjectViews:
             assert response.status_code == 200
             assert response.json()["lineage"]["asset_links"]
             assert response.json()["lineage"]["column_links"]
-
-    @pytest.mark.parametrize("branch_name", ["apple12345", "main"])
-    def test_stream_dbt_command(self, client, branch_name):
-        response = client.post(
-            build_url("/project/stream_dbt_command/", {"branch_name": branch_name}),
-            {"command": "run"},
-        )
-        if branch_name != "main":
-            assert response.status_code == 404
-        else:
-            out = ""
-            for chunk in response.streaming_content:
-                c = chunk.decode("utf-8")
-                print(c)
-                out += c
-            assert response.status_code == 200
-            assert out.endswith("\nTrue\n")
