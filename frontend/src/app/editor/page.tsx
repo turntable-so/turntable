@@ -23,6 +23,7 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import React from 'react'
 import BottomPanel from '@/components/editor/bottom-panel'
 import { LineageProvider } from '../contexts/LineageContext'
+import TopBar from '@/components/editor/top-bar'
 
 
 const PromptBox = ({ setPromptBoxOpen }: { setPromptBoxOpen: (open: boolean) => void }) => {
@@ -593,6 +594,7 @@ function EditorPageContent() {
 
     return (
         <div className='flex flex-col h-screen'>
+            <TopBar />
             <PanelGroup direction="horizontal" className="h-fit">
                 {showLeftSideBar && (
                     <Fragment>
@@ -650,7 +652,7 @@ function EditorPageContent() {
                         <div
                             className={cn(
                                 "flex h-[52px] items-center justify-center",
-                                "h-[52px]"
+                                "h-[48px]"
                             )}
                         >
                             <div className="flex items-center w-full px-4">
