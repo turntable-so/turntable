@@ -102,6 +102,8 @@ export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview
 
     console.log({ lineageData })
 
+    console.log("bottomPanelHeight", bottomPanelHeight)
+
 
 
     return (
@@ -190,7 +192,7 @@ export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview
                             </ErrorBoundary>
                         </div>
                     )}
-                    {activeTab === "command" && <CommandPanelWrapper />}
+                    {activeTab === "command" && <CommandPanelWrapper bottomPanelHeight={bottomPanelHeight} />}
                 </div>
             </Panel>
         </Fragment >

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { CircleX as CircleXIcon, Command as PlayIcon, CornerDownLeft } from "lucide-react";
+import { CircleSlash, Command as PlayIcon, CornerDownLeft } from "lucide-react";
 import { Button } from "../../ui/button";
 import { useWebSocket } from "@/app/hooks/use-websocket";
 import { useCommandPanelContext } from "./context";
@@ -26,15 +26,18 @@ export default function CommandPanelActionBtn({ inputValue, setInputValue, onRun
     const newCommandIdRef = useRef<string | null>(null);
 
     // TODO: pass in branch id when we support branches
-    const { startWebSocket, sendMessage } = useWebSocket(`${protocol}://${base}/ws/dbt_command/${session.user.current_workspace.id}/?token=${accessToken}`, {
+    const { startWebSocket, sendMessage, stopWebSocket } = useWebSocket(`${protocol}://${base}/ws/dbt_command/${session.user.current_workspace.id}/?token=${accessToken}`, {
         onOpen: () => {
-            sendMessage(JSON.stringify({ command: inputValue }));
+            sendMessage(JSON.stringify({ action: "start", command: inputValue }));
             setInputValue("");
         },
         onMessage: (event) => {
             console.log('Received:', event.data);
 
-            if (event.data === "PROCESS_STREAM_SUCCESS") {
+            if (event.data.error) {
+                setCommandPanelState("idling");
+                updateCommandById(newCommandIdRef.current, { status: "failed" });
+            } else if (event.data === "PROCESS_STREAM_SUCCESS") {
                 setCommandPanelState("idling");
                 updateCommandById(newCommandIdRef.current, { status: "success", duration: `${Math.round((Date.now() - parseInt(newCommandIdRef.current)) / 1000)}s` });
             } else if (event.data === "PROCESS_STREAM_ERROR") {
@@ -52,12 +55,18 @@ export default function CommandPanelActionBtn({ inputValue, setInputValue, onRun
         },
         onClose: () => {
             setCommandPanelState("idling");
-            updateCommandById(newCommandIdRef.current, { status: "success", duration: `${Math.round((Date.now() - parseInt(newCommandIdRef.current)) / 1000)}s` });
         },
     });
 
     const handleRunCommand = () => {
-        if (!inputValue || commandPanelState === "running") {
+        if (commandPanelState === "running") {
+            console.log('handleRunCommand: stopping websocket');
+            stopWebSocket();
+            updateCommandById(newCommandIdRef.current, { status: "cancelled" });
+            return;
+        }
+
+        if (!inputValue) {
             return;
         }
 
@@ -105,7 +114,7 @@ export default function CommandPanelActionBtn({ inputValue, setInputValue, onRun
                     <CornerDownLeft className="h-4 w-4 mr-2" /> Run
                 </div> :
                 <div className="flex flex-row gap-2 items-center">
-                    <CircleXIcon className="h-4 w-4 mr-2" />
+                    <CircleSlash className="h-4 w-4 mr-2" />
                     Cancel
                 </div>
             }

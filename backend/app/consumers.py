@@ -56,6 +56,7 @@ class DBTCommandConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, close_code):
         logger.info(f"WebSocket disconnected with close code: {close_code}")
+        # TODO: abort the workflow here if it's running
 
     async def receive(self, text_data):
         # load these inside or else we get "Apps aren't loaded yet" error
@@ -101,11 +102,9 @@ class DBTCommandConsumer(AsyncWebsocketConsumer):
 
         async for event in listener:
             if event.payload and event.type == "STEP_RUN_EVENT_TYPE_STREAM":
-                print("EVENT PAYLOAD: ", event.payload)
                 await self.send(text_data=event.payload)
 
                 if event.payload.startswith("PROCESS_STREAM_SUCCESS"):
-                    print("WOOHOO!")
                     await self.close()
                 elif event.payload.startswith("PROCESS_STREAM_ERROR"):
                     await self.close(code=4001, reason="Error running dbt command")

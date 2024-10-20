@@ -1,6 +1,6 @@
 export type CommandPanelState = "idling" | "running";
 
-export type CommandStatus = "running" | "success" | "failed";
+export type CommandStatus = "running" | "success" | "failed" | "cancelled";
 
 export type Command = {
     id: string;
