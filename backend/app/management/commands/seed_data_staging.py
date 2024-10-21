@@ -6,7 +6,9 @@ from fixtures.staging_env import (
     group_1,
     group_2,
     group_3,
+    group_4,
     group_5,
+    group_6,
 )
 
 
@@ -21,7 +23,9 @@ class Command(BaseCommand):
         group_1(user)
         group_2(user)
         group_3(user)
+        group_4(user)
         group_5(user)
+        group_6(user)
         self.stdout.write(
             self.style.SUCCESS("Successfully seeded the database with staging data")
         )

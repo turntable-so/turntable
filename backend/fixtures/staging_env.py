@@ -354,3 +354,12 @@ def group_5(user):
     create_dbt_n(redshift, 0, repository=repository)
 
     return [redshift]
+
+
+def group_6(user):
+    workspace = create_workspace_n(user, "bigquery", 3)
+    bigquery = create_bigquery_n(workspace, 3)
+    sshkey = create_ssh_key_n(workspace, 3)
+    repository = create_repository_n(workspace, 3, sshkey)
+    create_dbt_n(bigquery, 3, repository=repository)
+    return [bigquery]
