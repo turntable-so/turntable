@@ -1,4 +1,4 @@
-export type CommandPanelState = "idling" | "running";
+export type CommandPanelState = "idling" | "running" | "cancelling";
 
 export type CommandStatus = "running" | "success" | "failed" | "cancelled";
 

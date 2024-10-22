@@ -40,22 +40,18 @@ class TestDBTCommandConsumer:
         connected, _ = await communicator.connect()
         assert connected
 
-        print("test_dbt_command_consumer - can send command")
-
         await communicator.send_json_to({
             "action": "start",
             "command": "ls"
         })
 
-        print("test_dbt_command_consumer - sent command")
-
+        out = ""
         try:
             while True:
-                print("test_dbt_command_consumer - waiting for response")
                 response = await communicator.receive_from()
-                print("test_dbt_command_consumer - received response", response)
+                out += response
         except asyncio.TimeoutError:
-            print("No more messages received.")
+            pass
 
-        raise Exception("test_dbt_command_consumer - test complete")
+        assert "PROCESS_STREAM_SUCCESS" in out
         await communicator.disconnect()

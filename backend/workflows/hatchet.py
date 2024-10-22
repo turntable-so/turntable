@@ -11,4 +11,4 @@ if hatchet_env_path := os.getenv("HATCHET_ENV_PATH"):
 
 is_dev = os.getenv("DEV", "false").lower() in ("true", "t", "1")
 
-hatchet = Hatchet(debug=False)
+hatchet = Hatchet(debug=is_dev)

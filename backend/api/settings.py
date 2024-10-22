@@ -319,10 +319,10 @@ else:
     redis_hosts = [(redis_url)]
 
 
-is_test_environment = 'test' in sys.argv or 'pytest' in sys.modules
+IS_TEST_MODE = 'test' in sys.argv or 'pytest' in sys.modules
 CHANNEL_LAYERS = {
     "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer" if not is_test_environment else "channels.layers.InMemoryChannelLayer",
-        "CONFIG": {"hosts": redis_hosts} if not is_test_environment else {},
+        "BACKEND": "channels_redis.core.RedisChannelLayer" if not IS_TEST_MODE else "channels.layers.InMemoryChannelLayer",
+        "CONFIG": {"hosts": redis_hosts} if not IS_TEST_MODE else {},
     }
 }

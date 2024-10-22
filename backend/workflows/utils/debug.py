@@ -20,8 +20,8 @@ class ContextDebugger:
     def __init__(self, data):
         data.setdefault("workflow_run_id", uuid.uuid4())
         self.data = data
-        self.queue = asyncio.Queue()  # This will hold stream events
-        self.listener = self._stream()  # Initialize the async generator
+        self.queue = asyncio.Queue()
+        self.listener = self._stream()
 
     def workflow_run_id(self):
         return self.data.get("workflow_run_id")
@@ -35,16 +35,17 @@ class ContextDebugger:
     def log(self, message):
         print(message)
 
-    async def put_stream(self, message):
-        # Put the message in the queue as a StreamEvent
+    def put_stream(self, message):
         event = StreamEvent(payload=message, type="STEP_RUN_EVENT_TYPE_STREAM")
-        await self.queue.put(event)
+        self.queue.put_nowait(event)
     
     async def _stream(self):
-        # This is the async generator that yields events from the queue
         while True:
             event = await self.queue.get()
             yield event
+
+    def done(self):
+        return self.queue.empty()
 
 
 async def run_workflow(workflow, input: dict) -> tuple[str, WorkflowDebugger]:

@@ -5,6 +5,7 @@ import { useWebSocket } from "@/app/hooks/use-websocket";
 import { useCommandPanelContext } from "./context";
 import getUrl from "@/app/url";
 import { AuthActions } from "@/lib/auth";
+import { Loader2 } from "lucide-react";
 
 const baseUrl = getUrl();
 const base = new URL(baseUrl).host;
@@ -23,15 +24,30 @@ export default function CommandPanelActionBtn({ inputValue, setInputValue, onRun
     const { commandPanelState, setCommandPanelState, addCommandToHistory, updateCommandLogById, setSelectedCommandIndex, updateCommandById } = useCommandPanelContext();
     const newCommandIdRef = useRef<string | null>(null);
 
+    const componentMap = {
+        "idling": <div className="flex flex-row gap-0.5 items-center mr-2 text-base">
+        <PlayIcon className="h-4 w-4 mr-0.5" />
+            <CornerDownLeft className="h-4 w-4 mr-2" /> Run
+        </div>,
+        "running": <div className="flex flex-row gap-2 items-center">
+            <CircleSlash className="h-4 w-4 mr-2" />
+            Cancel
+        </div>,
+        "cancelling": <div className="flex flex-row gap-2 items-center">
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            Cancelling
+        </div>
+    }
+
+    const isDisabled = commandPanelState === "cancelling";
+
     // TODO: pass in branch id when we support branches
-    const { startWebSocket, sendMessage, stopWebSocket } = useWebSocket(`${protocol}://${base}/ws/dbt_command/?token=${accessToken}`, {
+    const { startWebSocket, sendMessage } = useWebSocket(`${protocol}://${base}/ws/dbt_command/?token=${accessToken}`, {
         onOpen: () => {
             sendMessage(JSON.stringify({ action: "start", command: inputValue }));
             setInputValue("");
         },
         onMessage: (event) => {
-            console.log('Received:', event.data);
-
             if (event.data.error) {
                 setCommandPanelState("idling");
                 updateCommandById(newCommandIdRef.current, { status: "failed" });
@@ -41,6 +57,9 @@ export default function CommandPanelActionBtn({ inputValue, setInputValue, onRun
             } else if (event.data === "PROCESS_STREAM_ERROR") {
                 setCommandPanelState("idling");
                 updateCommandById(newCommandIdRef.current, { status: "failed" });
+            } else if (event.data === "WORKFLOW_CANCELLED") {
+                setCommandPanelState("idling");
+                updateCommandById(newCommandIdRef.current, { status: "cancelled" });
             } else {
                 updateCommandLogById(newCommandIdRef.current, event.data);
             }
@@ -58,17 +77,15 @@ export default function CommandPanelActionBtn({ inputValue, setInputValue, onRun
 
     const handleRunCommand = () => {
         if (commandPanelState === "running") {
-            console.log('handleRunCommand: stopping websocket');
-            stopWebSocket();
-            updateCommandById(newCommandIdRef.current, { status: "cancelled" });
+            sendMessage(JSON.stringify({ action: "cancel" }));
+            setCommandPanelState("cancelling");
             return;
         }
 
-        if (!inputValue) {
+        if (!inputValue || commandPanelState === "cancelling") {
             return;
         }
 
-        console.log('handleRunCommand:', { inputValue });
         startWebSocket();
         setCommandPanelState("running");
 
@@ -104,18 +121,9 @@ export default function CommandPanelActionBtn({ inputValue, setInputValue, onRun
         <Button size='sm'
             variant="outline"
             onClick={handleRunCommand}
+            disabled={isDisabled}
         >
-            {
-                commandPanelState === "idling" ? 
-                <div className="flex flex-row gap-0.5 items-center mr-2 text-base">
-                    <PlayIcon className="h-4 w-4 mr-0.5" />
-                    <CornerDownLeft className="h-4 w-4 mr-2" /> Run
-                </div> :
-                <div className="flex flex-row gap-2 items-center">
-                    <CircleSlash className="h-4 w-4 mr-2" />
-                    Cancel
-                </div>
-            }
+            {componentMap[commandPanelState]}
         </Button>
     )
 }

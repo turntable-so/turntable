@@ -19,7 +19,7 @@ def send_status_update(sender, instance, **kwargs):
     workspace_id = instance.resource.workspace_id
     channel_layer = get_channel_layer()
     try:
-        channel_layer.group_send(
+        async_to_sync(channel_layer.group_send)(
             f"workspace_{workspace_id}",
             {
                 "type": "workflow_status_update",
