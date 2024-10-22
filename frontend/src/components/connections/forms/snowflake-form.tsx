@@ -176,7 +176,7 @@ export default function SnowflakeForm({ resource, details }: { resource?: any, d
                                     <FormItem>
                                         <FormLabel>Password</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="Password" {...field} />
+                                            <Input type='password' placeholder="Password" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
