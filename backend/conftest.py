@@ -15,7 +15,7 @@ from fixtures.local_env import (
     create_repository_n,
     create_ssh_key_n,
 )
-from fixtures.staging_env import group_2, group_3, group_4, group_5, group_6
+from fixtures.staging_env import group_1, group_2, group_3, group_4, group_5, group_6
 from workflows.metadata_sync import MetadataSyncWorkflow
 from workflows.utils.debug import ContextDebugger
 
@@ -125,8 +125,13 @@ def remote_redshift(user):
 
 
 @pytest.fixture
-def turntable_dbt(user):
+def internal_bigquery(user):
     return group_6(user)[0]
+
+
+@pytest.fixture
+def internal_bigquery_deprecated(user):
+    return group_1(user)[0]
 
 
 @pytest.fixture
