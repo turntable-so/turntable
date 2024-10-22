@@ -79,14 +79,15 @@ const SkeletonLoadingTable = () => {
 
 
 
-export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview, isLoading: isQueryLoading }: {
+export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview, isLoading: isQueryLoading, queryPreviewError }: {
     rowData: any,
     gridRef: any,
     colDefs: any,
     runQueryPreview: any,
     isLoading: boolean,
+    queryPreviewError: string | null,
 }) {
-    const [activeTab, setActiveTab] = useState("lineage");
+    const [activeTab, setActiveTab] = useState<"results" | "lineage">("results");
 
     const { fetchFileBasedLineage, lineageData } = useLineage()
     const { activeFile } = useFiles()
@@ -111,14 +112,15 @@ export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview
             <div className='h-10 bg-muted/50 border-t-2 flex justify-between items-center'>
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="text-sm">
                     <TabsList>
-                        <TabsTrigger value="lineage">
-                            <Network className="h-4 w-4 mr-2" />
-                            Lineage
-                        </TabsTrigger>
                         <TabsTrigger value="results">
                             <TableIcon className="h-4 w-4 mr-2" />
                             Preview
                         </TabsTrigger>
+                        <TabsTrigger value="lineage">
+                            <Network className="h-4 w-4 mr-2" />
+                            Lineage
+                        </TabsTrigger>
+
                     </TabsList>
                 </Tabs>
                 <div className="mr-2">
@@ -150,22 +152,34 @@ export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview
             </div >
             <Panel defaultSize={40} className='border-t flex items-center justify-center'>
                 <div className="flex flex-col w-full h-full flex-grow-1" ref={bottomPanelRef}>
-                    {activeTab === "results" && (
-                        isQueryLoading ? (
-                            <SkeletonLoadingTable />
-                        ) : (
-                            <AgGridReact
-                                className="ag-theme-custom"
-                                ref={gridRef}
-                                suppressRowHoverHighlight={true}
-                                columnHoverHighlight={true}
-                                rowData={rowData}
-                                pagination={true}
-                                // @ts-ignore
-                                columnDefs={colDefs}
-                            />
-                        )
-                    )}
+                    {activeTab === "results" && (() => {
+                        switch (true) {
+                            case isQueryLoading:
+                                return <SkeletonLoadingTable />;
+                            case !!queryPreviewError:
+                                return <div style={{
+                                    height: bottomPanelHeight,
+                                }} className="overflow-y-scroll  p-6 " >
+                                    <div className=" text-red-500 text-sm">
+                                        {queryPreviewError}
+                                    </div>
+                                    <div className='h-24' />
+                                </div>;
+                            default:
+                                return (
+                                    <AgGridReact
+                                        className="ag-theme-custom"
+                                        ref={gridRef}
+                                        suppressRowHoverHighlight={true}
+                                        columnHoverHighlight={true}
+                                        rowData={rowData}
+                                        pagination={true}
+                                        // @ts-ignore
+                                        columnDefs={colDefs}
+                                    />
+                                );
+                        }
+                    })()}
                     {activeTab === "lineage" && (
                         <div className="h-full">
                             <ErrorBoundary FallbackComponent={() => (

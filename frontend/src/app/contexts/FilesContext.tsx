@@ -12,7 +12,7 @@ export type OpenedFile = {
     node: FileNode;
     content: string;
     isDirty: boolean;
-    view: 'edit' | 'diff';
+    view: 'edit' | 'diff' | 'new';
     diff?: {
         original: string;
         modified: string;
@@ -39,8 +39,21 @@ const FilesContext = createContext<FilesContextType | undefined>(undefined);
 
 export const FilesProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [files, setFiles] = useState<FileNode[]>([]);
-    const [openedFiles, setOpenedFiles] = useState<OpenedFile[]>([]);
-    const [activeFile, setActiveFile] = useState<OpenedFile | null>(null);
+    const [openedFiles, setOpenedFiles] = useState<OpenedFile[]>([
+        {
+            node: {
+                name: 'New tab',
+                path: 'Untitled',
+                type: 'file'
+            },
+            content: '',
+            isDirty: false,
+            view: 'new'
+        }
+    ]);
+    const [activeFile, setActiveFile] = useState<OpenedFile | null>(
+        openedFiles[0] || null
+    );
     const [activeFilepath, setActiveFilepath] = useState<string | null>(null);
     const [searchFileIndex, setSearchFileIndex] = useState<FileNode[]>([]);
 

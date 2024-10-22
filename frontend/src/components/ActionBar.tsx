@@ -289,14 +289,9 @@ export default function ActionBar({
   };
 
   return (
-    <div className="text-muted-foreground w-full h-screen flex flex-col">
-      <div
-        className={cn(
-          "flex h-[52px] items-center justify-center",
-          "h-[52px]"
-        )}
-      >
-        <div className="flex space-x-2 w-full px-4">
+    <div className="text-muted-foreground w-full h-fit flex flex-col">
+      <div>
+        {/* <div className="flex space-x-2 w-full px-4">
           <input
             ref={searchRef}
             value={searchQuery}
@@ -304,7 +299,7 @@ export default function ActionBar({
             className="focus:outline-none bg-gray-100 w-full text-sm rounded-md py-2 px-2 border"
             placeholder="Filter assets"
           />
-        </div>
+        </div> */}
         <div className="flex justify-between">
           {/* <div className="text-xs mt-2 px-1 invisible">
             {filteredAssets.length} Assets
@@ -317,7 +312,7 @@ export default function ActionBar({
         </div>
       </div>
       <div
-        className={`flex-grow border-t mt-0 h-500 ${isFilterPopoverOpen ? "z-[-1]" : ""
+        className={`flex-grow mt-0 h-500 ${isFilterPopoverOpen ? "z-[-1]" : ""
           }`}
       >
         <Tabs defaultValue="assets" className="h-full">
@@ -364,18 +359,18 @@ export default function ActionBar({
                           width={width}
                           data={treeData}
                           initialSlelectedItemId="f12"
-                          onSelectChange={(item) => {
-                            if (item?.isSelectable) {
-                              if (context === "LINEAGE") {
-                                if (focusedAsset?.id !== item.id) {
-                                  setIsLineageLoading(true);
-                                  router.push(`/lineage/${item.id}`);
-                                }
-                              } else {
-                                fetchAssetPreview(item.id);
-                              }
-                            }
-                          }}
+                          // onSelectChange={(item) => {
+                          //   if (item?.isSelectable) {
+                          //     if (context === "LINEAGE") {
+                          //       if (focusedAsset?.id !== item.id) {
+                          //         setIsLineageLoading(true);
+                          //         router.push(`/lineage/${item.id}`);
+                          //       }
+                          //     } else {
+                          //       fetchAssetPreview(item.id);
+                          //     }
+                          //   }
+                          // }}
                           folderIcon={Folder}
                           itemIcon={Workflow}
                         />

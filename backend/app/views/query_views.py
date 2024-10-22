@@ -109,9 +109,15 @@ class DbtQueryPreviewView(APIView):
                 "use_fast_compile": False,
             },
         )
-
-        result = await workflow_run.result()
-        signed_url = result.get("dbt_query_preview", {}).get("signed_url", "")
+        try:
+            result = await workflow_run.result()
+            signed_url = result.get("dbt_query_preview", {}).get("signed_url", "")
+        except Exception as e:
+            print(e)
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         return JsonResponse(
             {"signed_url": signed_url},
