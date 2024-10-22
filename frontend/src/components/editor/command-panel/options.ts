@@ -1,4 +1,4 @@
-export const DEFAULT_COMMAND_OPTIONS = ["run", "test", "ls", "compile", "docs generate"];
+export const DEFAULT_COMMAND_OPTIONS = ["compile", "run", "test", "build", "snapshot"];
 
 const MAX_RECENT_COMMANDS = 10;
 

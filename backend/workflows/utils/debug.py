@@ -6,13 +6,22 @@ import uuid
 import networkx as nx
 from hatchet_sdk import Context
 from mpire import WorkerPool
+import os
+import asyncio
+
+
+class StreamEvent:
+    def __init__(self, payload, type):
+        self.payload = payload
+        self.type = type
 
 
 class ContextDebugger:
     def __init__(self, data):
         data.setdefault("workflow_run_id", uuid.uuid4())
         self.data = data
-        self.stream = []
+        self.queue = asyncio.Queue()  # This will hold stream events
+        self.listener = self._stream()  # Initialize the async generator
 
     def workflow_run_id(self):
         return self.data.get("workflow_run_id")
@@ -26,9 +35,40 @@ class ContextDebugger:
     def log(self, message):
         print(message)
 
-    def put_stream(self, message):
-        print(message)
-        self.stream.append(message)
+    async def put_stream(self, message):
+        # Put the message in the queue as a StreamEvent
+        event = StreamEvent(payload=message, type="STEP_RUN_EVENT_TYPE_STREAM")
+        await self.queue.put(event)
+    
+    async def _stream(self):
+        # This is the async generator that yields events from the queue
+        while True:
+            event = await self.queue.get()
+            yield event
+
+
+async def run_workflow(workflow, input: dict) -> tuple[str, WorkflowDebugger]:
+    if os.getenv("NO_HATCHET") == "true":
+        workflow_run = WorkflowDebugger(workflow, input).run()
+        workflow_run_id = workflow_run.context.workflow_run_id()
+    else:
+        from workflows.hatchet import hatchet
+
+        workflow_run_id = hatchet.admin.run_workflow(
+                workflow.__name__,
+                input=input,
+            )
+        workflow_run = None
+    return workflow_run_id, workflow_run
+
+
+async def get_async_listener(workflow_run_id: str, workflow_run: WorkflowDebugger):
+    if os.getenv("NO_HATCHET") == "true":
+        return workflow_run.context.listener
+    else:
+        from workflows.hatchet import hatchet
+
+        return hatchet.listener.stream(workflow_run_id)
 
 
 def spawn_workflow(context, workflow, input: dict, key: str | None = None):

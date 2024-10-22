@@ -18,6 +18,7 @@ from fixtures.local_env import (
 from fixtures.staging_env import group_2, group_3, group_4, group_5
 from workflows.metadata_sync import MetadataSyncWorkflow
 from workflows.utils.debug import ContextDebugger
+from rest_framework_simplejwt.tokens import AccessToken
 
 MOCK_WORKSPACE_ID = "mock_"
 
@@ -79,6 +80,13 @@ def client(user, workspace):
     client.force_authenticate(user=user)
     return client
 
+@pytest.fixture
+def client_with_token(user, workspace):
+    client = APIClient()
+    token = str(AccessToken.for_user(user))
+    client.force_authenticate(user=user, token=token)
+    client.access_token = token
+    return client
 
 @pytest.fixture
 def local_postgres(workspace):
@@ -156,3 +164,21 @@ def use_cache(request):
 @pytest.fixture
 def force_isolate(monkeypatch):
     monkeypatch.setenv("FORCE_ISOLATE", "true")
+
+
+@pytest.fixture
+def no_hatchet(monkeypatch):
+    monkeypatch.setenv("NO_HATCHET", "true")
+
+
+@pytest.fixture()
+def enable_django_allow_async_unsafe():
+    original_value = os.environ.get("DJANGO_ALLOW_ASYNC_UNSAFE")
+    os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
+    yield
+
+    # Restore original value after tests
+    if original_value is not None:
+        os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = original_value
+    else:
+        del os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"]

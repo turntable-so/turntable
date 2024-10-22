@@ -4,7 +4,6 @@ import { Button } from "../../ui/button";
 import { useWebSocket } from "@/app/hooks/use-websocket";
 import { useCommandPanelContext } from "./context";
 import getUrl from "@/app/url";
-import useSession from "@/app/hooks/use-session";
 import { AuthActions } from "@/lib/auth";
 
 const baseUrl = getUrl();
@@ -21,12 +20,11 @@ export default function CommandPanelActionBtn({ inputValue, setInputValue, onRun
     const { getToken } = AuthActions();
     const accessToken = getToken("access");
     
-    const session = useSession();
     const { commandPanelState, setCommandPanelState, addCommandToHistory, updateCommandLogById, setSelectedCommandIndex, updateCommandById } = useCommandPanelContext();
     const newCommandIdRef = useRef<string | null>(null);
 
     // TODO: pass in branch id when we support branches
-    const { startWebSocket, sendMessage, stopWebSocket } = useWebSocket(`${protocol}://${base}/ws/dbt_command/${session.user.current_workspace.id}/?token=${accessToken}`, {
+    const { startWebSocket, sendMessage, stopWebSocket } = useWebSocket(`${protocol}://${base}/ws/dbt_command/?token=${accessToken}`, {
         onOpen: () => {
             sendMessage(JSON.stringify({ action: "start", command: inputValue }));
             setInputValue("");

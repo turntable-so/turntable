@@ -3,7 +3,6 @@ import shlex
 import shutil
 from urllib.parse import unquote
 
-from django.http import StreamingHttpResponse
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -11,8 +10,6 @@ from rest_framework.response import Response
 from api.serializers import AssetSerializer, LineageSerializer
 from app.core.dbt import LiveDBTParser
 from app.models.git_connections import Branch
-from workflows.dbt_runner import DBTStreamerWorkflow
-from asgiref.sync import async_to_sync
 
 
 def _build_file_tree(user_id: str, path: str, base_path: str):

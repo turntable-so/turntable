@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 import os
+import sys
 from datetime import timedelta
 from pathlib import Path
 from urllib.parse import urlparse
@@ -197,10 +198,9 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
     "UPDATE_LAST_LOGIN": True,
-    "SIGNING_KEY": "complexsigningkey",  # generate a key and replace me
+    "SIGNING_KEY": SECRET_KEY,
     "ALGORITHM": "HS512",
 }
-
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -209,10 +209,6 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
-}
-
-SIMPLE_JWT = {
-    "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
@@ -322,9 +318,11 @@ else:
     parsed_url = urlparse(redis_url)
     redis_hosts = [(redis_url)]
 
+
+is_test_environment = 'test' in sys.argv or 'pytest' in sys.modules
 CHANNEL_LAYERS = {
     "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {"hosts": redis_hosts},
-    },
+        "BACKEND": "channels_redis.core.RedisChannelLayer" if not is_test_environment else "channels.layers.InMemoryChannelLayer",
+        "CONFIG": {"hosts": redis_hosts} if not is_test_environment else {},
+    }
 }
