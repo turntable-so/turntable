@@ -89,10 +89,13 @@ class DBTStreamerWorkflow:
         dbt_resource = DBTCoreDetails.objects.get(id=dbt_resource_id)
         command = context.workflow_input()["command"]
 
+        def should_terminate():
+            return context.done()
+
         with dbt_resource.dbt_transition_context(branch_id=branch_id) as (
             transition,
             project_dir,
             _,
         ):
-            for line in transition.after.stream_dbt_command(command):
+            for line in transition.after.stream_dbt_command(command, should_terminate=should_terminate):
                 context.put_stream(line)
