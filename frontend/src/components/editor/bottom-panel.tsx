@@ -93,7 +93,7 @@ export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview
     const { activeFile } = useFiles()
 
     useEffect(() => {
-        if (activeFile && activeTab === "lineage" && activeFile.node.path.endsWith(".sql")) {
+        if (activeFile && activeFile.node.path.endsWith(".sql")) {
             if (!lineageData[activeFile.node.path]) {
                 fetchFileBasedLineage(activeFile.node.path)
             }
@@ -101,8 +101,6 @@ export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview
     }, [activeFile, activeTab, fetchFileBasedLineage])
 
     const { ref: bottomPanelRef, width: bottomPanelWidth, height: bottomPanelHeight } = useResizeObserver();
-
-    console.log({ lineageData })
 
 
 
@@ -117,7 +115,9 @@ export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview
                             Preview
                         </TabsTrigger>
                         <TabsTrigger value="lineage">
-                            <Network className="h-4 w-4 mr-2" />
+                            {lineageData[activeFile?.node.path || ""]?.isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : (
+                                <Network className="h-4 w-4 mr-2" />
+                            )}
                             Lineage
                         </TabsTrigger>
 
@@ -186,16 +186,23 @@ export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview
                                 <div>Something went wrong</div>
                             )}>
                                 <>
-                                    {lineageData && lineageData[activeFile?.node.path || ''] && lineageData[activeFile?.node.path || ''].isLoading ? (
+                                    {lineageData && lineageData[activeFile?.node.path || ''] && lineageData[activeFile?.node.path || ''].isLoading && (
                                         <div className='w-full bg-gray-200 flex items-center justify-center' style={{ height: bottomPanelHeight }}>
                                             <Loader2 className='h-6 w-6 animate-spin opacity-50' />
                                         </div>
-                                    ) : (
-                                        lineageData && lineageData[activeFile?.node.path || ''] && lineageData[activeFile?.node.path || ''].data && (
-                                            <LineageView
-                                                key={activeFile?.node.path
-                                                } lineage={lineageData[activeFile?.node.path || ''].data.lineage} rootAsset={lineageData[activeFile?.node.path || ''].data.root_asset} style={{ height: bottomPanelHeight, }} />
-                                        )
+                                    )}
+                                    {lineageData && lineageData[activeFile?.node.path || ''] && lineageData[activeFile?.node.path || ''].data && (
+                                        <LineageView
+                                            key={activeFile?.node.path}
+                                            lineage={lineageData[activeFile?.node.path || ''].data.lineage}
+                                            rootAsset={lineageData[activeFile?.node.path || ''].data.root_asset}
+                                            style={{ height: bottomPanelHeight, }}
+                                        />
+                                    )}
+                                    {lineageData && lineageData[activeFile?.node.path || ''] && lineageData[activeFile?.node.path || ''].error && (
+                                        <div className='w-full bg-gray-200 flex items-center justify-center' style={{ height: bottomPanelHeight }}>
+                                            <div className='text-red-500 text-sm'>{lineageData[activeFile?.node.path || ''].error}</div>
+                                        </div>
                                     )}
                                 </>
                             </ErrorBoundary>

@@ -43,7 +43,9 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
         <AppContextProvider>
             <div className='flex h-screen'>
                 <div className="flex w-full">
-                    {/* <SideBar isCollapsed={sidebarCollapsed} /> */}
+                    {!pathName.includes('/editor') && (
+                        <SideBar isCollapsed={sidebarCollapsed} />
+                    )}
                     <main className="flex flex-grow-1 w-full">
                         {sidebarCollapsed ? (
                             sidebarContext === 'ACTION' ? (

@@ -49,10 +49,10 @@ export default function TopBar() {
                     </Button>
                 </div >
                 <div className="flex items-center space-x-2">
-                    <Button variant='ghost' size='sm' className='bg-white w-full hover:bg-gray-200 flex items-center space-x-1'>
+                    {/* <Button variant='ghost' size='sm' className='bg-white w-full hover:bg-gray-200 flex items-center space-x-1'>
                         <Search className='w-4 h-4' />
                         <div className="text-xs ">Search & Commands (⌘K)</div>
-                    </Button>
+                    </Button> */}
                     <Button variant='ghost' size='sm' className='bg-white hover:bg-gray-200 flex items-center space-x-1'>
                         <Users className='w-4 h-4' />
                         <div className="text-xs">Invite</div>

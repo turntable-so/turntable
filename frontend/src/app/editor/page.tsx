@@ -24,6 +24,7 @@ import React from 'react'
 import BottomPanel from '@/components/editor/bottom-panel'
 import { LineageProvider } from '../contexts/LineageContext'
 import EditorSidebar from '@/components/editor/editor-sidebar'
+import FileTabs from '@/components/editor/file-tabs'
 
 const PromptBox = ({ setPromptBoxOpen }: { setPromptBoxOpen: (open: boolean) => void }) => {
 
@@ -210,12 +211,7 @@ function EditorContent({ setPromptBoxOpen, containerWidth }: { setPromptBoxOpen:
     if (activeFile?.view === 'new') {
         return (
             <div className='h-full w-full flex items-center justify-center'>
-                <div className='w-full max-w-4xl'>
-                    <Input placeholder='Ask AI, search for files & run commands' />
-                </div>
-                <div>
-                    asd
-                </div>
+                new tab experience coming soon
             </div>
         )
     }
@@ -509,45 +505,10 @@ function EditorPageContent() {
                 <PanelResizeHandle className="bg-transparent   transition-colors" />
                 <Panel>
                     <div className="h-full bg-white" ref={topBarRef}>
-                        <div className='hover:cursor-pointer flex items-center space-x-2 py-0 bg-muted'>
-                            <div className='w-full' style={{
-                                maxWidth: topBarWidth ? topBarWidth - 50 : '100%'
-                            }}>
-                                <ScrollArea className='w-full flex whitespace-nowrap overflow-x-scroll'>
-                                    <div className='w-max flex overflow-x-scroll h-9'>
-                                        {openedFiles.map((file: OpenedFile, index: number) => (
-                                            <div
-                                                key={file.node.path}
-                                                onClick={() => {
-                                                    setActiveFile(file)
-                                                    setActiveFilepath(file.node.path)
-                                                }}
-                                                className={`px-2 py-1 text-xs font-medium flex items-center space-x-2 group select-none text-muted-foreground ${file.node.path === activeFile?.node.path ? 'text-black bg-white border-b-white border border-t-black' : 'border border-gray-200'} ${index === 0 ? 'border-l-0' : ''}`}
-                                            >
-                                                <div>
-                                                    {file.node.name}
-                                                </div>
-                                                <div className="relative h-3 w-3">
-                                                    {file.isDirty ? (
-                                                        <div className="h-3 w-3 rounded-full bg-blue-300 group-hover:invisible"></div>
-                                                    ) : null}
-                                                    <div
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            closeFile(file);
-                                                        }}
-                                                        className={`rounded-full bg-gray-500 text-gray-100 w-3 h-3 flex justify-center items-center font-bold ${file.isDirty ? 'opacity-0 group-hover:opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity absolute top-0 left-0`}
-                                                    >
-                                                        <X className='h-3 w-3' />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <ScrollBar className='h-2' orientation="horizontal" />
-                                </ScrollArea>
-                            </div>
-                        </div>
+                        <FileTabs
+                            topBarRef={topBarRef}
+                            topBarWidth={topBarWidth as number}
+                        />
                         <div className='py-2 w-full h-full'>
                             <PanelGroup direction="vertical" className="h-fit">
                                 {promptBoxOpen && (

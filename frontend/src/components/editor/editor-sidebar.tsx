@@ -51,8 +51,7 @@ export default function EditorSidebar() {
                 <ResizablePanel defaultSize={50} minSize={30} maxSize={70}>
                     <div className="h-full w-full px-2">
                         <div className="flex items-center space-x-2">
-                            <ChevronDown className="w-4 h-4" />
-                            <div className="text-black text-sm font-medium">Files  </div>
+                            <div className="px-1 text-black text-sm font-medium">Files  </div>
                         </div>
                         <div className="pt-2 h-full px-1" ref={treeContainerRef}>
                             <Tree
@@ -83,12 +82,11 @@ export default function EditorSidebar() {
                 <ResizablePanel defaultSize={50} minSize={30} maxSize={70}>
                     <div className="h-full w-full">
                         <div className="flex items-center space-x-2 px-2">
-                            <ChevronDown className="w-4 h-4" />
-                            <div className="text-black text-sm font-medium">Resources</div>
+                            <div className="px-1 text-black text-sm font-medium">Resources</div>
                         </div>
-                        <ScrollArea className='h-full z-50'>
+                        {/* <ScrollArea className='h-full z-50'>
                             <ActionBar key={'pls_remove'} context={'NOTEBOOK'} />
-                        </ScrollArea>
+                        </ScrollArea> */}
                     </div>
                 </ResizablePanel >
             </ResizablePanelGroup >

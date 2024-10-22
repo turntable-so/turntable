@@ -33,6 +33,7 @@ type FilesContextType = {
     searchFileIndex: FileNode[];
     createFileAndRefresh: (path: string, fileContents: string) => void;
     deleteFileAndRefresh: (path: string) => void;
+    createNewFileTab: () => void;
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
@@ -43,7 +44,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         {
             node: {
                 name: 'New tab',
-                path: 'Untitled',
+                path: `Untitled-${crypto.randomUUID()}`,
                 type: 'file'
             },
             content: '',
@@ -143,6 +144,21 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         await fetchFiles()
     }
 
+    const createNewFileTab = () => {
+        const newTab: OpenedFile = {
+            node: {
+                name: 'New tab',
+                path: `Untitled-${crypto.randomUUID()}`,
+                type: 'file'
+            },
+            content: '',
+            isDirty: false,
+            view: 'new'
+        }
+        setOpenedFiles(prev => [...prev, newTab]);
+        setActiveFile(newTab);
+    }
+
 
     return (
         <FilesContext.Provider value={{
@@ -158,7 +174,8 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             activeFilepath,
             searchFileIndex,
             createFileAndRefresh,
-            deleteFileAndRefresh
+            deleteFileAndRefresh,
+            createNewFileTab
         }}>
             {children}
         </FilesContext.Provider>

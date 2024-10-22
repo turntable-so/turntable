@@ -25,14 +25,26 @@ export const LineageProvider: React.FC<{ children: ReactNode }> = ({ children })
                 isLoading: true
             }
         })
-        const { lineage, root_asset } = await getProjectBasedLineage({ filePath, successor_depth: 1, predecessor_depth: 1 })
-        setLineageData({
-            ...lineageData,
-            [filePath]: {
-                data: { lineage, root_asset },
-                isLoading: false
-            }
-        })
+        const result = await getProjectBasedLineage({ filePath, successor_depth: 1, predecessor_depth: 1 })
+        if (result.error) {
+            setLineageData({
+                ...lineageData,
+                [filePath]: {
+                    data: null,
+                    isLoading: false,
+                    error: result.error
+                }
+            })
+        } else {
+            const { lineage, root_asset } = result
+            setLineageData({
+                ...lineageData,
+                [filePath]: {
+                    data: { lineage, root_asset },
+                    isLoading: false
+                }
+            })
+        }
     }
 
     return (

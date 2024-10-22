@@ -195,51 +195,58 @@ class ProjectViewSet(viewsets.ViewSet):
             _,
             repo,
         ):
-            transition.mount_manifest(defer=defer)
-            transition.mount_catalog(defer=defer)
+            try:
+                transition.mount_manifest(defer=defer)
+                transition.mount_catalog(defer=defer)
 
-            node_id = LiveDBTParser.get_node_id_from_filepath(
-                transition.after, filepath, defer
-            )
-            if not node_id:
-                raise ValueError(f"Node at filepath{filepath} not found in manifest")
+                node_id = LiveDBTParser.get_node_id_from_filepath(
+                    transition.after, filepath, defer
+                )
+                if not node_id:
+                    raise ValueError(
+                        f"Node at filepath{filepath} not found in manifest"
+                    )
 
-            dbtparser = LiveDBTParser.parse_project(
-                proj=transition.after,
-                before_proj=transition.before,
-                node_id=node_id,
-                resource=dbt_details.resource,
-                predecessor_depth=predecessor_depth,
-                successor_depth=successor_depth,
-                defer=defer,
-            )
-            lineage, _ = dbtparser.get_lineage()
-            root_asset = None
-            column_lookup = {}
-            for asset in lineage.assets:
-                column_lookup[asset.id] = []
-            for column in lineage.columns:
-                column_lookup[column.asset_id].append(column)
+                dbtparser = LiveDBTParser.parse_project(
+                    proj=transition.after,
+                    before_proj=transition.before,
+                    node_id=node_id,
+                    resource=dbt_details.resource,
+                    predecessor_depth=predecessor_depth,
+                    successor_depth=successor_depth,
+                    defer=defer,
+                )
+                lineage, _ = dbtparser.get_lineage()
+                root_asset = None
+                column_lookup = {}
+                for asset in lineage.assets:
+                    column_lookup[asset.id] = []
+                for column in lineage.columns:
+                    column_lookup[column.asset_id].append(column)
 
-            for asset in lineage.assets:
-                if asset.id == lineage.asset_id:
-                    root_asset = asset
+                for asset in lineage.assets:
+                    if asset.id == lineage.asset_id:
+                        root_asset = asset
 
-                asset.temp_columns = column_lookup[asset.id]
+                    asset.temp_columns = column_lookup[asset.id]
 
-            if not root_asset:
-                raise ValueError(f"Root asset not found for {lineage.asset_id}")
+                if not root_asset:
+                    raise ValueError(f"Root asset not found for {lineage.asset_id}")
 
-            asset_serializer = AssetSerializer(root_asset, context={"request": request})
-            lineage_serializer = LineageSerializer(
-                lineage, context={"request": request}
-            )
-            return Response(
-                {
-                    "root_asset": asset_serializer.data,
-                    "lineage": lineage_serializer.data,
-                }
-            )
+                asset_serializer = AssetSerializer(
+                    root_asset, context={"request": request}
+                )
+                lineage_serializer = LineageSerializer(
+                    lineage, context={"request": request}
+                )
+                return Response(
+                    {
+                        "root_asset": asset_serializer.data,
+                        "lineage": lineage_serializer.data,
+                    }
+                )
+            except Exception as e:
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["POST"])
     def stream_dbt_command(self, request):
