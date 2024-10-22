@@ -55,3 +55,38 @@ class TestDBTCommandConsumer:
 
         assert "PROCESS_STREAM_SUCCESS" in out
         await communicator.disconnect()
+    
+    @pytest.mark.usefixtures("enable_django_allow_async_unsafe")
+    async def test_can_cancel_command(self, client_with_token):
+        communicator = WebsocketCommunicator(
+            application,
+            f"{self.url}?token={client_with_token.access_token}",
+        )
+        connected, _ = await communicator.connect()
+        assert connected
+
+        await communicator.send_json_to({
+            "action": "start",
+            "command": "ls"
+        })
+
+        # wait for the command to start
+        try:
+            await communicator.receive_from()
+        except asyncio.TimeoutError:
+            pass
+
+        await communicator.send_json_to({
+            "action": "cancel"
+        })
+        
+        out = ""
+        try:
+            while True:
+                response = await communicator.receive_from()
+                out += response
+        except asyncio.TimeoutError:
+            pass
+
+        assert "WORKFLOW_CANCELLED" in out
+        await communicator.disconnect()

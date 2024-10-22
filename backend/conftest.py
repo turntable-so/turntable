@@ -171,14 +171,6 @@ def no_hatchet(monkeypatch):
     monkeypatch.setenv("NO_HATCHET", "true")
 
 
-@pytest.fixture()
-def enable_django_allow_async_unsafe():
-    original_value = os.environ.get("DJANGO_ALLOW_ASYNC_UNSAFE")
-    os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
-    yield
-
-    # Restore original value after tests
-    if original_value is not None:
-        os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = original_value
-    else:
-        del os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"]
+@pytest.fixture
+def enable_django_allow_async_unsafe(monkeypatch):
+    monkeypatch.setenv("DJANGO_ALLOW_ASYNC_UNSAFE", "true")

@@ -48,7 +48,7 @@ class DBTCommandConsumer(AsyncWebsocketConsumer):
                 self.workflow_task.cancel()
                 if self.workflow_run_id:
                     try:
-                        hatchet.rest.workflow_run_cancel(self.workflow_run_id)
+                        await hatchet.rest.workflow_run_cancel(self.workflow_run_id)
                     except Exception as e:
                         logger.error(f"Error cancelling Hatchet workflow: {e}")
                 await self.send(text_data="WORKFLOW_CANCELLED")

@@ -103,7 +103,7 @@ export default function CommandPanelActionBtn({ inputValue, setInputValue, onRun
             time: new Date().toLocaleTimeString()
         });
         setSelectedCommandIndex(0);
-        onRunCommand(); // Call the onRunCommand prop
+        onRunCommand();
     };
 
     const handleCommandEnterShortcut = () => {
