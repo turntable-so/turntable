@@ -8,7 +8,7 @@ import tempfile
 import traceback
 from dataclasses import make_dataclass
 from io import StringIO
-from typing import Any, Generator
+from typing import Any, Callable, Generator
 
 import orjson
 import yaml
@@ -333,7 +333,9 @@ class DBTProject(object):
         return out.stdout, out.stderr, success
 
     def dbt_cli_stream(
-        self, command: list[str]
+        self,
+        command: list[str],
+        should_terminate: Callable[[], bool] = None
     ) -> Generator[str, None, tuple[str, str, bool]]:
         env, cwd = self._dbt_cli_env()
 
@@ -347,7 +349,11 @@ class DBTProject(object):
             text=True,
             cwd=cwd,
         )
+
         while process.poll() is None:
+            if should_terminate and should_terminate():
+                process.terminate()
+                break
             ready, _, _ = select.select([process.stdout, process.stderr], [], [], 0.1)
             for stream in ready:
                 line = stream.readline()
@@ -358,19 +364,22 @@ class DBTProject(object):
                         stderrs.append(line)
                     yield line
 
-        # Read any remaining output
-        for line in process.stdout:
-            stdouts.append(line)
-            yield line
-        for line in process.stderr:
-            stderrs.append(line)
-            yield line
+        # Read any remaining output after termination
+        if process.stdout:
+            for line in process.stdout:
+                stdouts.append(line)
+                yield line
+        if process.stderr:
+            for line in process.stderr:
+                stderrs.append(line)
+                yield line
 
         stdout = "".join(stdouts)
         stderr = "".join(stderrs)
 
         success = self.check_command_success(stdout, stderr)
-        yield f"{success}\n"
+        success_str = "PROCESS_STREAM_SUCCESS" if success else "PROCESS_STREAM_ERROR"
+        yield success_str
 
     @classmethod
     def check_command_success(cls, stdout: str, stderr: str) -> bool:
@@ -389,7 +398,6 @@ class DBTProject(object):
         cli_args: list[str] | None = None,
         write_json: bool = False,
         dbt_cache: bool = False,
-        force_terminal: bool = True,
         defer: bool = False,
         defer_selection: bool = True,
     ) -> tuple[str, str, bool]:
@@ -451,7 +459,6 @@ class DBTProject(object):
             cli_args,
             write_json,
             dbt_cache,
-            force_terminal,
             defer,
             defer_selection,
         )
@@ -465,6 +472,7 @@ class DBTProject(object):
     def stream_dbt_command(
         self,
         command: list[str],
+        should_terminate: Callable[[], bool] = None,
         cli_args: list[str] | None = None,
         write_json: bool = False,
         dbt_cache: bool = False,
@@ -477,16 +485,15 @@ class DBTProject(object):
             cli_args,
             write_json,
             dbt_cache,
-            force_terminal,
             defer,
             defer_selection,
         )
         if self.dbt1_5 and not force_terminal and not self.multitenant:
             # self.install_dbt_if_necessary()
             # TODO: make streaming work for python api
-            yield from self.dbt_cli_stream(full_command)
+            yield from self.dbt_cli_stream(full_command, should_terminate=should_terminate)
         else:
-            yield from self.dbt_cli_stream(full_command)
+            yield from self.dbt_cli_stream(full_command, should_terminate=should_terminate)
 
     def dbt_parse(self, defer: bool = False) -> tuple[str, str, bool]:
         if self.dbt1_5:
@@ -627,7 +634,6 @@ class DBTProject(object):
                 return out, errors
 
         elif compile_if_not_found:
-            print("compiling")
             stdout, stderr, success = self.dbt_compile(
                 [node_id],
                 write_json=True,
@@ -934,3 +940,4 @@ class DBTTransition:
         self.after.mount_catalog(
             read=read, force_run=force_run, force_read=force_read, defer=defer
         )
+

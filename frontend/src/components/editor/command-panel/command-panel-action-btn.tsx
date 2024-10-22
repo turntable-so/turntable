@@ -1,48 +1,96 @@
-import { CircleX as CircleXIcon, Command as PlayIcon, CornerDownLeft } from "lucide-react";
-import { Button } from "../../ui/button";
-import { Command, CommandPanelState } from "./types";
-import { useWebSocket } from "@/app/hooks/use-websocket";
 import { useEffect, useRef } from "react";
+import { CircleSlash, Command as PlayIcon, CornerDownLeft } from "lucide-react";
+import { Button } from "../../ui/button";
+import { useWebSocket } from "@/app/hooks/use-websocket";
+import { useCommandPanelContext } from "./command-panel-context";
+import getUrl from "@/app/url";
+import { AuthActions } from "@/lib/auth";
+import { Loader2 } from "lucide-react";
+
+const baseUrl = getUrl();
+const base = new URL(baseUrl).host;
+const protocol = process.env.NODE_ENV === 'development' ? 'ws' : 'wss';
 
 type CommandPanelActionBtnProps = { 
-    commandPanelState: CommandPanelState;
     inputValue: string;
-    setCommandPanelState: (state: CommandPanelState) => void;
-    addCommandToHistory: (newCommand: Command) => void;
-    updateCommandLogById: (id: string, newLog: string) => void;
-    setSelectedCommandIndex: (index: number) => void;
+    setInputValue: (value: string) => void;
+    onRunCommand: () => void;
 }
 
-export default function CommandPanelActionBtn({ commandPanelState, inputValue, setCommandPanelState, addCommandToHistory, updateCommandLogById, setSelectedCommandIndex }: CommandPanelActionBtnProps) {
-    const newCommandIdRef = useRef<string | null>(null);
+export default function CommandPanelActionBtn({ inputValue, setInputValue, onRunCommand }: CommandPanelActionBtnProps) {
+    const { getToken } = AuthActions();
+    const accessToken = getToken("access");
     
-    // TODO: make this dynamic
-    const { startWebSocket, sendMessage } = useWebSocket('ws://localhost:8000/ws/dbt_command/1/', {
+    const { commandPanelState, setCommandPanelState, addCommandToHistory, updateCommandLogById, setSelectedCommandIndex, updateCommandById } = useCommandPanelContext();
+    const newCommandIdRef = useRef<string>("");
+
+    const componentMap = {
+        "idling": <div className="flex flex-row gap-0.5 items-center mr-2 text-base">
+        <PlayIcon className="h-4 w-4 mr-0.5" />
+            <CornerDownLeft className="h-4 w-4 mr-2" /> Run
+        </div>,
+        "running": <div className="flex flex-row gap-2 items-center">
+            <CircleSlash className="h-4 w-4 mr-2" />
+            Cancel
+        </div>,
+        "cancelling": <div className="flex flex-row gap-2 items-center">
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            Cancelling
+        </div>
+    }
+
+    const isDisabled = commandPanelState === "cancelling";
+
+    // TODO: pass in branch id when we support branches
+    const { startWebSocket, sendMessage, stopWebSocket } = useWebSocket(`${protocol}://${base}/ws/dbt_command/?token=${accessToken}`, {
         onOpen: () => {
-            sendMessage(JSON.stringify({ command: inputValue }));
+            sendMessage(JSON.stringify({ action: "start", command: inputValue }));
+            setInputValue("");
         },
         onMessage: (event) => {
-            console.log('Received:', event.data);
-            const message = JSON.parse(event.data) as { event: "update"; payload: string; };
-            console.log('newCommandId:', newCommandIdRef.current);
-            updateCommandLogById(newCommandIdRef.current, message.payload);
+            if (event.data.error) {
+                setCommandPanelState("idling");
+                updateCommandById(newCommandIdRef.current, { status: "failed" });
+            } else if (event.data === "PROCESS_STREAM_SUCCESS") {
+                setCommandPanelState("idling");
+                updateCommandById(newCommandIdRef.current, { status: "success", duration: `${Math.round((Date.now() - parseInt(newCommandIdRef.current)) / 1000)}s` });
+            } else if (event.data === "PROCESS_STREAM_ERROR") {
+                setCommandPanelState("idling");
+                updateCommandById(newCommandIdRef.current, { status: "failed" });
+            } else if (event.data === "WORKFLOW_CANCELLED") {
+                setCommandPanelState("idling");
+                updateCommandById(newCommandIdRef.current, { status: "cancelled" });
+                stopWebSocket()
+            } else {
+                updateCommandLogById(newCommandIdRef.current, event.data);
+            }
         },
         onError: (event) => {
             console.error('WebSocket error:', event);
             updateCommandLogById(newCommandIdRef.current, `WebSocket error: ${event}`);
             setCommandPanelState("idling");
+            updateCommandById(newCommandIdRef.current, { status: "failed" });
         },
         onClose: () => {
             setCommandPanelState("idling");
-        }
+        },
     });
 
     const handleRunCommand = () => {
-        if (!inputValue || commandPanelState === "running") {
+        if (commandPanelState === "running") {
+            console.log("Cancelling")
+            sendMessage(JSON.stringify({ action: "cancel" }));
+            setCommandPanelState("cancelling");
             return;
         }
 
-        console.log('handleRunCommand:', { inputValue });
+        if (!inputValue || commandPanelState === "cancelling") {
+            console.log("Not running, returning")
+            return;
+        }
+
+        console.log("Running")
+
         startWebSocket();
         setCommandPanelState("running");
 
@@ -55,6 +103,7 @@ export default function CommandPanelActionBtn({ commandPanelState, inputValue, s
             time: new Date().toLocaleTimeString()
         });
         setSelectedCommandIndex(0);
+        onRunCommand();
     };
 
     const handleCommandEnterShortcut = () => {
@@ -77,18 +126,9 @@ export default function CommandPanelActionBtn({ commandPanelState, inputValue, s
         <Button size='sm'
             variant="outline"
             onClick={handleRunCommand}
+            disabled={isDisabled}
         >
-            {
-                commandPanelState === "idling" ? 
-                <div className="flex flex-row gap-0.5 items-center mr-2 text-base">
-                    <PlayIcon className="h-4 w-4 mr-0.5" />
-                    <CornerDownLeft className="h-4 w-4 mr-2" /> Run
-                </div> :
-                <div className="flex flex-row gap-2 items-center">
-                    <CircleXIcon className="h-4 w-4 mr-2" />
-                    Cancel
-                </div>
-            }
+            {componentMap[commandPanelState]}
         </Button>
     )
 }

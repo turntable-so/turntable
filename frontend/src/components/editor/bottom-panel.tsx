@@ -18,7 +18,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import CommandPanelContent from "./command-panel";
+import CommandPanelWrapper from "./command-panel";
 import { useLocalStorage } from 'usehooks-ts';
 
 
@@ -102,13 +102,15 @@ export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview
 
     console.log({ lineageData })
 
+    console.log("bottomPanelHeight", bottomPanelHeight)
+
 
 
     return (
         <Fragment>
             <PanelResizeHandle className="h-1 bg-gray hover:bg-gray-300 hover:cursor-col-resize  transition-colors" />
             <div className='h-10 bg-muted/50 border-t-2 flex justify-between items-center'>
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="text-sm">
+                <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "lineage" | "results" | "command")} className="text-sm">
                     <TabsList>
                         <TabsTrigger value="lineage">
                             <Network className="h-4 w-4 mr-2" />
@@ -190,7 +192,7 @@ export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview
                             </ErrorBoundary>
                         </div>
                     )}
-                    {activeTab === "command" && <CommandPanelContent />}
+                    {activeTab === "command" && <CommandPanelWrapper bottomPanelHeight={bottomPanelHeight} />}
                 </div>
             </Panel>
         </Fragment >
