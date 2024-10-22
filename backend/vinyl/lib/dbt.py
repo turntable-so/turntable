@@ -352,7 +352,6 @@ class DBTProject(object):
 
         while process.poll() is None:
             if should_terminate and should_terminate():
-                print("TERMINATING!!!")
                 process.terminate()
                 break
             ready, _, _ = select.select([process.stdout, process.stderr], [], [], 0.1)
@@ -635,7 +634,6 @@ class DBTProject(object):
                 return out, errors
 
         elif compile_if_not_found:
-            print("compiling")
             stdout, stderr, success = self.dbt_compile(
                 [node_id],
                 write_json=True,
