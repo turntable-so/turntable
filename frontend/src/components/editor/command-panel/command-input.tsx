@@ -22,4 +22,6 @@ const CommandInput = React.forwardRef<HTMLInputElement, InputProps>(
     },
   );
 
+  CommandInput.displayName = "CommandInput";
+
   export default CommandInput;

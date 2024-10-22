@@ -14,6 +14,7 @@ media/ws/**
 !fixtures/datahub_dbs/metabase.duckdb
 *.duckdb.tmp/
 *.duckdb.wal
+*.trace.db
 
 # export folder
 exports/
