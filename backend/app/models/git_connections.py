@@ -101,7 +101,9 @@ class Repository(models.Model):
 
         # create main branch
         Branch.objects.get_or_create(
-            repository=self, branch_name=self.main_branch_name, workspace=self.workspace
+            repository=self,
+            branch_name=self.main_branch_name,
+            workspace=self.workspace,
         )
 
     # override main branch id. Useful for tests
@@ -205,11 +207,15 @@ class Branch(models.Model):
                 return
 
         with self._code_repo_path(isolate) as path:
-            if os.path.exists(path) and ".git" in os.listdir(path):
-                yield GitRepo(path), env_override
-                return
-
             with self.repository.with_ssh_env(env_override) as env:
+                if os.path.exists(path) and ".git" in os.listdir(path):
+                    gitrepo = GitRepo(path)
+                    with gitrepo.git.custom_environment(
+                        GIT_SSH_COMMAND=env["GIT_SSH_COMMAND"]
+                    ):
+                        yield gitrepo, env
+                        return
+
                 repo = GitRepo.clone_from(self.repository.git_repo_url, path, env=env)
 
                 # Fetch the latest changes from the remote

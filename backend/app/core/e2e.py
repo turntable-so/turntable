@@ -760,6 +760,12 @@ class DataHubDBParser:
                     workspace_id=self.workspace_id,
                     source_id=u,
                     target_id=v,
+                    source_resource_id=self.asset_dict[u].resource_id
+                    if u in self.asset_dict
+                    else None,
+                    target_resource_id=self.asset_dict[v].resource_id
+                    if v in self.asset_dict
+                    else None,
                 )
             )
         for u, v, data in self.column_graph.edges(data=True):
@@ -881,7 +887,11 @@ class DataHubDBParser:
         return nodes
 
     # @pyprofile(save_html=True)
-    def get_db_cll(self, ignore_ids: list[str] = []):
+    def get_db_cll(
+        self,
+        ignore_ids: list[str] = [],
+        lineage_types: list[ColumnLink.LineageType] = [],
+    ):
         self.get_asset_column_dict()
         asset_dict_items = self.asset_dict.items()
         graphs = []
@@ -892,7 +902,11 @@ class DataHubDBParser:
             if os.getenv("DEV") == "true":
                 print(j, k)
 
-            ltypes = [ltype for ltype in ColumnLink.LineageType]
+            ltypes = (
+                [ltype for ltype in ColumnLink.LineageType]
+                if lineage_types == []
+                else lineage_types
+            )
 
             nodes = self.get_ast_nodes(k, asset, ltypes)
             graph_it = nx.MultiDiGraph()
