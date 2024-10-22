@@ -4,10 +4,10 @@ import CommandLog from "./command-log";
 import { useCommandPanelContext } from "./context";
 import useResizeObserver from "use-resize-observer";
 
-export default function CommandPanelContent({ bottomPanelHeight }: { bottomPanelHeight: number }) {
+export default function CommandPanelContent({ bottomPanelHeight }: { bottomPanelHeight: number | undefined }) {
   const { commandHistory } = useCommandPanelContext();
   const { ref: headerRef, height: headerHeight } = useResizeObserver();
-  const componentHeight = bottomPanelHeight - (headerHeight || 0);
+  const componentHeight = (bottomPanelHeight || 0) - (headerHeight || 0);
 
   return (
     <div className="flex flex-col p-4 gap-6" style={{ height: componentHeight }}>

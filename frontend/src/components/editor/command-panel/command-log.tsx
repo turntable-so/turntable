@@ -9,7 +9,7 @@ export default function CommandLog({ bottomPanelHeight }: { bottomPanelHeight: n
 
   const logs = commandHistory[selectedCommandIndex]?.logs || [];
   const showLoader = commandPanelState === 'running' && logs.length === 0;
-  const containerRef = useRef(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (containerRef.current) {
