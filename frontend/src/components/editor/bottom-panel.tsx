@@ -110,7 +110,7 @@ export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview
         <Fragment>
             <PanelResizeHandle className="h-1 bg-gray hover:bg-gray-300 hover:cursor-col-resize  transition-colors" />
             <div className='h-10 bg-muted/50 border-t-2 flex justify-between items-center'>
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="text-sm">
+                <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "lineage" | "results" | "command")} className="text-sm">
                     <TabsList>
                         <TabsTrigger value="lineage">
                             <Network className="h-4 w-4 mr-2" />
