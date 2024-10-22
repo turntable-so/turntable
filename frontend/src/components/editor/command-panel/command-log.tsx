@@ -1,5 +1,5 @@
 import Convert from 'ansi-to-html';
-import { useCommandPanelContext } from './context';
+import { useCommandPanelContext } from './command-panel-context';
 import { Loader2 } from "lucide-react";
 import { useEffect, useRef } from 'react';
 

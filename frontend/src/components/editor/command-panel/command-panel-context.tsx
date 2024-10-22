@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { useLocalStorage } from 'usehooks-ts';
-import { Command, CommandPanelState, CommandStatus } from "./types";
+import { Command, CommandPanelState, CommandStatus } from "./command-panel-types";
 
 interface CommandPanelContextType {
   commandPanelState: CommandPanelState;
@@ -49,9 +49,16 @@ export const CommandPanelProvider: React.FC<CommandPanelProviderProps> = ({ chil
   const [commandPanelState, setCommandPanelState] = useState<CommandPanelState>("idling");
   const [selectedCommandIndex, setSelectedCommandIndex] = useState<number>(0);
   const [commandHistory, setCommandHistory] = useLocalStorage<Command[]>('command-history', []);
+  const MAX_COMMAND_HISTORY_SIZE = 20;
 
   const addCommandToHistory = (newCommand: Command) => {
-    setCommandHistory([newCommand, ...commandHistory]);
+    setCommandHistory((prevHistory) => {
+      const updatedHistory = [newCommand, ...prevHistory];
+      if (updatedHistory.length > MAX_COMMAND_HISTORY_SIZE) {
+        updatedHistory.pop();
+      }
+      return updatedHistory;
+    });
   }
 
   const updateCommandLogById = (id: string, newLog: string) => {

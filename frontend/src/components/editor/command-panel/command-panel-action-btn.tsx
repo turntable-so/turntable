@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { CircleSlash, Command as PlayIcon, CornerDownLeft } from "lucide-react";
 import { Button } from "../../ui/button";
 import { useWebSocket } from "@/app/hooks/use-websocket";
-import { useCommandPanelContext } from "./context";
+import { useCommandPanelContext } from "./command-panel-context";
 import getUrl from "@/app/url";
 import { AuthActions } from "@/lib/auth";
 import { Loader2 } from "lucide-react";
@@ -42,7 +42,7 @@ export default function CommandPanelActionBtn({ inputValue, setInputValue, onRun
     const isDisabled = commandPanelState === "cancelling";
 
     // TODO: pass in branch id when we support branches
-    const { startWebSocket, sendMessage } = useWebSocket(`${protocol}://${base}/ws/dbt_command/?token=${accessToken}`, {
+    const { startWebSocket, sendMessage, stopWebSocket } = useWebSocket(`${protocol}://${base}/ws/dbt_command/?token=${accessToken}`, {
         onOpen: () => {
             sendMessage(JSON.stringify({ action: "start", command: inputValue }));
             setInputValue("");
@@ -60,6 +60,7 @@ export default function CommandPanelActionBtn({ inputValue, setInputValue, onRun
             } else if (event.data === "WORKFLOW_CANCELLED") {
                 setCommandPanelState("idling");
                 updateCommandById(newCommandIdRef.current, { status: "cancelled" });
+                stopWebSocket()
             } else {
                 updateCommandLogById(newCommandIdRef.current, event.data);
             }
@@ -77,14 +78,18 @@ export default function CommandPanelActionBtn({ inputValue, setInputValue, onRun
 
     const handleRunCommand = () => {
         if (commandPanelState === "running") {
+            console.log("Cancelling")
             sendMessage(JSON.stringify({ action: "cancel" }));
             setCommandPanelState("cancelling");
             return;
         }
 
         if (!inputValue || commandPanelState === "cancelling") {
+            console.log("Not running, returning")
             return;
         }
+
+        console.log("Running")
 
         startWebSocket();
         setCommandPanelState("running");

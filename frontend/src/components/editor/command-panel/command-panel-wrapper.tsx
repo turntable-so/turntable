@@ -1,5 +1,5 @@
 import CommandPanelContent from "./command-panel-content";
-import { CommandPanelProvider } from "./context";
+import { CommandPanelProvider } from "./command-panel-context";
 
 export default function CommandPanelWrapper({ bottomPanelHeight }: { bottomPanelHeight: number | undefined }) {
     return (

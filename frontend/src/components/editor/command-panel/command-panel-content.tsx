@@ -1,7 +1,7 @@
 import CommandPanelInput from "./command-panel-input";
 import CommandPanelList from "./command-panel-list";
 import CommandLog from "./command-log";
-import { useCommandPanelContext } from "./context";
+import { useCommandPanelContext } from "./command-panel-context";
 import useResizeObserver from "use-resize-observer";
 
 export default function CommandPanelContent({ bottomPanelHeight }: { bottomPanelHeight: number | undefined }) {

@@ -1,8 +1,17 @@
+import { useEffect } from "react";
 import { CircleCheck, CircleX, LoaderCircle, CircleSlash } from "lucide-react";
-import { useCommandPanelContext } from "./context";
+import { useCommandPanelContext } from "./command-panel-context";
 
 export default function CommandPanelList() {
-    const { commandHistory, selectedCommandIndex, setSelectedCommandIndex } = useCommandPanelContext();
+    const { commandHistory, selectedCommandIndex, setSelectedCommandIndex, commandPanelState, updateCommandById } = useCommandPanelContext();
+
+    useEffect(() => {
+        commandHistory.forEach((command) => {
+            if (command.status === "running" && commandPanelState === "idling") {
+              updateCommandById(command.id, { status: "cancelled" });
+            }
+        });
+    }, [commandHistory]);
   
     return (
       <div className="flex flex-col">

@@ -37,8 +37,6 @@ class DBTCommandConsumer(AsyncWebsocketConsumer):
         data = json.loads(text_data)
         action = data.get("action")
 
-        print("ws - received action: ", action)
-
         if action == "start":
             if self.workflow_task and not self.workflow_task.done():
                 await self.send(text_data="TASK_ALREADY_RUNNING")
@@ -54,10 +52,8 @@ class DBTCommandConsumer(AsyncWebsocketConsumer):
                     except Exception as e:
                         logger.error(f"Error cancelling Hatchet workflow: {e}")
                 await self.send(text_data="WORKFLOW_CANCELLED")
-            else:
-                await self.send(text_data="NO_ACTIVE_WORKFLOW")
         else:
-            await self.send(text_data="INVALID_ACTION")
+            raise ValueError(f"Invalid action: {action} - only 'start' and 'cancel' are supported")
 
     async def run_workflow(self, data):
         from workflows.dbt_runner import DBTStreamerWorkflow
@@ -94,7 +90,7 @@ class DBTCommandConsumer(AsyncWebsocketConsumer):
                 "resource_id": resource_id,
                 "dbt_resource_id": dbt_resource_id,
             }
-            # Start the workflow and get the workflow_run_id
+
             workflow_run_id, workflow_run = await run_workflow(
                 workflow=DBTStreamerWorkflow,
                 input=input_data
@@ -108,17 +104,15 @@ class DBTCommandConsumer(AsyncWebsocketConsumer):
                 else:
                     logger.info(f"ws - skipped event: {event}")
 
-            # Assume success if we've reached the end of the event stream
+            # assume success if we've reached the end of the event stream
             await self.send(text_data="PROCESS_STREAM_SUCCESS")
             await self.close()
         except asyncio.CancelledError:
-            # Handle cancellation
-            print("Workflow run was cancelled.")
+            logger.info("Workflow run was cancelled.")
             if self.workflow_run_id:
                 await hatchet.rest.workflow_run_cancel(self.workflow_run_id)
             await self.send(text_data="WORKFLOW_CANCELLED")
             await self.close()
-            # Re-raise the exception to propagate the cancellation
             raise
         except Exception as e:
             logger.error(f"Error in workflow: {e}")

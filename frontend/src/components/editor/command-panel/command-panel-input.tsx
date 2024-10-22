@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { getCommandOptions, addRecentCommand } from "./options";
+import { getCommandOptions, addRecentCommand } from "./command-panel-options";
 import CommandPanelActionBtn from "./command-panel-action-btn";
 import CommandInput from "./command-input";
 
