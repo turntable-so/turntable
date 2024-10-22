@@ -115,6 +115,11 @@ def remote_bigquery(user):
 
 
 @pytest.fixture
+def remote_powerbi(user):
+    return group_4(user)[1]
+
+
+@pytest.fixture
 def remote_redshift(user):
     return group_5(user)[0]
 
@@ -163,6 +168,11 @@ def use_cache(request):
     return request.config.getoption("--use_cache")
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def force_isolate(monkeypatch):
     monkeypatch.setenv("FORCE_ISOLATE", "true")
+
+
+@pytest.fixture
+def bypass_hatchet(monkeypatch):
+    monkeypatch.setenv("BYPASS_HATCHET", "true")
