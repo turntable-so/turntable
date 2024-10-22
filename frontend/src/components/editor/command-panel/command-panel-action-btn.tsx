@@ -22,7 +22,7 @@ export default function CommandPanelActionBtn({ inputValue, setInputValue, onRun
     const accessToken = getToken("access");
     
     const { commandPanelState, setCommandPanelState, addCommandToHistory, updateCommandLogById, setSelectedCommandIndex, updateCommandById } = useCommandPanelContext();
-    const newCommandIdRef = useRef<string | null>(null);
+    const newCommandIdRef = useRef<string>("");
 
     const componentMap = {
         "idling": <div className="flex flex-row gap-0.5 items-center mr-2 text-base">
