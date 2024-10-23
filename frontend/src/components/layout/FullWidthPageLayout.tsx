@@ -1,10 +1,4 @@
 'use client'
-import { Button } from "../ui/button"
-import { Plus } from "lucide-react"
-
-import CreateNotebookButton from "../../app/notebooks/CreateNotebookButton"
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@radix-ui/react-dropdown-menu"
-import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbEllipsis, BreadcrumbPage } from "../ui/breadcrumb"
 
 export default function FullWidthPageLayout({ title, button, children, breadcrumbs }: { title?: string, children: React.ReactNode, button?: React.ReactNode, breadcrumbs?: string[] }) {
     return (

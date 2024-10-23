@@ -7,13 +7,22 @@ import uuid
 import networkx as nx
 from hatchet_sdk import Context
 from mpire import WorkerPool
+import os
+import asyncio
+
+
+class StreamEvent:
+    def __init__(self, payload, type):
+        self.payload = payload
+        self.type = type
 
 
 class ContextDebugger:
     def __init__(self, data):
         data.setdefault("workflow_run_id", uuid.uuid4())
         self.data = data
-        self.stream = []
+        self.queue = asyncio.Queue()
+        self.listener = self._stream()
 
     def workflow_run_id(self):
         return self.data.get("workflow_run_id")
@@ -28,8 +37,40 @@ class ContextDebugger:
         print(message)
 
     def put_stream(self, message):
-        print(message)
-        self.stream.append(message)
+        event = StreamEvent(payload=message, type="STEP_RUN_EVENT_TYPE_STREAM")
+        self.queue.put_nowait(event)
+    
+    async def _stream(self):
+        while True:
+            event = await self.queue.get()
+            yield event
+
+    def done(self):
+        return self.queue.empty()
+
+
+async def run_workflow(workflow, input: dict) -> tuple[str, WorkflowDebugger]:
+    if os.getenv("NO_HATCHET") == "true":
+        workflow_run = WorkflowDebugger(workflow, input).run()
+        workflow_run_id = workflow_run.context.workflow_run_id()
+    else:
+        from workflows.hatchet import hatchet
+
+        workflow_run_id = hatchet.admin.run_workflow(
+                workflow.__name__,
+                input=input,
+            )
+        workflow_run = None
+    return workflow_run_id, workflow_run
+
+
+async def get_async_listener(workflow_run_id: str, workflow_run: WorkflowDebugger):
+    if os.getenv("NO_HATCHET") == "true":
+        return workflow_run.context.listener
+    else:
+        from workflows.hatchet import hatchet
+
+        return hatchet.listener.stream(workflow_run_id)
 
 
 def run_workflow(workflow, input: dict) -> tuple[str, WorkflowDebugger]:
