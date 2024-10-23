@@ -1,4 +1,6 @@
 'use client'
+
+import Script from 'next/script';
 import dynamic from "next/dynamic";
 import { Inter as FontSans } from "next/font/google";
 import { usePathname } from "next/navigation";
@@ -69,6 +71,11 @@ export default function RootLayout({
                 <TooltipProvider>{children}</TooltipProvider>
               </AuthenticatedAppLayout>
               <Toaster richColors />
+              <Script 
+                type="module" 
+                src="https://us-east-1.online.tableau.com/javascripts/api/tableau.embedding.3.latest.min.js"
+                strategy="beforeInteractive"
+              />
             </body>
           </PHProvider>
         </html>

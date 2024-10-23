@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 
 const METABASE_SITE_URL = 'https://turntable.metabaseapp.com';
-const METABASE_JWT_SHARED_SECRET = '7fb93725616f077a6f17a3946e8f82f35e4cb0717d6c4eee971083d607736075';
+const METABASE_JWT_SHARED_SECRET = process.env.METABASE_JWT_SHARED_SECRET;
 
 const signUserToken = (user: any) => {
     return jwt.sign(
