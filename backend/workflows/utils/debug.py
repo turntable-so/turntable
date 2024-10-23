@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import inspect
 import os
 import uuid
@@ -7,8 +8,6 @@ import uuid
 import networkx as nx
 from hatchet_sdk import Context
 from mpire import WorkerPool
-import os
-import asyncio
 
 
 class StreamEvent:
@@ -39,7 +38,7 @@ class ContextDebugger:
     def put_stream(self, message):
         event = StreamEvent(payload=message, type="STEP_RUN_EVENT_TYPE_STREAM")
         self.queue.put_nowait(event)
-    
+
     async def _stream(self):
         while True:
             event = await self.queue.get()
@@ -49,42 +48,43 @@ class ContextDebugger:
         return self.queue.empty()
 
 
-async def run_workflow(workflow, input: dict) -> tuple[str, WorkflowDebugger]:
-    if os.getenv("NO_HATCHET") == "true":
+def run_workflow(workflow, input: dict) -> WorkflowDebugger:
+    if os.getenv("BYPASS_HATCHET") == "true":
         workflow_run = WorkflowDebugger(workflow, input).run()
         workflow_run_id = workflow_run.context.workflow_run_id()
     else:
         from workflows.hatchet import hatchet
 
         workflow_run_id = hatchet.admin.run_workflow(
-                workflow.__name__,
-                input=input,
-            )
+            workflow.__name__,
+            input=input,
+        )
+        workflow_run = None
+    return workflow_run_id, workflow_run
+
+
+async def run_workflow_async(workflow, input: dict) -> tuple[str, WorkflowDebugger]:
+    if os.getenv("BYPASS_HATCHET") == "true":
+        workflow_run = WorkflowDebugger(workflow, input).run()
+        workflow_run_id = workflow_run.context.workflow_run_id()
+    else:
+        from workflows.hatchet import hatchet
+
+        workflow_run_id = hatchet.admin.run_workflow(
+            workflow.__name__,
+            input=input,
+        )
         workflow_run = None
     return workflow_run_id, workflow_run
 
 
 async def get_async_listener(workflow_run_id: str, workflow_run: WorkflowDebugger):
-    if os.getenv("NO_HATCHET") == "true":
+    if os.getenv("BYPASS_HATCHET") == "true":
         return workflow_run.context.listener
     else:
         from workflows.hatchet import hatchet
 
         return hatchet.listener.stream(workflow_run_id)
-
-
-def run_workflow(workflow, input: dict) -> tuple[str, WorkflowDebugger]:
-    if os.getenv("BYPASS_HATCHET") == "true":
-        workflow_run = WorkflowDebugger(workflow, input).run()
-
-    else:
-        from workflows.hatchet import hatchet
-
-        workflow_run = hatchet.client.admin.run_workflow(
-            workflow.__name__,
-            input=input,
-        )
-    return workflow_run
 
 
 def spawn_workflow(context, workflow, input: dict, key: str | None = None):

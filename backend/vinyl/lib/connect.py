@@ -828,10 +828,9 @@ class DatabricksConnector(_DatabaseConnector):
     def sql_to_df(self, query: str, limit: int | None = _QUERY_LIMIT) -> pd.DataFrame:
         conn = self._connect(use_spark=False)
         query = self._sql_to_df_query_helper(query, limit)
-        with conn.cursor() as cursor:
+        with closing(conn.cursor()) as cursor:
             cursor.execute(query)
             out = cursor.fetchall_arrow().to_pandas()
-        conn.close()
         return out
 
 

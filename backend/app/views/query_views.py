@@ -52,7 +52,7 @@ class ExecuteQueryView(APIView):
             )
 
         # Run the async workflow
-        workflow_run_id, _ = run_workflow(
+        workflow_run_id, _ = run_workflow_async(
             ExecuteQueryWorkflow,
             {
                 "resource_id": resource_id,
@@ -88,7 +88,6 @@ class DbtQueryPreviewView(APIView):
 
     def post(self, request):
         workspace = self.get_current_workspace(request.user)
-        user_id = request.user.id
         query = request.data.get("query")
         use_fast_compile = (
             request.query_params.get("use_fast_compile", "true").lower() == "true"
