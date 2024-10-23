@@ -74,7 +74,7 @@ export default function SideBar({ isCollapsed }: { isCollapsed: boolean }) {
     console.log({ user })
     return (
         <div className={cn(
-            "flex-shrink-0",
+            "flex-shrink-0 bg-muted",
             isCollapsed ? "w-[75px]" : "w-[250px]",
             "border-r"
         )}>
@@ -108,7 +108,7 @@ export default function SideBar({ isCollapsed }: { isCollapsed: boolean }) {
                                 title: "Projects",
                                 icon: Code,
                                 variant: pathName.startsWith("/editor") ? "secondary" : "ghost",
-                                link: "/editor"
+                                link: "/projects"
                             },
                             {
                                 title: "Lineage",

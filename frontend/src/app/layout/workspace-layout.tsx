@@ -5,8 +5,10 @@ import AppContextProvider from "@/contexts/AppContext";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import useSession from '@/app/hooks/use-session';
+import TopBar from "@/components/editor/top-bar";
+import { cn } from "@/lib/utils";
 
-export default function WorkspaceLayout({ children }: { children: React.ReactNode }) {
+export default function AppLayout({ children }: { children: React.ReactNode }) {
     const pathName = usePathname()
     const [sidebarCollapsed, collapseSidebar] = useState<boolean>(false)
     const [sidebarContext, setSidebarContext] = useState<'ACTION' | 'HIDDEN'>('ACTION')
@@ -41,7 +43,13 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
 
     return (
         <AppContextProvider>
-            <div className='flex h-screen'>
+            <div className='h-screen'>
+                <div
+                    className={cn(
+                        "w-full flex  bg-muted h-[52px] items-center justify-between",
+                        "h-[48px] px-2 pl-4 py-1 border-b"
+                    )}
+                />
                 <div className="flex w-full">
                     {!pathName.includes('/editor') && (
                         <SideBar isCollapsed={sidebarCollapsed} />
