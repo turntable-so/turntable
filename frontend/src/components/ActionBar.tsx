@@ -289,7 +289,7 @@ export default function ActionBar({
   };
 
   return (
-    <div className="text-muted-foreground w-full h-fit flex flex-col">
+    <div className="text-muted-foreground w-full h-screen flex flex-col">
       <div
         className={cn(
           "flex h-[52px] items-center justify-center",
