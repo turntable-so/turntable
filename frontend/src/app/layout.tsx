@@ -71,11 +71,12 @@ export default function RootLayout({
                 <TooltipProvider>{children}</TooltipProvider>
               </AuthenticatedAppLayout>
               <Toaster richColors />
-              <Script 
+              <script 
                 type="module" 
                 src="https://us-east-1.online.tableau.com/javascripts/api/tableau.embedding.3.latest.min.js"
-                strategy="beforeInteractive"
-              />
+                // strategy="beforeInteractive"
+                // crossOrigin="anonymous"
+              ></script>
             </body>
           </PHProvider>
         </html>

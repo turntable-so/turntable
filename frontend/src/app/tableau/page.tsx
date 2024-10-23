@@ -21,11 +21,17 @@ export default function Tableau() {
 
     return (
         <div className="w-full h-full">
-            {token ? <tableau-viz id="tableauViz"       
-                src='https://us-east-1.online.tableau.com/views/Superstore/Overview'      
-                token={token}
-                >
-            </tableau-viz> : null}
+            {
+                token ? 
+                <tableau-viz 
+                    id='tableau-viz' 
+                    src='https://us-east-1.online.tableau.com/t/turntable/views/Superstore/Overview' 
+                    width='1280' 
+                    height='1280' 
+                    toolbar='bottom' 
+                    token={token} 
+                ></tableau-viz> : null
+            }
         </div>
     )
 }
