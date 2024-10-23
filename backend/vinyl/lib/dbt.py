@@ -762,11 +762,17 @@ class DBTProject(object):
                 return None
         return relation_name
 
-    def preview(self, dbt_sql: str, limit: int | None = None, defer: bool = False):
+    def preview(
+        self,
+        dbt_sql: str,
+        limit: int | None = None,
+        defer: bool = False,
+        data: bool = True,
+    ):
         if not self.dbt1_5:
             raise ValueError("Must use dbt 1.5+ to use show")
         command = [
-            "show",
+            "show" if data else "compile",
             "--inline",
             dbt_sql,
             "--output",
@@ -778,7 +784,7 @@ class DBTProject(object):
             "--log-format-file",
             "json",
         ]
-        if limit:
+        if limit and data:
             command.extend(["--limit", str(limit)])
         with tempfile.TemporaryDirectory() as temp_dir:
             command.extend(["--log-path", temp_dir])
@@ -797,6 +803,7 @@ class DBTProject(object):
             with open(log_file, "r") as f:
                 last_line = f.readlines()[-1]
                 contents = orjson.loads(last_line)
+            breakpoint()
             return contents["data"]["preview"]
 
     def _replace_sources_and_refs(self, contents):

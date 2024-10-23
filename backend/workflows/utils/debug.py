@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+import os
 import uuid
 
 import networkx as nx
@@ -29,6 +30,20 @@ class ContextDebugger:
     def put_stream(self, message):
         print(message)
         self.stream.append(message)
+
+
+def run_workflow(workflow, input: dict) -> tuple[str, WorkflowDebugger]:
+    if os.getenv("BYPASS_HATCHET") == "true":
+        workflow_run = WorkflowDebugger(workflow, input).run()
+
+    else:
+        from workflows.hatchet import hatchet
+
+        workflow_run = hatchet.client.admin.run_workflow(
+            workflow.__name__,
+            input=input,
+        )
+    return workflow_run
 
 
 def spawn_workflow(context, workflow, input: dict, key: str | None = None):

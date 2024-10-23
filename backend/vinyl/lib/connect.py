@@ -322,6 +322,11 @@ class _DatabaseConnector(_ResourceConnector):
             query += f" limit {limit}"
         return query
 
+    def run_query(
+        self, query: str, limit: int | None = _QUERY_LIMIT
+    ) -> tuple[pd.DataFrame, dict[str, str]]:
+        pass
+
     def sql_to_df(self, query: str, limit: int | None = _QUERY_LIMIT) -> pd.DataFrame:
         conn = self._connect()
         query = self._sql_to_df_query_helper(query, limit)
@@ -559,6 +564,23 @@ class BigQueryConnector(_DatabaseConnector):
 
         return df
 
+    def run_query(
+        self, query: str, limit: int | None = _QUERY_LIMIT
+    ) -> tuple[pd.DataFrame, dict[str, str]]:
+        conn = self._connect()
+        query = self._sql_to_df_query_helper(query, limit)
+        rows = conn.client.query_and_wait(query)
+        columns = {field.name: field.field_type for field in rows.schema}
+        if rows.total_rows < self._BQ_ITERATOR_ROW_CUTOFF:
+            # faster to use iterators for small datasets
+            data = [dict(row) for row in rows]
+            df = pd.DataFrame(data, columns=columns.keys())
+        else:
+            # faster to download directly for large datasets
+            df = rows.to_dataframe()
+
+        return df, columns
+
     def validate_sql(self, query: str) -> ValidationOutput:
         from google.cloud.bigquery import QueryJobConfig
 
@@ -583,6 +605,8 @@ class BigQueryConnector(_DatabaseConnector):
 
 
 class PostgresConnector(_DatabaseConnector):
+    from psycopg2.extensions import binary_types, string_types
+
     _excluded_schemas = [
         "information_schema",
         "pg_catalog",
@@ -591,12 +615,19 @@ class PostgresConnector(_DatabaseConnector):
         "extensions",
         "net",
     ]
+    _raw_types_dict = {
+        **(string_types if string_types else {}),
+        **(binary_types if binary_types else {}),
+    }
     _allows_multiple_databases: bool = False
     _host: str
     _port: int
     _user: str
     _password: str
     _database: str
+
+    class PGTypeHelper:
+        name: None
 
     def __init__(
         self,
@@ -629,6 +660,25 @@ class PostgresConnector(_DatabaseConnector):
         out, errors = self._find_sources_in_db(with_schema=with_schema)
         return out, errors
 
+    def run_query(
+        self, query: str, limit: int | None = _QUERY_LIMIT
+    ) -> tuple[pd.DataFrame, dict[str, str]]:
+        conn = self._connect()
+        query = self._sql_to_df_query_helper(query, limit)
+        with closing(conn.raw_sql(query)) as cursor:
+            types_dict = {
+                **self._raw_types_dict,
+                **(cursor.string_types if cursor.string_types else {}),
+                **(cursor.binary_types if cursor.binary_types else {}),
+            }
+            columns = {
+                desc.name: types_dict.get(desc.type_code, self.PGTypeHelper()).name
+                for desc in cursor.description
+            }
+            df = pd.DataFrame(cursor.fetchall(), columns=[col for col in columns])
+
+        return df, columns
+
     # caching ensures we create one bq connection per set of credentials across instances of the class
     @staticmethod
     @lru_cache()
@@ -643,17 +693,6 @@ class PostgresConnector(_DatabaseConnector):
 class RedshiftConnector(PostgresConnector):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-    def sql_to_df(self, query: str, limit: int | None = _QUERY_LIMIT) -> pd.DataFrame:
-        conn = self._connect()
-        query = self._sql_to_df_query_helper(query, limit)
-        # conn.sql doesn't work for redshift, using a workaround for now while wait for issue resoluation
-        # issue link here: https://ibis-project.zulipchat.com/#narrow/stream/431387-postgres/topic/Bug.20with.20conn.2Esql.28.29.20for.20Reshift
-        with closing(conn.raw_sql(query)) as cursor:
-            rows = cursor.fetchall()
-            col_names = [desc[0] for desc in cursor.description]
-            df = pd.DataFrame(rows, columns=col_names)
-        return df
 
 
 class SnowflakeConnector(_DatabaseConnector):
@@ -699,6 +738,14 @@ class SnowflakeConnector(_DatabaseConnector):
             )
         else:
             return ibis.snowflake.connect(account=account, user=user, password=password)
+
+    def run_query(
+        self, query: str, limit: int | None = _QUERY_LIMIT
+    ) -> tuple[pd.DataFrame, dict[str, str]]:
+        conn = self._connect()
+        query = self._sql_to_df_query_helper(query, limit)
+        with closing(conn.raw_sql(query)) as cursor:
+            breakpoint()
 
     def validate_sql(self, query: str) -> ValidationOutput:
         conn = self._connect()

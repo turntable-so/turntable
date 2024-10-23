@@ -5,11 +5,14 @@ import json
 from adrf.views import APIView
 from asgiref.sync import sync_to_async
 from django.http import JsonResponse
-from app.models.workspace import Workspace
 from rest_framework import status
 from rest_framework.response import Response
 
 from app.models import Block, Notebook
+from app.models.workspace import Workspace
+from workflows.execute_dbt_query import DBTQueryPreviewWorkflow
+from workflows.execute_query import ExecuteQueryWorkflow
+from workflows.utils.debug import run_workflow
 
 
 class ExecuteQueryView(APIView):
@@ -18,8 +21,6 @@ class ExecuteQueryView(APIView):
         return user.current_workspace()
 
     async def post(self, request, notebook_id, block_id):
-        from workflows.hatchet import hatchet
-
         workspace = await self.get_current_workspace(request.user)
         data = json.loads(request.body)
         resource_id = data["resource_id"]
@@ -51,8 +52,8 @@ class ExecuteQueryView(APIView):
             )
 
         # Run the async workflow
-        workflow_run = hatchet.client.admin.run_workflow(
-            "ExecuteQueryWorkflow",
+        workflow_run_id, _ = run_workflow(
+            ExecuteQueryWorkflow,
             {
                 "resource_id": resource_id,
                 "block_id": block_id,
@@ -62,7 +63,7 @@ class ExecuteQueryView(APIView):
 
         return JsonResponse(
             {
-                "workflow_run": str(workflow_run),
+                "workflow_run": str(workflow_run_id),
             },
             status=status.HTTP_201_CREATED,
         )
@@ -76,41 +77,40 @@ class ExecuteQueryView(APIView):
 
 
 class DbtQueryPreviewView(APIView):
-    @sync_to_async
     def get_current_workspace(self, user):
         return user.current_workspace()
 
-    @sync_to_async
     def get_dbt_details(self, workspace: Workspace):
         return {
             "resource": workspace.get_dbt_details().resource,
             "dbt_resource": workspace.get_dbt_details(),
         }
 
-    async def post(self, request):
-        from workflows.hatchet import hatchet
-
-        workspace = await self.get_current_workspace(request.user)
+    def post(self, request):
+        workspace = self.get_current_workspace(request.user)
         user_id = request.user.id
         query = request.data.get("query")
+        use_fast_compile = (
+            request.query_params.get("use_fast_compile", "true").lower() == "true"
+        )
         if not query:
             return Response(
                 {"error": "query required"}, status=status.HTTP_400_BAD_REQUEST
             )
         # assumes a single repo in the workspace for now
-        details = await self.get_dbt_details(workspace)
+        details = self.get_dbt_details(workspace)
 
-        workflow_run = hatchet.client.admin.run_workflow(
-            "DBTQueryPreviewWorkflow",
+        workflow_run = run_workflow(
+            DBTQueryPreviewWorkflow,
             {
                 "resource_id": str(details["resource"].id),
                 "dbt_resource_id": str(details["dbt_resource"].id),
                 "dbt_sql": query,
-                "use_fast_compile": False,
+                "use_fast_compile": use_fast_compile,
             },
         )
 
-        result = await workflow_run.result()
+        result = workflow_run.result()
         signed_url = result.get("dbt_query_preview", {}).get("signed_url", "")
 
         return JsonResponse(
