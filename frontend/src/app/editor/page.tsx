@@ -506,7 +506,7 @@ function EditorPageContent() {
                 <Panel>
                     <div className="h-full bg-white" ref={topBarRef}>
                         <FileTabs
-                            topBarRef={topBarRef}
+                            topBarRef={topBarRef as any}
                             topBarWidth={topBarWidth as number}
                         />
                         <div className='py-2 w-full h-full'>

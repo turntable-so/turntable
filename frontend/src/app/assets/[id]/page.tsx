@@ -18,8 +18,6 @@ import ExploreInLineageViewerButton from "@/components/assets/explore-in-lineage
 import { getResourceIcon } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import LineagePreview from "@/components/lineage/LineagePreview"
-import EmbeddedCard from "@/components/metabase/embedded-card"
-
 
 
 function ColumnsTable({ columns }: {
@@ -57,99 +55,9 @@ function ColumnsTable({ columns }: {
     )
 }
 
-const EMBEDDING_KEY = 'a1ed35e2bec9192530c1bd26c3b0248cae3c8acfb0ed54eeb30d816eedac1f42'
-
-const init = {
-    headers: {
-        "Content-Type": "application/json",
-        "X-API-KEY": 'mb_cs2je3H5w5rLjpPkqOIDWnW4fBP0tXPRR4vN/HAFQG4=',
-    },
-};
-
-const host = "http://metabase:4000";
-
-async function getGroups() {
-    const response = await fetch(`${host}/api/permissions/group`, {
-        ...init,
-    });
-    return response.json();
-}
-
-async function updateCard(id: string) {
-    const response = await fetch(`${host}/api/card/${id}`, {
-        method: 'PUT',
-        headers: init.headers,
-        body: JSON.stringify({
-            enable_embedding: true,
-        })
-    });
-    return response.json();
-}
-
-async function getCards(id: string) {
-    const response = await fetch(`${host}/api/card/${id}`, init);
-    return response.json();
-}
-
-async function makeEmbeddable(id: string) {
-    const response = await fetch(`${host}/api/card/${id}`, {
-        method: 'PUT',
-        headers: init.headers,
-        body: JSON.stringify({
-            enable_embedding: true,
-        })
-    });
-    return response.json();
-}
-
-
 export default async function AssetPage({ params }: { params: { id: string } }) {
 
     const asset = await getAssetPreview(params.id)
-
-    // extract the number 2 from this kind of id:
-    // "0:urn:li:dashboard:(metabase,2)"
-    const decodedId = decodeURIComponent(params.id);
-    const questionId = decodedId.split(',').pop()?.replace(')', '') || '';
-    console.log({ questionId })
-
-    // const groups = await getGroups()
-    // console.log({ groups })
-
-    // const token = await fetch('/api/metabase')
-    // useEffect(() => {
-    //     const fetchData = async () => {
-    //         const result = await updateCard('12')
-    //         const response = await fetch(
-    //             'http://localhost:3000/api/metabase/iframe_url?questionId=17',
-    //             {
-    //                 method: 'GET'
-    //             }
-    //         )
-    //         console.log({ response })
-    //         const iframeUrl = await response.json()
-    //         console.log('iframeUrl')
-    //         console.log({ iframeUrl })
-
-    //         console.log({ result })
-
-    //     }
-    //     fetchData()
-    // }, [])
-
-
-
-
-    // const metabaseCardId = decodeURIComponent(params.id).split(',').pop()?.replace(')', '') || '';
-    // console.log({ metabaseCardId });
-
-    // const cards = await getCards(metabaseCardId)
-    // // very interesting stuff in here, we could pull our last_used at field as well as view count
-    // console.log({ cards })
-
-    // const result = await makeEmbeddable('17')
-    // console.log({ result })
-
 
 
 
@@ -208,14 +116,6 @@ export default async function AssetPage({ params }: { params: { id: string } }) 
                                 <div>
                                     {asset.description ? <p className="text-sm">{asset.description}</p> : <p className="text-sm italic">No description</p>}
                                 </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-                    <div>
-                        <div className="font-medium text-muted-foreground my-1  text-lg">Preview</div>
-                        <Card className="rounded-md">
-                            <CardContent className="p-4">
-                                <EmbeddedCard questionId={Number(questionId)} />
                             </CardContent>
                         </Card>
                     </div>
