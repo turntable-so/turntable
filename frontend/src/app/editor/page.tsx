@@ -25,6 +25,7 @@ import BottomPanel from '@/components/editor/bottom-panel'
 import { LineageProvider } from '../contexts/LineageContext'
 import EditorSidebar from '@/components/editor/editor-sidebar'
 import FileTabs from '@/components/editor/file-tabs'
+import { useLayoutContext } from '../contexts/LayoutContext'
 
 const PromptBox = ({ setPromptBoxOpen }: { setPromptBoxOpen: (open: boolean) => void }) => {
 
@@ -254,8 +255,6 @@ function EditorContent({ setPromptBoxOpen, containerWidth }: { setPromptBoxOpen:
                     ...customTheme,
                     colors: {
                         ...customTheme.colors,
-                        'editor.lineHighlightBackground': 'var(--muted)',
-                        'editor.lineHighlightBorder': 'var(--muted)',
                     }
                 } as any);
                 monaco.editor.setTheme('mutedTheme');
@@ -295,9 +294,8 @@ function EditorPageContent() {
 
     const { files, openedFiles, activeFile, openFile, setActiveFile, activeFilepath, closeFile, setActiveFilepath } = useFiles();
 
-    const [showLeftSideBar, setShowLeftSidebar] = useState(true)
-    const [showRightSideBar, setShowRightSidebar] = useState(false)
-    const [showBottomPanel, setShowBottomPanel] = useState(true)
+    const { sidebarLeftShown, sidebarRightShown, bottomPanelShown, setSidebarLeftShown, setSidebarRightShown, setBottomPanelShown, } = useLayoutContext();
+
 
     const [promptBoxOpen, setPromptBoxOpen] = useState(false)
     const [colDefs, setColDefs] = useState([])
@@ -331,11 +329,11 @@ function EditorPageContent() {
                         event.preventDefault();
                         if (event.shiftKey) {
                             console.log('Cmd+Shift+B pressed');
-                            setShowRightSidebar(!showRightSideBar)
+                            setSidebarRightShown(!sidebarRightShown)
 
                         } else {
                             console.log('Cmd+B pressed');
-                            setShowLeftSidebar(!showLeftSideBar)
+                            setSidebarLeftShown(!sidebarLeftShown)
                         }
                         break;
                     case 'p':
@@ -346,7 +344,7 @@ function EditorPageContent() {
                     case 'j':
                         event.preventDefault();
                         console.log('Cmd+J pressed');
-                        setShowBottomPanel(!showBottomPanel)
+                        setBottomPanelShown(!bottomPanelShown)
                         break;
                 }
             }
@@ -377,7 +375,7 @@ function EditorPageContent() {
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [showLeftSideBar, showRightSideBar, showBottomPanel, isSearchFocused, selectedIndex]);
+    }, [sidebarLeftShown, sidebarRightShown, bottomPanelShown, isSearchFocused, selectedIndex]);
 
 
     useEffect(() => {
@@ -453,9 +451,11 @@ function EditorPageContent() {
     return (
         <div className='flex flex-col h-screen'>
             <PanelGroup direction="horizontal" className="h-fit">
-                <Panel defaultSize={leftWidth} minSize={15} maxSize={30} onResize={setLeftWidth} className='border-r  text-gray-600'>
-                    <EditorSidebar />
-                </Panel>
+                {sidebarLeftShown && (
+                    <Panel defaultSize={leftWidth} minSize={15} maxSize={30} onResize={setLeftWidth} className='border-r  text-gray-600'>
+                        <EditorSidebar />
+                    </Panel>
+                )}
                 {/* <Panel defaultSize={leftWidth} minSize={15} maxSize={30} onResize={setLeftWidth} className='border-r bg-muted/50 text-gray-600'>
                     <Tabs defaultValue="files" className="h-full">
                         <div
@@ -517,7 +517,7 @@ function EditorPageContent() {
                                 <Panel className='h-full relative z-0'>
                                     <EditorContent setPromptBoxOpen={setPromptBoxOpen} containerWidth={topBarWidth as number} />
                                 </Panel>
-                                {showBottomPanel && (
+                                {bottomPanelShown && (
                                     <BottomPanel
                                         rowData={rowData}
                                         gridRef={gridRef}
@@ -531,11 +531,11 @@ function EditorPageContent() {
                         </div>
                     </div>
                 </Panel >
-                {showRightSideBar && (
+                {sidebarRightShown && (
                     <Fragment>
                         <PanelResizeHandle className="border-l w-1 bg-transparent hover:bg-gray-300 hover:cursor-col-resize transition-colors" />
                         <Panel defaultSize={rightWidth} minSize={25} maxSize={60} onResize={setRightWidth}>
-                            <div className="h-full p-4 flex items-center justify-center">Coming soon...</div>
+                            <div className="bg-muted h-full p-4 flex items-center justify-center">Coming soon...</div>
                         </Panel>
                     </Fragment>
                 )

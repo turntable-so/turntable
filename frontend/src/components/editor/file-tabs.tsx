@@ -13,7 +13,7 @@ export default function FileTabs({
 }) {
     const { openedFiles, activeFile, setActiveFile, setActiveFilepath, closeFile, createNewFileTab } = useFiles();
     return (
-        <div className='hover:cursor-pointer flex items-center space-x-0 py-0 bg-muted'>
+        <div className='hover:cursor-pointer flex items-center space-x-0 py-0 bg-white'>
             <div className='' style={{
                 maxWidth: topBarWidth ? topBarWidth - 50 : '100%'
             }}>
