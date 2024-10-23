@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import { AgGridReact } from "ag-grid-react";
-import { Loader2, Network, Play, RefreshCcw, Table as TableIcon } from "lucide-react";
+import { Loader2, Network, Play, RefreshCcw, Table as TableIcon, Terminal as TerminalIcon, CircleX as CircleXIcon } from "lucide-react";
 import { Button } from "../ui/button";
-import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
+import { Panel, PanelResizeHandle } from 'react-resizable-panels'
 import { Fragment } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs"
-import LineagePreview from "../lineage/LineagePreview";
+import { Tabs, TabsList, TabsTrigger } from "../ui/tabs"
 import { useLineage } from "@/app/contexts/LineageContext";
 import { ErrorBoundary } from "react-error-boundary";
 import { useFiles } from "@/app/contexts/FilesContext";
@@ -14,13 +13,13 @@ import useResizeObserver from "use-resize-observer";
 import {
     Table,
     TableBody,
-    TableCaption,
     TableCell,
-    TableFooter,
     TableHead,
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
+import CommandPanelWrapper from "./command-panel";
+import { useLocalStorage } from 'usehooks-ts';
 
 
 const SkeletonLoadingTable = () => {
@@ -87,7 +86,7 @@ export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview
     isLoading: boolean,
     queryPreviewError: string | null,
 }) {
-    const [activeTab, setActiveTab] = useState<"results" | "lineage">("results");
+    const [activeTab, setActiveTab] = useLocalStorage<"lineage" | "results" | "command">("bottom-panel-tab", "lineage");
 
     const { fetchFileBasedLineage, lineageData } = useLineage()
     const { activeFile } = useFiles()
@@ -103,12 +102,11 @@ export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview
     const { ref: bottomPanelRef, width: bottomPanelWidth, height: bottomPanelHeight } = useResizeObserver();
 
 
-
     return (
         <Fragment>
             <PanelResizeHandle className="h-1 bg-gray hover:bg-gray-300 hover:cursor-col-resize  transition-colors" />
             <div className='h-10 bg-muted/50 border-t-2 flex justify-between items-center'>
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="text-sm">
+                <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "lineage" | "results" | "command")} className="text-sm">
                     <TabsList>
                         <TabsTrigger value="results">
                             <TableIcon className="h-4 w-4 mr-2" />
@@ -121,8 +119,12 @@ export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview
                             Lineage
                         </TabsTrigger>
 
-                    </TabsList>
-                </Tabs>
+                        <TabsTrigger value="command">
+                            <TerminalIcon className="h-4 w-4 mr-2" />
+                            Command
+                        </TabsTrigger>
+                    </TabsList >
+                </Tabs >
                 <div className="mr-2">
                     {
                         activeTab === "results" && (
@@ -208,6 +210,7 @@ export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview
                             </ErrorBoundary>
                         </div>
                     )}
+                    {activeTab === "command" && <CommandPanelWrapper bottomPanelHeight={bottomPanelHeight} />}
                 </div>
             </Panel>
         </Fragment >

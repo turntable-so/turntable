@@ -4,6 +4,7 @@ import shutil
 from urllib.parse import unquote
 
 from django.http import StreamingHttpResponse
+
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -11,7 +12,6 @@ from rest_framework.response import Response
 from api.serializers import AssetSerializer, LineageSerializer
 from app.core.dbt import LiveDBTParser
 from app.models.git_connections import Branch
-from workflows.dbt_runner import DBTStreamerWorkflow
 
 
 def _build_file_tree(user_id: str, path: str, base_path: str):
@@ -247,62 +247,3 @@ class ProjectViewSet(viewsets.ViewSet):
                 )
             except Exception as e:
                 return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=False, methods=["POST"])
-    def stream_dbt_command(self, request):
-        from workflows.main import hatchet
-
-        command = request.data.get("command")
-        if command is None:
-            return Response(
-                {"error": "Command is required"}, status=status.HTTP_400_BAD_REQUEST
-            )
-        else:
-            command = shlex.split(command)
-
-        workspace = request.user.current_workspace()
-        dbt_details = workspace.get_dbt_details()
-        branch_name = request.query_params.get("branch_name")
-        if branch_name:
-            try:
-                branch_id = Branch.objects.get(
-                    workspace=workspace,
-                    repository=dbt_details.repository,
-                    branch_name=branch_name,
-                ).id
-            except Branch.DoesNotExist:
-                return Response(
-                    {"error": f"Branch {branch_name} not found"},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-        else:
-            branch_id = None
-
-        if os.getenv("BYPASS_HATCHET") == "true":
-
-            def stream():
-                with dbt_details.dbt_transition_context(branch_id=branch_id) as (
-                    transition,
-                    _,
-                    repo,
-                ):
-                    yield from transition.after.stream_dbt_command(command)
-
-        else:
-
-            def stream():
-                input = {
-                    "command": command,
-                    "branch_id": str(branch_id) if branch_id else None,
-                    "resource_id": str(dbt_details.resource.id),
-                    "dbt_resource_id": str(dbt_details.id),
-                }
-                id = hatchet.client.admin.run_workflow(
-                    DBTStreamerWorkflow.__name__,
-                    input=input,
-                )
-                for event in hatchet.client.listener.stream(id):
-                    if event.payload and event.type == "STEP_RUN_EVENT_TYPE_STREAM":
-                        yield event.payload
-
-        return StreamingHttpResponse(stream(), content_type="text/event-stream")
