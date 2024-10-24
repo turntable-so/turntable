@@ -27,6 +27,7 @@ from app.consumers import (
     ChatInferenceConsumer,
     WorkflowRunConsumer,
 )
+from app.consumers import DBTCommandConsumer, WorkflowRunConsumer
 from app.views import (
     AssetViewSet,
     BlockViewSet,
@@ -113,6 +114,8 @@ urlpatterns = [
         "infer/stream",
         ChatInferenceConsumer.as_asgi(),
     ),
+    path("ws/subscribe/<str:workspace_id>/", WorkflowRunConsumer.as_asgi()),
+    path("ws/dbt_command/<str:workspace_id>/", DBTCommandConsumer.as_asgi()),
     path("settings/", SettingsView.as_view(), name="settings"),
     path("infer/", InferenceView.as_view(), name="inference"),
     path("", include(router.urls)),

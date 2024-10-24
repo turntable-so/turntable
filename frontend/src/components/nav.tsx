@@ -26,7 +26,7 @@ export function Nav({ links, isCollapsed }: NavProps) {
     return (
         <div
             data-collapsed={isCollapsed}
-            className="mt-4 group flex flex-col gap-4 py-2 data-[collapsed=true]:py-2"
+            className="mt-2 group flex flex-col gap-4 py-2 data-[collapsed=true]:py-2"
         >
             <nav className="grid gap-5 px-2 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2">
                 {links.map((link, index) =>

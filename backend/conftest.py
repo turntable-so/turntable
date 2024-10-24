@@ -15,9 +15,10 @@ from fixtures.local_env import (
     create_repository_n,
     create_ssh_key_n,
 )
-from fixtures.staging_env import group_2, group_3, group_4, group_5
+from fixtures.staging_env import group_1, group_2, group_3, group_4, group_5, group_6
 from workflows.metadata_sync import MetadataSyncWorkflow
 from workflows.utils.debug import ContextDebugger
+from rest_framework_simplejwt.tokens import AccessToken
 
 MOCK_WORKSPACE_ID = "mock_"
 
@@ -79,6 +80,13 @@ def client(user, workspace):
     client.force_authenticate(user=user)
     return client
 
+@pytest.fixture
+def client_with_token(user, workspace):
+    client = APIClient()
+    token = str(AccessToken.for_user(user))
+    client.force_authenticate(user=user, token=token)
+    client.access_token = token
+    return client
 
 @pytest.fixture
 def local_postgres(workspace):
@@ -115,8 +123,23 @@ def remote_bigquery(user):
 
 
 @pytest.fixture
+def remote_powerbi(user):
+    return group_4(user)[1]
+
+
+@pytest.fixture
 def remote_redshift(user):
     return group_5(user)[0]
+
+
+@pytest.fixture
+def internal_bigquery(user):
+    return group_6(user)[0]
+
+
+@pytest.fixture
+def internal_bigquery_deprecated(user):
+    return group_1(user)[0]
 
 
 @pytest.fixture
@@ -153,6 +176,16 @@ def use_cache(request):
     return request.config.getoption("--use_cache")
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def force_isolate(monkeypatch):
     monkeypatch.setenv("FORCE_ISOLATE", "true")
+
+
+@pytest.fixture
+def no_hatchet(monkeypatch):
+    monkeypatch.setenv("NO_HATCHET", "true")
+
+
+@pytest.fixture
+def enable_django_allow_async_unsafe(monkeypatch):
+    monkeypatch.setenv("DJANGO_ALLOW_ASYNC_UNSAFE", "true")

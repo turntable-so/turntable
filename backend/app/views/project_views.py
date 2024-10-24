@@ -1,6 +1,9 @@
 import os
+import shlex
 import shutil
 from urllib.parse import unquote
+
+from django.http import StreamingHttpResponse
 
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -163,7 +166,7 @@ class ProjectViewSet(viewsets.ViewSet):
         return Response(status=status.HTTP_501_NOT_IMPLEMENTED)
 
     @action(detail=False, methods=["GET"])
-    def lineage(self, request, branch_id=None):
+    def lineage(self, request):
         workspace = request.user.current_workspace()
         dbt_details = workspace.get_dbt_details()
         filepath = unquote(request.query_params.get("filepath"))
@@ -171,53 +174,76 @@ class ProjectViewSet(viewsets.ViewSet):
         successor_depth = int(request.query_params.get("successor_depth"))
         lineage_type = request.query_params.get("lineage_type", "all")
         defer = request.query_params.get("defer", True)
+        branch_name = request.query_params.get("branch_name")
+        if branch_name:
+            try:
+                branch_id = Branch.objects.get(
+                    workspace=workspace,
+                    repository=dbt_details.repository,
+                    branch_name=branch_name,
+                ).id
+            except Branch.DoesNotExist:
+                return Response(
+                    {"error": f"Branch {branch_name} not found"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+        else:
+            branch_id = None
+
         with dbt_details.dbt_transition_context(branch_id=branch_id) as (
             transition,
             _,
             repo,
         ):
-            transition.mount_manifest(defer=defer)
-            transition.mount_catalog(defer=defer)
+            try:
+                transition.mount_manifest(defer=defer)
+                transition.mount_catalog(defer=defer)
 
-            node_id = LiveDBTParser.get_node_id_from_filepath(
-                transition.after, filepath, defer
-            )
-            if not node_id:
-                raise ValueError(f"Node at filepath{filepath} not found in manifest")
+                node_id = LiveDBTParser.get_node_id_from_filepath(
+                    transition.after, filepath, defer
+                )
+                if not node_id:
+                    raise ValueError(
+                        f"Node at filepath{filepath} not found in manifest"
+                    )
 
-            dbtparser = LiveDBTParser.parse_project(
-                proj=transition.after,
-                before_proj=transition.before,
-                node_id=node_id,
-                resource=dbt_details.resource,
-                predecessor_depth=predecessor_depth,
-                successor_depth=successor_depth,
-                defer=defer,
-            )
-            lineage, _ = dbtparser.get_lineage()
-            root_asset = None
-            column_lookup = {}
-            for asset in lineage.assets:
-                column_lookup[asset.id] = []
-            for column in lineage.columns:
-                column_lookup[column.asset_id].append(column)
+                dbtparser = LiveDBTParser.parse_project(
+                    proj=transition.after,
+                    before_proj=transition.before,
+                    node_id=node_id,
+                    resource=dbt_details.resource,
+                    predecessor_depth=predecessor_depth,
+                    successor_depth=successor_depth,
+                    defer=defer,
+                )
+                lineage, _ = dbtparser.get_lineage()
+                root_asset = None
+                column_lookup = {}
+                for asset in lineage.assets:
+                    column_lookup[asset.id] = []
+                for column in lineage.columns:
+                    column_lookup[column.asset_id].append(column)
 
-            for asset in lineage.assets:
-                if asset.id == lineage.asset_id:
-                    root_asset = asset
+                for asset in lineage.assets:
+                    if asset.id == lineage.asset_id:
+                        root_asset = asset
 
-                asset.temp_columns = column_lookup[asset.id]
+                    asset.temp_columns = column_lookup[asset.id]
 
-            if not root_asset:
-                raise ValueError(f"Root asset not found for {lineage.asset_id}")
+                if not root_asset:
+                    raise ValueError(f"Root asset not found for {lineage.asset_id}")
 
-            asset_serializer = AssetSerializer(root_asset, context={"request": request})
-            lineage_serializer = LineageSerializer(
-                lineage, context={"request": request}
-            )
-            return Response(
-                {
-                    "root_asset": asset_serializer.data,
-                    "lineage": lineage_serializer.data,
-                }
-            )
+                asset_serializer = AssetSerializer(
+                    root_asset, context={"request": request}
+                )
+                lineage_serializer = LineageSerializer(
+                    lineage, context={"request": request}
+                )
+                return Response(
+                    {
+                        "root_asset": asset_serializer.data,
+                        "lineage": lineage_serializer.data,
+                    }
+                )
+            except Exception as e:
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
