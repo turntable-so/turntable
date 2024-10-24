@@ -780,7 +780,7 @@ class DBTProject(object):
     ):
         if not self.dbt1_5:
             raise ValueError("Must use dbt 1.5+ to use show")
-        if limit and data:
+        if limit and not data:
             dbt_sql = query_limit_helper(dbt_sql, limit)
         command = [
             "show" if data else "compile",
@@ -795,7 +795,7 @@ class DBTProject(object):
             "--log-format-file",
             "json",
         ]
-        if limit and not data:
+        if limit and data:
             command.extend(["--limit", str(limit)])
         with tempfile.TemporaryDirectory() as temp_dir:
             command.extend(["--log-path", temp_dir])
