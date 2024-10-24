@@ -285,7 +285,7 @@ type QueryPreview = {
 }
 
 function EditorPageContent() {
-    const [leftWidth, setLeftWidth] = useState(20)
+    const [leftWidth, setLeftWidth] = useState(15)
     const [rightWidth, setRightWidth] = useState(20)
     const [branches, setBranches] = useState([])
     const [activeBranch, setActiveBranch] = useState('')
@@ -445,9 +445,7 @@ function EditorPageContent() {
         fetchQueryPreview()
     }, [queryPreview?.signed_url])
 
-
-
-
+    console.log('REEEEEEE', { sidebarLeftShown, sidebarRightShown, bottomPanelShown })
     return (
         <div className='flex flex-col h-screen'>
             <PanelGroup direction="horizontal" className="h-fit">

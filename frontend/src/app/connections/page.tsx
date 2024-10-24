@@ -129,12 +129,8 @@ export default async function Page() {
     const resources = await getResources() || []
 
     return (
-        <FullWidthPageLayout title='Connections'>
-            {resources.length > 0 && (
-                <div className='mb-8 flex justify-end'>
-                    <NewConnectionButton />
-                </div>
-            )}
+        <FullWidthPageLayout title='Connections' button={<NewConnectionButton />}>
+
             {resources.length > 0 ? (
                 <div className='flex flex-col space-y-4'>
                     {resources.map((resource: any, i: number) => (

@@ -12,7 +12,7 @@ import {
 import { Input } from "../ui/input"
 import { Tree } from "react-arborist"
 import useResizeObserver from "use-resize-observer"
-import { useRef } from "react"
+import { useEffect, useRef } from "react"
 import { useFiles } from "@/app/contexts/FilesContext"
 import Node from "./file-tree-node"
 import ActionBar from "../ActionBar"
@@ -38,15 +38,15 @@ export default function EditorSidebar() {
         console.log('deleting!', { ids, })
     };
 
+    useEffect(() => {
+        if (files.length > 0) {
+
+        }
+    }, [files]);
+
 
     return (
         <div className="h-full flex flex-col bg-muted">
-            <div className='px-1'>
-                <Input
-                    className="bg-white shadow-none focus:ring-0 focus:border-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
-                    placeholder="Search"
-                />
-            </div>
             <ResizablePanelGroup direction='vertical' className='py-2'>
                 <ResizablePanel defaultSize={50} minSize={30} maxSize={70}>
                     <div className="h-full w-full px-2">
@@ -62,6 +62,7 @@ export default function EditorSidebar() {
                                 openByDefault={false}
                                 indent={12}
                                 ref={treeRef}
+                                openNodes={[files[0]?.path]}
                                 // @ts-ignore
                                 onCreate={onCreate}
                                 // @ts-ignore
@@ -79,7 +80,7 @@ export default function EditorSidebar() {
                 <div className="px-2 pb-2">
                     <ResizableHandle className='h-10' withHandle />
                 </div>
-                <ResizablePanel defaultSize={50} minSize={30} maxSize={70}>
+                <ResizablePanel defaultSize={70} minSize={30} maxSize={70}>
                     <div className="h-full w-full">
                         <div className="flex items-center space-x-2 px-2">
                             <div className="px-1 text-black text-sm font-medium">Resources</div>

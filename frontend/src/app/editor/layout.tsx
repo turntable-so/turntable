@@ -7,7 +7,6 @@ export default function EditorLayout({ children }: { children: React.ReactNode }
     return (
         <LayoutProvider>
             <div className="w-full h-screen overflow-hidden">
-                <TopBar />
                 <div className="w-full flex-grow overflow-hidden">
                     {children}
                 </div>

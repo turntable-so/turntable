@@ -2,9 +2,9 @@
 import useSession from "@/app/hooks/use-session";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Boxes, Code, Database, DatabaseZap, FileBarChart, LogOut, Network, Settings, Users } from 'lucide-react';
+import { BookOpen, Boxes, Code, Database, DatabaseZap, FileBarChart, FolderGit2, LogOut, Network, Settings, Users } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { SearchDialog } from '../SearchDialog';
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
@@ -25,8 +25,8 @@ import {
     Trash2,
     Users2,
 } from "lucide-react"
-import { AccountSwitcher } from "../account-switcher";
 import { TooltipProvider } from "../ui/tooltip";
+import { useLayoutContext } from "@/app/contexts/LayoutContext";
 
 
 export const accounts = [
@@ -67,129 +67,78 @@ export const accounts = [
         ),
     },
 ]
-export default function SideBar({ isCollapsed }: { isCollapsed: boolean }) {
+
+const links = [
+    {
+        title: "Connections",
+        icon: DatabaseZap,
+        variant: "ghost",
+        link: "/connections"
+    },
+    {
+        title: "Assets",
+        icon: Boxes,
+        variant: "ghost",
+        link: "/assets"
+    },
+    {
+        title: "Projects",
+        icon: FolderGit2,
+        variant: "ghost",
+        link: "/projects"
+    },
+    {
+        title: "Lineage",
+        icon: Network,
+        variant: "ghost",
+        link: "/lineage"
+    },
+    {
+        title: "Workspace",
+        icon: Users,
+        variant: "ghost",
+        link: "/team"
+    },
+    {
+        title: "Settings",
+        icon: Settings,
+        variant: "ghost",
+        link: "/settings"
+    },
+]
+
+export default function SideBar() {
     const pathName = usePathname()
-    const { user, logout } = useSession()
-    const { current_workspace, workspaces } = user
-    console.log({ user })
+    const router = useRouter()
+    const { appSidebarCollapsed } = useLayoutContext()
+
     return (
         <div className={cn(
             "flex-shrink-0 bg-muted",
-            isCollapsed ? "w-[75px]" : "w-[250px]",
-            "border-r"
+            appSidebarCollapsed ? "w-[64px]" : "w-[250px]",
+            "border-r border-gray-300"
         )}>
             <TooltipProvider delayDuration={0}>
-                <div
-                    className={cn(
-                        "flex h-[52px] items-center justify-center",
-                        isCollapsed ? "h-[52px]" : "px-2"
-                    )}
-                >
-                    <AccountSwitcher currentAccountId={current_workspace.id} isCollapsed={isCollapsed} accounts={workspaces} />
-                </div>
-                <Separator />
-                <div className='flex flex-col justify-between h-full mb-24'>
-                    <Nav
-                        isCollapsed={isCollapsed}
-                        links={[
-                            {
-                                title: "Connections",
-                                icon: DatabaseZap,
-                                variant: pathName.startsWith("/connections") ? "secondary" : "ghost",
-                                link: "/connections"
-                            },
-                            {
-                                title: "Assets",
-                                icon: Boxes,
-                                variant: pathName.startsWith("/assets") ? "secondary" : "ghost",
-                                link: "/assets"
-                            },
-                            {
-                                title: "Projects",
-                                icon: Code,
-                                variant: pathName.startsWith("/editor") ? "secondary" : "ghost",
-                                link: "/projects"
-                            },
-                            {
-                                title: "Lineage",
-                                icon: Network,
-                                variant: pathName.startsWith("/lineage") ? "secondary" : "ghost",
-                                link: "/lineage"
-                            },
-                            {
-                                title: "Workspace",
-                                icon: Users,
-                                variant: pathName.startsWith("/team") ? "secondary" : "ghost",
-                                link: "/team"
-                            },
-                            {
-                                title: "Settings",
-                                icon: Settings,
-                                variant: pathName.startsWith("/settings") ? "secondary" : "ghost",
-                                link: "/settings"
-                            },
-                        ]}
-                    />
-                    <div className="pb-20 w-full">
-                        {user && (
-                            <Popover>
-                                <PopoverTrigger className='px-2 w-full'>
-                                    <div className={`w-full px-2 py-2 text-sm text-ellipsis hover:cursor-pointer hover:bg-muted rounded-lg ${isCollapsed ? 'justify-center' : ''} truncate  text-muted-foreground font flex items-center space-x-2`}>
-                                        <div className={isCollapsed ? 'mr-0' : 'mr-1'}>
-                                            <Avatar className='size-8 border h-8 w8 flex items-center justify-center bg-gray-400'>
-                                                <AvatarImage src={user ? user.imageUrl : ''} />
-                                                <AvatarFallback className='bg-gray-400 text-white'>{user.email.slice(0, 1).toUpperCase()}</AvatarFallback>
-                                            </Avatar>
-                                        </div>
-                                        {!isCollapsed && <div>{user.email}</div>}
-                                    </div>
-                                </PopoverTrigger>
-                                <PopoverContent side="right" align="start" className='w-fit text-muted-foreground p-0'>
-                                    <Button onClick={logout} variant='ghost' className='flex items-center'>
-                                        <LogOut className='h-4 w-4 mr-2' />
-                                        Sign out
-                                    </Button>
-                                </PopoverContent>
-                            </Popover>
-                        )}
+
+                <div className='flex flex-col justify-between h-screen text-muted-foreground'>
+                    <div className="flex flex-col gap-2 mt-4">
+                        {links.map((link: any) => (
+                            appSidebarCollapsed ? (
+                                <Button onClick={() => router.push(link.link)}
+                                    variant="ghost" key={link.title} className={`flex  items-center justify-center  hover:bg-white ${pathName.includes(link.link) ? 'bg-white' : ''}`}>
+                                    <link.icon className="h-4 w-4" />
+                                </Button>
+                            ) : (
+                                <Button onClick={() => router.push(link.link)}
+                                    variant="ghost" key={link.title} className={`mx-2 px-4 flex items-center justify-start  hover:bg-white ${pathName.includes(link.link) ? 'bg-white' : ''}`}>
+                                    <link.icon className="h-4 w-4 mr-2" />
+                                    {link.title}
+                                </Button>
+                            )
+                        ))}
                     </div>
                 </div>
-                {/* <Separator />
-                <Nav
-                    isCollapsed={isCollapsed}
-                    links={[
-                        {
-                            title: "Social",
-                            label: "972",
-                            icon: Users2,
-                            variant: "ghost",
-                        },
-                        {
-                            title: "Updates",
-                            label: "342",
-                            icon: AlertCircle,
-                            variant: "ghost",
-                        },
-                        {
-                            title: "Forums",
-                            label: "128",
-                            icon: MessagesSquare,
-                            variant: "ghost",
-                        },
-                        {
-                            title: "Shopping",
-                            label: "8",
-                            icon: ShoppingCart,
-                            variant: "ghost",
-                        },
-                        {
-                            title: "Promotions",
-                            label: "21",
-                            icon: Archive,
-                            variant: "ghost",
-                        },
-                    ]}
-                /> */}
+
             </TooltipProvider>
         </div>
     )
