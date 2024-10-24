@@ -1,31 +1,29 @@
+import asyncio
+
 import pytest
 from channels.testing import WebsocketCommunicator
-from api.asgi import application
 from rest_framework_simplejwt.exceptions import InvalidToken
-import asyncio
+
+from api.asgi import application
 
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio
-@pytest.mark.usefixtures("no_hatchet", "local_postgres")
+@pytest.mark.usefixtures("bypass_hatchet", "local_postgres")
 class TestDBTCommandConsumer:
     url = "/ws/dbt_command/"
 
     async def test_no_token(self):
-        communicator = WebsocketCommunicator(
-            application,
-            self.url
-        )
-        
+        communicator = WebsocketCommunicator(application, self.url)
+
         with pytest.raises(InvalidToken) as exc_info:
             await communicator.connect()
-        
+
         assert "token_not_valid" in str(exc_info.value)
-    
+
     async def test_valid_token(self, client_with_token):
         communicator = WebsocketCommunicator(
-            application,
-            f"{self.url}?token={client_with_token.access_token}"
+            application, f"{self.url}?token={client_with_token.access_token}"
         )
         connected, _ = await communicator.connect()
         assert connected
@@ -40,10 +38,7 @@ class TestDBTCommandConsumer:
         connected, _ = await communicator.connect()
         assert connected
 
-        await communicator.send_json_to({
-            "action": "start",
-            "command": "ls"
-        })
+        await communicator.send_json_to({"action": "start", "command": "ls"})
 
         out = ""
         try:
@@ -55,7 +50,7 @@ class TestDBTCommandConsumer:
 
         assert "PROCESS_STREAM_SUCCESS" in out
         await communicator.disconnect()
-    
+
     @pytest.mark.usefixtures("enable_django_allow_async_unsafe")
     async def test_can_cancel_command(self, client_with_token):
         communicator = WebsocketCommunicator(
@@ -65,10 +60,7 @@ class TestDBTCommandConsumer:
         connected, _ = await communicator.connect()
         assert connected
 
-        await communicator.send_json_to({
-            "action": "start",
-            "command": "ls"
-        })
+        await communicator.send_json_to({"action": "start", "command": "ls"})
 
         # wait for the command to start
         try:
@@ -76,10 +68,8 @@ class TestDBTCommandConsumer:
         except asyncio.TimeoutError:
             pass
 
-        await communicator.send_json_to({
-            "action": "cancel"
-        })
-        
+        await communicator.send_json_to({"action": "cancel"})
+
         out = ""
         try:
             while True:

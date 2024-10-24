@@ -324,7 +324,7 @@ class ResourceDetails(PolymorphicModel):
     def test_db_connection(self):
         try:
             connector = self.get_connector()
-            query = connector.sql_to_df("SELECT 1").iloc[0].iloc[0]
+            query = connector.run_query("SELECT 1")[0].iloc[0].iloc[0]
             if query != 1:
                 raise Exception("Query did not return expected value")
             return {"success": True}

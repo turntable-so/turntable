@@ -5,6 +5,7 @@ import django
 import pytest
 from django.apps import apps
 from rest_framework.test import APIClient
+from rest_framework_simplejwt.tokens import AccessToken
 
 from app.utils.test_utils import assert_ingest_output
 from fixtures.local_env import (
@@ -18,7 +19,6 @@ from fixtures.local_env import (
 from fixtures.staging_env import group_1, group_2, group_3, group_4, group_5, group_6
 from workflows.metadata_sync import MetadataSyncWorkflow
 from workflows.utils.debug import ContextDebugger
-from rest_framework_simplejwt.tokens import AccessToken
 
 MOCK_WORKSPACE_ID = "mock_"
 
@@ -80,6 +80,7 @@ def client(user, workspace):
     client.force_authenticate(user=user)
     return client
 
+
 @pytest.fixture
 def client_with_token(user, workspace):
     client = APIClient()
@@ -87,6 +88,7 @@ def client_with_token(user, workspace):
     client.force_authenticate(user=user, token=token)
     client.access_token = token
     return client
+
 
 @pytest.fixture
 def local_postgres(workspace):
@@ -182,8 +184,8 @@ def force_isolate(monkeypatch):
 
 
 @pytest.fixture
-def no_hatchet(monkeypatch):
-    monkeypatch.setenv("NO_HATCHET", "true")
+def bypass_hatchet(monkeypatch):
+    monkeypatch.setenv("BYPASS_HATCHET", "true")
 
 
 @pytest.fixture

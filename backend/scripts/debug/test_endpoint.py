@@ -37,9 +37,10 @@ def test_endpoint(
 
 if __name__ == "__main__":
     x = test_endpoint(
-        "/project/stream_dbt_command/",
+        "/query/sql/",
         "dev@turntable.so",
         "POST",
-        stream=True,
-        data={"command": "run"},
+        stream=False,
+        data={"query": "select * from dbt_sl_test.customers"},
     )
+    breakpoint()
