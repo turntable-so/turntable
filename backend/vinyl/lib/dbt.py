@@ -796,7 +796,7 @@ class DBTProject(object):
             "json",
         ]
         if limit and not data:
-            command.extend(["--limit", limit])
+            command.extend(["--limit", str(limit)])
         with tempfile.TemporaryDirectory() as temp_dir:
             command.extend(["--log-path", temp_dir])
             stdout, stderr, success = self.run_dbt_command(
