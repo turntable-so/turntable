@@ -69,6 +69,3 @@ def decrypt_secret(secret: str) -> str:
 
     decrypted_secret = cipher.decrypt(urlsafe_b64decode(secret)).decode("utf-8")
     return decrypted_secret
-
-
-# NOTE: Starting in Ibis 10.0, Ibis now uses nomenclature for tables (i.e. catalog, database, name), that is distinct from how we usually think about it. Database, schema, name. Until we rename our variables, the variable naming will be confusing.

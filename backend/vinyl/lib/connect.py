@@ -38,6 +38,9 @@ _JOIN_STRING_HELPER = "_____"
 _PARALLEL_DB_THREADS = 10
 
 
+# NOTE: Starting in Ibis 10.0, Ibis now uses nomenclature for tables (i.e. catalog, database, name), that is distinct from how we usually think about it. Database, schema, name. Until we rename our variables, the variable naming will be confusing.
+
+
 @dataclass
 class SourceInfo:
     _name: str
