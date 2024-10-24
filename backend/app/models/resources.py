@@ -909,6 +909,7 @@ class RedshiftDetails(DBDetails):
 
 class BigqueryDetails(DBDetails):
     subtype = models.CharField(max_length=255, default=ResourceSubtype.BIGQUERY)
+    region = models.CharField(max_length=255, blank=True)
     service_account = encrypt(models.JSONField())
 
     @property
@@ -933,6 +934,7 @@ class BigqueryDetails(DBDetails):
         assert project_id, "project_id is required in service_account"
         return BigQueryConnector(
             service_account_info=self.service_account_dict,
+            region=self.region,
             tables=[f"{self.service_account_dict['project_id']}.*.*"],
         )
 

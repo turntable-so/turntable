@@ -72,6 +72,7 @@ def create_bigquery_n(workspace, n):
     gac = os.getenv(f"BIGQUERY_{n}_GOOGLE_APPLICATION_CREDENTIALS")
     resource_name = os.getenv(f"BIGQUERY_{n}_RESOURCE_NAME")
     schema_include = os.getenv(f"BIGQUERY_{n}_SCHEMA_INCLUDE")
+    region = os.getenv(f"BIGQUERY_{n}_REGION") or "region-us"
     if schema_include:
         schema_include = json.loads(schema_include)
 
@@ -91,6 +92,7 @@ def create_bigquery_n(workspace, n):
         BigqueryDetails(
             name=resource_name,
             resource=resource,
+            region=region,
             lookback_days=1,
             schema_include=schema_include,
             service_account=json.loads(gac.replace("\n", "\\n")),

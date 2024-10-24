@@ -42,6 +42,7 @@ from app.views.query_views import (
     NotebookQueryView,
     QueryPreviewView,
 )
+from app.views.schema_views import ResourceSchemaView, TableSchemaView
 from app.views.settings_view import SettingsView
 
 from .views import CustomUserViewSet, LogoutView, OAuthView
@@ -75,6 +76,16 @@ urlpatterns = [
         "query/sql/",
         QueryPreviewView.as_view(),
         name="query_preview",
+    ),
+    path(
+        "schema/resource/<str:resource_id>/",
+        ResourceSchemaView.as_view(),
+        name="resource_schema",
+    ),
+    path(
+        "schema/table/<str:resource_id>/",
+        TableSchemaView.as_view(),
+        name="table_schema",
     ),
     path(
         "resources/<str:resource_id>/sync/",
