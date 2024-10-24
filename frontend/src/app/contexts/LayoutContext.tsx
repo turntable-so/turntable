@@ -1,5 +1,6 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
 type LayoutContextType = {
     sidebarLeftShown: boolean;
@@ -8,6 +9,7 @@ type LayoutContextType = {
     setSidebarRightShown: (shown: boolean) => void;
     bottomPanelShown: boolean;
     setBottomPanelShown: (shown: boolean) => void;
+    appSidebarCollapsed: boolean;
 };
 
 const LayoutContext = createContext<LayoutContextType | undefined>(undefined);
@@ -24,6 +26,20 @@ export const LayoutProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const [sidebarLeftShown, setSidebarLeftShown] = useState(true);
     const [bottomPanelShown, setBottomPanelShown] = useState(true);
     const [sidebarRightShown, setSidebarRightShown] = useState(false);
+    const [appSidebarCollapsed, setAppSidebarCollapsed] = useState(false);
+    const pathName = usePathname()
+
+    console.log({ sidebarLeftShown, sidebarRightShown, bottomPanelShown })
+
+    useEffect(() => {
+        setAppSidebarCollapsed(
+            pathName.includes('/lineage') ||
+            pathName.includes('/assets')
+        )
+    }, [pathName])
+
+
+
 
     const value = {
         sidebarLeftShown,
@@ -32,6 +48,7 @@ export const LayoutProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         setSidebarRightShown,
         bottomPanelShown,
         setBottomPanelShown,
+        appSidebarCollapsed,
     };
 
     return <LayoutContext.Provider value={value}>{children}</LayoutContext.Provider>;
