@@ -48,21 +48,6 @@ class ContextDebugger:
         return self.queue.empty()
 
 
-def run_workflow(workflow, input: dict) -> WorkflowDebugger:
-    if os.getenv("BYPASS_HATCHET") == "true":
-        workflow_run = WorkflowDebugger(workflow, input).run()
-        workflow_run_id = workflow_run.context.workflow_run_id()
-    else:
-        from workflows.hatchet import hatchet
-
-        workflow_run_id = hatchet.admin.run_workflow(
-            workflow.__name__,
-            input=input,
-        )
-        workflow_run = None
-    return workflow_run_id, workflow_run
-
-
 async def run_workflow_async(workflow, input: dict) -> tuple[str, WorkflowDebugger]:
     if os.getenv("BYPASS_HATCHET") == "true":
         workflow_run = WorkflowDebugger(workflow, input).run()
@@ -76,6 +61,24 @@ async def run_workflow_async(workflow, input: dict) -> tuple[str, WorkflowDebugg
         )
         workflow_run = None
     return workflow_run_id, workflow_run
+
+
+def run_workflow_get_result(workflow, input: dict, result=True) -> WorkflowDebugger:
+    if os.getenv("BYPASS_HATCHET") == "true":
+        workflow_run = WorkflowDebugger(workflow, input).run()
+        return workflow_run.result()
+    else:
+        from workflows.hatchet import hatchet
+
+        async def async_helper():
+            workflow_run = hatchet.client.admin.run_workflow(
+                workflow.__name__,
+                input=input,
+            )
+            result = await workflow_run.result()
+            return result
+
+        return asyncio.run(async_helper())
 
 
 async def get_async_listener(workflow_run_id: str, workflow_run: WorkflowDebugger):

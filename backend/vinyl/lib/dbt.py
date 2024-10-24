@@ -23,6 +23,7 @@ from vinyl.lib.dbt_methods import (
 from vinyl.lib.errors import VinylError, VinylErrorType
 from vinyl.lib.utils.files import adjust_path, cd, file_exists_in_directory, load_orjson
 from vinyl.lib.utils.graph import DAG
+from vinyl.lib.utils.query_limit_helper import query_limit_helper
 
 
 def run_adjusted_replace(base_pattern_list, replacement, contents):
@@ -333,9 +334,7 @@ class DBTProject(object):
         return out.stdout, out.stderr, success
 
     def dbt_cli_stream(
-        self,
-        command: list[str],
-        should_terminate: Callable[[], bool] = None
+        self, command: list[str], should_terminate: Callable[[], bool] = None
     ) -> Generator[str, None, tuple[str, str, bool]]:
         env, cwd = self._dbt_cli_env()
 
@@ -491,9 +490,13 @@ class DBTProject(object):
         if self.dbt1_5 and not force_terminal and not self.multitenant:
             # self.install_dbt_if_necessary()
             # TODO: make streaming work for python api
-            yield from self.dbt_cli_stream(full_command, should_terminate=should_terminate)
+            yield from self.dbt_cli_stream(
+                full_command, should_terminate=should_terminate
+            )
         else:
-            yield from self.dbt_cli_stream(full_command, should_terminate=should_terminate)
+            yield from self.dbt_cli_stream(
+                full_command, should_terminate=should_terminate
+            )
 
     def dbt_parse(self, defer: bool = False) -> tuple[str, str, bool]:
         if self.dbt1_5:
@@ -777,6 +780,8 @@ class DBTProject(object):
     ):
         if not self.dbt1_5:
             raise ValueError("Must use dbt 1.5+ to use show")
+        if limit and data:
+            dbt_sql = query_limit_helper(dbt_sql, limit)
         command = [
             "show" if data else "compile",
             "--inline",
@@ -790,8 +795,8 @@ class DBTProject(object):
             "--log-format-file",
             "json",
         ]
-        if limit and data:
-            command.extend(["--limit", str(limit)])
+        if limit and not data:
+            command.extend(["--limit", limit])
         with tempfile.TemporaryDirectory() as temp_dir:
             command.extend(["--log-path", temp_dir])
             stdout, stderr, success = self.run_dbt_command(
@@ -809,8 +814,7 @@ class DBTProject(object):
             with open(log_file, "r") as f:
                 last_line = f.readlines()[-1]
                 contents = orjson.loads(last_line)
-            breakpoint()
-            return contents["data"]["preview"]
+            return contents["data"]["preview"] if data else contents["data"]["compiled"]
 
     def _replace_sources_and_refs(self, contents):
         self.mount_manifest()
@@ -897,7 +901,10 @@ class DBTProject(object):
         return new_contents
 
     def fast_compile(self, dbt_sql: str):
-        self.mount_manifest()
+        # fast compile not worth it unless we have a manifest
+        if not hasattr(self, "manifest") or self.manifest is None:
+            return None
+
         if not dbt_sql:
             raise ValueError("dbt_sql is empty")
         contents = self._replace_sources_and_refs(dbt_sql)
@@ -947,4 +954,3 @@ class DBTTransition:
         self.after.mount_catalog(
             read=read, force_run=force_run, force_read=force_read, defer=defer
         )
-

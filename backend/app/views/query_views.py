@@ -9,13 +9,13 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from app.models import Block, Notebook
-from app.models.workspace import Workspace
-from workflows.execute_dbt_query import DBTQueryPreviewWorkflow
-from workflows.execute_query import ExecuteQueryWorkflow
-from workflows.utils.debug import run_workflow
+from scripts.debug.pyinstrument import pyprofile
+from workflows.execute_query import DBTQueryPreviewWorkflow, QueryPreviewWorkflow
+from workflows.execute_query_DEPRECATED import ExecuteQueryWorkflow
+from workflows.utils.debug import run_workflow_get_result
 
 
-class ExecuteQueryView(APIView):
+class NotebookQueryView(APIView):
     @sync_to_async
     def get_current_workspace(self, user):
         return user.current_workspace()
@@ -52,7 +52,7 @@ class ExecuteQueryView(APIView):
             )
 
         # Run the async workflow
-        workflow_run_id, _ = run_workflow_async(
+        workflow_run_id, _ = run_workflow(
             ExecuteQueryWorkflow,
             {
                 "resource_id": resource_id,
@@ -76,18 +76,47 @@ class ExecuteQueryView(APIView):
         return JsonResponse(result, status=status.HTTP_200_OK)
 
 
-class DbtQueryPreviewView(APIView):
-    def get_current_workspace(self, user):
-        return user.current_workspace()
+class QueryPreviewView(APIView):
+    def _preprocess(self, request):
+        workspace = request.user.current_workspace()
+        query = request.data.get("query")
+        if not query:
+            return Response(
+                {"error": "query required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+        # assumes a single repo in the workspace for now
+        dbt_resource = workspace.get_dbt_details()
 
-    def get_dbt_details(self, workspace: Workspace):
         return {
-            "resource": workspace.get_dbt_details().resource,
-            "dbt_resource": workspace.get_dbt_details(),
+            "workspace_id": str(workspace.id),
+            "resource_id": str(dbt_resource.resource.id),
+            "sql": query,
         }
 
+    def _post_process(self, result):
+        signed_url = result.get("execute_query", {}).get("signed_url", "")
+
+        if not signed_url:
+            return Response(
+                {"error": "signed_url not found"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return JsonResponse(
+            {"signed_url": signed_url},
+            status=status.HTTP_201_CREATED,
+        )
+
+    @pyprofile()
     def post(self, request):
-        workspace = self.get_current_workspace(request.user)
+        result = run_workflow_get_result(
+            QueryPreviewWorkflow, self._preprocess(request)
+        )
+        return self._post_process(result)
+
+
+class DbtQueryPreviewView(QueryPreviewView):
+    def _preprocess(self, request):
+        workspace = request.user.current_workspace()
         query = request.data.get("query")
         use_fast_compile = (
             request.query_params.get("use_fast_compile", "true").lower() == "true"
@@ -97,22 +126,18 @@ class DbtQueryPreviewView(APIView):
                 {"error": "query required"}, status=status.HTTP_400_BAD_REQUEST
             )
         # assumes a single repo in the workspace for now
-        details = self.get_dbt_details(workspace)
+        details = workspace.get_dbt_details()
 
-        workflow_run = run_workflow(
-            DBTQueryPreviewWorkflow,
-            {
-                "resource_id": str(details["resource"].id),
-                "dbt_resource_id": str(details["dbt_resource"].id),
-                "dbt_sql": query,
-                "use_fast_compile": use_fast_compile,
-            },
+        return {
+            "workspace_id": str(workspace.id),
+            "resource_id": str(details.resource.id),
+            "dbt_resource_id": str(details.id),
+            "dbt_sql": query,
+            "use_fast_compile": use_fast_compile,
+        }
+
+    def post(self, request):
+        result = run_workflow_get_result(
+            DBTQueryPreviewWorkflow, self._preprocess(request)
         )
-
-        result = workflow_run.result()
-        signed_url = result.get("dbt_query_preview", {}).get("signed_url", "")
-
-        return JsonResponse(
-            {"signed_url": signed_url},
-            status=status.HTTP_201_CREATED,
-        )
+        return self._post_process(result)

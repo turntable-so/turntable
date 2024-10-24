@@ -27,17 +27,15 @@ from vinyl.lib.dbt import DBTProject
 from vinyl.lib.dbt_methods import DBTDialect, DBTVersion
 from vinyl.lib.errors import VinylError, VinylErrorType
 from vinyl.lib.utils.pkg import _get_project_directory
+from vinyl.lib.utils.query import _QUERY_LIMIT
+from vinyl.lib.utils.query_limit_helper import query_limit_helper
 from vinyl.lib.utils.text import (
     _extract_uri_scheme,
-    _generate_random_ascii_string,
 )
 
 _TEMP_PATH_PREFIX = "vinyl_"
-_QUERY_LIMIT = 100000
 _JOIN_STRING_HELPER = "_____"
 _PARALLEL_DB_THREADS = 10
-
-# NOTE: Starting in Ibis 10.0, Ibis now uses nomenclature for tables (i.e. catalog, database, name), that is distinct from how we usually think about it. Database, schema, name. Until we rename our variables, the variable naming will be confusing.
 
 
 @dataclass
@@ -62,7 +60,9 @@ class _ResourceConnector(ABC):
         pass
 
     @abstractmethod
-    def sql_to_df(self, query: str, limit: int | None) -> pd.DataFrame:
+    def run_query(
+        self, query: str, limit: int | None = _QUERY_LIMIT
+    ) -> tuple[pd.DataFrame, dict[str, str]]:
         pass
 
     @abstractmethod
@@ -95,7 +95,9 @@ class _TableConnector(_ResourceConnector):
         )
         return sampled
 
-    def sql_to_df(self, query: str, limit: int | None = _QUERY_LIMIT) -> pd.DataFrame:
+    def run_query(
+        self, query: str, limit: int | None = _QUERY_LIMIT
+    ) -> tuple[pd.DataFrame, dict[str, str]]:
         pass
 
     def validate_sql(self, query: str) -> ValidationOutput:
@@ -313,24 +315,10 @@ class _DatabaseConnector(_ResourceConnector):
         conn.drop_table(table_temp_name)
         return final_table
 
-    def _sql_to_df_query_helper(
-        self, query: str, limit: int | None = _QUERY_LIMIT
-    ) -> str:
-        alias = _generate_random_ascii_string(8)
-        query = f"select * from ({query}) as {alias}"
-        if limit:
-            query += f" limit {limit}"
-        return query
-
     def run_query(
         self, query: str, limit: int | None = _QUERY_LIMIT
     ) -> tuple[pd.DataFrame, dict[str, str]]:
         pass
-
-    def sql_to_df(self, query: str, limit: int | None = _QUERY_LIMIT) -> pd.DataFrame:
-        conn = self._connect()
-        query = self._sql_to_df_query_helper(query, limit)
-        return conn.sql(query).execute()
 
     def validate_sql(self, query: str) -> ValidationOutput:
         pass
@@ -549,26 +537,11 @@ class BigQueryConnector(_DatabaseConnector):
 
         return conn
 
-    def sql_to_df(self, query: str, limit: int | None = _QUERY_LIMIT) -> pd.DataFrame:
-        conn = self._connect()
-        query = self._sql_to_df_query_helper(query, limit)
-        rows = conn.client.query_and_wait(query)
-        if rows.total_rows < self._BQ_ITERATOR_ROW_CUTOFF:
-            # faster to use iterators for small datasets
-            data = [dict(row) for row in rows]
-            columns = [field.name for field in rows.schema]
-            df = pd.DataFrame(data, columns=columns)
-        else:
-            # faster to download directly for large datasets
-            df = rows.to_dataframe()
-
-        return df
-
     def run_query(
         self, query: str, limit: int | None = _QUERY_LIMIT
     ) -> tuple[pd.DataFrame, dict[str, str]]:
         conn = self._connect()
-        query = self._sql_to_df_query_helper(query, limit)
+        query = query_limit_helper(query, limit)
         rows = conn.client.query_and_wait(query)
         columns = {field.name: field.field_type for field in rows.schema}
         if rows.total_rows < self._BQ_ITERATOR_ROW_CUTOFF:
@@ -664,7 +637,7 @@ class PostgresConnector(_DatabaseConnector):
         self, query: str, limit: int | None = _QUERY_LIMIT
     ) -> tuple[pd.DataFrame, dict[str, str]]:
         conn = self._connect()
-        query = self._sql_to_df_query_helper(query, limit)
+        query = query_limit_helper(query, limit)
         with closing(conn.raw_sql(query)) as cursor:
             types_dict = {
                 **self._raw_types_dict,
@@ -696,6 +669,9 @@ class RedshiftConnector(PostgresConnector):
 
 
 class SnowflakeConnector(_DatabaseConnector):
+    from snowflake.connector import constants
+
+    _raw_types_dict = dict(constants.FIELD_ID_TO_NAME)
     _account: str
     _user: str
     _password: str
@@ -743,9 +719,14 @@ class SnowflakeConnector(_DatabaseConnector):
         self, query: str, limit: int | None = _QUERY_LIMIT
     ) -> tuple[pd.DataFrame, dict[str, str]]:
         conn = self._connect()
-        query = self._sql_to_df_query_helper(query, limit)
+        query = query_limit_helper(query, limit)
         with closing(conn.raw_sql(query)) as cursor:
-            breakpoint()
+            df = cursor.fetch_arrow_all().to_pandas()
+            columns = {
+                d.name: self._raw_types_dict.get(d.type_code, None)
+                for d in cursor.description
+            }
+        return df, columns
 
     def validate_sql(self, query: str) -> ValidationOutput:
         conn = self._connect()
@@ -825,13 +806,17 @@ class DatabricksConnector(_DatabaseConnector):
                 server_hostname=host, http_path=http_path, access_token=token
             )
 
-    def sql_to_df(self, query: str, limit: int | None = _QUERY_LIMIT) -> pd.DataFrame:
+    def run_query(
+        self, query: str, limit: int | None = _QUERY_LIMIT
+    ) -> tuple[pd.DataFrame, dict[str, str]]:
         conn = self._connect(use_spark=False)
-        query = self._sql_to_df_query_helper(query, limit)
+        query = query_limit_helper(query, limit)
         with closing(conn.cursor()) as cursor:
             cursor.execute(query)
-            out = cursor.fetchall_arrow().to_pandas()
-        return out
+            columns = {d[0]: d[1] for d in cursor.description}
+            df = cursor.fetchall_arrow().to_pandas()
+
+        return df, columns
 
 
 @dataclass(frozen=True)
