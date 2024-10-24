@@ -78,12 +78,13 @@ const SkeletonLoadingTable = () => {
 
 
 
-export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview, isLoading: isQueryLoading }: {
+export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview, isLoading: isQueryLoading, queryPreviewError }: {
     rowData: any,
     gridRef: any,
     colDefs: any,
     runQueryPreview: any,
     isLoading: boolean,
+    queryPreviewError: string | null,
 }) {
     const [activeTab, setActiveTab] = useLocalStorage<"lineage" | "results" | "command">("bottom-panel-tab", "lineage");
 
@@ -91,7 +92,7 @@ export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview
     const { activeFile } = useFiles()
 
     useEffect(() => {
-        if (activeFile && activeTab === "lineage" && activeFile.node.path.endsWith(".sql")) {
+        if (activeFile && activeFile.node.path.endsWith(".sql")) {
             if (!lineageData[activeFile.node.path]) {
                 fetchFileBasedLineage(activeFile.node.path)
             }
@@ -100,11 +101,6 @@ export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview
 
     const { ref: bottomPanelRef, width: bottomPanelWidth, height: bottomPanelHeight } = useResizeObserver();
 
-    console.log({ lineageData })
-
-    console.log("bottomPanelHeight", bottomPanelHeight)
-
-
 
     return (
         <Fragment>
@@ -112,20 +108,23 @@ export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview
             <div className='h-10 bg-muted/50 border-t-2 flex justify-between items-center'>
                 <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "lineage" | "results" | "command")} className="text-sm">
                     <TabsList>
-                        <TabsTrigger value="lineage">
-                            <Network className="h-4 w-4 mr-2" />
-                            Lineage
-                        </TabsTrigger>
                         <TabsTrigger value="results">
                             <TableIcon className="h-4 w-4 mr-2" />
                             Preview
                         </TabsTrigger>
+                        <TabsTrigger value="lineage">
+                            {lineageData[activeFile?.node.path || ""]?.isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : (
+                                <Network className="h-4 w-4 mr-2" />
+                            )}
+                            Lineage
+                        </TabsTrigger>
+
                         <TabsTrigger value="command">
                             <TerminalIcon className="h-4 w-4 mr-2" />
                             Command
                         </TabsTrigger>
-                    </TabsList>
-                </Tabs>
+                    </TabsList >
+                </Tabs >
                 <div className="mr-2">
                     {
                         activeTab === "results" && (
@@ -155,38 +154,57 @@ export default function BottomPanel({ rowData, gridRef, colDefs, runQueryPreview
             </div >
             <Panel defaultSize={40} className='border-t flex items-center justify-center'>
                 <div className="flex flex-col w-full h-full flex-grow-1" ref={bottomPanelRef}>
-                    {activeTab === "results" && (
-                        isQueryLoading ? (
-                            <SkeletonLoadingTable />
-                        ) : (
-                            <AgGridReact
-                                className="ag-theme-custom"
-                                ref={gridRef}
-                                suppressRowHoverHighlight={true}
-                                columnHoverHighlight={true}
-                                rowData={rowData}
-                                pagination={true}
-                                // @ts-ignore
-                                columnDefs={colDefs}
-                            />
-                        )
-                    )}
+                    {activeTab === "results" && (() => {
+                        switch (true) {
+                            case isQueryLoading:
+                                return <SkeletonLoadingTable />;
+                            case !!queryPreviewError:
+                                return <div style={{
+                                    height: bottomPanelHeight,
+                                }} className="overflow-y-scroll  p-6 " >
+                                    <div className=" text-red-500 text-sm">
+                                        {queryPreviewError}
+                                    </div>
+                                    <div className='h-24' />
+                                </div>;
+                            default:
+                                return (
+                                    <AgGridReact
+                                        className="ag-theme-custom"
+                                        ref={gridRef}
+                                        suppressRowHoverHighlight={true}
+                                        columnHoverHighlight={true}
+                                        rowData={rowData}
+                                        pagination={true}
+                                        // @ts-ignore
+                                        columnDefs={colDefs}
+                                    />
+                                );
+                        }
+                    })()}
                     {activeTab === "lineage" && (
                         <div className="h-full">
                             <ErrorBoundary FallbackComponent={() => (
                                 <div>Something went wrong</div>
                             )}>
                                 <>
-                                    {lineageData && lineageData[activeFile?.node.path || ''] && lineageData[activeFile?.node.path || ''].isLoading ? (
+                                    {lineageData && lineageData[activeFile?.node.path || ''] && lineageData[activeFile?.node.path || ''].isLoading && (
                                         <div className='w-full bg-gray-200 flex items-center justify-center' style={{ height: bottomPanelHeight }}>
                                             <Loader2 className='h-6 w-6 animate-spin opacity-50' />
                                         </div>
-                                    ) : (
-                                        lineageData && lineageData[activeFile?.node.path || ''] && lineageData[activeFile?.node.path || ''].data && (
-                                            <LineageView
-                                                key={activeFile?.node.path
-                                                } lineage={lineageData[activeFile?.node.path || ''].data.lineage} rootAsset={lineageData[activeFile?.node.path || ''].data.root_asset} style={{ height: bottomPanelHeight, }} />
-                                        )
+                                    )}
+                                    {lineageData && lineageData[activeFile?.node.path || ''] && lineageData[activeFile?.node.path || ''].data && (
+                                        <LineageView
+                                            key={activeFile?.node.path}
+                                            lineage={lineageData[activeFile?.node.path || ''].data.lineage}
+                                            rootAsset={lineageData[activeFile?.node.path || ''].data.root_asset}
+                                            style={{ height: bottomPanelHeight, }}
+                                        />
+                                    )}
+                                    {lineageData && lineageData[activeFile?.node.path || ''] && lineageData[activeFile?.node.path || ''].error && (
+                                        <div className='w-full bg-gray-200 flex items-center justify-center' style={{ height: bottomPanelHeight }}>
+                                            <div className='text-red-500 text-sm'>{lineageData[activeFile?.node.path || ''].error}</div>
+                                        </div>
                                     )}
                                 </>
                             </ErrorBoundary>

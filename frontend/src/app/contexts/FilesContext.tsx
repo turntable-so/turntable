@@ -12,7 +12,7 @@ export type OpenedFile = {
     node: FileNode;
     content: string;
     isDirty: boolean;
-    view: 'edit' | 'diff';
+    view: 'edit' | 'diff' | 'new';
     diff?: {
         original: string;
         modified: string;
@@ -33,14 +33,28 @@ type FilesContextType = {
     searchFileIndex: FileNode[];
     createFileAndRefresh: (path: string, fileContents: string) => void;
     deleteFileAndRefresh: (path: string) => void;
+    createNewFileTab: () => void;
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
 
 export const FilesProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [files, setFiles] = useState<FileNode[]>([]);
-    const [openedFiles, setOpenedFiles] = useState<OpenedFile[]>([]);
-    const [activeFile, setActiveFile] = useState<OpenedFile | null>(null);
+    const [openedFiles, setOpenedFiles] = useState<OpenedFile[]>([
+        {
+            node: {
+                name: 'New tab',
+                path: `Untitled-${crypto.randomUUID()}`,
+                type: 'file'
+            },
+            content: '',
+            isDirty: false,
+            view: 'new'
+        }
+    ]);
+    const [activeFile, setActiveFile] = useState<OpenedFile | null>(
+        openedFiles[0] || null
+    );
     const [activeFilepath, setActiveFilepath] = useState<string | null>(null);
     const [searchFileIndex, setSearchFileIndex] = useState<FileNode[]>([]);
 
@@ -130,6 +144,21 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         await fetchFiles()
     }
 
+    const createNewFileTab = () => {
+        const newTab: OpenedFile = {
+            node: {
+                name: 'New tab',
+                path: `Untitled-${crypto.randomUUID()}`,
+                type: 'file'
+            },
+            content: '',
+            isDirty: false,
+            view: 'new'
+        }
+        setOpenedFiles(prev => [...prev, newTab]);
+        setActiveFile(newTab);
+    }
+
 
     return (
         <FilesContext.Provider value={{
@@ -145,7 +174,8 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             activeFilepath,
             searchFileIndex,
             createFileAndRefresh,
-            deleteFileAndRefresh
+            deleteFileAndRefresh,
+            createNewFileTab
         }}>
             {children}
         </FilesContext.Provider>

@@ -60,6 +60,7 @@ export default async function AssetPage({ params }: { params: { id: string } }) 
     const asset = await getAssetPreview(params.id)
 
 
+
     return (
         <div className="w-full  flex justify-center">
             <div className="max-w-7xl w-full px-16 pt-16">

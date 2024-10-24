@@ -9,7 +9,6 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from app.models import Block, Notebook
-from scripts.debug.pyinstrument import pyprofile
 from workflows.execute_query import DBTQueryPreviewWorkflow, QueryPreviewWorkflow
 from workflows.execute_query_DEPRECATED import ExecuteQueryWorkflow
 from workflows.utils.debug import run_workflow_get_result
@@ -106,7 +105,6 @@ class QueryPreviewView(APIView):
             status=status.HTTP_201_CREATED,
         )
 
-    @pyprofile()
     def post(self, request):
         result = run_workflow_get_result(
             QueryPreviewWorkflow, self._preprocess(request)
