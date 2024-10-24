@@ -445,7 +445,6 @@ function EditorPageContent() {
         fetchQueryPreview()
     }, [queryPreview?.signed_url])
 
-    console.log('REEEEEEE', { sidebarLeftShown, sidebarRightShown, bottomPanelShown })
     return (
         <div className='flex flex-col h-screen'>
             <PanelGroup direction="horizontal" className="h-fit">
