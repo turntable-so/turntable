@@ -136,7 +136,7 @@ const projects = [
 
 ]
 
-export function TableDemo() {
+function MockProjectsTable() {
     return (
         <Table className='bg-white rounded'>
             <TableHeader>
@@ -166,7 +166,7 @@ export function TableDemo() {
 
 export default function Projects() {
     return <FullWidthPageLayout title='Projects' button={<NewProjectButton />}>
-        <TableDemo />
+        <MockProjectsTable />
     </FullWidthPageLayout>
 }
 

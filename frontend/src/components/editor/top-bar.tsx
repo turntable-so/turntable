@@ -57,7 +57,7 @@ const EditorContent = () => {
             <div className="flex justify-center">
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button onClick={() => setSidebarLeftShown((prev) => !prev)} variant="ghost" className='hover:bg-white' size="icon">
+                        <Button onClick={() => setSidebarLeftShown(!sidebarLeftShown)} variant="ghost" className='hover:bg-white' size="icon">
                             {sidebarLeftShown ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
                         </Button>
                     </TooltipTrigger>
