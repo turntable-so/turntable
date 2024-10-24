@@ -1,6 +1,7 @@
 from hatchet_sdk import Context
 
 from app.models.editor import DBTQuery, Query
+from app.models.resources import Resource
 from vinyl.lib.utils.query import _QUERY_LIMIT
 from workflows.hatchet import hatchet
 from workflows.utils.log import inject_workflow_run_logging
@@ -63,3 +64,38 @@ class DBTQueryPreviewWorkflow:
             workspace_id=workspace_id,
         )
         return dbt_query.run(use_fast_compile=use_fast_compile, limit=limit)
+
+
+@hatchet.workflow(on_events=["table_schema"], timeout="4m")
+@inject_workflow_run_logging(hatchet)
+class SchemaWorkflow:
+    """
+    input structure:
+        {
+            resource_id: str,
+            workspace_id: str,
+            with_columns: bool,
+            table_override: str | None,
+        }
+    """
+
+    @hatchet.step()
+    def execute_query(self, context: Context):
+        resource_id = context.workflow_input()["resource_id"]
+        workspace_id = context.workflow_input()["workspace_id"]
+        with_columns = context.workflow_input().get("with_columns", False)
+        table_override = context.workflow_input().get("table_override")
+        resource = Resource.objects.get(id=resource_id)
+
+        if not hasattr(resource.details, "get_connector"):
+            raise ValueError("Resource does not have a connector")
+        connector = resource.details.get_connector()
+        query_ast = connector._get_information_schema_query(
+            table_override=table_override, with_columns=with_columns
+        )
+        query = Query(
+            sql=query_ast.sql(dialect=resource.details.subtype),
+            resource_id=resource_id,
+            workspace_id=workspace_id,
+        )
+        return query.run()

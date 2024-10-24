@@ -6,7 +6,11 @@ django.setup()
 # rest of imports
 
 from workflows.dbt_runner import DBTRunnerWorkflow, DBTStreamerWorkflow
-from workflows.execute_query import DBTQueryPreviewWorkflow, QueryPreviewWorkflow
+from workflows.execute_query import (
+    DBTQueryPreviewWorkflow,
+    QueryPreviewWorkflow,
+    SchemaWorkflow,
+)
 from workflows.execute_query_DEPRECATED import ExecuteQueryWorkflow
 from workflows.hatchet import hatchet
 from workflows.metadata_sync import (
@@ -21,6 +25,7 @@ def start():
     worker.register_workflow(ExecuteQueryWorkflow())
     worker.register_workflow(QueryPreviewWorkflow())
     worker.register_workflow(DBTQueryPreviewWorkflow())
+    worker.register_workflow(SchemaWorkflow())
     worker.register_workflow(DBTRunnerWorkflow())
     worker.register_workflow(DBTStreamerWorkflow())
     worker.start()

@@ -6,7 +6,7 @@ from app.utils.test_utils import require_env_vars
 from app.utils.url import build_url
 
 
-def _validate_query_test(response):
+def _validate_query_test(response, min_rows: int = 100):
     assert response.status_code == 201
     data = response.json()
     url = data["signed_url"]
@@ -16,7 +16,9 @@ def _validate_query_test(response):
     url = url.replace(settings.AWS_S3_PUBLIC_URL, settings.AWS_S3_ENDPOINT_URL)
     response = requests.get(url)
     assert response.status_code == 200
-    assert len(response.json()["data"]) >= 100
+    data = response.json()
+    assert len(data["data"]) >= min_rows
+    return data
 
 
 @pytest.mark.django_db

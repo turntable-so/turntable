@@ -16,6 +16,7 @@ from typing import Any, Optional
 import ibis
 import ibis.expr.types as ir
 import pandas as pd
+import sqlglot.expressions as sge
 from ibis import Schema
 from ibis.backends import BaseBackend
 from ibis.backends.duckdb import Backend as DuckDBBackend
@@ -115,6 +116,16 @@ class _DatabaseConnector(_ResourceConnector):
     _excluded_dbs: list[str] = []
     _excluded_schemas: list[str] = []
     _excluded_tables: list[str] = []
+    _exclusion_map: dict[str, list[str]] = {}
+    _region: str | None
+    _default_upper_case: bool = False
+
+    def _get_exclusion_map(self):
+        return {
+            "table_catalog": self._excluded_dbs,
+            "table_schema": self._excluded_schemas,
+            "table_name": self._excluded_tables,
+        }
 
     def _expand_table_names(self, location: str) -> list[str]:
         db, sch, table = location.split(_JOIN_STRING_HELPER)
@@ -177,6 +188,35 @@ class _DatabaseConnector(_ResourceConnector):
                 traceback=traceback.format_exc(),
             )
 
+    def _list_dbs_expand_star(self) -> list[str]:
+        if not hasattr(self._conn, "list_catalogs"):
+            raise ValueError(
+                f"Database specification required for this connector: {self.__class__.__name__}"
+            )
+        return list(set(self._conn.list_catalogs()) - set(self._excluded_dbs))
+
+    def list_databases(self, databases_override: list[str] | None = None) -> list[str]:
+        self._connect()
+        if databases_override is not None:
+            return databases_override
+
+        databases = []
+        for loc in self._tables:
+            split_ = loc.split(".")
+            if len(split_) != 3:
+                continue
+            database, schema, table = split_
+            databases.append(database)
+
+        databases = list(set(databases))
+        adj_databases = []
+        for db in databases:
+            if database == "*":
+                adj_databases.extend(self._list_dbs_expand_star())
+            else:
+                adj_databases.append(db)
+        return adj_databases
+
     def _find_sources_in_db(
         self,
         databases_override: list[str] | None = None,
@@ -195,13 +235,7 @@ class _DatabaseConnector(_ResourceConnector):
             if databases_override is not None:
                 adj_databases = databases_override
             elif database == "*":
-                if not hasattr(self._conn, "list_catalogs"):
-                    raise ValueError(
-                        f"Database specification required for this connector: {self.__class__.__name__}"
-                    )
-                adj_databases = list(
-                    set(self._conn.list_catalogs()) - set(self._excluded_dbs)
-                )
+                adj_databases = self._list_dbs_expand_star()
             else:
                 adj_databases = [database]
 
@@ -325,6 +359,95 @@ class _DatabaseConnector(_ResourceConnector):
 
     def validate_sql(self, query: str) -> ValidationOutput:
         pass
+
+    def _get_information_schema_query(
+        self, table_override: str | None = None, with_columns: bool = False
+    ) -> list[str]:
+        if table_override is not None:
+            split_ = table_override.split(".")
+            if len(split_) != 3:
+                raise ValueError(
+                    "table_override must be a string of format 'database.schema.table'"
+                )
+            database, schema, table = split_
+            databases = self.list_databases() if database == "*" else [database]
+        else:
+            databases = self.list_databases()
+
+        for i, db in enumerate(databases):
+            out_it = self._get_information_schema_query_for_db(
+                db, table_override, with_columns
+            )
+            if i == 0:
+                out = out_it
+            else:
+                out = sge.Union(
+                    this=out,
+                    expression=out_it,
+                )
+        return out
+
+    def _get_information_schema_query_for_db(
+        self, db: str, table_override: str | None = None, with_columns: bool = False
+    ) -> list[str]:
+        catalog = sge.to_identifier(
+            db.upper() if self._default_upper_case else db, quoted=True
+        )
+        if hasattr(self, "_region") and self._region is not None:
+            catalog = sge.Dot(
+                this=catalog, expression=sge.to_identifier(self._region, quoted=True)
+            )
+        col_names = ["table_catalog", "table_schema", "table_name"]
+        if with_columns:
+            col_names.extend(["column_name", "ordinal_position", "data_type"])
+        else:
+            col_names.append("table_type")
+        select_dict = {
+            "expressions": [sge.Column(this=sge.Identifier(this=c)) for c in col_names],
+            "from": sge.From(
+                this=sge.Table(
+                    catalog=catalog,
+                    db=sge.to_identifier("INFORMATION_SCHEMA"),
+                    this=sge.to_identifier("COLUMNS" if with_columns else "TABLES"),
+                )
+            ),
+        }
+        where = None
+        for key, excluded in self._get_exclusion_map().items():
+            if not excluded:
+                continue
+            in_ = sge.Not(
+                this=sge.In(
+                    this=sge.Column(this=sge.Identifier(this=key)),
+                    expressions=[sge.Literal(this=d, is_string=True) for d in excluded],
+                )
+            )
+            where = sge.And(this=where, expression=in_) if where is not None else in_
+        if table_override is not None:
+            split_ = table_override.split(".")
+            if len(split_) != 3:
+                raise ValueError(
+                    "table_override must be a string of format 'database.schema.table'"
+                )
+            schema = split_[1]
+            table = split_[2]
+            for k, v in {"table_schema": schema, "table_name": table}.items():
+                # only run filter if specific value is provided
+                if v == "*":
+                    continue
+                eq = sge.EQ(
+                    this=sge.Column(this=sge.Identifier(this=k)),
+                    expression=sge.Literal(
+                        this=v.upper() if self._default_upper_case else v,
+                        is_string=True,
+                    ),
+                )
+                where = eq if where is None else sge.And(this=where, expression=eq)
+        if where is not None:
+            select_dict["where"] = sge.Where(this=where)
+
+        query_ast = sge.Select(**select_dict)
+        return query_ast
 
 
 class _FileConnector(_ResourceConnector):
@@ -483,12 +606,14 @@ class BigQueryConnector(_DatabaseConnector):
     def __init__(
         self,
         tables: list[str],
+        region: str | None = None,
         service_account_path: str | None = None,
         service_account_info: dict[str, str] | None = None,
     ):
         self._service_account_path = service_account_path
         self._service_account_info = service_account_info
         self._tables = tables
+        self._region = region
 
     def _connect(self) -> BaseBackend:
         self._conn = BigQueryConnector._connect_helper(
@@ -500,7 +625,7 @@ class BigQueryConnector(_DatabaseConnector):
         return self._conn
 
     def _list_sources(self, with_schema=False) -> list[SourceInfo]:
-        conn = self._connect()
+        self._connect()
         out, errors = self._find_sources_in_db(
             with_schema=with_schema,
             databases_override=[
@@ -586,6 +711,7 @@ class PostgresConnector(_DatabaseConnector):
     _excluded_schemas = [
         "information_schema",
         "pg_catalog",
+        "pg_internal",
         "pgsodium",
         "auth",
         "extensions",
@@ -679,6 +805,7 @@ class SnowflakeConnector(_DatabaseConnector):
     _user: str
     _password: str
     _warehouse: str | None
+    _default_upper_case: bool = True
 
     def __init__(
         self,
@@ -759,6 +886,9 @@ class DatabricksConnector(_DatabaseConnector):
     _token: str
     _http_path: str
 
+    _excluded_dbs = ["hive_metastore", "system", "samples"]
+    _excluded_schemas = ["information_schema"]
+
     def __init__(
         self,
         host: str,
@@ -773,7 +903,7 @@ class DatabricksConnector(_DatabaseConnector):
         self._cluster_id = cluster_id
         self._tables = tables
 
-    def _connect(self, use_spark: bool = True) -> BaseBackend:
+    def _connect(self, use_spark: bool = False) -> BaseBackend:
         self._conn = self._connect_helper(
             self._host,
             self._token,
@@ -787,6 +917,11 @@ class DatabricksConnector(_DatabaseConnector):
         raise NotImplementedError(
             "Databricks ibis connection not currently supported, only SQL connection."
         )
+
+    def _list_dbs_expand_star(self) -> list[str]:
+        self._connect(use_spark=False)
+        df, _ = self.run_query("SHOW CATALOGS;", bypass_limit=True)
+        return set(df["catalog"]) - set(self._excluded_dbs)
 
     # caching ensures we create one bq connection per set of credentials across instances of the class
     @staticmethod
@@ -810,10 +945,13 @@ class DatabricksConnector(_DatabaseConnector):
             )
 
     def run_query(
-        self, query: str, limit: int | None = _QUERY_LIMIT
+        self,
+        query: str,
+        limit: int | None = _QUERY_LIMIT,
+        bypass_limit: bool = False,
     ) -> tuple[pd.DataFrame, dict[str, str]]:
         conn = self._connect(use_spark=False)
-        query = query_limit_helper(query, limit)
+        query = query_limit_helper(query, limit, bypass_limit)
         with closing(conn.cursor()) as cursor:
             cursor.execute(query)
             columns = {d[0]: d[1] for d in cursor.description}
