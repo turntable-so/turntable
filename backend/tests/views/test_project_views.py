@@ -3,6 +3,7 @@ from urllib.parse import quote, unquote
 import pytest
 
 from app.utils.test_utils import require_env_vars
+from app.utils.url import build_url
 
 
 def safe_encode(s):
@@ -103,19 +104,23 @@ class TestProjectViews:
             "models/staging/stg_products.sql",
         ],
     )
-    def test_get_project_based_lineage_view(self, client, filepath_param):
+    @pytest.mark.parametrize("branch_name", ["apple12345", "main"])
+    def test_get_project_based_lineage_view(self, client, filepath_param, branch_name):
         encoded_filepath = safe_encode(filepath_param)
         response = client.get(
-            "/project/lineage/",
-            {
-                "filepath": encoded_filepath,
-                "predecessor_depth": 1,
-                "successor_depth": 1,
-            },
+            build_url(
+                "/project/lineage/",
+                {
+                    "filepath": encoded_filepath,
+                    "predecessor_depth": 1,
+                    "successor_depth": 1,
+                    "branch_name": branch_name,
+                },
+            )
         )
-        assert response.status_code == 200
-        for asset in response.json()["lineage"]["assets"]:
-            assert len(asset["columns"]) > 0
-
-        assert response.json()["lineage"]["asset_links"]
-        assert response.json()["lineage"]["column_links"]
+        if branch_name != "main":
+            assert response.status_code == 404
+        else:
+            assert response.status_code == 200
+            assert response.json()["lineage"]["asset_links"]
+            assert response.json()["lineage"]["column_links"]

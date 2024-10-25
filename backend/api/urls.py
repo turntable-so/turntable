@@ -18,15 +18,15 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path, re_path
 from app.views.settings_view import SettingsView
-from app.views.inference_views import InferenceView
 from app.views.project_views import ProjectViewSet
 from app.views.query_views import DbtQueryPreviewView
+from app.consumers.ai_chat_consumer import AIChatConsumer
 from rest_framework import routers
 
 from app.consumers import (
-    ChatInferenceConsumer,
     WorkflowRunConsumer,
 )
+from app.consumers import DBTCommandConsumer, WorkflowRunConsumer
 from app.views import (
     AssetViewSet,
     BlockViewSet,
@@ -109,11 +109,9 @@ urlpatterns = [
         AssetViewSet.as_view({"get": "retrieve"}),
         name="asset-detail",
     ),
-    path(
-        "infer/stream",
-        ChatInferenceConsumer.as_asgi(),
-    ),
+    path("ws/subscribe/<str:workspace_id>/", WorkflowRunConsumer.as_asgi()),
+    path("ws/dbt_command/<str:workspace_id>/", DBTCommandConsumer.as_asgi()),
+    path("ws/infer/ ", AIChatConsumer.as_asgi()),
     path("settings/", SettingsView.as_view(), name="settings"),
-    path("infer/", InferenceView.as_view(), name="inference"),
     path("", include(router.urls)),
 ]

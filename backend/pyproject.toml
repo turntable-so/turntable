@@ -24,7 +24,7 @@ dependencies = [
     "netext>=0.2.1",
     "supabase>=2.4.5",
     "githubkit>=0.11.4",
-    "hatchet-sdk>=0.38.0",
+    "hatchet-sdk>=0.38.3",
     "bs4>=0.0.2",
     "deepmerge>=1.1.1",
     "orjson>=3.10.5",
@@ -83,6 +83,7 @@ dependencies = [
     "dbtx>=0.0.3",
     "psycopg[binary]>=3.1.19",
     "gitpython>=3.1.43",
+    "daphne>=4.1.2",
 ]
 
 [project.scripts]
@@ -118,7 +119,6 @@ dev-dependencies = [
     "google-cloud-storage>=2.17.0",
     "google-cloud-dataproc>=5.9.3",
     "pytest-django>=4.8.0",
-    "dbt-postgres>=1.8.2",
     "harlequin>=1.23.1",
 ]
 

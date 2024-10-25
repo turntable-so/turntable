@@ -17,8 +17,6 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **kwargs):
-        pass
-
         user = create_user()
         group_1(user)
         group_2(user)

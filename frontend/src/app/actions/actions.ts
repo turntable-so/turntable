@@ -16,7 +16,6 @@ type CookiesContext = {
 };
 
 
-
 export async function createWorkspace(body: FormData) {
   const response = await fetcher(
     '/workspaces/',
@@ -540,14 +539,3 @@ export async function getProjectBasedLineage({
   return response.json();
 }
 
-
-export async function submitEcho(message: string) {
-  const response = await fetcher(`/api/echo/`, {
-    cookies,
-    method: "POST",
-    body: {
-      message
-    }
-  });
-  return response.json()
-}

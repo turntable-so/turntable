@@ -13,7 +13,12 @@ from workflows.utils.debug import ContextDebugger, WorkflowDebugger
 
 
 def run_test_sync(
-    resources, recache: bool, use_cache: bool = False, db_read_path: str | None = None
+    resources,
+    recache: bool,
+    use_cache: bool = False,
+    db_read_path: str | None = None,
+    produce_columns: bool = False,
+    produce_column_links: bool = False,
 ):
     for resource in resources:
         input = {
@@ -28,9 +33,7 @@ def run_test_sync(
         else:
             WorkflowDebugger(MetadataSyncWorkflow, input).run()
 
-    breakpoint()
-
-    assert_ingest_output(resources)
+    assert_ingest_output(resources, produce_columns, produce_column_links)
 
     # recache datahub_dbs if successful and arg is passed
     if recache:
@@ -76,41 +79,6 @@ def test_tableau_sync(remote_tableau, recache: bool, use_cache: bool):
 
 
 @pytest.mark.django_db
-def test_eda(local_postgres):
-    connector = local_postgres.details.get_connector()
-    conn = connector._connect()
-    table = VinylTable(conn.table("orders", database="dbt_sl_test")._arg)
-    breakpoint()
-
-
-# @pytest.mark.django_db
-# @pyprofile()
-# def test_edb(local_postgres):
-#     connector = local_postgres.details.get_connector()
-#     table = connector._get_table(database="mydb", schema="dbt_sl_test", table="orders")
-#     vinyltable = VinylTable(table._arg)
-
-#     def get_sql(tbl, col):
-#         return tbl.eda(
-#             cols=[col],
-#             topk=20,
-#         )
-
-#     sqls = [
-#         vinyltable.eda(cols=[col], topk=20).to_sql(
-#             dialect="postgres", node_name="", optimized=True
-#         )
-#         for col in table.columns
-#     ]
-#     with WorkerPool(n_jobs=30, start_method="threading", use_dill=True) as pool:
-#         dfs = pool.imap(connector.sql_to_df, sqls)
-#     df = pd.concat(dfs)
-#     df.reset_index(drop=True)
-#     df.sort_values(by="position", inplace=True)
-#     print(df)
-
-
-@pytest.mark.django_db
 @pyprofile()
 def test_edb(internal_bigquery):
     connector = internal_bigquery.details.get_connector()
@@ -135,3 +103,14 @@ def test_edb(internal_bigquery):
     df.reset_index(drop=True)
     df.sort_values(by="position", inplace=True)
     print(df)
+
+
+@require_env_vars("POWERBI_0_RESOURCE_NAME")
+def test_powerbi_sync(remote_powerbi, recache: bool, use_cache: bool):
+    run_test_sync(
+        [remote_powerbi],
+        recache,
+        use_cache,
+        produce_columns=False,
+        produce_column_links=False,
+    )

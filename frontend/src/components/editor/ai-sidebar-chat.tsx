@@ -9,6 +9,14 @@ import { useLineage } from '@/app/contexts/LineageContext';
 const ApiHost = true ? "http://localhost:8000" : process.env.BACKEND_HOST;
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vs } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import { AuthActions } from '@/lib/auth';
+import getUrl from '@/app/url';
+import { useWebSocket } from '@/app/hooks/use-websocket';
+
+
+const baseUrl = getUrl();
+const base = new URL(baseUrl).host;
+const protocol = process.env.NODE_ENV === 'development' ? 'ws' : 'wss';
 
 
 export default function AiSidebarChat() {
@@ -16,79 +24,62 @@ export default function AiSidebarChat() {
     const [input, setInput] = useState('');
     const [currentResponse, setCurrentResponse] = useState('');
     const [error, setError] = useState<string | null>(null);
-    const ws = useRef<WebSocket | null>(null);
 
     const { activeFile } = useFiles()
     const { lineageData } = useLineage()
 
-    const connectWebSocket = () => {
-        console.log(`connecting to ws://${ApiHost}/ws/echo/123`)
-        ws.current = new WebSocket(`ws://localhost:8000/ws/echo/123/`);
+    const { getToken } = AuthActions();
+    const accessToken = getToken("access");
 
-        // ws.current = new WebSocket('ws://localhost:8000/ws/subscribe/0/')
+    const { startWebSocket, sendMessage, stopWebSocket, } = useWebSocket(`${protocol}://${base}/ws/infer/?token=${accessToken}`, {
+        onOpen: () => {
+            console.log('WebSocket connected')
+            sendMessage(JSON.stringify(
+                {
+                    type: 'completion',
+                    related_assets: visibleLineage?.data?.lineage?.assets.map((asset: any) => asset.id),
+                    asset_links: visibleLineage?.data?.lineage?.asset_links,
+                    instructions: input
+                }));
 
-
-        ws.current.onopen = () => {
-            console.log('WebSocket connected');
-        };
-
-        ws.current.onmessage = (event) => {
+        },
+        onClose: () => {
+            console.log('WebSocket disconnected')
+        },
+        onMessage: (event) => {
             const data = JSON.parse(event.data);
             console.log({ data })
             if (data.type === 'message_chunk') {
                 setCurrentResponse(prev => prev + data.content);
             } else if (data.type === 'message_end') {
                 setIsLoading(false);
+                stopWebSocket();
             }
-        };
-
-        ws.current.onerror = (error) => {
+        },
+        onError: (error) => {
             console.error('WebSocket error:', error);
             // setError('WebSocket connection error. Please try again.');
             setIsLoading(false);
-        };
+            stopWebSocket();
+        }
+    })
 
-        ws.current.onclose = () => {
-            console.log('WebSocket disconnected');
-        };
 
-    };
-
-    useEffect(() => {
-        connectWebSocket()
-        return () => {
-            if (ws.current) {
-                ws.current.close();
-            }
-        };
-    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
         setCurrentResponse('');
+        startWebSocket();
         setError(null);
 
-        try {
-            if (ws.current?.readyState === WebSocket.OPEN) {
-                ws.current.send(JSON.stringify({ type: 'completion', related_assets: visibleLineage?.data?.lineage?.assets.map((asset: any) => asset.id), asset_links: visibleLineage?.data?.lineage?.asset_links, instructions: input }));
-            } else {
-                throw new Error('WebSocket is not connected');
-            }
-        } catch (err) {
-            console.error('Message submission failed:', err);
-            setError('Failed to send message. Please try again.');
-            setIsLoading(false);
-        }
     };
 
 
 
 
-    console.log({ lineageData })
-    console.log({ activeFile })
     const visibleLineage = lineageData[activeFile?.node.path || '']
-    console.log({ visibleLineage })
+
     return (
         <div className="p-4 flex flex-col overflow-y-scroll">
             <div className="space-y-2 relative bg-muted p-1 rounded">
@@ -106,7 +97,7 @@ export default function AiSidebarChat() {
                 )}
                 <Textarea
                     placeholder='Ask anything'
-                    className='bg-transparent shadow-none border-none outline-none ring-0 resize-none w-full focus:outline-none focus:ring-0 focus:border-none focus:ring-offset-0 !border-0'
+                    className='bg-white shadow-none border-none outline-none ring-0 resize-none w-full focus:outline-none focus:ring-0 focus:border-none focus:ring-offset-0 !border-0'
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                 />

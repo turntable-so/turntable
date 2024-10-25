@@ -4,34 +4,36 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Check, X, Loader2 } from 'lucide-react'
 import { useLineage } from '@/app/contexts/LineageContext'
+import { AuthActions } from "@/lib/auth";
+import { useWebSocket } from '@/app/hooks/use-websocket'
+import getUrl from '@/app/url'
+
+const baseUrl = getUrl();
+const base = new URL(baseUrl).host;
+const protocol = process.env.NODE_ENV === 'development' ? 'ws' : 'wss';
+
 const ApiHost = true ? "http://localhost:8000" : process.env.BACKEND_HOST;
-export default function PromptBox({ setPromptBoxOpen }: { setPromptBoxOpen: (open: boolean) => void }) {
+export default function SingleFileEditPromptPopover({ setPromptBoxOpen }: { setPromptBoxOpen: (open: boolean) => void }) {
+    const { getToken } = AuthActions();
+    const accessToken = getToken("access");
+    const { startWebSocket, sendMessage, stopWebSocket, } = useWebSocket(`${protocol}://${base}/ws/infer/?token=${accessToken}`, {
+        onOpen: () => {
+            console.log('WebSocket connected')
+            sendMessage(JSON.stringify(
+                {
+                    type: 'single_file_edit',
+                    current_file: activeFile.content,
+                    related_assets: visibleLineage?.data?.lineage?.assets.map((asset: any) => asset.id),
+                    asset_links: visibleLineage?.data?.lineage?.asset_links,
+                    instructions: prompt
+                }));
 
-    const { activeFile, setActiveFile, updateFileContent } = useFiles();
-    const { lineageData } = useLineage();
-    const visibleLineage = lineageData[activeFile?.node.path || '']
-
-
-    const [prompt, setPrompt] = useState('')
-    const [mode, setMode] = useState<'PROMPT' | 'CONFIRM'>('PROMPT')
-    const [isLoading, setIsLoading] = useState(false)
-    const [modifiedContent, setModifiedContent] = useState('')
-    const ws = useRef<WebSocket | null>(null);
-
-    const connectWebSocket = () => {
-        console.log(`connecting to ws://${ApiHost}/ws/echo/123`)
-        ws.current = new WebSocket(`ws://localhost:8000/ws/echo/123/`);
-
-        // ws.current = new WebSocket('ws://localhost:8000/ws/subscribe/0/')
-
-
-        ws.current.onopen = () => {
-            console.log('WebSocket connected');
-        };
-
-        ws.current.onmessage = (event) => {
+        },
+        onClose: () => {
+            console.log('WebSocket disconnected')
+        },
+        onMessage: (event) => {
             const data = JSON.parse(event.data);
-            console.log({ data })
 
             if (data.type === 'single_file_edit_chunk') {
                 console.log(data.content)
@@ -46,40 +48,32 @@ export default function PromptBox({ setPromptBoxOpen }: { setPromptBoxOpen: (ope
                     } as OpenedFile
                 })
             } else if (data.type === 'single_file_edit_end') {
+                stopWebSocket();
                 setMode('CONFIRM')
                 setIsLoading(false);
             }
-        };
-
-        ws.current.onerror = (error) => {
+        },
+        onError: (error) => {
             console.error('WebSocket error:', error);
-            // setError('WebSocket connection error. Please try again.');
             setIsLoading(false);
-        };
+        }
+    })
 
-        ws.current.onclose = () => {
-            console.log('WebSocket disconnected');
-        };
+    const { activeFile, setActiveFile, updateFileContent } = useFiles();
+    const { lineageData } = useLineage();
+    const visibleLineage = lineageData[activeFile?.node.path || '']
 
-    };
 
-    useEffect(() => {
+    const [prompt, setPrompt] = useState('')
+    const [mode, setMode] = useState<'PROMPT' | 'CONFIRM'>('PROMPT')
+    const [isLoading, setIsLoading] = useState(false)
+    const [modifiedContent, setModifiedContent] = useState('')
 
-    }, [activeFile, modifiedContent])
-
-    useEffect(() => {
-        connectWebSocket()
-        return () => {
-            if (ws.current) {
-                ws.current.close();
-            }
-        };
-    }, []);
 
     const handleSubmit = async () => {
         setModifiedContent('')
-
         if (activeFile) {
+            startWebSocket();
             setIsLoading(true)
             setActiveFile({
                 ...activeFile,
@@ -89,24 +83,9 @@ export default function PromptBox({ setPromptBoxOpen }: { setPromptBoxOpen: (ope
                     modified: ""
                 }
             })
-            try {
-                if (ws.current?.readyState === WebSocket.OPEN) {
-                    ws.current.send(JSON.stringify(
-                        {
-                            type: 'single_file_edit',
-                            current_file: activeFile.content,
-                            related_assets: visibleLineage?.data?.lineage?.assets.map((asset: any) => asset.id),
-                            asset_links: visibleLineage?.data?.lineage?.asset_links,
-                            instructions: prompt
-                        }));
+            console.log('Sending message')
 
-                } else {
-                    throw new Error('WebSocket is not connected');
-                }
-            } catch (err) {
-                console.error('Message submission failed:', err);
-                setIsLoading(false);
-            }
+
         }
     }
 

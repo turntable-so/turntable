@@ -6,6 +6,7 @@ from app.models import (
     DatabricksDetails,
     DBTCoreDetails,
     LookerDetails,
+    PowerBIDetails,
     RedshiftDetails,
     Repository,
     Resource,
@@ -80,12 +81,10 @@ def create_bigquery_n(workspace, n):
     assert resource_name, f"must provide BIGQUERY_{n}_RESOURCE_NAME to use this test"
     # assert schema_include, f"must provide BIGQUERY_{n}_SCHEMA_INCLUDE to use this test"
 
-    try:
-        resource = Resource.objects.get(workspace=workspace, type=ResourceType.DB)
-    except Resource.DoesNotExist:
-        resource = Resource.objects.create(
-            workspace=workspace, type=ResourceType.DB, name=resource_name
-        )
+    resource, _ = Resource.objects.get_or_create(
+        workspace=workspace, type=ResourceType.DB, name=resource_name
+    )
+
     if not hasattr(resource, "details") or not isinstance(
         resource.details, BigqueryDetails
     ):
@@ -113,12 +112,11 @@ def create_snowflake_n(workspace, n):
     assert warehouse, f"must provide SNOWFLAKE_{n}_WAREHOUSE to use this test"
     assert role, f"must provide SNOWFLAKE_{n}_ROLE to use this test"
     assert resource_name, f"must provide SNOWFLAKE_{n}_RESOURCE_NAME to use this test"
-    try:
-        resource = Resource.objects.get(workspace=workspace, type=ResourceType.DB)
-    except Resource.DoesNotExist:
-        resource = Resource.objects.create(
-            workspace=workspace, type=ResourceType.DB, name=resource_name
-        )
+
+    resource, _ = Resource.objects.get_or_create(
+        workspace=workspace, type=ResourceType.DB, name=resource_name
+    )
+
     if not hasattr(resource, "details") or not isinstance(
         resource.details, SnowflakeDetails
     ):
@@ -144,12 +142,9 @@ def create_databricks_n(workspace, n):
     assert http_path, f"must provide DATABRICKS_{n}_HTTP_PATH to use this test"
     assert resource_name, f"must provide DATABRICKS_{n}_RESOURCE_NAME to use this test"
 
-    try:
-        resource = Resource.objects.get(workspace=workspace, type=ResourceType.DB)
-    except Resource.DoesNotExist:
-        resource = Resource.objects.create(
-            workspace=workspace, type=ResourceType.DB, name=resource_name
-        )
+    resource, _ = Resource.objects.get_or_create(
+        workspace=workspace, type=ResourceType.DB, name=resource_name
+    )
 
     if not hasattr(resource, "details") or not isinstance(
         resource.details, DatabricksDetails
@@ -181,12 +176,9 @@ def create_redshift_n(workspace: Workspace, n):
     assert serverless, f"must provide REDSHIFT_{n}_SERVERLESS to use this test"
     assert resource_name, f"must provide REDSHIFT_{n}_RESOURCE_NAME to use this test"
 
-    try:
-        resource = Resource.objects.get(workspace=workspace, type=ResourceType.DB)
-    except Resource.DoesNotExist:
-        resource = Resource.objects.create(
-            workspace=workspace, type=ResourceType.DB, name=resource_name
-        )
+    resource, _ = Resource.objects.get_or_create(
+        workspace=workspace, type=ResourceType.DB, name=resource_name
+    )
 
     if not hasattr(resource, "details") or not isinstance(
         resource.details, RedshiftDetails
@@ -252,7 +244,7 @@ def create_looker_n(workspace, n, git_repo: Repository | None = None):
 
     looker_secret_json = json.loads(looker_secret)
 
-    looker, _ = Resource.objects.update_or_create(
+    looker, _ = Resource.objects.get_or_create(
         name=resource_name, type=ResourceType.BI, workspace=workspace
     )
     if not hasattr(looker, "details") or not isinstance(looker.details, LookerDetails):
@@ -279,12 +271,9 @@ def create_tableau_n(workspace, n):
     assert password, f"must provide TABLEAU_{n}_PASSWORD to use this test"
     assert resource_name, f"must provide TABLEAU_{n}_RESOURCE_NAME to use this test"
 
-    try:
-        resource = Resource.objects.get(workspace=workspace, type=ResourceType.BI)
-    except Resource.DoesNotExist:
-        resource = Resource.objects.create(
-            workspace=workspace, type=ResourceType.BI, name=resource_name
-        )
+    resource, _ = Resource.objects.get_or_create(
+        workspace=workspace, type=ResourceType.BI, name=resource_name
+    )
 
     if not hasattr(resource, "details") or not isinstance(
         resource.details, TableauDetails
@@ -295,6 +284,36 @@ def create_tableau_n(workspace, n):
             site=os.getenv(f"TABLEAU_{n}_SITE", ""),
             username=username,
             password=password,
+        ).save()
+
+    return resource
+
+
+def create_powerbi_n(workspace, n):
+    resource_name = os.getenv(f"POWERBI_{n}_RESOURCE_NAME")
+    client_id = os.getenv(f"POWERBI_{n}_CLIENT_ID")
+    client_secret = os.getenv(f"POWERBI_{n}_CLIENT_SECRET")
+    tenant_id = os.getenv(f"POWERBI_{n}_TENANT_ID")
+    workspace_id = os.getenv(f"POWERBI_{n}_WORKSPACE_ID")
+
+    assert resource_name, f"must provide POWERBI_{n}_RESOURCE_NAME to use this test"
+    assert client_id, f"must provide POWERBI_{n}_CLIENT_ID to use this test"
+    assert client_secret, f"must provide POWERBI_{n}_CLIENT_SECRET to use this test"
+    assert tenant_id, f"must provide POWERBI_{n}_TENANT_ID to use this test"
+
+    resource, _ = Resource.objects.get_or_create(
+        workspace=workspace, type=ResourceType.BI, name=resource_name
+    )
+
+    if not hasattr(resource, "details") or not isinstance(
+        resource.details, PowerBIDetails
+    ):
+        PowerBIDetails(
+            resource=resource,
+            client_id=client_id,
+            client_secret=client_secret,
+            powerbi_tenant_id=tenant_id,
+            powerbi_workspace_id=workspace_id,
         ).save()
 
     return resource
@@ -343,7 +362,8 @@ def group_4(user):
         bigquery, 0, force_db=True, repository=repository
     )  # force_db=True to use the same project_id as the bigquery resource. Can't use mydb because it is reserved.
 
-    return [bigquery]
+    powerbi = create_powerbi_n(workspace, 0)
+    return [bigquery, powerbi]
 
 
 def group_5(user):

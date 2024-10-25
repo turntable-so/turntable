@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useRef } from 'react';
 import getUrl from '@/app/url';
+import { AuthActions } from '@/lib/auth';
 
 const baseUrl = getUrl();
 const protocol = process.env.NODE_ENV === 'development' ? 'ws' : 'wss';
@@ -12,13 +13,13 @@ const useWorkflowUpdates = (workspaceId: string) => {
     const heartbeatInterval = useRef<number | null>(null);
     const reconnectTimeout = useRef<number | null>(null);
     const retryDelay = useRef<number>(2000); // Start with 2 seconds delay
+    const { getToken } = AuthActions();
+    const accessToken = getToken("access");
 
     const connectWebSocket = () => {
         // Construct the WebSocket URL
         const base = new URL(baseUrl).host;
-        // const socketUrl = `${protocol}://${base}/ws/subscribe/${workspaceId}/`;
-        const socketUrl = `${protocol}://${base}/ws/subscribe/${workspaceId}/`;
-
+        const socketUrl = `${protocol}://${base}/ws/subscribe/${workspaceId}/?token=${accessToken}`;
         console.log(`Attempting to connect to ${socketUrl}`);
         console.log({
             socketUrl

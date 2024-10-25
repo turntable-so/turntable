@@ -60,7 +60,7 @@ export default function RootLayout({
           <PHProvider>
             <body
               className={cn(
-                "min-h-screen bg-background font-sans antialiased",
+                "min-h-screen bg-muted font-sans antialiased",
                 fontSans.variable
               )}
             >
