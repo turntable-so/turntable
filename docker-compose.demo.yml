@@ -20,6 +20,8 @@ services:
     depends_on:
       ensure_populate_test_db:
         condition: service_completed_successfully
+      metabase:
+        condition: service_healthy
 
   web:
     extends:

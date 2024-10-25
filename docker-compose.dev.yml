@@ -129,6 +129,16 @@ services:
       file: docker-compose.demo.yml
       service: ensure_populate_test_db
 
+  metabase:
+    extends:
+      file: docker-compose.demo.yml
+      service: metabase
+
+  ready:
+    extends:
+      file: docker-compose.demo.yml
+      service: ready
+
 volumes:
   postgres_data:
   minio_data:
