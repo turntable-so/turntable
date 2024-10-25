@@ -3,22 +3,24 @@ import json
 import logging
 import shlex
 
-from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
-from workflows.utils.debug import run_workflow, get_async_listener
+from channels.generic.websocket import AsyncWebsocketConsumer
+
 from workflows.hatchet import hatchet
+from workflows.utils.debug import get_async_listener, run_workflow_async
 
 logger = logging.getLogger(__name__)
+
 
 class DBTCommandConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         logger.info(f"WebSocket connected for user: {self.scope['user']}")
         await self.accept()
 
-        self.workspace = await sync_to_async(self.scope['user'].current_workspace)()
+        self.workspace = await sync_to_async(self.scope["user"].current_workspace)()
         if not self.workspace:
             raise ValueError("User does not have a current workspace")
-        
+
         self.dbt_details = await sync_to_async(self.workspace.get_dbt_details)()
         if not self.dbt_details:
             raise ValueError("Workspace does not have a dbt resource")
@@ -53,11 +55,13 @@ class DBTCommandConsumer(AsyncWebsocketConsumer):
                         logger.error(f"Error cancelling Hatchet workflow: {e}")
                 await self.send(text_data="WORKFLOW_CANCELLED")
         else:
-            raise ValueError(f"Invalid action: {action} - only 'start' and 'cancel' are supported")
+            raise ValueError(
+                f"Invalid action: {action} - only 'start' and 'cancel' are supported"
+            )
 
     async def run_workflow(self, data):
-        from workflows.dbt_runner import DBTStreamerWorkflow
         from app.models.git_connections import Branch
+        from workflows.dbt_runner import DBTStreamerWorkflow
 
         try:
             command = data.get("command")
@@ -80,9 +84,11 @@ class DBTCommandConsumer(AsyncWebsocketConsumer):
                     raise ValueError(f"Branch {branch_name} not found")
             else:
                 branch_id = None
-            
+
             dbt_resource_id = await sync_to_async(lambda: str(self.dbt_details.id))()
-            resource_id = await sync_to_async(lambda: str(self.dbt_details.resource.id))()
+            resource_id = await sync_to_async(
+                lambda: str(self.dbt_details.resource.id)
+            )()
 
             input_data = {
                 "command": command,
@@ -91,9 +97,8 @@ class DBTCommandConsumer(AsyncWebsocketConsumer):
                 "dbt_resource_id": dbt_resource_id,
             }
 
-            workflow_run_id, workflow_run = await run_workflow(
-                workflow=DBTStreamerWorkflow,
-                input=input_data
+            workflow_run_id, workflow_run = await run_workflow_async(
+                workflow=DBTStreamerWorkflow, input=input_data
             )
             self.workflow_run_id = str(workflow_run_id)
             listener = await get_async_listener(workflow_run_id, workflow_run)
