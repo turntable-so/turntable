@@ -15,11 +15,7 @@ export async function GET(request: Request) {
         jti: uuidv4(),
         aud: 'tableau',
         sub: user,
-        // scp: ['tableau:views:embed', 'tableau:metrics:embed'],
-        scp: ['tableau:views:embed'],
-        'https://tableau.com/oda': 'true',
-        'https://tableau.com/groups': ['ALL'],
-        'Region': 'East'
+        scp: ['tableau:views:embed', 'tableau:metrics:embed'],
     };
 
     const headers = {
