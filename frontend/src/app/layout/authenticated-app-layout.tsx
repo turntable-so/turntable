@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import useSession from '@/app/hooks/use-session';
-import WorkspaceLayout from "./workspace-layout";
+import AppLayout from "./workspace-layout";
 import { useRouter } from "next/navigation";
 
 export default function AuthenticatedAppLayout({ children }: { children: React.ReactNode }) {
@@ -20,8 +20,8 @@ export default function AuthenticatedAppLayout({ children }: { children: React.R
     }
 
     return (
-        <WorkspaceLayout>
+        <AppLayout>
             {children}
-        </WorkspaceLayout>
+        </AppLayout>
     )
 }

@@ -6,6 +6,7 @@ type LineageContextType = {
         [filePath: string]: {
             data: any;
             isLoading: boolean;
+            error: string | null;
         }
     };
     fetchFileBasedLineage: (filePath: string) => Promise<void>;
@@ -22,17 +23,31 @@ export const LineageProvider: React.FC<{ children: ReactNode }> = ({ children })
             ...lineageData,
             [filePath]: {
                 data: null,
-                isLoading: true
+                isLoading: true,
+                error: null
             }
         })
-        const { lineage, root_asset } = await getProjectBasedLineage({ filePath, successor_depth: 1, predecessor_depth: 1 })
-        setLineageData({
-            ...lineageData,
-            [filePath]: {
-                data: { lineage, root_asset },
-                isLoading: false
-            }
-        })
+        const result = await getProjectBasedLineage({ filePath, successor_depth: 1, predecessor_depth: 1 })
+        if (result.error) {
+            setLineageData({
+                ...lineageData,
+                [filePath]: {
+                    data: null,
+                    isLoading: false,
+                    error: result.error
+                }
+            })
+        } else {
+            const { lineage, root_asset } = result
+            setLineageData({
+                ...lineageData,
+                [filePath]: {
+                    data: { lineage, root_asset },
+                    isLoading: false,
+                    error: null
+                }
+            })
+        }
     }
 
     return (

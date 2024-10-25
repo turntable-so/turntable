@@ -17,23 +17,23 @@ export default function CommandLog({ bottomPanelHeight }: { bottomPanelHeight: n
     }
   }, [logs]);
 
-  return showLoader ? 
-  <div className="flex items-center justify-center">
-          <Loader2 className="w-6 h-6 animate-spin" />
-        </div> :
-  (
-    <div
-      className="flex flex-col overflow-y-auto"
-      ref={containerRef}
-      style={{ maxHeight: `${bottomPanelHeight}px` }}
-    >
-      {logs.map((log, index) => (
-          <p 
-            key={index} 
-            dangerouslySetInnerHTML={{ __html: convert.toHtml(log) }} 
+  return showLoader ?
+    <div className="flex items-center justify-center">
+      <Loader2 className="w-6 h-6 animate-spin" />
+    </div> :
+    (
+      <div
+        className="flex flex-col overflow-y-auto"
+        ref={containerRef}
+        style={{ maxHeight: `${bottomPanelHeight}px` }}
+      >
+        {logs.map((log, index) => (
+          <p
+            key={index}
+            dangerouslySetInnerHTML={{ __html: convert.toHtml(log) }}
             className="whitespace-pre-wrap break-words"
           />
         ))}
-    </div>
-  );
+      </div>
+    );
 }
