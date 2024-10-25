@@ -1,14 +1,11 @@
-'use client'
-import { AssetViewerProvider } from '@/contexts/AssetViewerContext'
-import ViewerContainer from "@/components/table-viewer/viewer-container"
-
-
+"use client";
+import ViewerContainer from "@/components/table-viewer/viewer-container";
+import { AssetViewerProvider } from "@/contexts/AssetViewerContext";
 
 export default function AssetsPage() {
-
-    return (
-        <AssetViewerProvider>
-            <ViewerContainer />
-        </AssetViewerProvider>
-    )
+  return (
+    <AssetViewerProvider>
+      <ViewerContainer />
+    </AssetViewerProvider>
+  );
 }

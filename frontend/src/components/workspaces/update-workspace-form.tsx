@@ -1,9 +1,9 @@
 // @ts-nocheck
 "use client";
-import React, { useEffect, useRef, useState } from "react";
 import { AuthActions } from "@/lib/auth";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import React, { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -17,9 +17,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { fetcher } from "@/app/fetcher";
+import useSession from "@/app/hooks/use-session";
 import {
   Form,
   FormControl,
@@ -29,14 +28,15 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { PasswordInput } from "../ui/password-input";
-import { LoaderButton } from "../ui/LoadingSpinner";
-import { Avatar } from "@radix-ui/react-avatar";
 import WorkspaceIcon from "@/components/workspaces/workspace-icon";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Avatar } from "@radix-ui/react-avatar";
 import { Upload } from "lucide-react";
-import { fetcher } from "@/app/fetcher";
+import { useForm } from "react-hook-form";
 import { useSWRConfig } from "swr";
-import useSession from "@/app/hooks/use-session";
+import { z } from "zod";
+import { LoaderButton } from "../ui/LoadingSpinner";
+import { PasswordInput } from "../ui/password-input";
 
 const FormSchema = z.object({
   name: z.string().min(2, {
@@ -136,25 +136,27 @@ const UpdateWorkspaceForm = ({ workspace, enabled }: any) => {
                 name={workspaceName || "Personal"}
                 iconUrl={iconUrl}
               />
-              {enabled && <div className="space-y-2">
-                <Label htmlFor="password">Set an Icon</Label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  style={{ display: "none" }}
-                />
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="flex"
-                  onClick={handleUploadClick}
-                >
-                  <Upload className="h-4 w-4 mr-2" />
-                  Upload Image
-                </Button>
-              </div>}
+              {enabled && (
+                <div className="space-y-2">
+                  <Label htmlFor="password">Set an Icon</Label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    style={{ display: "none" }}
+                  />
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="flex"
+                    onClick={handleUploadClick}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload Image
+                  </Button>
+                </div>
+              )}
             </div>
             <FormField
               control={form.control}
@@ -170,13 +172,15 @@ const UpdateWorkspaceForm = ({ workspace, enabled }: any) => {
               )}
             />
 
-            {enabled && <LoaderButton
-              isLoading={isLoading}
-              className="float-right"
-              type="submit"
-            >
-              Save
-            </LoaderButton>}
+            {enabled && (
+              <LoaderButton
+                isLoading={isLoading}
+                className="float-right"
+                type="submit"
+              >
+                Save
+              </LoaderButton>
+            )}
           </form>
         </Form>
       </div>

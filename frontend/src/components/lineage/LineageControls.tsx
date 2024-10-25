@@ -1,8 +1,8 @@
-import React, { useCallback, useContext } from 'react';
-import { Panel, useReactFlow, useViewport } from 'reactflow';
-import { LineageViewContext } from './LineageView';
-import { Maximize, ZoomIn, ZoomOut } from 'lucide-react';
-import { Button } from '../ui/button';
+import { Maximize, ZoomIn, ZoomOut } from "lucide-react";
+import React, { useCallback, useContext } from "react";
+import { Panel, useReactFlow, useViewport } from "reactflow";
+import { Button } from "../ui/button";
+import { LineageViewContext } from "./LineageView";
 
 const buttonTailwindClasses = `p-1.5
   rounded-lg
@@ -31,7 +31,7 @@ export function LineageControls() {
         predecessor_depth: lineageOptions.predecessor_depth + 1,
         successor_depth: lineageOptions.successor_depth,
       },
-      false
+      false,
     );
   }, [lineageOptions]);
 
@@ -42,7 +42,7 @@ export function LineageControls() {
         predecessor_depth: lineageOptions.predecessor_depth,
         successor_depth: lineageOptions.successor_depth + 1,
       },
-      false
+      false,
     );
   }, [lineageOptions]);
 
@@ -57,8 +57,11 @@ export function LineageControls() {
               });
             }}
           >
-            <Button variant='secondary' className='p-1 border-2 border-gray-300 hover:bg-white opacity-70 hover:opacity-100'>
-              <Maximize className='text-muted-foreground size-5' />
+            <Button
+              variant="secondary"
+              className="p-1 border-2 border-gray-300 hover:bg-white opacity-70 hover:opacity-100"
+            >
+              <Maximize className="text-muted-foreground size-5" />
             </Button>
           </div>
 
@@ -67,8 +70,11 @@ export function LineageControls() {
               instance.zoomOut();
             }}
           >
-            <Button variant='secondary' className='p-1 border-2 border-gray-300 hover:bg-white opacity-70 hover:opacity-100'>
-              <ZoomOut className='text-muted-foreground size-5' />
+            <Button
+              variant="secondary"
+              className="p-1 border-2 border-gray-300 hover:bg-white opacity-70 hover:opacity-100"
+            >
+              <ZoomOut className="text-muted-foreground size-5" />
             </Button>
           </div>
 
@@ -77,8 +83,11 @@ export function LineageControls() {
               instance.zoomIn();
             }}
           >
-            <Button variant='secondary' className='p-1 border-2 border-gray-300 hover:bg-white opacity-70 hover:opacity-100'>
-              <ZoomIn className='text-muted-foreground size-5' />
+            <Button
+              variant="secondary"
+              className="p-1 border-2 border-gray-300 hover:bg-white opacity-70 hover:opacity-100"
+            >
+              <ZoomIn className="text-muted-foreground size-5" />
             </Button>
           </div>
         </div>

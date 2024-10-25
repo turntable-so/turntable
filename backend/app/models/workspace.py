@@ -8,6 +8,7 @@ from django.db import models
 
 from app.models.user import User
 from app.services.storage_backends import PublicMediaStorage
+from app.utils.fields import encrypt
 
 
 def generate_short_uuid():
@@ -27,6 +28,7 @@ class Workspace(models.Model):
     assets_exclude_name_contains = ArrayField(
         models.CharField(max_length=255), default=list
     )
+    api_key_metabase = encrypt(models.CharField(max_length=255, blank=True, null=True))
 
     class Meta:
         permissions = [

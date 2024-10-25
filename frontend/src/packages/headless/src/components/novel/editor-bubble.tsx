@@ -1,6 +1,6 @@
 import { BubbleMenu, isNodeSelection, useCurrentEditor } from "@tiptap/react";
-import { useMemo, useRef, useEffect, forwardRef } from "react";
 import type { BubbleMenuProps } from "@tiptap/react";
+import { forwardRef, useEffect, useMemo, useRef } from "react";
 import type { ReactNode } from "react";
 import type { Instance, Props } from "tippy.js";
 
@@ -31,7 +31,12 @@ export const EditorBubble = forwardRef<HTMLDivElement, EditorBubbleProps>(
         // - the selected node is an image
         // - the selection is empty
         // - the selection is a node selection (for drag handles)
-        if (!editor.isEditable || editor.isActive("image") || empty || isNodeSelection(selection)) {
+        if (
+          !editor.isEditable ||
+          editor.isActive("image") ||
+          empty ||
+          isNodeSelection(selection)
+        ) {
           return false;
         }
         return true;

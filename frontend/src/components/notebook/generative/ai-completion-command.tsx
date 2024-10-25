@@ -1,7 +1,7 @@
+import { Check, TextQuote, TrashIcon } from "lucide-react";
+import { useEditor } from "novel";
 // @ts-nocheck
 import { CommandGroup, CommandItem, CommandSeparator } from "../../ui/command";
-import { useEditor } from "novel";
-import { Check, TextQuote, TrashIcon } from "lucide-react";
 
 const AICompletionCommands = ({
   completion,

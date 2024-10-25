@@ -6,13 +6,13 @@ import { Command, CommandInput } from "../../ui/command";
 import { useCompletion } from "ai/react";
 import { ArrowUp } from "lucide-react";
 import { useEditor } from "novel";
-import { addAIHighlight } from '../../../packages/headless/src/extensions';
 import { useState } from "react";
 import Markdown from "react-markdown";
 import { toast } from "sonner";
-import { Button } from '../../ui/button'
+import { addAIHighlight } from "../../../packages/headless/src/extensions";
 import CrazySpinner from "../../icons/crazy-spinner";
 import Magic from "../../icons/magic";
+import { Button } from "../../ui/button";
 import { ScrollArea } from "../../ui/scroll-area";
 import AICompletionCommands from "./ai-completion-command";
 import AISelectorCommands from "./ai-selector-commands";
@@ -25,7 +25,7 @@ interface AISelectorProps {
 
 export function AISelector({ onOpenChange }: AISelectorProps) {
   const { editor } = useEditor();
-  console.log({ editor, addAIHighlight })
+  console.log({ editor, addAIHighlight });
   const [inputValue, setInputValue] = useState("");
 
   const { completion, complete, isLoading } = useCompletion({
@@ -72,7 +72,11 @@ export function AISelector({ onOpenChange }: AISelectorProps) {
               value={inputValue}
               onValueChange={setInputValue}
               autoFocus
-              placeholder={hasCompletion ? "Tell AI what to do next" : "Ask AI to edit or generate..."}
+              placeholder={
+                hasCompletion
+                  ? "Tell AI what to do next"
+                  : "Ask AI to edit or generate..."
+              }
               onFocus={() => addAIHighlight(editor)}
             />
             <Button
@@ -85,7 +89,9 @@ export function AISelector({ onOpenChange }: AISelectorProps) {
                   }).then(() => setInputValue(""));
 
                 const slice = editor.state.selection.content();
-                const text = editor.storage.markdown.serializer.serialize(slice.content);
+                const text = editor.storage.markdown.serializer.serialize(
+                  slice.content,
+                );
 
                 complete(text, {
                   body: { option: "zap", command: inputValue },
@@ -104,7 +110,11 @@ export function AISelector({ onOpenChange }: AISelectorProps) {
               completion={completion}
             />
           ) : (
-            <AISelectorCommands onSelect={(value, option) => complete(value, { body: { option } })} />
+            <AISelectorCommands
+              onSelect={(value, option) =>
+                complete(value, { body: { option } })
+              }
+            />
           )}
         </>
       )}

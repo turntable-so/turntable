@@ -28,5 +28,26 @@ class SettingsView(APIView):
             )
 
         # Prepare the response data
-        response_data = {"exclusion_filters": exclusion_results}
+        response_data = {
+            "exclusion_filters": exclusion_results,
+            "api_keys": {
+                "metabase": workspace.api_key_metabase,
+            },
+        }
+
         return Response(response_data)
+    
+    def post(self, request):
+        workspace = request.user.current_workspace()
+        if not workspace:
+            return Response(
+                {"detail": "Workspace not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        api_keys = request.data.get("api_keys", {})
+        metabase_api_key = api_keys.get("metabase")
+        if metabase_api_key is not None:
+            workspace.api_key_metabase = metabase_api_key
+            workspace.save()
+
+        return Response({"detail": "Workspace updated successfully."}, status=status.HTTP_200_OK)

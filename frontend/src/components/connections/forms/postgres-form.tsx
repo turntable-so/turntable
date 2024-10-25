@@ -1,5 +1,6 @@
 "use client";
 import { createResource, updateResource } from "@/app/actions/actions";
+import { LoaderButton } from "@/components/ui/LoadingSpinner";
 import {
   Form,
   FormControl,
@@ -9,7 +10,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { LoaderButton } from "@/components/ui/LoadingSpinner";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -24,7 +24,7 @@ const FormSchema = z.object({
     message: "Hostname account can't be empty",
   }),
   port: z.coerce.number().min(1, {
-      message: "Port can't be empty",
+    message: "Port can't be empty",
   }),
   database: z.string().min(1, {
     message: "Database can't be empty",

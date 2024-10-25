@@ -3,7 +3,6 @@ import MultiSelect from "@/components/ui/multi-select";
 import { AgGridReact } from "ag-grid-react";
 import { useEffect, useRef, useState } from "react";
 
-
 import {
   Select,
   SelectContent,
@@ -26,7 +25,7 @@ export default function ChartComposer({
   const { notebookCharts, setNotebookCharts, activeNode } = useAppContext();
 
   const [currentOptions, setCurrentOptions] = useState(
-    notebookCharts[activeNode]
+    notebookCharts[activeNode],
   );
 
   useEffect(() => {
@@ -36,7 +35,7 @@ export default function ChartComposer({
   useEffect(() => {
     if (currentOptions?.xAxis && currentOptions?.isXAxisNumeric) {
       const minXAxisValue = Math.min(
-        ...data.rowData.map((row) => row[currentOptions?.xAxis])
+        ...data.rowData.map((row) => row[currentOptions?.xAxis]),
       );
       setNotebookCharts({
         ...notebookCharts,
@@ -60,7 +59,7 @@ export default function ChartComposer({
         [activeNode]: {
           ...notebookCharts[activeNode],
           isXAxisNumeric: data.rowData.every(
-            (row) => typeof row[currentOptions?.xAxis] === "number"
+            (row) => typeof row[currentOptions?.xAxis] === "number",
           ),
         },
       });
@@ -173,7 +172,7 @@ export default function ChartComposer({
                 value: item,
               }))}
               selected={currentOptions?.yAxisSeriesList}
-              setSelected={() => { }}
+              setSelected={() => {}}
               functionSelected={(newValue: any) => {
                 setNotebookCharts({
                   ...notebookCharts,

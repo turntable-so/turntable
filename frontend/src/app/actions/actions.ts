@@ -1,44 +1,34 @@
 "use server";
 
-import { fetcher } from '@/app/fetcher';
-import { revalidateTag } from 'next/cache';
-import { cookies } from 'next/headers';
-import getUrl from '@/app/url';
-
-const isDev = process.env.DEV ? true : false;
-
-const ApiHost = isDev
-  ? "http://localhost:8000"
-  : process.env.BACKEND_HOST;
-
-type CookiesContext = {
-  cookies: any | undefined;
-};
-
+import { fetcher } from "@/app/fetcher";
+import getUrl from "@/app/url";
+import { revalidateTag } from "next/cache";
+import { cookies } from "next/headers";
+import type { Settings } from "../settings/types";
 
 export async function createWorkspace(body: FormData) {
-  const response = await fetcher(
-    '/workspaces/',
-    {
-      cookies,
-      next: {
-        tags: ["workspaces"],
-      },
-      method: 'POST',
-      body,
-    }
-  )
+  const response = await fetcher("/workspaces/", {
+    cookies,
+    next: {
+      tags: ["workspaces"],
+    },
+    method: "POST",
+    body,
+  });
   const data = await response.json();
   revalidateTag("workspaces");
   return data;
 }
 
 type CreateNotebookArgs = {
-  title: string
-  json_contents: string
-}
+  title: string;
+  json_contents: string;
+};
 
-export async function createNotebook({ title, json_contents }: CreateNotebookArgs) {
+export async function createNotebook({
+  title,
+  json_contents,
+}: CreateNotebookArgs) {
   const response = await fetcher(`/notebooks/`, {
     cookies,
     method: "POST",
@@ -55,13 +45,16 @@ export async function createNotebook({ title, json_contents }: CreateNotebookArg
   return notebook;
 }
 
-export async function updateNotebook(notebookId: string, { json_contents, title }: { json_contents?: string, title?: string }) {
+export async function updateNotebook(
+  notebookId: string,
+  { json_contents, title }: { json_contents?: string; title?: string },
+) {
   const response = await fetcher(`/notebooks/${notebookId}/`, {
     cookies,
     method: "PUT",
     body: {
       ...(json_contents && { contents: json_contents }),
-      ...(title && { title: title })
+      ...(title && { title: title }),
     },
   });
   return await response.json();
@@ -87,28 +80,35 @@ export async function getNotebook(id: string) {
   return await response.json();
 }
 
-
-export async function getAssets({ query, page, sources, tags, types, sortBy, sortOrder }: {
-  query: string,
-  page: number,
-  sources?: string[],
-  tags?: string[],
-  types?: string[],
-  sortBy?: string,
-  sortOrder?: 'asc' | 'desc'
+export async function getAssets({
+  query,
+  page,
+  sources,
+  tags,
+  types,
+  sortBy,
+  sortOrder,
+}: {
+  query: string;
+  page: number;
+  sources?: string[];
+  tags?: string[];
+  types?: string[];
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
 }) {
   let url = `/assets/?q=${encodeURIComponent(query)}&page=${page}`;
 
   if (sources && sources.length > 0) {
-    url += `&resources=${sources.map(encodeURIComponent).join(',')}`;
+    url += `&resources=${sources.map(encodeURIComponent).join(",")}`;
   }
 
   if (tags && tags.length > 0) {
-    url += `&tags=${tags.map(encodeURIComponent).join(',')}`;
+    url += `&tags=${tags.map(encodeURIComponent).join(",")}`;
   }
 
   if (types && types.length > 0) {
-    url += `&types=${types.map(encodeURIComponent).join(',')}`;
+    url += `&types=${types.map(encodeURIComponent).join(",")}`;
   }
 
   if (sortBy && sortOrder) {
@@ -126,20 +126,31 @@ export async function getAssets({ query, page, sources, tags, types, sortBy, sor
   return data;
 }
 
-
-export async function getColumns({ query, page, sources, tags, types }: { query: string, page: number, sources?: string[], tags?: string[], types?: string[] }) {
+export async function getColumns({
+  query,
+  page,
+  sources,
+  tags,
+  types,
+}: {
+  query: string;
+  page: number;
+  sources?: string[];
+  tags?: string[];
+  types?: string[];
+}) {
   let url = `/columns/?q=${encodeURIComponent(query)}&page=${page}`;
 
   if (sources && sources.length > 0) {
-    url += `&resources=${sources.map(encodeURIComponent).join(',')}`;
+    url += `&resources=${sources.map(encodeURIComponent).join(",")}`;
   }
 
   if (tags && tags.length > 0) {
-    url += `&tags=${tags.map(encodeURIComponent).join(',')}`;
+    url += `&tags=${tags.map(encodeURIComponent).join(",")}`;
   }
 
   if (types && types.length > 0) {
-    url += `&types=${types.map(encodeURIComponent).join(',')}`;
+    url += `&types=${types.map(encodeURIComponent).join(",")}`;
   }
 
   const response = await fetcher(url, {
@@ -152,9 +163,6 @@ export async function getColumns({ query, page, sources, tags, types }: { query:
   const data = await response.json();
   return data;
 }
-
-
-
 
 export async function getAssetIndex() {
   const response = await fetcher("/assets/index/", {
@@ -195,7 +203,6 @@ export async function switchWorkspace(workspaceId: string) {
   return data;
 }
 
-
 export async function getGithubInstallations() {
   const response = await fetcher(`/github/`, {
     cookies,
@@ -206,7 +213,6 @@ export async function getGithubInstallations() {
   });
   return response.json();
 }
-
 
 export async function getLineage({
   nodeId,
@@ -224,7 +230,7 @@ export async function getLineage({
     {
       cookies,
       method: "GET",
-    }
+    },
   );
   return await response.json();
 }
@@ -286,55 +292,54 @@ export async function getSshKey(tenant_id: string) {
     {
       cookies,
       method: "GET",
-    }
+    },
   );
 
   return response.json();
 }
 
-export async function testGitConnection(public_key: string, git_repo_url: string) {
-  const response = await fetcher(
-    `/ssh/`,
-    {
-      cookies,
-      method: "POST",
-      body: {
-        public_key,
-        git_repo_url,
-        action: "test_git_connection",
-      },
-    }
-  );
+export async function testGitConnection(
+  public_key: string,
+  git_repo_url: string,
+) {
+  const response = await fetcher(`/ssh/`, {
+    cookies,
+    method: "POST",
+    body: {
+      public_key,
+      git_repo_url,
+      action: "test_git_connection",
+    },
+  });
 
   return response.json();
 }
 
 type CreateResourcePayload = {
   resource: {
-    name: string
-    type: string
-  }
-  subtype: string
-  config: object
-}
+    name: string;
+    type: string;
+  };
+  subtype: string;
+  config: object;
+};
 
 export async function createResource(payload: CreateResourcePayload) {
-
   const response = await fetcher(`/resources/`, {
     cookies,
     method: "POST",
     next: {
       tags: ["resources"],
     },
-    body: payload
+    body: payload,
   });
   if (response.ok) {
     revalidateTag("resources");
     const data = await response.json();
 
-    return data
+    return data;
   } else {
-    return false
+    return false;
   }
 }
 
@@ -345,7 +350,7 @@ export async function updateResource(id: string, payload: any) {
     next: {
       tags: ["resources"],
     },
-    body: payload
+    body: payload,
   });
 
   const data = await response.json();
@@ -451,6 +456,15 @@ export async function getSettings() {
   return response.json();
 }
 
+export async function updateSettings(settings: Partial<Settings>) {
+  const response = await fetcher(`/settings/`, {
+    cookies,
+    method: "POST",
+    body: settings,
+  });
+  return response.json();
+}
+
 export async function getBackendUrl() {
   return getUrl();
 }
@@ -462,7 +476,6 @@ export async function getBranches() {
   });
   return response.json();
 }
-
 
 export async function getFileIndex() {
   const response = await fetcher(`/project/files/`, {
@@ -487,7 +500,7 @@ export async function executeQueryPreview(dbtSql: string) {
     method: "POST",
     body: {
       query: dbtSql,
-    }
+    },
   });
   return response.json();
 }
@@ -498,7 +511,7 @@ export async function persistFile(filePath: string, fileContents: string) {
     method: "PUT",
     body: {
       contents: fileContents,
-    }
+    },
   });
 }
 
@@ -508,9 +521,9 @@ export async function createFile(filePath: string, fileContents: string) {
     method: "POST",
     body: {
       contents: fileContents,
-    }
+    },
   });
-  return response.ok
+  return response.ok;
 }
 
 export async function deleteFile(filePath: string) {
@@ -518,17 +531,17 @@ export async function deleteFile(filePath: string) {
     cookies,
     method: "DELETE",
   });
-  return response.ok
+  return response.ok;
 }
 
 export async function infer({
   instructions,
   content,
-  filepath
+  filepath,
 }: {
-  instructions: string
-  content: string
-  filepath: string
+  instructions: string;
+  content: string;
+  filepath: string;
 }) {
   const response = await fetcher(`/infer/`, {
     cookies,
@@ -536,8 +549,8 @@ export async function infer({
     body: {
       instructions,
       content,
-      filepath
-    }
+      filepath,
+    },
   });
   return response.json();
 }
@@ -552,9 +565,12 @@ export async function getProjectBasedLineage({
   predecessor_depth: number;
 }) {
   const encodedPath = encodeURIComponent(filePath);
-  const response = await fetcher(`/project/lineage/?filepath=${encodedPath}&predecessor_depth=${predecessor_depth}&successor_depth=${successor_depth}`, {
-    cookies,
-    method: "GET",
-  });
+  const response = await fetcher(
+    `/project/lineage/?filepath=${encodedPath}&predecessor_depth=${predecessor_depth}&successor_depth=${successor_depth}`,
+    {
+      cookies,
+      method: "GET",
+    },
+  );
   return response.json();
-} 
+}

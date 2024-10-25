@@ -1,14 +1,17 @@
-import Convert from 'ansi-to-html';
-import { useCommandPanelContext } from './command-panel-context';
+import Convert from "ansi-to-html";
 import { Loader2 } from "lucide-react";
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
+import { useCommandPanelContext } from "./command-panel-context";
 
-export default function CommandLog({ bottomPanelHeight }: { bottomPanelHeight: number }) {
-  const { commandPanelState, commandHistory, selectedCommandIndex } = useCommandPanelContext();
+export default function CommandLog({
+  bottomPanelHeight,
+}: { bottomPanelHeight: number }) {
+  const { commandPanelState, commandHistory, selectedCommandIndex } =
+    useCommandPanelContext();
   const convert = new Convert();
 
   const logs = commandHistory[selectedCommandIndex]?.logs || [];
-  const showLoader = commandPanelState === 'running' && logs.length === 0;
+  const showLoader = commandPanelState === "running" && logs.length === 0;
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -17,23 +20,23 @@ export default function CommandLog({ bottomPanelHeight }: { bottomPanelHeight: n
     }
   }, [logs]);
 
-  return showLoader ?
+  return showLoader ? (
     <div className="flex items-center justify-center">
       <Loader2 className="w-6 h-6 animate-spin" />
-    </div> :
-    (
-      <div
-        className="flex flex-col overflow-y-auto"
-        ref={containerRef}
-        style={{ maxHeight: `${bottomPanelHeight}px` }}
-      >
-        {logs.map((log, index) => (
-          <p
-            key={index}
-            dangerouslySetInnerHTML={{ __html: convert.toHtml(log) }}
-            className="whitespace-pre-wrap break-words"
-          />
-        ))}
-      </div>
-    );
+    </div>
+  ) : (
+    <div
+      className="flex flex-col overflow-y-auto"
+      ref={containerRef}
+      style={{ maxHeight: `${bottomPanelHeight}px` }}
+    >
+      {logs.map((log, index) => (
+        <p
+          key={index}
+          dangerouslySetInnerHTML={{ __html: convert.toHtml(log) }}
+          className="whitespace-pre-wrap break-words"
+        />
+      ))}
+    </div>
+  );
 }
