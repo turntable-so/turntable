@@ -52,7 +52,7 @@ export default function FileTabs({
                 </ScrollArea>
             </div>
             <div>
-                <Button onClick={() => createNewFileTab()} size='icon' variant='ghost' className='hover:bg-white'>
+                <Button onClick={() => createNewFileTab()} size='icon' variant='ghost' className='hover:bg-muted'>
                     <Plus className='h-3 w-3' />
                 </Button>
             </div>

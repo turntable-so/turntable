@@ -22,9 +22,11 @@ export function useWebSocket(url: string, options?: UseWebSocketOptions) {
       return;
     }
 
+    console.log('Attempting to connect WebSocket...');
     ws.current = new WebSocket(url);
 
     ws.current.onopen = (event) => {
+      console.log('WebSocket opened successfully');
       setIsConnected(true);
       options?.onOpen?.(event);
 
@@ -40,6 +42,7 @@ export function useWebSocket(url: string, options?: UseWebSocketOptions) {
     };
 
     ws.current.onmessage = (event) => {
+      console.log('WebSocket message received:', event.data);
       options?.onMessage?.(event);
 
       if (options?.timeout) {
@@ -63,6 +66,7 @@ export function useWebSocket(url: string, options?: UseWebSocketOptions) {
     };
 
     ws.current.onclose = (event) => {
+      console.log(`WebSocket closed with code: ${event.code}, reason: ${event.reason}`);
       setIsConnected(false);
       ws.current = null;
       options?.onClose?.(event);
