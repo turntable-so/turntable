@@ -18,7 +18,6 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path, re_path
 from app.views.settings_view import SettingsView
-from app.views.inference_views import InferenceView
 from app.views.project_views import ProjectViewSet
 from app.views.query_views import DbtQueryPreviewView
 from app.consumers.ai_chat_consumer import AIChatConsumer
@@ -114,6 +113,5 @@ urlpatterns = [
     path("ws/dbt_command/<str:workspace_id>/", DBTCommandConsumer.as_asgi()),
     path("ws/infer/ ", AIChatConsumer.as_asgi()),
     path("settings/", SettingsView.as_view(), name="settings"),
-    path("infer/", InferenceView.as_view(), name="inference"),
     path("", include(router.urls)),
 ]

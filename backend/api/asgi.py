@@ -15,8 +15,6 @@ from app.consumers import WorkflowRunConsumer, DBTCommandConsumer
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "api.settings")
 
-django_asgi_app = get_asgi_application()
-
 
 application = ProtocolTypeRouter(
     {
