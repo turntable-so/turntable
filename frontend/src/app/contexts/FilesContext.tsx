@@ -76,7 +76,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         const searchableFiles = flattenedFiles
             .filter(file => file.type === 'file')
             .filter(file => !file.path.includes('dbt_packages/'))
-            .filter(file => !file.path.includes('target/'))
+            // .filter(file => !file.path.includes('target/'))
         setSearchFileIndex(searchableFiles)
     }
 

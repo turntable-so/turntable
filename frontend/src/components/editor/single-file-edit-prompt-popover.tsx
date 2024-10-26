@@ -22,9 +22,11 @@ export default function SingleFileEditPromptPopover({ setPromptBoxOpen }: { setP
             sendMessage(JSON.stringify(
                 {
                     type: 'single_file_edit',
-                    current_file: activeFile.content,
-                    related_assets: visibleLineage?.data?.lineage?.assets.map((asset: any) => asset.id),
+                    current_file: activeFile?.content || '',
+                    asset_id: visibleLineage?.data?.lineage?.asset_id,
+                    related_assets: visibleLineage?.data?.lineage?.assets,
                     asset_links: visibleLineage?.data?.lineage?.asset_links,
+                    column_links: visibleLineage?.data?.lineage?.column_links,
                     instructions: prompt
                 }));
 

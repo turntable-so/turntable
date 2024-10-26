@@ -1,14 +1,16 @@
 import asyncio
 import json
-import traceback
+
+from asgiref.sync import sync_to_async
+from channels.generic.websocket import AsyncWebsocketConsumer
+from litellm import completion
+
 from app.core.inference.chat import (
     EDIT_PROMPT_SYSTEM,
     SYSTEM_PROMPT,
     build_context,
+    recreate_lineage_object,
 )
-from channels.generic.websocket import AsyncWebsocketConsumer
-from asgiref.sync import sync_to_async
-from litellm import completion
 
 
 class AIChatConsumer(AsyncWebsocketConsumer):
@@ -23,17 +25,14 @@ class AIChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         print(f"Received message: {text_data}")
         data = json.loads(text_data)
-        print(data, flush=True)
+        user = self.scope["user"]
+        # print(data, flush=True)
+        lineage = await sync_to_async(recreate_lineage_object)(data)
         if data.get("type") == "completion":
-            related_assets = data.get("related_assets")
-            if related_assets and len(related_assets) > 0:
-                related_assets = ["0:" + id for id in related_assets]
-            else:
-                related_assets = []
             prompt = await sync_to_async(build_context)(
-                related_assets=related_assets,
+                user=user,
                 instructions=data.get("instructions"),
-                asset_links=data.get("asset_links"),
+                lineage=lineage,
             )
 
             response = completion(
@@ -59,16 +58,11 @@ class AIChatConsumer(AsyncWebsocketConsumer):
             await self.send(text_data=json.dumps({"type": "message_end"}))
 
         if data.get("type") == "single_file_edit":
-            related_assets = data.get("related_assets")
-            if related_assets and len(related_assets) > 0:
-                related_assets = ["0:" + id for id in related_assets]
-            else:
-                related_assets = []
             prompt = await sync_to_async(build_context)(
-                related_assets=related_assets,
+                user=user,
+                lineage=lineage,
                 instructions=data.get("instructions"),
                 current_file=data.get("current_file"),
-                asset_links=data.get("asset_links"),
             )
 
             response = completion(

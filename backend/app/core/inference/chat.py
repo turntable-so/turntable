@@ -8,16 +8,17 @@ Rules:
 - You will only respond in markdown, using headers, paragraph, bulleted lists and sql/dbt code blocks if needed for the best answer quality possible
 - IMPORTANT: make sure all generate sql, dbt jinja examples or included code blocks are syntactically correct and will run on the target database postgres
 """
+import itertools
+import os
+import re
 from typing import List
+
 from litellm import completion
 from pydantic import BaseModel
 
-
-import os
-
-from django.core.management.base import BaseCommand
-from app.models import Asset
-import re
+from app.core.dbt import LiveDBTParser
+from app.models import Asset, AssetLink, Column, ColumnLink, User
+from app.services.lineage_service import Lineage
 
 SYSTEM_PROMPT = """
 You are an expert data analyst and data engineer who is a world expert at dbt (data build tool.
@@ -51,8 +52,50 @@ Rules:
 """
 
 
-def asset_md(asset: Asset, contents: str):
-    columns = asset.columns.all()
+def get_asset_object(asset_dict: dict):
+    unused_asset_keys = [
+        "resource_type",
+        "resource_subtype",
+        "resource_has_dbt",
+        "resource_name",
+        "url",
+    ]
+    unused_column_keys = ["is_unused"]
+    for key in unused_asset_keys:
+        if key in asset_dict:
+            asset_dict.pop(key)
+    if "columns" in asset_dict:
+        columns = asset_dict.pop("columns")
+        for col in columns:
+            for key in unused_column_keys:
+                if key in col:
+                    col.pop(key)
+    asset_dict["db_location"] = [
+        asset_dict.pop("dataset"),
+        asset_dict.pop("schema"),
+        asset_dict.pop("table_name"),
+    ]
+    asset = Asset(**asset_dict)
+    return asset, [Column(**col, asset_id=asset.id) for col in columns]
+
+
+def recreate_lineage_object(data: dict) -> Lineage:
+    assets, columns = zip(*[get_asset_object(d) for d in data.get("related_assets")])
+    columns = list(itertools.chain(*columns))
+    asset_links = [AssetLink(**link) for link in data.get("asset_links")]
+    column_links = [ColumnLink(**link) for link in data.get("column_links")]
+    print(data.get("asset_id"))
+    return Lineage(
+        asset_id=data.get("asset_id"),
+        assets=assets,
+        columns=columns,
+        asset_links=asset_links,
+        column_links=column_links,
+    )
+
+
+def asset_md(lineage: Lineage, asset: Asset, contents: str):
+    columns = [c for c in lineage.columns if c.asset_id == asset.id]
     column_table = (
         "| Name | Type | Description |\n|-------------|-----------|-------------|\n"
     )
@@ -121,69 +164,64 @@ def lineage_ascii(edges):
 
 
 def build_context(
-    related_assets: List[str],
+    user: User,
+    lineage: Lineage,
     instructions: str,
-    asset_links: List[str],
     current_file: str = None,
 ):
     # map each id to a schema (with name, type and description)
-    if related_assets and len(related_assets) > 0:
-        assets = Asset.objects.filter(id__in=related_assets)
+    if not lineage.assets or len(lineage.assets) == 0:
+        return f"\nUser Instructions: {instructions}\n"
+    workspace = user.current_workspace()
+    dbt_details = workspace.get_dbt_details()
+    with dbt_details.dbt_transition_context() as (
+        transition,
+        project_path,
+        repo,
+    ):
+        transition.mount_manifest(defer=True)
+        asset_mds = []
+        # schemas
+        for asset in lineage.assets:
+            # find each file for the related assets
+            manifest_node = LiveDBTParser.get_manifest_node(
+                transition.after, asset.unique_name
+            )
+            if not manifest_node:
+                continue
+            path = os.path.join(project_path, manifest_node.get("original_file_path"))
+            if not os.path.exists(path):
+                continue
+            with open(path) as file:
+                contents = file.read()
+                asset_mds.append(asset_md(lineage, asset, contents))
 
-        dbt_details = assets[0].resource.dbtresource_set.first()
-        with dbt_details.dbt_transition_context() as (
-            transition,
-            _,
-            repo,
-        ):
-            transition.mount_manifest(defer=True)
-            asset_mds = []
-            # schemas
-            for asset in assets:
-                # find each file for the related assets
-                with open(
-                    os.path.join(
-                        repo.working_tree_dir,
-                        "models",
-                        transition.after.manifest.get("nodes")
-                        .get(asset.unique_name.lower())
-                        .get("path"),
-                    )
-                ) as file:
-                    contents = file.read()
-                    asset_mds.append(asset_md(asset, contents))
+        # lineage information
+        edges = []
+        for link in lineage.asset_links:
+            source_model = extract_model_name(link.source_id)
+            target_model = extract_model_name(link.target_id)
+            edges.append({"source": source_model, "target": target_model})
 
-            # lineage information
-            edges = []
-            for link in asset_links:
-                source_model = extract_model_name(link["source_id"])
-                target_model = extract_model_name(link["target_id"])
-                edges.append({"source": source_model, "target": target_model})
-
-            lineage_md = f"""
-    # Model lineage
-    IMPORTANT: keep in mind how these are connected to each other. You may need to add or modify this structure to complete a task.
-    {lineage_ascii(edges)}
-    """
-            assets = "\n".join(asset_mds)
-            # file contents
-            output = f"""{lineage_md}
-    {assets}
-    User Instructions: {instructions}
-    """
-            if current_file:
-                output += f"""
+        lineage_md = f"""
+# Model lineage
+IMPORTANT: keep in mind how these are connected to each other. You may need to add or modify this structure to complete a task.
+{lineage_ascii(edges)}
+"""
+        assets = "\n".join(asset_mds)
+        # file contents
+        output = f"""{lineage_md}
+{assets}
+User Instructions: {instructions}
+"""
+        if current_file:
+            output += f"""
 Current File:
 ```sql
 {current_file}
 ```
-    """
-            return output
-    else:
-
-        return f"""
-User Instructions: {instructions}
 """
+        return output
 
 
 class RelatedAsset(BaseModel):

@@ -333,11 +333,11 @@ def group_1(user):
 
 
 def group_2(user):
-    workspace = create_workspace_n(user, "snowflake", 1)
-    snowflake = create_snowflake_n(workspace, 1)
-    sshkey = create_ssh_key_n(workspace, 1)
-    repository = create_repository_n(workspace, 1, sshkey)
-    create_dbt_n(snowflake, 1, repository=repository)
+    workspace = create_workspace_n(user, "snowflake", 0)
+    snowflake = create_snowflake_n(workspace, 0)
+    sshkey = create_ssh_key_n(workspace, 0)
+    repository = create_repository_n(workspace, 0, sshkey)
+    create_dbt_n(snowflake, 0, repository=repository)
 
     return [snowflake]
 
@@ -381,5 +381,5 @@ def group_6(user):
     bigquery = create_bigquery_n(workspace, 3)
     sshkey = create_ssh_key_n(workspace, 3)
     repository = create_repository_n(workspace, 3, sshkey)
-    create_dbt_n(bigquery, 3, repository=repository)
+    create_dbt_n(bigquery, 5, repository=repository)
     return [bigquery]

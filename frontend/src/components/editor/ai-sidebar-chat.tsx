@@ -37,8 +37,11 @@ export default function AiSidebarChat() {
             sendMessage(JSON.stringify(
                 {
                     type: 'completion',
-                    related_assets: visibleLineage?.data?.lineage?.assets.map((asset: any) => asset.id),
+                    current_file: activeFile?.content || '',
+                    asset_id: visibleLineage?.data?.lineage?.asset_id,
+                    related_assets: visibleLineage?.data?.lineage?.assets,
                     asset_links: visibleLineage?.data?.lineage?.asset_links,
+                    column_links: visibleLineage?.data?.lineage?.column_links,
                     instructions: input
                 }));
 
