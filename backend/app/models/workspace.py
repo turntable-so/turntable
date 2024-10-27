@@ -8,7 +8,6 @@ from django.db import models
 
 from app.models.user import User
 from app.services.storage_backends import PublicMediaStorage
-from app.utils.fields import encrypt
 
 
 def generate_short_uuid():
