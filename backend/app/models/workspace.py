@@ -28,7 +28,6 @@ class Workspace(models.Model):
     assets_exclude_name_contains = ArrayField(
         models.CharField(max_length=255), default=list
     )
-    api_key_metabase = encrypt(models.CharField(max_length=255, blank=True, null=True))
 
     class Meta:
         permissions = [

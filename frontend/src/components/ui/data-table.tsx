@@ -1,9 +1,7 @@
 "use client";
 
 import {
-  ColumnDef,
   type ColumnFiltersState,
-  SortingState,
   type VisibilityState,
   flexRender,
   getCoreRowModel,
@@ -28,9 +26,7 @@ import {
 import { columns } from "@/components/table-viewer/asset-viewer-columns";
 import { DataTablePagination } from "@/components/ui/data-table-pagination";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
-import { useAppContext } from "@/contexts/AppContext";
 import { useAssets } from "@/contexts/AssetViewerContext";
-import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function DataTable() {
@@ -47,8 +43,6 @@ export default function DataTable() {
   const router = useRouter();
 
   const { assets, isLoading, submitSearch, sorting, setSorting } = useAssets();
-
-  console.log({ assets });
 
   useEffect(() => {
     submitSearch();

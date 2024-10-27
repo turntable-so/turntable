@@ -23,7 +23,6 @@ import GlobalDragHandle from "tiptap-extension-global-drag-handle";
 
 const PlaceholderExtension = Placeholder.configure({
   placeholder: ({ node }) => {
-    console.log("PlaceholderExtension", node.type.name);
     if (node.type.name === "heading") {
       return `Heading ${node.attrs.level}`;
     }

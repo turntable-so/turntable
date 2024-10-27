@@ -91,7 +91,6 @@ export const AssetViewerProvider: React.FC<AssetViewerProviderProps> = ({
           sortOrder: sorting[0]?.desc ? "desc" : "asc",
         });
         setAssets(data);
-        console.log({ data });
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "An unknown error occurred",
@@ -102,8 +101,6 @@ export const AssetViewerProvider: React.FC<AssetViewerProviderProps> = ({
     },
     [query, currentPage, filters, sorting],
   );
-
-  console.log({ sorting });
 
   useEffect(() => {
     fetchAssets();

@@ -10,8 +10,6 @@ export default function LineagePreview({ nodeId }: { nodeId: string }) {
   const [lineage, setLineage] = useState<any>(null);
   const [rootAsset, setRootAsset] = useState<any>(null);
 
-  console.log({ nodeId });
-
   useEffect(() => {
     const fetchLineage = async () => {
       setIsLoading(true);

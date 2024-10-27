@@ -15,30 +15,30 @@ import { useForm } from "react-hook-form";
 import { updateSettings } from "../actions/actions";
 import type { Settings } from "./types";
 
-type ApiKeysProps = {
-  apiKeys: Settings["api_keys"];
+type JwtSecretKeysProps = {
+  jwtSharedSecrets: Settings["jwt_shared_secrets"];
 };
 
-export function ApiKeysTable({ apiKeys }: ApiKeysProps) {
-  const { register, handleSubmit, setValue } = useForm<ApiKeysProps>({
+export function JwtSecretKeysTable({ jwtSharedSecrets }: JwtSecretKeysProps) {
+  const { register, handleSubmit, setValue } = useForm<JwtSecretKeysProps>({
     defaultValues: {
-      apiKeys,
+      jwtSharedSecrets,
     },
   });
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const onSubmit = async (data: ApiKeysProps) => {
+  const onSubmit = async (data: JwtSecretKeysProps) => {
     setIsLoading(true);
     setError(null);
 
     try {
       await updateSettings({
-        api_keys: data.apiKeys,
+        jwt_shared_secrets: data.jwtSharedSecrets,
       });
     } catch (err) {
-      setError("An error occurred while updating the API keys.");
+      setError("An error occurred while updating the JWT secret keys.");
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -46,8 +46,8 @@ export function ApiKeysTable({ apiKeys }: ApiKeysProps) {
   };
 
   useEffect(() => {
-    setValue("apiKeys", apiKeys);
-  }, [apiKeys]);
+    setValue("jwtSharedSecrets", jwtSharedSecrets);
+  }, [jwtSharedSecrets]);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
@@ -56,11 +56,11 @@ export function ApiKeysTable({ apiKeys }: ApiKeysProps) {
           <TableHeader>
             <TableRow>
               <TableHead>Service</TableHead>
-              <TableHead>API Key</TableHead>
+              <TableHead>JWT Secret Key</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {Object.entries(apiKeys).map(([key, value]) => (
+            {Object.entries(jwtSharedSecrets).map(([key, value]) => (
               <TableRow key={key}>
                 <TableCell className="font-semibold">
                   {capitalize(key)}
@@ -69,7 +69,7 @@ export function ApiKeysTable({ apiKeys }: ApiKeysProps) {
                   <Input
                     className="w-2/3"
                     defaultValue={value}
-                    {...register(`apiKeys.${key}`)}
+                    {...register(`jwtSharedSecrets.${key}`)}
                   />
                 </TableCell>
               </TableRow>

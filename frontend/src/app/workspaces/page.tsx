@@ -1,14 +1,10 @@
 "use client";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
-import CreateWorkspaceForm from "@/components/workspaces/create-workspace-form";
 import NewWorkspaceButton from "@/components/workspaces/new-workspace-button";
 import WorkspaceIcon from "@/components/workspaces/workspace-icon";
-import { Loader2, PlusIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getWorkspaces, switchWorkspace } from "../actions/actions";
-import useSession from "../hooks/use-session";
 
 type Workspace = {
   id: string;
@@ -19,16 +15,11 @@ type Workspace = {
 };
 
 export default function WorkspacePage() {
-  const router = useRouter();
-  const { user } = useSession();
-
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingWorkspaceId, setLoadingWorkspaceId] = useState<string | null>(
     null,
   );
-
-  console.log({ user });
 
   useEffect(() => {
     const fetchWorkspaces = async () => {

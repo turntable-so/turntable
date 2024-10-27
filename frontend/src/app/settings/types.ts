@@ -5,7 +5,4 @@ export type AssetExclusionFilter = {
 
 export type Settings = {
   exclusion_filters: AssetExclusionFilter[];
-  api_keys: {
-    metabase: string | null;
-  };
 };

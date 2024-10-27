@@ -17,6 +17,7 @@ import ActionBar from "../ActionBar";
 import { Input } from "../ui/input";
 import { ScrollArea } from "../ui/scroll-area";
 import Node from "./file-tree-node";
+import ResourcesTree from "./resources-tree";
 export default function EditorSidebar() {
   const {
     ref: treeContainerRef,
@@ -94,9 +95,7 @@ export default function EditorSidebar() {
                 Resources
               </div>
             </div>
-            {/* <ScrollArea className='h-full z-50'>
-                            <ActionBar key={'pls_remove'} context={'NOTEBOOK'} />
-                        </ScrollArea> */}
+            <ResourcesTree />
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>

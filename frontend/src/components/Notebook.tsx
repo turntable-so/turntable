@@ -59,28 +59,17 @@ export default function Notebook({ notebook }: { notebook: Notebook }) {
     setActiveNotebook(notebook);
   }, [notebook]);
 
-  console.log({ activeNotebook });
-
   function calculateDistances() {
-    console.log("calc");
     if (divRef.current) {
       // @ts-ignore
       const rect = divRef.current.getBoundingClientRect();
-      console.log("left", rect.left);
-      console.log("Rect:", rect.width);
       const viewportWidth = window.innerWidth;
 
-      console.log("Viewport width:", viewportWidth);
-
       const divWidthBasedOnPosition = viewportWidth - rect.left - 50;
-
-      console.log("Div width based on position:", divWidthBasedOnPosition);
       // padding on each side
       setMaxWidth(divWidthBasedOnPosition);
     }
   }
-
-  console.log({ maxWidth });
 
   useEffect(() => {
     // Initial calculation

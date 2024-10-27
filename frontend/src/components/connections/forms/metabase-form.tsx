@@ -29,6 +29,8 @@ const FormSchema = z.object({
   password: z.string().min(1, {
     message: "Password can't be empty",
   }),
+  api_key: z.string(),
+  jwt_shared_secret: z.string(),
 });
 
 export default function MetabaseForm({
@@ -37,7 +39,8 @@ export default function MetabaseForm({
 }: { resource?: any; details?: any }) {
   const router = useRouter();
 
-  console.log({ resource, details });
+  console.log("details: ", details);
+
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -45,6 +48,8 @@ export default function MetabaseForm({
       connect_uri: details?.connect_uri || "",
       username: details?.username || "",
       password: details?.password || "",
+      api_key: details?.api_key || "",
+      jwt_shared_secret: details?.jwt_shared_secret || "",
     },
   });
 
@@ -61,6 +66,8 @@ export default function MetabaseForm({
         connect_uri: data.connect_uri,
         username: data.username,
         password: data.password,
+        api_key: data.api_key,
+        jwt_shared_secret: data.jwt_shared_secret,
       },
     };
     const res = isUpdate
@@ -152,6 +159,34 @@ export default function MetabaseForm({
               />
             </div>
           </div>
+
+          <FormField
+            control={form.control}
+            name="api_key"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>API Key (Optional)</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="jwt_shared_secret"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>JWT Secret Key (Optional)</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <div className="flex justify-end">
             <LoaderButton type="submit">Save</LoaderButton>

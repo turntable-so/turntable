@@ -69,14 +69,11 @@ const RegistrationForm = ({ invitationCode = "" }: any) => {
 
     registerUser(data.email, data.password, invitationCode)
       .json((answer) => {
-        console.log(answer);
         setCookie("accessToken", answer.tokens.access);
         setCookie("refreshToken", answer.tokens.refresh);
         router.push("/"); // Adjust the path as needed
       })
       .catch((err) => {
-        console.log("ERROR");
-        console.log(err);
         setIsLoading(false);
         if (err?.json?.email) {
           setError("email", { type: "server", message: err.json.email });

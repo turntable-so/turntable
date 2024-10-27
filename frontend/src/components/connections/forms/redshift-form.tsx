@@ -54,7 +54,6 @@ export default function RedshiftForm({
 }) {
   const router = useRouter();
 
-  console.log({ resource });
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -242,7 +241,6 @@ export default function RedshiftForm({
               <LoaderButton
                 className="mr-5"
                 onClick={(event) => {
-                  console.log("si esta entrando");
                   event.preventDefault();
                   testConnection(resource);
                 }}

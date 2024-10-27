@@ -10,16 +10,12 @@ import {
 import { useEffect, useState } from "react";
 import FullWidthPageLayout from "../../components/layout/FullWidthPageLayout";
 import { getSettings } from "../actions/actions";
-import { ApiKeysTable } from "./api-keys-table";
 import { AssetExclusionTable } from "./asset-exclusion-table";
 import type { Settings } from "./types";
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings>({
     exclusion_filters: [],
-    api_keys: {
-      metabase: null,
-    },
   });
 
   useEffect(() => {
@@ -45,16 +41,6 @@ export default function SettingsPage() {
             <AssetExclusionTable
               exclusionFilters={settings.exclusion_filters}
             />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>API Keys</CardTitle>
-            <CardDescription>API keys for external services.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ApiKeysTable apiKeys={settings.api_keys} />
           </CardContent>
         </Card>
       </div>

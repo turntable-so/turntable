@@ -76,7 +76,6 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
 
   const fetchFiles = async () => {
     const { dirty_changes, file_index } = await getFileIndex();
-    console.log({ file_index });
     const fileIndex = file_index.map((file: FileNode) => ({ ...file }));
     setFiles(fileIndex);
     const flattenFileIndex = (files: FileNode[]): FileNode[] => {
@@ -102,9 +101,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
 
   const openFile = useCallback(
     async (node: FileNode) => {
-      console.log("openFile", { node });
       if (node.type === "file") {
-        console.log({ openedFiles });
         const existingFile = openedFiles.find((f) => f.node.path === node.path);
         if (!existingFile) {
           const { contents } = await fetchFileContents(node.path);
@@ -132,7 +129,6 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         (f) => f.node.path !== file.node.path,
       );
       setOpenedFiles(newOpenedFiles);
-      console.log({ newOpenedFiles });
       if (newOpenedFiles.length > 0) {
         setActiveFile(newOpenedFiles[0]);
       }
@@ -146,7 +142,6 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const updateFileContent = useCallback((path: string, content: string) => {
-    console.log({ openedFiles, path });
     setOpenedFiles((prev) =>
       prev.map((f) =>
         f.node.path === path ? { ...f, content, isDirty: true } : f,
@@ -155,7 +150,6 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   }, []);
 
   const saveFile = async (filepath: string, content: string) => {
-    console.log("saveFile", { filepath });
     if (activeFile) {
       await persistFile(filepath, content);
       setOpenedFiles((prev) =>

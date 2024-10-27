@@ -225,9 +225,7 @@ export function LineageViewProvider({
    */
   useEffect(() => {
     async function load() {
-      console.log("LOADING LINEAGE");
       setIsLoading(false);
-      console.log("LOADED LINEAEG");
     }
 
     load();

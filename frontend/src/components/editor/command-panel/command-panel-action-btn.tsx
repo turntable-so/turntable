@@ -104,18 +104,14 @@ export default function CommandPanelActionBtn({
 
   const handleRunCommand = () => {
     if (commandPanelState === "running") {
-      console.log("Cancelling");
       sendMessage(JSON.stringify({ action: "cancel" }));
       setCommandPanelState("cancelling");
       return;
     }
 
     if (!inputValue || commandPanelState === "cancelling") {
-      console.log("Not running, returning");
       return;
     }
-
-    console.log("Running");
 
     startWebSocket();
     setCommandPanelState("running");

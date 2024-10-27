@@ -178,8 +178,6 @@ export const getColumnLineageForAsset = ({
     };
   });
 
-  console.log({ columnEdges, nodes: tableLineage.nodes });
-
   return {
     nodes: tableLineage.nodes,
     tableEdges: tableLineage.edges,

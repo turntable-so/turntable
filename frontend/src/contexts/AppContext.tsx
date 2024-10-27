@@ -172,7 +172,6 @@ export default function AppContextProvider({
 
   const fetchAssetPreview = async (assetId: string) => {
     const asset = await getAssetPreview(assetId);
-    console.log({ asset });
     setAssetPreview(asset);
   };
 
@@ -200,7 +199,6 @@ export default function AppContextProvider({
 
   const clearAssetPreview = () => {
     setAssetPreview(null);
-    console.log("clearAssetPreview");
   };
 
   const value = {

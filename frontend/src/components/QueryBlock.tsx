@@ -550,7 +550,6 @@ export default function QueryBlock(props: QueryBlockProps) {
   };
 
   const deleteBlock = () => {
-    console.log(props);
     props.node.attrs.blockId && props.deleteNode();
   };
 
@@ -615,7 +614,6 @@ export default function QueryBlock(props: QueryBlockProps) {
         },
         cellClass: "p-0",
       }));
-      console.log({ defs, types: table.column_types });
       setColDefs(defs);
       setRowData(table.data);
       setDefaultDataChart(table.data, defs);
@@ -634,7 +632,6 @@ export default function QueryBlock(props: QueryBlockProps) {
         setIsLoading(false);
       }
       if (data.execute_query && data.execute_query.status === "success") {
-        console.log(data.execute_query.signed_url);
         getTablefromSignedUrl(data.execute_query.signed_url);
       }
       setIsLoading(false);

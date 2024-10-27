@@ -126,7 +126,6 @@ const AdvancedEditor = ({
   useEffect(() => {
     const fetchNotebook = async (id: string) => {
       const notebook = await getNotebook(id as string);
-      console.log({ contents: notebook.contents });
       setInitialContent(JSON.parse(notebook.contents));
     };
     if (notebookId) {

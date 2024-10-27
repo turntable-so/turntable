@@ -574,3 +574,22 @@ export async function getProjectBasedLineage({
   );
   return response.json();
 }
+
+export async function getMetabaseEmbedUrlForAsset(assetId: string) {
+  const response = await fetcher(`/embedding/metabase/?asset_id=${assetId}`, {
+    cookies,
+    method: "GET",
+  });
+  return response.json();
+}
+
+export async function makeMetabaseAssetEmbeddable(assetId: string) {
+  const response = await fetcher(
+    `/embedding/metabase_make_embeddable/?asset_id=${assetId}`,
+    {
+      cookies,
+      method: "POST",
+    },
+  );
+  return response.json();
+}

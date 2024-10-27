@@ -50,7 +50,6 @@ type FormData = {
 };
 
 const UpdateWorkspaceForm = ({ workspace, enabled }: any) => {
-  console.log(workspace);
   const router = useRouter();
   const [formRespError, setFormRespError] = useState<string | null>(null);
 

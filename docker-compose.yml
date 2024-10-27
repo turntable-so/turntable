@@ -127,6 +127,7 @@ services:
     command: ["pnpm", "start"]
     ports:
       - "3000:3000"
+      - "2222:22"
     depends_on:
       api:
         condition: service_healthy

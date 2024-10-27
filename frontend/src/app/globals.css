@@ -277,3 +277,13 @@ pre {
     pointer-events: none;
   }
 }
+
+/* hide scrollbar */
+.hide-scrollbar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

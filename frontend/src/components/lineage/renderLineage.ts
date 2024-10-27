@@ -78,7 +78,6 @@ const getLayoutedElements = (nodes, edges, hoveredNode) => {
     if (hoveredNode && hoveredNode.nodeId === node.id) {
       hoveredYPos = hoveredNode.yPos;
     }
-    console.log(nodeWithPosition);
     node.position = {
       x: nodeWithPosition.x - nodeWidth / 2,
       y:
@@ -89,8 +88,6 @@ const getLayoutedElements = (nodes, edges, hoveredNode) => {
 
     return node;
   });
-
-  console.log("POS", { nodes, edges });
 
   return { nodes, edges };
 };
@@ -175,7 +172,6 @@ export default function buildLineageReactFlow({
       hoveredColumn,
     );
 
-    console.log("nodesWithDisplayColumns", { node });
     if (!node.position) {
       node.position = { x: 0, y: 0 };
     }

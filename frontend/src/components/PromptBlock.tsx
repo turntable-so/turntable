@@ -51,8 +51,6 @@ export default function PromptBlock() {
     setRecommendations(relevantSources);
   };
 
-  console.log({ sources, recommendations });
-
   const onTextChange = (text: string) => {
     setText(text);
     const words = text.split(/\s+/);

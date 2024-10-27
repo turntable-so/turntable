@@ -20,7 +20,6 @@ const useWorkflowUpdates = (workspaceId: string) => {
     // Construct the WebSocket URL
     const base = new URL(baseUrl).host;
     const socketUrl = `${protocol}://${base}/ws/subscribe/${workspaceId}/?token=${accessToken}`;
-    console.log(`Attempting to connect to ${socketUrl}`);
 
     const socket = new WebSocket(socketUrl);
     socketRef.current = socket;
@@ -36,7 +35,6 @@ const useWorkflowUpdates = (workspaceId: string) => {
     };
 
     socket.onopen = () => {
-      console.log(`WebSocket connection established: ${socketUrl}`);
       retryDelay.current = 2000; // Reset retry delay on successful connection
       // Start the heartbeat interval
       heartbeatInterval.current = window.setInterval(sendHeartbeat, 30000); // Ping every 30 seconds
@@ -49,9 +47,6 @@ const useWorkflowUpdates = (workspaceId: string) => {
       } else {
         setWorkflowStatus(data.status);
         setResource(data.resource_id);
-        console.log(
-          `Workflow Run ${data.workflow_run_id} status updated: ${data.status}`,
-        );
       }
     };
 
@@ -60,16 +55,13 @@ const useWorkflowUpdates = (workspaceId: string) => {
     };
 
     socket.onclose = () => {
-      console.log("WebSocket connection closed.");
       if (heartbeatInterval.current) {
         clearInterval(heartbeatInterval.current);
       }
 
       // RECONNECT with exponential backoff
       if (!reconnectTimeout.current) {
-        console.log(`Reconnecting in ${retryDelay.current / 1000} seconds...`);
         reconnectTimeout.current = window.setTimeout(() => {
-          console.log("Reconnecting...");
           retryDelay.current = Math.min(retryDelay.current * 2, 30000); // Cap delay at 30 seconds
           connectWebSocket(); // Try reconnecting
           reconnectTimeout.current = null; // Reset timeout

@@ -37,8 +37,6 @@ export const LayoutProvider: React.FC<{ children: ReactNode }> = ({
   const [appSidebarCollapsed, setAppSidebarCollapsed] = useState(false);
   const pathName = usePathname();
 
-  console.log({ sidebarLeftShown, sidebarRightShown, bottomPanelShown });
-
   useEffect(() => {
     setAppSidebarCollapsed(
       pathName.includes("/lineage") || pathName.includes("/assets"),

@@ -12,7 +12,7 @@ export default async function LineagePage({
   });
   return (
     <div className="w-full h-screen overflow-y-scroll">
-      <div className="">
+      <div>
         {/* <ErrorBoundary
                 FallbackComponent={() => <div>Something went wrong</div>}
                 onError={e => console.error(e)}> */}
