@@ -1,7 +1,7 @@
 import useSession from "@/app/hooks/use-session";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import AppLayout from "./workspace-layout";
+import WorkspaceLayout from "./workspace-layout";
 
 export default function AuthenticatedAppLayout({
   children,
@@ -25,5 +25,5 @@ export default function AuthenticatedAppLayout({
     return null;
   }
 
-  return <AppLayout>{children}</AppLayout>;
+  return <WorkspaceLayout>{children}</WorkspaceLayout>;
 }
