@@ -17,23 +17,18 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import include, path, re_path
-from app.views.embedding_views import EmbeddingViewSet
-from app.views.settings_view import SettingsView
-from app.views.inference_views import InferenceView
-from app.views.project_views import ProjectViewSet
-from app.views.query_views import DbtQueryPreviewView
 from rest_framework import routers
 
 from app.consumers import DBTCommandConsumer, WorkflowRunConsumer
 from app.views import (
     AssetViewSet,
     BlockViewSet,
-    ExecuteQueryView,
     HealthCheckViewSet,
     InvitationViewSet,
     LineageViewSet,
     NotebookViewSet,
     ResourceViewSet,
+    EmbeddingViewSet,
     SSHViewSet,
     SyncResourceView,
     TestResourceView,
@@ -41,8 +36,13 @@ from app.views import (
     WorkspaceGroupViewSet,
     WorkspaceViewSet,
 )
+from app.views.inference_views import InferenceView
 from app.views.project_views import ProjectViewSet
-from app.views.query_views import DbtQueryPreviewView
+from app.views.query_views import (
+    DbtQueryPreviewView,
+    NotebookQueryView,
+    QueryPreviewView,
+)
 from app.views.settings_view import SettingsView
 
 from .views import CustomUserViewSet, LogoutView, OAuthView
@@ -65,13 +65,18 @@ urlpatterns = [
     path("oauth/auth", OAuthView.as_view(), name="oauth-auth"),
     path(
         "notebooks/<str:notebook_id>/blocks/<str:block_id>/query/",
-        ExecuteQueryView.as_view(),
+        NotebookQueryView.as_view(),
         name="execute_query",
     ),
     path(
-        "query/preview/",
+        "query/dbt/",
         DbtQueryPreviewView.as_view(),
         name="dbt_query_preview",
+    ),
+    path(
+        "query/sql/",
+        QueryPreviewView.as_view(),
+        name="query_preview",
     ),
     path(
         "resources/<str:resource_id>/sync/",

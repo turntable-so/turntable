@@ -4,7 +4,7 @@ from django.conf import settings
 
 from app.models import Resource
 from app.utils.test_utils import require_env_vars
-from workflows.execute_query import ExecuteQueryWorkflow
+from workflows.execute_query_DEPRECATED import ExecuteQueryWorkflow
 from workflows.utils.debug import WorkflowDebugger
 
 TEST_QUERY = "select * from mydb.dbt_sl_test.raw_products"
