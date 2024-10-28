@@ -1,6 +1,9 @@
 name: Run Tests
 
-on: [pull_request]
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
@@ -41,7 +44,6 @@ jobs:
           SSHKEY_0_PUBLIC: op://Env/GitHub/sshkey_0_public
           SSHKEY_0_PRIVATE: op://Env/GitHub/sshkey_0_private
           GIT_0_REPO_URL: op://Env/GitHub/git_0_repo_url
-
 
       - name: Start test resources
         uses: hoverkraft-tech/compose-action@v2.0.1

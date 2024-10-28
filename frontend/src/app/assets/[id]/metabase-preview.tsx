@@ -1,6 +1,7 @@
 import { getMetabaseEmbedUrlForAsset } from "@/app/actions/actions";
 import { Card, CardContent } from "@/components/ui/card";
 import AssetNotPublished from "./asset-not-published";
+
 type MetabasePreviewProps = {
   asset: any;
 };
