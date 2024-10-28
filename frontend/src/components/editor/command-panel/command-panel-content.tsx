@@ -1,4 +1,3 @@
-import useResizeObserver from "use-resize-observer";
 import CommandLog from "./command-log";
 import { useCommandPanelContext } from "./command-panel-context";
 import CommandPanelInput from "./command-panel-input";
