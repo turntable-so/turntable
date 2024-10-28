@@ -26,6 +26,7 @@ import { LineageProvider } from '../contexts/LineageContext'
 import EditorSidebar from '@/components/editor/editor-sidebar'
 import FileTabs from '@/components/editor/file-tabs'
 import { useLayoutContext } from '../contexts/LayoutContext'
+import NewFileTabContent from './new-file-tab-content'
 
 const PromptBox = ({ setPromptBoxOpen }: { setPromptBoxOpen: (open: boolean) => void }) => {
 
@@ -211,8 +212,16 @@ function EditorContent({ setPromptBoxOpen, containerWidth }: { setPromptBoxOpen:
 
     if (activeFile?.view === 'new') {
         return (
-            <div className='h-full w-full flex items-center justify-center'>
-                new tab experience coming soon
+            <div className='h-full w-full flex items-center justify-center overflow-y-scroll'>
+                <NewFileTabContent />
+            </div>
+        )
+    }
+
+    if (activeFile?.view === 'query') {
+        return (
+            <div className='h-full w-full flex items-center justify-center overflow-y-scroll'>
+                QUERY!
             </div>
         )
     }

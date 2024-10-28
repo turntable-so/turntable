@@ -71,13 +71,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                                         </ResizablePanel>
                                     </ResizablePanelGroup>
                                 ) : (
-                                    <div className='w-full h-full overflow-y-auto'>
+                                    <div className='w-full h-screen overflow-y-scroll'>
                                         {children}
                                     </div>
                                 )
 
                             ) : (
-                                <div className='flex flex-col max-h-screen overflow-x-auto w-full text-muted-foreground bg-background items-center'>
+                                <div className='flex flex-col max-h-screen overflow-x-auto w-full text-muted-foreground bg-background items-center overflow-y-scroll h-screen'>
                                     {children}
                                 </div>
                             )}

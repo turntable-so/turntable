@@ -12,7 +12,7 @@ export type OpenedFile = {
     node: FileNode;
     content: string;
     isDirty: boolean;
-    view: 'edit' | 'diff' | 'new';
+    view: 'edit' | 'diff' | 'new' | 'query';
     diff?: {
         original: string;
         modified: string;
@@ -34,6 +34,7 @@ type FilesContextType = {
     createFileAndRefresh: (path: string, fileContents: string) => void;
     deleteFileAndRefresh: (path: string) => void;
     createNewFileTab: () => void;
+    createNewQueryTab: () => void;
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
@@ -159,6 +160,21 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         setActiveFile(newTab);
     }
 
+    const createNewQueryTab = () => {
+        const newTab: OpenedFile = {
+            node: {
+                name: 'New query',
+                path: `queries/${new Date().getTime()}.sql`,
+                type: 'file'
+            },
+            content: '',
+            isDirty: false,
+            view: 'query'
+        }
+        setOpenedFiles(prev => [...prev, newTab]);
+        setActiveFile(newTab);
+    }
+
 
     return (
         <FilesContext.Provider value={{
@@ -175,7 +191,8 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             searchFileIndex,
             createFileAndRefresh,
             deleteFileAndRefresh,
-            createNewFileTab
+            createNewFileTab,
+            createNewQueryTab
         }}>
             {children}
         </FilesContext.Provider>
