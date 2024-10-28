@@ -14,27 +14,26 @@ import {
 } from "novel/extensions";
 import { UploadImagesPlugin } from "novel/plugins";
 
-import { slashCommand } from './slash-command'
+import Heading from "@tiptap/extension-heading";
+import Paragraph from "@tiptap/extension-paragraph";
 import { cx } from "class-variance-authority";
 import { common, createLowlight } from "lowlight";
-import Paragraph from '@tiptap/extension-paragraph'
-import Heading from '@tiptap/extension-heading'
-import GlobalDragHandle from 'tiptap-extension-global-drag-handle'
-import AutoJoiner from 'tiptap-extension-auto-joiner' // optional
+import AutoJoiner from "tiptap-extension-auto-joiner"; // optional
+import GlobalDragHandle from "tiptap-extension-global-drag-handle";
+import { slashCommand } from "./slash-command";
 
-import Document from '@tiptap/extension-document'
+import Document from "@tiptap/extension-document";
 
-import Text from '@tiptap/extension-text'
+import Text from "@tiptap/extension-text";
 import Component, { sqlNodeExtension } from "./sql-node";
-
 
 //TODO I am using cx here to get tailwind autocomplete working, idk if someone else can write a regex to just capture the class key in objects
 const aiHighlight = AIHighlight;
 //You can overwrite the placeholder with your own configuration
 const placeholder = Placeholder.configure({
   placeholder: ({ node }) => {
-    if (node.type.name === 'heading') {
-      return '(Untitled))'
+    if (node.type.name === "heading") {
+      return "(Untitled))";
     }
     return "Press '/' for commands";
   },
@@ -111,7 +110,9 @@ const starterKit = StarterKit.configure({
   },
   codeBlock: {
     HTMLAttributes: {
-      class: cx("rounded-md bg-muted text-muted-foreground border p-5 font-mono font-medium"),
+      class: cx(
+        "rounded-md bg-muted text-muted-foreground border p-5 font-mono font-medium",
+      ),
     },
   },
   code: {
@@ -141,14 +142,9 @@ const youtube = Youtube.configure({
   inline: false,
 });
 
-
 const characterCount = CharacterCount.configure();
 
-const CustomDocument = Document.extend({
-})
-
-
-
+const CustomDocument = Document.extend({});
 
 export const extensions = [
   GlobalDragHandle.configure({
@@ -156,7 +152,7 @@ export const extensions = [
     scrollThreshold: 100,
   }),
   AutoJoiner.configure({
-    elementsToJoin: ['bulletList', 'orderedList']
+    elementsToJoin: ["bulletList", "orderedList"],
   }),
   starterKit,
   CustomDocument,

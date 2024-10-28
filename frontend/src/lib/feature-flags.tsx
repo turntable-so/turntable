@@ -1,9 +1,8 @@
 type FeatureFlags = {
-    notebookTabExp: boolean
-}
+  notebookTabExp: boolean;
+};
 export default function getFeatureFlags(tenantId: string): FeatureFlags {
-
-    return {
-        notebookTabExp: tenantId === '0'
-    }
+  return {
+    notebookTabExp: tenantId === "0",
+  };
 }

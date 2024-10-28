@@ -103,7 +103,7 @@
 //             defaultValue={lineageOptions.successor_depth}
 //           />
 //         </span>
-//         {/* 
+//         {/*
 //         <VSCodeButton appearance="primary" type="submit">
 //           Update graph
 //         </VSCodeButton> */}

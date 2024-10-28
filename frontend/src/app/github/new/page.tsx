@@ -3,19 +3,25 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import FullWidthPageLayout from "../../../components/layout/FullWidthPageLayout";
 import { Button } from "../../../components/ui/button";
-import { createGithubConnection, getSshKey, getWorkspace, testGitConnection } from "../../actions/actions";
+import {
+  createGithubConnection,
+  getSshKey,
+  getWorkspace,
+  testGitConnection,
+} from "../../actions/actions";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { GitHubLogoIcon } from "@radix-ui/react-icons";
 import { CopyIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { LoaderButton } from "../../../components/ui/LoadingSpinner";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "../../../components/ui/card";
 import {
   Form,
@@ -23,10 +29,9 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "../../../components/ui/form";
 import { Input } from "../../../components/ui/input";
-import { LoaderButton } from "../../../components/ui/LoadingSpinner";
 import { ScrollArea } from "../../../components/ui/scroll-area";
 import { Textarea } from "../../../components/ui/textarea";
 
@@ -88,7 +93,7 @@ function GithubConnection() {
     setTested(true);
     const data = await testGitConnection(
       form.getValues().deployKey,
-      form.getValues().dbtGitRepoUrl
+      form.getValues().dbtGitRepoUrl,
     );
     if (data.success === true) {
       setConnectionCheck(true);
@@ -101,7 +106,7 @@ function GithubConnection() {
     const getSshKeyFunction = async () => {
       const data = await getSshKey(workspace.id);
       if (data) {
-        form.setValue('deployKey', data.public_key)
+        form.setValue("deployKey", data.public_key);
       }
     };
 
@@ -227,13 +232,16 @@ function GithubConnection() {
           </CardContent>
           <CardFooter className="flex justify-end">
             <div className="float-right flex ">
-              {tested && (
-                connectionCheck ? (
-                  <div className="text-green-500 mt-2 mr-2">Connection successful</div>
+              {tested &&
+                (connectionCheck ? (
+                  <div className="text-green-500 mt-2 mr-2">
+                    Connection successful
+                  </div>
                 ) : (
-                  <div className="text-red-500  mt-2 mr-2">Connection failed</div>
-                ))
-              }
+                  <div className="text-red-500  mt-2 mr-2">
+                    Connection failed
+                  </div>
+                ))}
               <LoaderButton
                 isLoading={isSubmitting}
                 isDisabled={isSubmitting}

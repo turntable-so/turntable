@@ -480,6 +480,8 @@ class MetabaseDetails(ResourceDetails):
     username = encrypt(models.CharField(max_length=255, blank=False))
     password = encrypt(models.CharField(max_length=255, blank=False))
     connect_uri = encrypt(models.CharField(blank=False, max_length=255))
+    api_key = encrypt(models.CharField(max_length=255, blank=True, null=True))
+    jwt_shared_secret = encrypt(models.CharField(max_length=255, blank=True, null=True))
 
     @property
     def datahub_extras(self):

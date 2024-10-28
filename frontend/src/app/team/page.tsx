@@ -1,10 +1,14 @@
 "use client";
-import FullWidthPageLayout from "../../components/layout/FullWidthPageLayout";
 import CreateWorkspaceForm from "@/components/workspaces/create-workspace-form";
+import FullWidthPageLayout from "../../components/layout/FullWidthPageLayout";
 
 import * as React from "react";
 import Modal from "react-modal";
 
+import useSession from "@/app/hooks/use-session";
+import { LoaderButton } from "@/components/ui/LoadingSpinner";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -23,7 +27,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -33,14 +36,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { DropdownMenu } from "@radix-ui/react-dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import UpdateWorkspaceForm from "@/components/workspaces/update-workspace-form";
-import useSession from "@/app/hooks/use-session";
-import { fetcher } from "../fetcher";
-import { LoaderButton } from "@/components/ui/LoadingSpinner";
+import { DropdownMenu } from "@radix-ui/react-dropdown-menu";
 import { getWorkspace } from "../actions/actions";
+import { fetcher } from "../fetcher";
 
 export default function Page() {
   const [workspace, setWorkspace] = React.useState<any>({});
@@ -83,7 +83,7 @@ export default function Page() {
         },
       });
       setIsLoading(false);
-    } catch (err: any) { }
+    } catch (err: any) {}
   };
 
   const openInviteMembers = () => {
@@ -111,7 +111,7 @@ export default function Page() {
 
   const { user } = useSession();
 
-  const role = false ? 'Member' : "Admin"
+  const role = false ? "Member" : "Admin";
   return (
     <FullWidthPageLayout title="Workspace">
       <Modal
@@ -198,7 +198,8 @@ export default function Page() {
                               <Avatar className="size-8 border">
                                 <AvatarImage src="" />
                                 <AvatarFallback>
-                                  {listUser.name?.slice(0, 2).toUpperCase() || ''}
+                                  {listUser.name?.slice(0, 2).toUpperCase() ||
+                                    ""}
                                 </AvatarFallback>
                               </Avatar>
                             </div>

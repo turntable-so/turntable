@@ -4,7 +4,11 @@ import type { Editor, Range } from "@tiptap/core";
 import { ReactRenderer } from "@tiptap/react";
 import Suggestion, { type SuggestionOptions } from "@tiptap/suggestion";
 import type { ReactNode } from "react";
-import tippy, { type GetReferenceClientRect, type Instance, type Props } from "tippy.js";
+import tippy, {
+  type GetReferenceClientRect,
+  type Instance,
+  type Props,
+} from "tippy.js";
 import { EditorCommandOut } from "../components/novel/editor-command";
 
 const Command = Extension.create({
@@ -60,7 +64,10 @@ const renderItems = () => {
         placement: "bottom-start",
       });
     },
-    onUpdate: (props: { editor: Editor; clientRect: GetReferenceClientRect }) => {
+    onUpdate: (props: {
+      editor: Editor;
+      clientRect: GetReferenceClientRect;
+    }) => {
       component?.updateProps(props);
 
       popup?.[0]?.setProps({

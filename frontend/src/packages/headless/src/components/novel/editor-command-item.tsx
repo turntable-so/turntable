@@ -1,11 +1,11 @@
+import type { Editor, Range } from "@tiptap/core";
+import { useCurrentEditor } from "@tiptap/react";
+import { CommandEmpty, CommandItem } from "cmdk";
+import { useAtomValue } from "jotai";
 // @ts-nocheck
 import { forwardRef } from "react";
-import { CommandEmpty, CommandItem } from "cmdk";
-import { useCurrentEditor } from "@tiptap/react";
-import { useAtomValue } from "jotai";
-import { rangeAtom } from "../../utils/atoms";
 import type { ComponentPropsWithoutRef } from "react";
-import type { Editor, Range } from "@tiptap/core";
+import { rangeAtom } from "../../utils/atoms";
 
 interface EditorCommandItemProps {
   readonly onCommand: ({
@@ -27,7 +27,11 @@ export const EditorCommandItem = forwardRef<
   if (!editor || !range) return null;
 
   return (
-    <CommandItem ref={ref} {...rest} onSelect={() => onCommand({ editor, range })}>
+    <CommandItem
+      ref={ref}
+      {...rest}
+      onSelect={() => onCommand({ editor, range })}
+    >
       {children}
     </CommandItem>
   );

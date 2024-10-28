@@ -1,8 +1,12 @@
 // @ts-nocheck
-import { ColumnLineage, Edge, getVisibleEdges } from '../../lib/lineage';
+import {
+  type ColumnLineage,
+  type Edge,
+  getVisibleEdges,
+} from "../../lib/lineage";
 
-import dagre from '@dagrejs/dagre';
-import { ColumnWithPosition } from './LineageView';
+import dagre from "@dagrejs/dagre";
+import type { ColumnWithPosition } from "./LineageView";
 
 const maxNodeHeight = 260;
 
@@ -19,19 +23,19 @@ const getLayoutedElements = (nodes, edges, hoveredNode) => {
   const columnHeight = 24;
 
   dagreGraph.setGraph({
-    rankdir: 'LR',
-    align: 'UL',
+    rankdir: "LR",
+    align: "UL",
     ranksep: 150,
   });
 
-  nodes.forEach(node => {
+  nodes.forEach((node) => {
     const numColumns = node.data.collapsed
       ? node.data.filteredColumns.length
       : node.data.allColumns.length;
 
     const thisNodeHeight = Math.min(
       baseNodeHeight + numColumns * columnHeight,
-      maxNodeHeight
+      maxNodeHeight,
     );
 
     let hoveredYPos = null;
@@ -50,15 +54,15 @@ const getLayoutedElements = (nodes, edges, hoveredNode) => {
     });
   });
 
-  edges.forEach(edge => {
+  edges.forEach((edge) => {
     dagreGraph.setEdge(edge.source, edge.target);
   });
 
   dagre.layout(dagreGraph);
-  nodes.forEach(node => {
+  nodes.forEach((node) => {
     const nodeWithPosition = dagreGraph.node(node.id);
-    node.targetPosition = 'left';
-    node.sourcePosition = 'right';
+    node.targetPosition = "left";
+    node.sourcePosition = "right";
 
     const numColumns = node.data.collapsed
       ? node.data.filteredColumns.length
@@ -66,7 +70,7 @@ const getLayoutedElements = (nodes, edges, hoveredNode) => {
 
     const thisNodeHeight = Math.min(
       baseNodeHeight + numColumns * columnHeight,
-      maxNodeHeight
+      maxNodeHeight,
     );
 
     let hoveredYPos = null;
@@ -74,7 +78,6 @@ const getLayoutedElements = (nodes, edges, hoveredNode) => {
     if (hoveredNode && hoveredNode.nodeId === node.id) {
       hoveredYPos = hoveredNode.yPos;
     }
-    console.log(nodeWithPosition)
     node.position = {
       x: nodeWithPosition.x - nodeWidth / 2,
       y:
@@ -85,8 +88,6 @@ const getLayoutedElements = (nodes, edges, hoveredNode) => {
 
     return node;
   });
-
-  console.log('POS', { nodes, edges })
 
   return { nodes, edges };
 };
@@ -117,7 +118,6 @@ export default function buildLineageReactFlow({
       ? getVisibleEdges(hoveredColumn.columnId, edges)
       : [];
 
-
   // gets unique table edges from column edges
   const tableEdges = columnLineage.tableEdges.map((edge: any) => {
     const highlight =
@@ -138,27 +138,27 @@ export default function buildLineageReactFlow({
 
   const getFilteredColumns = (
     node: any,
-    selectedColumn: String | null,
-    hoveredColumn: ColumnWithPosition | null
+    selectedColumn: string | null,
+    hoveredColumn: ColumnWithPosition | null,
   ) => {
     if (selectedColumn) {
       return node.data.allColumns.filter(
         (column: any) =>
           filteredEdges.find(
-            edge =>
+            (edge) =>
               edge.sourceHandle === `${column.columnId}-source` ||
-              edge.targetHandle === `${column.columnId}-target`
-          ) || column.columnId === selectedColumn
+              edge.targetHandle === `${column.columnId}-target`,
+          ) || column.columnId === selectedColumn,
       );
     }
     if (hoveredColumn) {
       return node.data.allColumns.filter(
         (column: any) =>
           filteredEdges.find(
-            edge =>
+            (edge) =>
               edge.sourceHandle === `${column.columnId}-source` ||
-              edge.targetHandle === `${column.columnId}-target`
-          ) || column.columnId === hoveredColumn.columnId
+              edge.targetHandle === `${column.columnId}-target`,
+          ) || column.columnId === hoveredColumn.columnId,
       );
     }
 
@@ -169,10 +169,9 @@ export default function buildLineageReactFlow({
     const filteredColumns = getFilteredColumns(
       node,
       selectedColumn,
-      hoveredColumn
+      hoveredColumn,
     );
 
-    console.log('nodesWithDisplayColumns', { node })
     if (!node.position) {
       node.position = { x: 0, y: 0 };
     }
@@ -195,7 +194,7 @@ export default function buildLineageReactFlow({
   const { nodes: layoutedNodes } = getLayoutedElements(
     nodesWithDisplayColumns,
     tableEdges,
-    hoveredNode
+    hoveredNode,
   );
 
   // Turn off animated edges when there are more than 100 edges to be rendered.

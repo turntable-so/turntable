@@ -1,7 +1,7 @@
+import { Check, TextQuote, TrashIcon } from "lucide-react";
+import { useEditor } from "novel";
 // @ts-nocheck
 import { CommandGroup, CommandItem, CommandSeparator } from "../../ui/command";
-import { useEditor } from "novel";
-import { Check, TextQuote, TrashIcon } from "lucide-react";
 
 const AICompletionCommands = ({
   completion,
@@ -18,15 +18,15 @@ const AICompletionCommands = ({
           className="gap-2 px-4"
           value="replace"
           onSelect={() => {
-            const selection = editor.view.state.selection;
+            const selection = editor?.view?.state?.selection;
 
             editor
-              .chain()
+              ?.chain()
               .focus()
               .insertContentAt(
                 {
-                  from: selection.from,
-                  to: selection.to,
+                  from: selection?.from,
+                  to: selection?.to,
                 },
                 completion,
               )
@@ -40,11 +40,11 @@ const AICompletionCommands = ({
           className="gap-2 px-4"
           value="insert"
           onSelect={() => {
-            const selection = editor.view.state.selection;
+            const selection = editor?.view?.state?.selection;
             editor
-              .chain()
+              ?.chain()
               .focus()
-              .insertContentAt(selection.to + 1, completion)
+              .insertContentAt(selection?.to + 1, completion)
               .run();
           }}
         >
