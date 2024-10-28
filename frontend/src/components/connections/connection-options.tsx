@@ -367,6 +367,7 @@ export const BIToolOptions = [
         'name': 'powerbi',
         'type': 'BI_TOOL',
         'label': 'PowerBI',
+        'url': '/connections/new/powerbi',
         logo: <PowerBiLogo />
     },
     {
