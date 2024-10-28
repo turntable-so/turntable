@@ -18,6 +18,9 @@ export default async function AssetPage({
     asset.resource_type === "metabase" &&
     validMetabaseSubtypes.includes(asset.type);
 
+  const showSchema =
+    asset.schema || asset.dataset || asset.table_name || asset.tags;
+
   return (
     <div className="w-full h-screen flex justify-center pb-16">
       <div className="max-w-7xl w-full px-16 pt-16 overflow-y-auto hide-scrollbar">
@@ -39,62 +42,64 @@ export default async function AssetPage({
           </div>
         </div>
         <div className="flex flex-col gap-8 w-full pb-12">
-          <div>
-            <div className="font-medium text-muted-foreground my-1 text-lg">
-              Details
-            </div>
-            <Card className="rounded-md">
-              <CardContent className="p-4">
-                <div className="flex gap-6">
-                  <div>
-                    <p className="text-sm text-gray-500">Schema</p>
-                    <p className="text-sm my-1">{asset.schema}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Dataset</p>
-                    <p className="text-sm my-1">{asset.dataset}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Table</p>
-                    <p className="text-sm my-1">{asset.table_name}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Tags</p>
-                    <div className="flex gap-2 my-1">
-                      {asset.tags ? (
-                        <p className="text-sm text-gray-500">
-                          {asset.tags.map((tag: string) => (
-                            <Badge variant="secondary" key={tag}>
-                              {tag}
-                            </Badge>
-                          ))}
-                        </p>
-                      ) : (
-                        <p className="text-sm text-gray-500 italic">No tags</p>
-                      )}
+          {showSchema ? (
+            <div>
+              <div className="font-medium text-muted-foreground my-1 text-lg">
+                Details
+              </div>
+              <Card className="rounded-md">
+                <CardContent className="p-4">
+                  <div className="flex gap-6">
+                    <div>
+                      <p className="text-sm text-gray-500">Schema</p>
+                      <p className="text-sm my-1">{asset.schema}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Dataset</p>
+                      <p className="text-sm my-1">{asset.dataset}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Table</p>
+                      <p className="text-sm my-1">{asset.table_name}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Tags</p>
+                      <div className="flex gap-2 my-1">
+                        {asset.tags ? (
+                          <p className="text-sm text-gray-500">
+                            {asset.tags.map((tag: string) => (
+                              <Badge variant="secondary" key={tag}>
+                                {tag}
+                              </Badge>
+                            ))}
+                          </p>
+                        ) : (
+                          <p className="text-sm text-gray-500 italic">
+                            No tags
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          <div>
-            <div className="font-medium text-muted-foreground my-1  text-lg">
-              Summary
+                </CardContent>
+              </Card>
             </div>
-            <Card className="rounded-md">
-              <CardContent className="p-4">
-                <div>
-                  {asset.description ? (
+          ) : null}
+          {asset.description ? (
+            <div>
+              <div className="font-medium text-muted-foreground my-1  text-lg">
+                Summary
+              </div>
+              <Card className="rounded-md">
+                <CardContent className="p-4">
+                  <div>
                     <p className="text-sm">{asset.description}</p>
-                  ) : (
-                    <p className="text-sm italic">No description</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          {asset.columns && (
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          ) : null}
+          {asset.columns?.length ? (
             <div>
               <div className="font-medium text-muted-foreground my-1  text-lg">
                 Columns
@@ -103,7 +108,7 @@ export default async function AssetPage({
                 <ColumnsTable columns={asset.columns} />
               </Card>
             </div>
-          )}
+          ) : null}
           {showMetabasePreview && (
             <div>
               <div className="font-medium text-muted-foreground my-1  text-lg">
