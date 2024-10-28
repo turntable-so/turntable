@@ -12,6 +12,7 @@ import {
   deleteFile,
   fetchFileContents,
   getFileIndex,
+  getProjectChanges,
   persistFile,
 } from "../actions/actions";
 
@@ -65,9 +66,20 @@ type FilesContextType = {
   createFileAndRefresh: (path: string, fileContents: string) => void;
   deleteFileAndRefresh: (path: string) => void;
   createNewFileTab: () => void;
+  changes: ProjectChanges | null;
+  fetchChanges: () => void;
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
+
+type Changes = Array<{
+  path: string;
+  before: string;
+  after: string;
+  type: "untracked" | "modified" | "staged";
+}>
+
+
 
 export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   children,
@@ -89,9 +101,26 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     openedFiles[0] || null,
   );
   const [searchFileIndex, setSearchFileIndex] = useState<FileNode[]>([]);
+  const [changes, setChanges] = useState<Changes | null>(null);
+
+  const fetchChanges = async () => {
+    const result = await getProjectChanges();
+    const flattenedChanges = result.untracked.map((change) => ({
+      ...change,
+      type: "untracked",
+    })).concat(result.modified.map((change) => ({
+      ...change,
+      type: "modified",
+    }))).concat(result.staged.map((change) => ({
+      ...change,
+      type: "staged",
+    })),
+    );
+    setChanges(flattenedChanges as Changes);
+  };
 
   const fetchFiles = async () => {
-    const { dirty_changes, file_index } = await getFileIndex();
+    const { file_index } = await getFileIndex();
     const fileIndex = file_index.map((file: FileNode) => ({ ...file }));
     setFiles(fileIndex);
     const flattenFileIndex = (files: FileNode[]): FileNode[] => {
@@ -211,10 +240,10 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         prev.map((f) =>
           f.node.path === path
             ? {
-                ...f,
-                content,
-                node: { ...f.node, type: newNodeType },
-              }
+              ...f,
+              content,
+              node: { ...f.node, type: newNodeType },
+            }
             : f,
         ),
       );
@@ -289,6 +318,8 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         createFileAndRefresh,
         deleteFileAndRefresh,
         createNewFileTab,
+        changes,
+        fetchChanges,
       }}
     >
       {children}

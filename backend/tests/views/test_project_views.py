@@ -124,3 +124,27 @@ class TestProjectViews:
             assert response.status_code == 200
             assert response.json()["lineage"]["asset_links"]
             assert response.json()["lineage"]["column_links"]
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("local_postgres")
+@require_env_vars("SSHKEY_0_PUBLIC", "SSHKEY_0_PRIVATE")
+class TestFileChanges:
+
+    def test_file_changes(self, client):
+        # edit use case
+        result = client.put(
+            f"/project/files/?filepath={safe_encode('models/marts/customer360/customers.sql')}",
+            {"contents": "modified customers content"},
+        )
+
+        # new file use case
+        client.post(
+            f"/project/files/?filepath={safe_encode('models/marts/customer360/sales.sql')}",
+            {"contents": "a bunch of sales sql"},
+        )
+        response = client.get("/project/changes/")
+        assert response.status_code == 200
+        assert len(response.json()["untracked"]) == 1
+        assert len(response.json()["modified"]) == 1
+        breakpoint()

@@ -101,14 +101,72 @@ class ProjectViewSet(viewsets.ViewSet):
                             )
 
             root = get_file_tree(user_id, repo.working_tree_dir, project_path)
-            dirty_changes = repo.index.diff(None)
 
         return Response(
             {
                 "file_index": [root],
-                # "dirty_changes": dirty_changes,
             }
         )
+
+    @action(detail=False, methods=["GET"])
+    def changes(self, request):
+        workspace = request.user.current_workspace()
+        dbt_details = workspace.get_dbt_details()
+        if not dbt_details:
+            return Response(
+                {"error": "No DBT details found for this workspace"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        with dbt_details.dbt_repo_context() as (project, _, repo):
+            # Get untracked files
+            untracked_files = []
+            for filepath in repo.untracked_files:
+                with open(os.path.join(repo.working_dir, filepath), "r") as file:
+                    after_content = file.read()
+                untracked_files.append(
+                    {
+                        "path": filepath,
+                        "before": "",
+                        "after": after_content,
+                    }
+                )
+
+            # Get tracked modified files
+            changed_files = []
+            for item in repo.index.diff(None):
+                with open(os.path.join(repo.working_dir, item.a_path), "r") as file:
+                    after_content = file.read()
+                before_content = repo.git.show(f"HEAD:{item.a_path}")
+                changed_files.append(
+                    {
+                        "path": item.a_path,
+                        "before": before_content,
+                        "after": after_content,
+                    }
+                )
+
+            # Get staged files
+            staged_files = []
+            for item in repo.index.diff("HEAD"):
+                with open(os.path.join(repo.working_dir, item.a_path), "r") as file:
+                    after_content = file.read()
+                before_content = repo.git.show(f"HEAD:{item.a_path}")
+                staged_files.append(
+                    {
+                        "path": item.a_path,
+                        "before": before_content,
+                        "after": after_content,
+                    }
+                )
+
+            return Response(
+                {
+                    "untracked": untracked_files,
+                    "modified": changed_files,
+                    "staged": staged_files,
+                }
+            )
 
     @action(detail=False, methods=["GET", "POST", "PATCH"])
     def branches(self, request):
