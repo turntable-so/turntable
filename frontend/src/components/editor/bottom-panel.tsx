@@ -103,7 +103,6 @@ export default function BottomPanel({
 
   const {
     ref: bottomPanelRef,
-    width: bottomPanelWidth,
     height: bottomPanelHeight,
   } = useResizeObserver();
 
