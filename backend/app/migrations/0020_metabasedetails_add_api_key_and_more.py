@@ -7,18 +7,10 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("app", "0020_workspace_jwt_shared_secret_metabase"),
+        ("app", "0019_remove_dbtquery_user_id_query"),
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name="workspace",
-            name="api_key_metabase",
-        ),
-        migrations.RemoveField(
-            model_name="workspace",
-            name="jwt_shared_secret_metabase",
-        ),
         migrations.AddField(
             model_name="metabasedetails",
             name="api_key",
