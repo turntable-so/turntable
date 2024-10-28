@@ -18,7 +18,7 @@ const AICompletionCommands = ({
           className="gap-2 px-4"
           value="replace"
           onSelect={() => {
-            const selection = editor.view.state.selection;
+            const selection = editor?.view?.state?.selection;
 
             editor
               .chain()

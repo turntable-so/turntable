@@ -34,11 +34,17 @@ const PromptBox = ({
   const [isLoading, setIsLoading] = useState(false);
 
   const callInference = async () => {
+    const content = activeFile?.content;
+    if (typeof content !== "string") {
+      console.error("Content is not a string", { content });
+      return;
+    }
+
     if (activeFile) {
       setIsLoading(true);
       const response = await infer({
         filepath: activeFile.node.path,
-        content: activeFile.content,
+        content,
         instructions: prompt,
       });
       if (response.content) {
@@ -46,7 +52,10 @@ const PromptBox = ({
           ...activeFile,
           view: "diff",
           diff: {
-            original: activeFile.content,
+            original:
+              typeof activeFile.content === "string"
+                ? activeFile.content
+                : "",
             modified: response.content,
           },
         });
@@ -209,7 +218,7 @@ function EditorContent({
     );
   }
 
-  if (activeFile?.node?.type === "url") {
+  if (activeFile?.node?.type === "url" && typeof activeFile.content === "string") {
     return (
       <iframe
         src={activeFile.content}
@@ -259,7 +268,9 @@ function EditorContent({
   return (
     <Editor
       key={activeFile?.node.path}
-      value={activeFile?.content || ""}
+      value={
+        typeof activeFile?.content === "string" ? activeFile.content : ""
+      }
       onChange={(value) => {
         if (activeFile) {
           updateFileContent(activeFile.node.path, value || "");
@@ -437,7 +448,7 @@ function EditorPageContent() {
     setIsLoading(true);
     setQueryPreview(null);
     setQueryPreviewError(null);
-    if (activeFile && activeFile.content) {
+    if (activeFile && activeFile.content && typeof activeFile.content === "string") {
       const query = activeFile.content;
       const preview = await executeQueryPreview(query);
       if (preview.error) {

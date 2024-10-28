@@ -139,4 +139,3 @@ class EmbeddingViewSet(viewsets.ViewSet):
     def _get_metabase_entity_id(self, asset_id: str):
         # get the last number in the urn, which corresponds to the metabase asset id
         return re.search(r"\d+(?=\)$)", f"{asset_id}").group()
-    

@@ -1,4 +1,3 @@
-import { ChevronRight, ChevronUp, Cuboid, Type } from "lucide-react";
 // @ts-nocheck
 import type React from "react";
 import {
@@ -17,12 +16,8 @@ import {
   useUpdateNodeInternals,
 } from "reactflow";
 import { useAppContext } from "../../contexts/AppContext";
-import { getIconClassNamesForDataType } from "../../lib/getIconClassNamesForDataTypes";
 import { getAssetIcon } from "../../lib/utils";
-import { DbtLogo } from "../ActionBar";
 import { ColumnTypeIcon } from "../ColumnTypeIcon";
-import { DbtCorelogo } from "../connections/AddNewSourceSection";
-import { columns } from "../ui/Columns";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { LineageViewContext } from "./LineageView";
 // import { useHotkeys } from 'react-hotkeys-hook';

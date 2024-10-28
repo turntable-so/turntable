@@ -57,7 +57,7 @@ type FilesContextType = {
     newNodeType,
   }: {
     path: string;
-    content: string;
+    content: string | ReactNode;
     newNodeType: NodeType;
   }) => void;
   saveFile: (path: string, content: string) => void;
@@ -204,7 +204,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
       newNodeType,
     }: {
       path: string;
-      content: string;
+      content: string | ReactNode;
       newNodeType: NodeType;
     }) => {
       setOpenedFiles((prev) =>

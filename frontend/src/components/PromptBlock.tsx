@@ -98,7 +98,7 @@ export default function PromptBlock() {
       {showRecommendationCard && (
         <Card className="rounded-md border-none">
           <CardContent className="p-2 text-muted-foreground bg-muted">
-            {recommendations.map((recommendation, i) => (
+            {recommendations.map((recommendation: any, i: number) => (
               // @ts-ignore
               <div
                 className="cursor-pointer py-0.5 px-2 hover:bg-gray-200 rounded-md"
