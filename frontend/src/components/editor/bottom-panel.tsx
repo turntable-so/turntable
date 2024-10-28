@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/table";
 import { AgGridReact } from "ag-grid-react";
 import {
-  CircleX as CircleXIcon,
   Loader2,
   Network,
   Play,

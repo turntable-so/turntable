@@ -9,16 +9,15 @@ export default function CommandPanelContent({
 }: { bottomPanelHeight: number | undefined }) {
   const { commandHistory } = useCommandPanelContext();
   const { ref: headerRef, height: headerHeight } = useResizeObserver();
-  const componentHeight = (bottomPanelHeight || 0) - (headerHeight || 0);
+  const componentHeight = (bottomPanelHeight || 0) - (headerHeight || 40) - 48;
+  console.log({ bottomPanelHeight, headerHeight, componentHeight });
 
   return (
     <div
-      className="flex flex-col p-2 gap-6"
+      className="flex flex-col p-4 gap-4"
       style={{ height: componentHeight }}
     >
-      <div className="flex flex-col gap-2" ref={headerRef}>
-        <CommandPanelInput />
-      </div>
+      <CommandPanelInput />
 
       <div className="flex flex-col flex-1 gap-2 min-h-0">
         {commandHistory.length > 0 ? (
@@ -29,7 +28,6 @@ export default function CommandPanelContent({
             <div className="w-2/3 flex flex-col rounded-md border-2 p-2 overflow-y-auto bg-black text-white">
               <CommandLog bottomPanelHeight={componentHeight} />
             </div>
-            <div className="h-12" />
           </div>
         ) : (
           <p className="text-muted-foreground">No commands run yet</p>
