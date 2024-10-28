@@ -21,33 +21,6 @@ class EmbeddingViewSet(viewsets.ViewSet):
         Asset.AssetType.DASHBOARD: "dashboard",
     }
 
-    # TODO theres a better way to do this
-    def _get_metabase_details_from_asset(self, asset_id: str):
-        try:
-            asset = Asset.objects.get(id=asset_id)
-        except Asset.DoesNotExist:
-            return None
-        
-        try:
-            resource_details = ResourceDetails.objects.get(resource_id=asset.resource_id)
-        except ResourceDetails.DoesNotExist:
-            return None
-        
-        try:
-            metabase_details = MetabaseDetails.objects.get(resourcedetails_ptr_id=resource_details.id)
-        except MetabaseDetails.DoesNotExist:
-            return None
-
-        return dict(
-            asset=asset,
-            resource_details=resource_details,
-            metabase_details=metabase_details,
-        )
-    
-    def _get_metabase_entity_id(self, asset_id: str):
-        # get the last number in the urn, which corresponds to the metabase asset id
-        return re.search(r"\d+(?=\)$)", f"{asset_id}").group()
-
     @action(detail=False, methods=["GET"])
     def metabase(self, request):
         asset_id = request.query_params.get("asset_id")
@@ -136,4 +109,31 @@ class EmbeddingViewSet(viewsets.ViewSet):
             return Response({"detail": f"Error marking asset embeddable: {metabase_response.text}"}, status=500)
 
         return Response({"detail": "ASSET_EMBEDDED"}, status=200)
+    
+    # TODO theres a better way to do this with joins
+    def _get_metabase_details_from_asset(self, asset_id: str):
+        try:
+            asset = Asset.objects.get(id=asset_id)
+        except Asset.DoesNotExist:
+            return None
+        
+        try:
+            resource_details = ResourceDetails.objects.get(resource_id=asset.resource_id)
+        except ResourceDetails.DoesNotExist:
+            return None
+        
+        try:
+            metabase_details = MetabaseDetails.objects.get(resourcedetails_ptr_id=resource_details.id)
+        except MetabaseDetails.DoesNotExist:
+            return None
+
+        return dict(
+            asset=asset,
+            resource_details=resource_details,
+            metabase_details=metabase_details,
+        )
+    
+    def _get_metabase_entity_id(self, asset_id: str):
+        # get the last number in the urn, which corresponds to the metabase asset id
+        return re.search(r"\d+(?=\)$)", f"{asset_id}").group()
     

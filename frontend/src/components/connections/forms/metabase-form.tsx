@@ -39,8 +39,6 @@ export default function MetabaseForm({
 }: { resource?: any; details?: any }) {
   const router = useRouter();
 
-  console.log("details: ", details);
-
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {

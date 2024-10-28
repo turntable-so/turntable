@@ -1,9 +1,4 @@
-import {
-  getMetabaseEmbedUrlForAsset,
-  makeMetabaseAssetEmbeddable,
-} from "@/app/actions/actions";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { getMetabaseEmbedUrlForAsset } from "@/app/actions/actions";
 import AssetNotPublished from "./asset-not-published";
 
 type MetabasePreviewProps = {
@@ -21,12 +16,5 @@ export default async function MetabasePreview({ asset }: MetabasePreviewProps) {
     return <div>{result.detail}</div>;
   }
 
-  return (
-    <iframe
-      src={result.iframe_url}
-      width="100%"
-      height="600px"
-      allowTransparency
-    />
-  );
+  return <iframe src={result.iframe_url} width="100%" height="600px" />;
 }

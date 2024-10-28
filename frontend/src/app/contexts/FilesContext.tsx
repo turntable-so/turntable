@@ -15,10 +15,14 @@ import {
   persistFile,
 } from "../actions/actions";
 
+type NodeType = "file" | "directory" | "url" | "loader" | "error";
+
+type FileView = "edit" | "diff" | "new";
+
 export type FileNode = {
   name: string;
   path: string;
-  type: "file" | "directory";
+  type: NodeType;
   children?: FileNode[];
 };
 
@@ -26,7 +30,7 @@ export type OpenedFile = {
   node: FileNode;
   content: string;
   isDirty: boolean;
-  view: "edit" | "diff" | "new";
+  view: FileView;
   diff?: {
     original: string;
     modified: string;
@@ -37,10 +41,25 @@ type FilesContextType = {
   files: FileNode[];
   openedFiles: OpenedFile[];
   openFile: (node: FileNode) => void;
+  openUrl: ({
+    id,
+    name,
+    url,
+  }: { id: string; name: string; url: string }) => void;
+  openLoader: ({ id, name }: { id: string; name: string }) => void;
   closeFile: (file: OpenedFile) => void;
   activeFile: OpenedFile | null;
   setActiveFile: (file: OpenedFile | null) => void;
   updateFileContent: (path: string, content: string) => void;
+  updateLoaderContent: ({
+    path,
+    content,
+    newNodeType,
+  }: {
+    path: string;
+    content: string;
+    newNodeType: NodeType;
+  }) => void;
   saveFile: (path: string, content: string) => void;
   setActiveFilepath: (path: string) => void;
   activeFilepath: string | null;
@@ -123,6 +142,50 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     [openedFiles],
   );
 
+  const openUrl = useCallback(
+    ({ id, name, url }: { id: string; name: string; url: string }) => {
+      const urlNode: FileNode = {
+        name,
+        path: id,
+        type: "url",
+      };
+
+      const newUrl: OpenedFile = {
+        node: urlNode,
+        content: url,
+        isDirty: false,
+        view: "edit",
+      };
+
+      setOpenedFiles((prev) => [...prev, newUrl]);
+      setActiveFile(newUrl);
+      setActiveFilepath(urlNode.path);
+    },
+    [openedFiles],
+  );
+
+  const openLoader = useCallback(
+    ({ id, name }: { id: string; name: string }) => {
+      const loaderNode: FileNode = {
+        name,
+        path: id,
+        type: "loader",
+      };
+
+      const openedFileNode: OpenedFile = {
+        node: loaderNode,
+        content: "",
+        isDirty: false,
+        view: "edit",
+      };
+
+      setOpenedFiles((prev) => [...prev, openedFileNode]);
+      setActiveFile(openedFileNode);
+      setActiveFilepath(loaderNode.path);
+    },
+    [openedFiles],
+  );
+
   const closeFile = useCallback(
     (file: OpenedFile) => {
       const newOpenedFiles = openedFiles.filter(
@@ -140,6 +203,30 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     await createFile(path, fileContents);
     await fetchFiles();
   };
+
+  const updateLoaderContent = useCallback(
+    ({
+      path,
+      content,
+      newNodeType,
+    }: {
+      path: string;
+      content: string;
+      newNodeType: NodeType;
+    }) => {
+      setActiveFile((prev) => {
+        if (prev?.node?.path === path) {
+          return {
+            ...prev,
+            node: { ...prev.node, type: newNodeType },
+            content,
+          };
+        }
+        return prev;
+      });
+    },
+    [],
+  );
 
   const updateFileContent = useCallback((path: string, content: string) => {
     setOpenedFiles((prev) =>
@@ -186,10 +273,13 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         files,
         openedFiles,
         openFile,
+        openUrl,
+        openLoader,
         closeFile,
         activeFile,
         setActiveFile,
         updateFileContent,
+        updateLoaderContent,
         saveFile,
         setActiveFilepath,
         activeFilepath,

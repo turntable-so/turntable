@@ -232,6 +232,8 @@ function EditorContent({
     setActiveFile,
   } = useFiles();
 
+  console.log("activeFile", activeFile);
+
   // Define your custom theme
   const customTheme = {
     base: "vs",
@@ -242,6 +244,34 @@ function EditorContent({
       "editorLineNumber.foreground": "#A1A1AA",
     },
   };
+
+  if (activeFile?.node?.type === "error") {
+    return (
+      <div className="h-full w-full flex items-center justify-center">
+        {activeFile.content}
+      </div>
+    );
+  }
+
+  if (activeFile?.node?.type === "loader") {
+    return (
+      <div className="h-full w-full flex items-center justify-center">
+        <Loader2 className="h-4 w-4 animate-spin" />
+      </div>
+    );
+  }
+
+  if (activeFile?.node?.type === "url") {
+    console.log("WOO VIEW IS URL", activeFile);
+    return (
+      <iframe
+        src={activeFile.content}
+        title={activeFile.node.name}
+        width="100%"
+        height="100%"
+      />
+    );
+  }
 
   if (activeFile?.view === "diff") {
     return (
@@ -284,6 +314,7 @@ function EditorContent({
       key={activeFile?.node.path}
       value={activeFile?.content || ""}
       onChange={(value) => {
+        console.log("onchange", { value, activeFile });
         if (activeFile) {
           updateFileContent(activeFile.node.path, value || "");
           setActiveFile({
@@ -324,6 +355,7 @@ function EditorContent({
 
         // Add cmd+k as a monaco keyboard listener
         editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK, () => {
+          console.log("Cmd+K pressed in Monaco editor");
           setPromptBoxOpen(true);
         });
 
@@ -331,6 +363,7 @@ function EditorContent({
         editor.addCommand(
           monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
           (e: any) => {
+            console.log("Cmd+S pressed in Monaco editor");
             saveFile(activeFile?.node.path || "", editor.getValue());
           },
         );
@@ -412,17 +445,21 @@ function EditorPageContent() {
           case "b":
             event.preventDefault();
             if (event.shiftKey) {
+              console.log("Cmd+Shift+B pressed");
               setSidebarRightShown(!sidebarRightShown);
             } else {
+              console.log("Cmd+B pressed");
               setSidebarLeftShown(!sidebarLeftShown);
             }
             break;
           case "p":
             event.preventDefault();
+            console.log("Cmd+P pressed");
             searchInputRef.current?.focus();
             break;
           case "j":
             event.preventDefault();
+            console.log("Cmd+J pressed");
             setBottomPanelShown(!bottomPanelShown);
             break;
         }
@@ -441,6 +478,7 @@ function EditorPageContent() {
           case "Enter":
             event.preventDefault();
             // Handle file selection here
+            console.log("File selected:", selectedIndex);
             setIsSearchFocused(false);
             setFilesearchQuery("");
             break;
@@ -490,6 +528,7 @@ function EditorPageContent() {
     const response = await fetch(signedUrl);
     if (response.ok) {
       const table = await response.json();
+      console.log({ table });
       const defs = Object.keys(table.data[0]).map((key) => ({
         field: key,
         headerName: key,
@@ -504,6 +543,7 @@ function EditorPageContent() {
         },
         cellClass: "p-0",
       }));
+      console.log({ defs, types: table.column_types });
       setColDefs(defs as any);
       setRowData(table.data);
       // setDefaultDataChart(table.data, defs);

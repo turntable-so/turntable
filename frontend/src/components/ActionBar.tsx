@@ -92,25 +92,15 @@ type ResourceAsset = {
 
 export default function ActionBar({
   context,
+  onSelectChange,
 }: {
-  context: "NOTEBOOK" | "LINEAGE";
+  context: "NOTEBOOK" | "LINEAGE" | "EDITOR";
+  onSelectChange: (item: any) => void;
 }) {
   const searchRef = useRef<HTMLInputElement>(null);
-  const resizerRef = useRef<HTMLDivElement>(null);
   const { ref: treeRef, width, height } = useResizeObserver();
 
-  const {
-    // assets,
-    clearAssetPreview,
-    assetPreview,
-    // areAssetsLoading,
-    focusedAsset,
-    setIsLineageLoading,
-    tags,
-    resources,
-    types,
-    fetchAssetPreview,
-  } = useAppContext();
+  const { clearAssetPreview, assetPreview } = useAppContext();
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isFilterPopoverOpen, setIsFilterPopoverOpen] = useState(false);
   const [treeData, setTreeData] = useState<any>([]);
@@ -358,18 +348,7 @@ export default function ActionBar({
                           width={width}
                           data={treeData}
                           initialSlelectedItemId="f12"
-                          onSelectChange={(item) => {
-                            if (item?.isSelectable) {
-                              if (context === "LINEAGE") {
-                                if (focusedAsset?.id !== item.id) {
-                                  setIsLineageLoading(true);
-                                  router.push(`/lineage/${item.id}`);
-                                }
-                              } else {
-                                fetchAssetPreview(item.id);
-                              }
-                            }
-                          }}
+                          onSelectChange={onSelectChange}
                           folderIcon={Folder}
                           itemIcon={Workflow}
                         />
@@ -396,18 +375,7 @@ export default function ActionBar({
                             width={width}
                             data={treeData}
                             initialSlelectedItemId="f12"
-                            onSelectChange={(item) => {
-                              if (item?.isSelectable) {
-                                if (context === "LINEAGE") {
-                                  if (focusedAsset?.id !== item.id) {
-                                    setIsLineageLoading(true);
-                                    router.push(`/lineage/${item.id}`);
-                                  }
-                                } else {
-                                  fetchAssetPreview(item.id);
-                                }
-                              }
-                            }}
+                            onSelectChange={onSelectChange}
                             folderIcon={Folder}
                             itemIcon={Workflow}
                           />
@@ -416,25 +384,29 @@ export default function ActionBar({
                       </Fragment>
                     )}
                   </ResizablePanel>
-                  <ResizableHandle withHandle className="bg-gray-300" />
-                  <ResizablePanel
-                    defaultSize={75}
-                    className="p-0"
-                    onResize={(
-                      e: number | undefined,
-                      size: number | undefined,
-                    ) => {
-                      setLowheight(
-                        ((size as number) / 100.0) * window.innerHeight,
-                      );
-                    }}
-                  >
-                    <ModelPreviewer
-                      context={context}
-                      clearAsset={clearAssetPreview}
-                      asset={assetPreview}
-                    />
-                  </ResizablePanel>
+                  {context !== "EDITOR" && (
+                    <>
+                      <ResizableHandle withHandle className="bg-gray-300" />
+                      <ResizablePanel
+                        defaultSize={75}
+                        className="p-0"
+                        onResize={(
+                          e: number | undefined,
+                          size: number | undefined,
+                        ) => {
+                          setLowheight(
+                            ((size as number) / 100.0) * window.innerHeight,
+                          );
+                        }}
+                      >
+                        <ModelPreviewer
+                          context={context}
+                          clearAsset={clearAssetPreview}
+                          asset={assetPreview}
+                        />
+                      </ResizablePanel>
+                    </>
+                  )}
                 </ResizablePanelGroup>
               )}
             </div>

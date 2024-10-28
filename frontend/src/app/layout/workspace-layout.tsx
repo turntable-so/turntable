@@ -7,14 +7,18 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import AppContextProvider from "@/contexts/AppContext";
+import AppContextProvider, { useAppContext } from "@/contexts/AppContext";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { LayoutProvider } from "../contexts/LayoutContext";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathName = usePathname();
+  const router = useRouter();
+  const { focusedAsset, setIsLineageLoading, fetchAssetPreview } =
+    useAppContext();
   const [sidebarCollapsed, collapseSidebar] = useState<boolean>(false);
   const [sidebarContext, setSidebarContext] = useState<"ACTION" | "HIDDEN">(
     "ACTION",
@@ -22,6 +26,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [actionBarContext, setActionBarContext] = useState<
     "NOTEBOOK" | "LINEAGE"
   >("LINEAGE");
+
+  const onActionBarSelectChange = (item: any) => {
+    if (!item?.isSelectable) {
+      return;
+    }
+
+    if (actionBarContext === "LINEAGE") {
+      if (focusedAsset?.id !== item.id) {
+        setIsLineageLoading(true);
+        router.push(`/lineage/${item.id}`);
+      }
+    } else if (actionBarContext === "NOTEBOOK") {
+      fetchAssetPreview(item.id);
+    }
+  };
 
   useEffect(() => {
     collapseSidebar(
@@ -71,7 +90,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       defaultSize={25}
                       className="w-[10px] bg-muted/50"
                     >
-                      <ActionBar context={actionBarContext} />
+                      <ActionBar
+                        context={actionBarContext}
+                        onSelectChange={onActionBarSelectChange}
+                      />
                     </ResizablePanel>
                     <ResizableHandle />
                     <ResizablePanel defaultSize={75}>{children}</ResizablePanel>

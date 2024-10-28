@@ -24,7 +24,11 @@ export default function ModelPreviewer({
   asset,
   context,
   clearAsset,
-}: { context?: "NOTEBOOK" | "LINEAGE"; asset: any; clearAsset: () => void }) {
+}: {
+  context?: "NOTEBOOK" | "LINEAGE" | "EDITOR";
+  asset: any;
+  clearAsset: () => void;
+}) {
   const { setInsertCurrentSqlContent } = useAppContext();
 
   const insertAssetSqlIntoCurrentContext = () => {

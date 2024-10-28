@@ -1,30 +1,23 @@
+import { getMetabaseEmbedUrlForAsset } from "@/app/actions/actions";
 import { useFiles } from "@/app/contexts/FilesContext";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { ChevronDown } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { Tree } from "react-arborist";
 import useResizeObserver from "use-resize-observer";
 import ActionBar from "../ActionBar";
-import { Input } from "../ui/input";
-import { ScrollArea } from "../ui/scroll-area";
 import Node from "./file-tree-node";
-import ResourcesTree from "./resources-tree";
+
 export default function EditorSidebar() {
   const {
     ref: treeContainerRef,
     width: treeWidth,
     height: treeHeight,
   } = useResizeObserver();
-  const { files, activeFile } = useFiles();
+  const { files, activeFile, updateLoaderContent, openLoader } = useFiles();
   const treeRef = useRef<any>(null);
 
   const onCreate = async ({
@@ -48,10 +41,41 @@ export default function EditorSidebar() {
     console.log("deleting!", { ids });
   };
 
-  useEffect(() => {
-    if (files.length > 0) {
+  const onActionBarSelectChange = (item: any) => {
+    if (!item?.isSelectable) {
+      return;
     }
-  }, [files]);
+
+    openLoader({ id: item.id, name: item.name });
+
+    getMetabaseEmbedUrlForAsset(item.id).then((result) => {
+      if (result.detail === "NOT_EMBEDDED") {
+        updateLoaderContent({
+          path: item.id,
+          content: "Not embedded",
+          newNodeType: "error",
+        });
+      } else if (result.detail) {
+        updateLoaderContent({
+          path: item.id,
+          content: `An error occured: ${result.detail}`,
+          newNodeType: "error",
+        });
+      } else if (!result.iframe_url) {
+        updateLoaderContent({
+          path: item.id,
+          content: "Something went wrong. Please try again.",
+          newNodeType: "error",
+        });
+      } else {
+        updateLoaderContent({
+          path: item.id,
+          content: result.iframe_url,
+          newNodeType: "url",
+        });
+      }
+    });
+  };
 
   return (
     <div className="h-full flex flex-col bg-muted">
@@ -95,7 +119,10 @@ export default function EditorSidebar() {
                 Resources
               </div>
             </div>
-            <ResourcesTree />
+            <ActionBar
+              context="EDITOR"
+              onSelectChange={onActionBarSelectChange}
+            />
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>

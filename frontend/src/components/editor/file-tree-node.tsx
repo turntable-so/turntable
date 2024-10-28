@@ -39,8 +39,7 @@ export default function Node({
   node,
   style,
   dragHandle,
-  tree,
-}: { node: any; style: any; dragHandle: any; tree: any }) {
+}: { node: any; style: any; dragHandle: any }) {
   const { openFile, createFileAndRefresh, deleteFileAndRefresh, closeFile } =
     useFiles();
   const [showOptions, setShowOptions] = useState(false);
