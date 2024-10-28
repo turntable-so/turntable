@@ -8,9 +8,7 @@ export default function CommandPanelContent({
   bottomPanelHeight,
 }: { bottomPanelHeight: number | undefined }) {
   const { commandHistory } = useCommandPanelContext();
-  const { ref: headerRef, height: headerHeight } = useResizeObserver();
-  const componentHeight = (bottomPanelHeight || 0) - (headerHeight || 40) - 48;
-  console.log({ bottomPanelHeight, headerHeight, componentHeight });
+  const componentHeight = (bottomPanelHeight || 0) - 48;
 
   return (
     <div
