@@ -21,12 +21,12 @@ const AICompletionCommands = ({
             const selection = editor?.view?.state?.selection;
 
             editor
-              .chain()
+              ?.chain()
               .focus()
               .insertContentAt(
                 {
-                  from: selection.from,
-                  to: selection.to,
+                  from: selection?.from,
+                  to: selection?.to,
                 },
                 completion,
               )
@@ -40,11 +40,11 @@ const AICompletionCommands = ({
           className="gap-2 px-4"
           value="insert"
           onSelect={() => {
-            const selection = editor.view.state.selection;
+            const selection = editor?.view?.state?.selection;
             editor
-              .chain()
+              ?.chain()
               .focus()
-              .insertContentAt(selection.to + 1, completion)
+              .insertContentAt(selection?.to + 1, completion)
               .run();
           }}
         >
