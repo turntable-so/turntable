@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/table";
 import { AgGridReact } from "ag-grid-react";
 import {
-  CircleX as CircleXIcon,
   Loader2,
   Network,
   Play,
@@ -18,7 +17,7 @@ import {
   Table as TableIcon,
   Terminal as TerminalIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Fragment } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { Panel, PanelResizeHandle } from "react-resizable-panels";
@@ -102,11 +101,8 @@ export default function BottomPanel({
     }
   }, [activeFile, activeTab, fetchFileBasedLineage]);
 
-  const {
-    ref: bottomPanelRef,
-    width: bottomPanelWidth,
-    height: bottomPanelHeight,
-  } = useResizeObserver();
+  const { ref: bottomPanelRef, height: bottomPanelHeight } =
+    useResizeObserver();
 
   return (
     <Fragment>
