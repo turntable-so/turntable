@@ -139,10 +139,16 @@ export const SnowflakeLogo = () => (
   </svg>
 );
 
-export const PowerBiLogo = () => (
+export const PowerBiLogo = ({
+  width = 18,
+  height = 18,
+}: {
+  width?: number;
+  height?: number;
+}) => (
   <svg
-    width="25px"
-    height="25px"
+    width={width}
+    height={height}
     viewBox="0 0 630 630"
     version="1.1"
     xmlns="http://www.w3.org/2000/svg"

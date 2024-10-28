@@ -6,7 +6,7 @@ import CommandPanelList from "./command-panel-list";
 
 export default function CommandPanelContent({
   bottomPanelHeight,
-}: { bottomPanelHeight: number | undefined }) {
+}: { bottomPanelHeight: number | undefined }) {y
   const { commandHistory } = useCommandPanelContext();
   const { ref: headerRef, height: headerHeight } = useResizeObserver();
   const componentHeight = (bottomPanelHeight || 0) - (headerHeight || 0);

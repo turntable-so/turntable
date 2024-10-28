@@ -3,6 +3,7 @@
 import {
   BigQueryLogo,
   DatabricksLogo,
+  PowerBiLogo,
   RedshiftLogo,
   SnowflakeLogo,
   TableauLogo,
@@ -32,6 +33,7 @@ import useWorkflowUpdates from "@/app/hooks/use-workflow-updates";
 import DatabricksForm from "@/components/connections/forms/databricks-form";
 import DbtProjectForm from "@/components/connections/forms/dbt-project-form";
 import MetabaseForm from "@/components/connections/forms/metabase-form";
+import PowerBIForm from "@/components/connections/forms/powerbi-form";
 import RedshiftForm from "@/components/connections/forms/redshift-form";
 import SnowflakeForm from "@/components/connections/forms/snowflake-form";
 import TableauForm from "@/components/connections/forms/tableau-form";
@@ -112,6 +114,7 @@ export default function ConnectionLayout({
           )}
           {resource.subtype === "tableau" && <TableauLogo />}
           {resource.subtype === "redshift" && <RedshiftLogo />}
+          {resource.subtype === "powerbi" && <PowerBiLogo />}
           <div>Edit {resource.name}</div>
         </div>
       </Button>
@@ -217,6 +220,9 @@ export default function ConnectionLayout({
               )}
               {resource.subtype === "redshift" && (
                 <RedshiftForm resource={resource} details={details} />
+              )}
+              {resource.subtype === "powerbi" && (
+                <PowerBIForm resource={resource} details={details} />
               )}
             </CardContent>
           </Card>
