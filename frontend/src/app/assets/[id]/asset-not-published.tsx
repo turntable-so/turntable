@@ -21,6 +21,7 @@ export default function AssetNotPublished({ asset }: AssetNotPublishedProps) {
   const isMutating = isFetching || isPending;
 
   const handleEmbed = async () => {
+    setIsFetching(true);
     const result = await makeMetabaseAssetEmbeddable(asset.id);
     if (result.detail === "ASSET_EMBEDDED") {
       startTransition(() => {
@@ -31,6 +32,7 @@ export default function AssetNotPublished({ asset }: AssetNotPublishedProps) {
     } else {
       setText("An error occurred while embedding the asset.");
     }
+    setIsFetching(false);
   };
 
   return (

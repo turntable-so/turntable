@@ -44,8 +44,9 @@ class EmbeddingViewSet(viewsets.ViewSet):
 
         metabase_site_url = metabase_details.connect_uri
 
-        embed_type = self.asset_type_to_embed_type[asset.type]
-        if not embed_type:
+        try:
+            embed_type = self.asset_type_to_embed_type[asset.type]
+        except KeyError:
             return Response({"detail": "Asset type not supported for embedding."}, status=400)
     
         metabase_entity_id = self._get_metabase_entity_id(asset_id)
@@ -60,8 +61,9 @@ class EmbeddingViewSet(viewsets.ViewSet):
         # this is the token we'll use to check if the asset is embeddable, and to generate the iframe url
         token = jwt.encode(payload, jwt_shared_secret, algorithm='HS256')
 
-        api_asset_type = self.asset_type_to_api_type[asset.type]
-        if not api_asset_type:
+        try:
+            api_asset_type = self.asset_type_to_api_type[asset.type]
+        except KeyError:
             return Response({"detail": "Asset type not supported for url embedding."}, status=400)
 
         response = requests.get(f"{metabase_site_url}/api/embed/{api_asset_type}/{token}")
@@ -94,8 +96,9 @@ class EmbeddingViewSet(viewsets.ViewSet):
         if not metabase_api_key:
             return Response({"detail": "Metabase API key not configured."}, status=400)
         
-        api_asset_type = self.asset_type_to_api_type[asset.type]
-        if not api_asset_type:
+        try:
+            api_asset_type = self.asset_type_to_api_type[asset.type]
+        except KeyError:
             return Response({"detail": "Asset type not supported for url embedding."}, status=400)
         
         metabase_entity_id = self._get_metabase_entity_id(asset_id)

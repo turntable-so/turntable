@@ -1,14 +1,18 @@
-import { getMetabaseEmbedUrlForAsset } from "@/app/actions/actions";
+import {
+  getMetabaseEmbedUrlForAsset,
+  makeMetabaseAssetEmbeddable,
+} from "@/app/actions/actions";
 import { useFiles } from "@/app/contexts/FilesContext";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Tree } from "react-arborist";
 import useResizeObserver from "use-resize-observer";
 import ActionBar from "../ActionBar";
+import EmbedAsset from "./embed-asset";
 import Node from "./file-tree-node";
 
 export default function EditorSidebar() {
@@ -48,17 +52,44 @@ export default function EditorSidebar() {
 
     openLoader({ id: item.id, name: item.name });
 
+    // Define the callback function
+    const onEmbedded = () => {
+      // Re-fetch and update content
+      getMetabaseEmbedUrlForAsset(item.id).then((result) => {
+        if (result.detail) {
+          updateLoaderContent({
+            path: item.id,
+            content: `An error occurred: ${result.detail}`,
+            newNodeType: "error",
+          });
+        } else if (!result.iframe_url) {
+          updateLoaderContent({
+            path: item.id,
+            content: "Something went wrong. Please try again.",
+            newNodeType: "error",
+          });
+        } else {
+          updateLoaderContent({
+            path: item.id,
+            content: result.iframe_url,
+            newNodeType: "url",
+          });
+        }
+      });
+    };
+
+    // Fetch the embed URL
     getMetabaseEmbedUrlForAsset(item.id).then((result) => {
       if (result.detail === "NOT_EMBEDDED") {
         updateLoaderContent({
           path: item.id,
-          content: "Not embedded",
+          content: <EmbedAsset assetId={item.id} onEmbedded={onEmbedded} />,
           newNodeType: "error",
         });
       } else if (result.detail) {
         updateLoaderContent({
           path: item.id,
-          content: `An error occured: ${result.detail}`,
+          content: `An error occurred: ${result.detail}`,
           newNodeType: "error",
         });
       } else if (!result.iframe_url) {

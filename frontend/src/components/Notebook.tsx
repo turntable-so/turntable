@@ -114,7 +114,7 @@ export default function Notebook({ notebook }: { notebook: Notebook }) {
                     // @ts-ignore
                     title={block.title}
                     key={block.id}
-                    onSqlChange={(sql: string) => onSqlChange(block.id, sql)}
+                    onSqlChange={(sql: string) => onSqlChange(block.id!, sql)}
                     sql={block.sql}
                     records={block.records}
                   />

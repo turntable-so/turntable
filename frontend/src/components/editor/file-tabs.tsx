@@ -15,10 +15,10 @@ export default function FileTabs({
     openedFiles,
     activeFile,
     setActiveFile,
-    setActiveFilepath,
     closeFile,
     createNewFileTab,
   } = useFiles();
+
   return (
     <div className="hover:cursor-pointer flex items-center space-x-0 py-0 bg-white">
       <div
@@ -33,8 +33,8 @@ export default function FileTabs({
               <div
                 key={file.node.path}
                 onClick={() => {
+                  console.log("Setting active file to", file);
                   setActiveFile(file);
-                  setActiveFilepath(file.node.path);
                 }}
                 className={`px-2 py-1 text-xs font-medium flex items-center space-x-2 group select-none text-muted-foreground ${file.node.path === activeFile?.node.path ? "text-black bg-white border-b-white border border-t-black" : "border border-gray-200"} ${index === 0 ? "border-l-0" : ""}`}
               >

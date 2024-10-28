@@ -28,7 +28,7 @@ export type FileNode = {
 
 export type OpenedFile = {
   node: FileNode;
-  content: string;
+  content: string | ReactNode;
   isDirty: boolean;
   view: FileView;
   diff?: {
@@ -61,8 +61,6 @@ type FilesContextType = {
     newNodeType: NodeType;
   }) => void;
   saveFile: (path: string, content: string) => void;
-  setActiveFilepath: (path: string) => void;
-  activeFilepath: string | null;
   searchFileIndex: FileNode[];
   createFileAndRefresh: (path: string, fileContents: string) => void;
   deleteFileAndRefresh: (path: string) => void;
@@ -90,7 +88,6 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   const [activeFile, setActiveFile] = useState<OpenedFile | null>(
     openedFiles[0] || null,
   );
-  const [activeFilepath, setActiveFilepath] = useState<string | null>(null);
   const [searchFileIndex, setSearchFileIndex] = useState<FileNode[]>([]);
 
   const fetchFiles = async () => {
@@ -132,10 +129,8 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
           };
           setOpenedFiles((prev) => [...prev, newFile]);
           setActiveFile(newFile);
-          setActiveFilepath(node.path);
         } else {
           setActiveFile(existingFile);
-          setActiveFilepath(node.path);
         }
       }
     },
@@ -159,7 +154,6 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
 
       setOpenedFiles((prev) => [...prev, newUrl]);
       setActiveFile(newUrl);
-      setActiveFilepath(urlNode.path);
     },
     [openedFiles],
   );
@@ -181,7 +175,6 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
 
       setOpenedFiles((prev) => [...prev, openedFileNode]);
       setActiveFile(openedFileNode);
-      setActiveFilepath(loaderNode.path);
     },
     [openedFiles],
   );
@@ -214,6 +207,17 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
       content: string;
       newNodeType: NodeType;
     }) => {
+      setOpenedFiles((prev) =>
+        prev.map((f) =>
+          f.node.path === path
+            ? {
+                ...f,
+                content,
+                node: { ...f.node, type: newNodeType },
+              }
+            : f,
+        ),
+      );
       setActiveFile((prev) => {
         if (prev?.node?.path === path) {
           return {
@@ -281,8 +285,6 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         updateFileContent,
         updateLoaderContent,
         saveFile,
-        setActiveFilepath,
-        activeFilepath,
         searchFileIndex,
         createFileAndRefresh,
         deleteFileAndRefresh,

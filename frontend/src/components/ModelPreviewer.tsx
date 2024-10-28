@@ -1,24 +1,13 @@
 "use client";
-import { Scroll, SquareArrowOutUpRight, X } from "lucide-react";
-import { Fragment, useEffect } from "react";
+
+import { SquareArrowOutUpRight, X } from "lucide-react";
+import { Fragment } from "react";
 import { useAppContext } from "../contexts/AppContext";
 import { ColumnTypeIcon } from "./ColumnTypeIcon";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "./ui/accordion";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
 import { Separator } from "./ui/separator";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "./ui/tooltip";
 
 export default function ModelPreviewer({
   asset,

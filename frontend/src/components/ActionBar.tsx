@@ -1,30 +1,24 @@
 "use client";
+
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tree } from "@/components/ui/tree";
 import { useAppContext } from "@/contexts/AppContext";
-import { Loader2, SlidersHorizontal } from "lucide-react";
+import { cn, getAssetIcon, getLeafIcon } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
+import { Folder, Workflow } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import useResizeObserver from "use-resize-observer";
 import { getAssetIndex, getNotebooks } from "../app/actions/actions";
-
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Label } from "@radix-ui/react-dropdown-menu";
-import { PopoverContent } from "@radix-ui/react-popover";
 import ModelPreviewer from "./ModelPreviewer";
-import { Card, CardContent } from "./ui/card";
-import { Popover, PopoverTrigger } from "./ui/popover";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "./ui/resizable";
 
-import { Tree } from "@/components/ui/tree";
-import { cn, getAssetIcon, getLeafIcon } from "@/lib/utils";
-import { Folder, Workflow } from "lucide-react";
-import MultiSelect from "./ui/multi-select";
-import { Asset } from "./ui/schema";
 // @ts-ignore
 const groupBy = (array, key) =>
   array.reduce((result: any, currentValue: any) => {

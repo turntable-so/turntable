@@ -1,68 +1,24 @@
 "use client";
+
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import Editor, { DiffEditor } from "@monaco-editor/react";
 import type { AgGridReact } from "ag-grid-react";
-import {
-  Box,
-  Check,
-  ChevronDown,
-  ChevronRight,
-  CircleArrowUp,
-  Ellipsis,
-  File,
-  FileText,
-  Folder,
-  FolderOpen,
-  GitBranch,
-  Loader2,
-  PanelBottom,
-  PanelLeft,
-  PanelRight,
-  Pencil,
-  Play,
-  Plus,
-  Trash,
-  X,
-} from "lucide-react";
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
-import { Tree, TreeApi } from "react-arborist";
+import { Check, Loader2, X } from "lucide-react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import useResizeObserver from "use-resize-observer";
 import { executeQueryPreview, getBranches, infer } from "../actions/actions";
 import {
-  FileNode,
   FilesProvider,
   type OpenedFile,
   useFiles,
 } from "../contexts/FilesContext";
 import "@/components/ag-grid-custom-theme.css"; // Custom CSS Theme for Data Grid
-import FileSearchCommand from "@/components/editor/FileSearchCommand";
 import BottomPanel from "@/components/editor/bottom-panel";
 import EditorSidebar from "@/components/editor/editor-sidebar";
 import FileTabs from "@/components/editor/file-tabs";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import type React from "react";
 import { useLayoutContext } from "../contexts/LayoutContext";
@@ -224,15 +180,7 @@ function EditorContent({
   setPromptBoxOpen,
   containerWidth,
 }: { setPromptBoxOpen: (open: boolean) => void; containerWidth: number }) {
-  const {
-    activeFile,
-    updateFileContent,
-    saveFile,
-    activeFilepath,
-    setActiveFile,
-  } = useFiles();
-
-  console.log("activeFile", activeFile);
+  const { activeFile, updateFileContent, saveFile, setActiveFile } = useFiles();
 
   // Define your custom theme
   const customTheme = {
@@ -262,7 +210,6 @@ function EditorContent({
   }
 
   if (activeFile?.node?.type === "url") {
-    console.log("WOO VIEW IS URL", activeFile);
     return (
       <iframe
         src={activeFile.content}
@@ -314,7 +261,6 @@ function EditorContent({
       key={activeFile?.node.path}
       value={activeFile?.content || ""}
       onChange={(value) => {
-        console.log("onchange", { value, activeFile });
         if (activeFile) {
           updateFileContent(activeFile.node.path, value || "");
           setActiveFile({
@@ -355,7 +301,6 @@ function EditorContent({
 
         // Add cmd+k as a monaco keyboard listener
         editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK, () => {
-          console.log("Cmd+K pressed in Monaco editor");
           setPromptBoxOpen(true);
         });
 
@@ -363,7 +308,6 @@ function EditorContent({
         editor.addCommand(
           monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
           (e: any) => {
-            console.log("Cmd+S pressed in Monaco editor");
             saveFile(activeFile?.node.path || "", editor.getValue());
           },
         );
@@ -384,26 +328,12 @@ function EditorPageContent() {
   const [branches, setBranches] = useState([]);
   const [activeBranch, setActiveBranch] = useState("");
   const {
-    ref: treeContainerRef,
-    width: treeWidth,
-    height: treeHeight,
-  } = useResizeObserver();
-  const {
     ref: topBarRef,
     width: topBarWidth,
     height: topBarHeight,
   } = useResizeObserver();
 
-  const {
-    files,
-    openedFiles,
-    activeFile,
-    openFile,
-    setActiveFile,
-    activeFilepath,
-    closeFile,
-    setActiveFilepath,
-  } = useFiles();
+  const { files, activeFile } = useFiles();
 
   const {
     sidebarLeftShown,
@@ -445,21 +375,17 @@ function EditorPageContent() {
           case "b":
             event.preventDefault();
             if (event.shiftKey) {
-              console.log("Cmd+Shift+B pressed");
               setSidebarRightShown(!sidebarRightShown);
             } else {
-              console.log("Cmd+B pressed");
               setSidebarLeftShown(!sidebarLeftShown);
             }
             break;
           case "p":
             event.preventDefault();
-            console.log("Cmd+P pressed");
             searchInputRef.current?.focus();
             break;
           case "j":
             event.preventDefault();
-            console.log("Cmd+J pressed");
             setBottomPanelShown(!bottomPanelShown);
             break;
         }
@@ -478,7 +404,6 @@ function EditorPageContent() {
           case "Enter":
             event.preventDefault();
             // Handle file selection here
-            console.log("File selected:", selectedIndex);
             setIsSearchFocused(false);
             setFilesearchQuery("");
             break;
@@ -528,7 +453,6 @@ function EditorPageContent() {
     const response = await fetch(signedUrl);
     if (response.ok) {
       const table = await response.json();
-      console.log({ table });
       const defs = Object.keys(table.data[0]).map((key) => ({
         field: key,
         headerName: key,
@@ -543,7 +467,6 @@ function EditorPageContent() {
         },
         cellClass: "p-0",
       }));
-      console.log({ defs, types: table.column_types });
       setColDefs(defs as any);
       setRowData(table.data);
       // setDefaultDataChart(table.data, defs);
