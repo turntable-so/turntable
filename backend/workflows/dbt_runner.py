@@ -97,5 +97,7 @@ class DBTStreamerWorkflow:
             project_dir,
             _,
         ):
-            for line in transition.after.stream_dbt_command(command, should_terminate=should_terminate):
+            for line in transition.after.stream_dbt_command(
+                command, should_terminate=should_terminate
+            ):
                 context.put_stream(line)

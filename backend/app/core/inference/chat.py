@@ -34,11 +34,11 @@ Rules:
 - You may reference parts of the cntext that was passed in
 - You will only respond in markdown, using headers, paragraph, bulleted lists and sql/dbt code blocks if needed for the best answer quality possible
 - IMPORTANT: make sure all generate sql, dbt jinja examples or included code blocks are syntactically correct and will run on the target database postgres
-
+- You will be provided the sql dialect. Make sure to use it when writing any sql code.
 """
 
 EDIT_PROMPT_SYSTEM = """
-You are an expert data analyst and data engineer who is a world expert at dbt (data build tool.
+You are an expert data analyst and data engineer who is a world expert at dbt (data build tool).
 You have mastery in writing sql, jinja, dbt macros and architecturing data pipelines using marts, star schema architecures and designs for efficient and effective analytics data pipelines.
 
 You are given a dbt model file and a user request to edit the file.
@@ -49,6 +49,7 @@ Rules:
 - IMPORTANT: only respond with the full modified file contents, no markdown allowed and no backticks
 - You will be given context for tables upstream and downstream of a current_file. current_file is the file to edit and no other files.
 - You are not allowed to tamper with the existing formatting
+- You will be provided the sql dialect. Make sure to use it when writing any sql code.
 """
 
 
@@ -203,6 +204,11 @@ def build_context(
             target_model = extract_model_name(link.target_id)
             edges.append({"source": source_model, "target": target_model})
 
+        dialect_md = f"""
+# Dialect
+Use the {dbt_details.resource.details.subtype} dialect when writing any sql code.
+"""
+
         lineage_md = f"""
 # Model lineage
 IMPORTANT: keep in mind how these are connected to each other. You may need to add or modify this structure to complete a task.
@@ -210,7 +216,8 @@ IMPORTANT: keep in mind how these are connected to each other. You may need to a
 """
         assets = "\n".join(asset_mds)
         # file contents
-        output = f"""{lineage_md}
+        output = f"""{dialect_md}
+{lineage_md}
 {assets}
 User Instructions: {instructions}
 """
