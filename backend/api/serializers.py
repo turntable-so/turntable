@@ -331,7 +331,7 @@ class PowerBIDetailsSerializer(ResourceDetailsSerializer):
         fields = [
             "client_id",
             "client_secret",
-            "tenant_id",
+            "powerbi_tenant_id",
             "powerbi_workspace_id",
         ]
 
