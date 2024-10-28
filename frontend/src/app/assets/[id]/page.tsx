@@ -19,7 +19,7 @@ export default async function AssetPage({
     validMetabaseSubtypes.includes(asset.type);
 
   const showSchema =
-    asset.schema || asset.dataset || asset.table_name || asset.tags;
+    asset.schema || asset.dataset || asset.table_name || asset.tags?.length;
 
   return (
     <div className="w-full h-screen flex justify-center pb-16">
