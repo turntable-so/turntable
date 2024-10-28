@@ -1,7 +1,14 @@
 "use client";
 
-import { BigQueryLogo, DatabricksLogo, RedshiftLogo, SnowflakeLogo, TableauLogo } from "@/components/connections/connection-options";
+import {
+  BigQueryLogo,
+  DatabricksLogo,
+  RedshiftLogo,
+  SnowflakeLogo,
+  TableauLogo,
+} from "@/components/connections/connection-options";
 import BigqueryForm from "@/components/connections/forms/bigquery-form";
+import { LoaderButton } from "@/components/ui/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,21 +17,24 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { LoaderButton } from "@/components/ui/LoadingSpinner";
 import { Separator } from "@/components/ui/separator";
 import { ChevronLeft, Loader2 } from "lucide-react";
 
+import { testResource } from "@/app/actions/actions";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { useRouter } from "next/navigation";
-import { testResource } from "@/app/actions/actions";
 
 dayjs.extend(relativeTime);
 
 import useSession from "@/app/hooks/use-session";
 import useWorkflowUpdates from "@/app/hooks/use-workflow-updates";
+import DatabricksForm from "@/components/connections/forms/databricks-form";
 import DbtProjectForm from "@/components/connections/forms/dbt-project-form";
 import MetabaseForm from "@/components/connections/forms/metabase-form";
+import RedshiftForm from "@/components/connections/forms/redshift-form";
+import SnowflakeForm from "@/components/connections/forms/snowflake-form";
+import TableauForm from "@/components/connections/forms/tableau-form";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -34,15 +44,11 @@ import {
   AlertDialogHeader,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import React, { useEffect } from "react";
 import PostgresForm from "../../components/connections/forms/postgres-form";
 import { MetabaseIcon, PostgresLogo } from "../../lib/utils";
 import { deleteResource, syncResource } from "../actions/actions";
-import React, { useEffect } from "react";
-import { Badge } from "@/components/ui/badge";
-import SnowflakeForm from "@/components/connections/forms/snowflake-form";
-import DatabricksForm from "@/components/connections/forms/databricks-form";
-import TableauForm from "@/components/connections/forms/tableau-form";
-import RedshiftForm from "@/components/connections/forms/redshift-form";
 
 type DbtDetails = {
   git_repo_url: string;
@@ -70,7 +76,7 @@ export default function ConnectionLayout({
   const [testRun, setTestRun] = React.useState(false);
 
   const [status, resourceId] = useWorkflowUpdates(
-    session.user.current_workspace.id
+    session.user.current_workspace.id,
   );
 
   useEffect(() => {
@@ -81,10 +87,10 @@ export default function ConnectionLayout({
 
   const testConnection = async (resource: any) => {
     const tests = await testResource(resource.id);
-    setTestRun(true)
-    setTestStatus(tests.test_datahub.success && tests.test_db.success)
+    setTestRun(true);
+    setTestStatus(tests.test_datahub.success && tests.test_db.success);
     return tests;
-  }
+  };
 
   return (
     <div className="max-w-7xl w-full px-16 py-4">
@@ -101,7 +107,9 @@ export default function ConnectionLayout({
           {resource.subtype === "postgres" && <PostgresLogo />}
           {resource.subtype === "metabase" && <MetabaseIcon />}
           {resource.subtype === "snowflake" && <SnowflakeLogo />}
-          {resource.subtype === "databricks" && <DatabricksLogo height={24} width={24} />}
+          {resource.subtype === "databricks" && (
+            <DatabricksLogo height={24} width={24} />
+          )}
           {resource.subtype === "tableau" && <TableauLogo />}
           {resource.subtype === "redshift" && <RedshiftLogo />}
           <div>Edit {resource.name}</div>
@@ -113,9 +121,11 @@ export default function ConnectionLayout({
           <Card className="px-5 py-6 flex justify-between items-center">
             <div>
               <CardTitle>Sync Connection</CardTitle>
-              <CardDescription className="py-1">{resource.last_synced ? `Last synced ${dayjs(
-                resource.last_synced
-              ).fromNow()} ` : ''}</CardDescription>
+              <CardDescription className="py-1">
+                {resource.last_synced
+                  ? `Last synced ${dayjs(resource.last_synced).fromNow()} `
+                  : ""}
+              </CardDescription>
             </div>
             <div className="flex justify-end items-center space-x-2">
               <div>
@@ -150,7 +160,6 @@ export default function ConnectionLayout({
                     </Badge>
                   </div>
                 )}
-
               </div>
               <Button
                 disabled={realStatus === "RUNNING"}
@@ -170,7 +179,6 @@ export default function ConnectionLayout({
                 Run Sync
               </Button>
             </div>
-
           </Card>
           <Card className="py-6">
             <CardHeader>
@@ -178,10 +186,22 @@ export default function ConnectionLayout({
             </CardHeader>
             <CardContent>
               {resource.subtype === "bigquery" && (
-                <BigqueryForm resource={resource} details={details} testConnection={testConnection} tested={testRun} connectionCheck={testStatus} />
+                <BigqueryForm
+                  resource={resource}
+                  details={details}
+                  testConnection={testConnection}
+                  tested={testRun}
+                  connectionCheck={testStatus}
+                />
               )}
               {resource.subtype === "postgres" && (
-                <PostgresForm resource={resource} details={details} testConnection={testConnection} tested={testRun} connectionCheck={testStatus} />
+                <PostgresForm
+                  resource={resource}
+                  details={details}
+                  testConnection={testConnection}
+                  tested={testRun}
+                  connectionCheck={testStatus}
+                />
               )}
               {resource.subtype === "metabase" && (
                 <MetabaseForm resource={resource} details={details} />

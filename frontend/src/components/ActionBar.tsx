@@ -1,35 +1,29 @@
 "use client";
+
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tree } from "@/components/ui/tree";
 import { useAppContext } from "@/contexts/AppContext";
-import { Loader2, SlidersHorizontal } from "lucide-react";
+import { cn, getAssetIcon, getLeafIcon } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
+import { Folder, Workflow } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import useResizeObserver from "use-resize-observer";
 import { getAssetIndex, getNotebooks } from "../app/actions/actions";
-
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Label } from "@radix-ui/react-dropdown-menu";
-import { PopoverContent } from "@radix-ui/react-popover";
 import ModelPreviewer from "./ModelPreviewer";
-import { Card, CardContent } from "./ui/card";
-import { Popover, PopoverTrigger } from "./ui/popover";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "./ui/resizable";
 
-import { Tree } from "@/components/ui/tree";
-import { cn, getAssetIcon, getLeafIcon } from "@/lib/utils";
-import { Folder, Workflow } from "lucide-react";
-import MultiSelect from "./ui/multi-select";
-import { Asset } from "./ui/schema";
 // @ts-ignore
 const groupBy = (array, key) =>
   array.reduce((result: any, currentValue: any) => {
     (result[currentValue[key]] = result[currentValue[key]] || []).push(
-      currentValue
+      currentValue,
     );
     return result;
   }, {});
@@ -61,7 +55,6 @@ const TreeDataNode = ({
   ...(children && { children }),
 });
 
-
 export const DbtLogo = () => (
   <svg
     width="16px"
@@ -79,7 +72,6 @@ export const DbtLogo = () => (
   </svg>
 );
 
-
 type ResourceAsset = {
   id: string;
   name: string;
@@ -90,29 +82,19 @@ type ResourceAsset = {
     name: string;
     type: string;
   }[];
-}
+};
 
 export default function ActionBar({
   context,
+  onSelectChange,
 }: {
-  context: "NOTEBOOK" | "LINEAGE"
+  context: "NOTEBOOK" | "LINEAGE" | "EDITOR";
+  onSelectChange: (item: any) => void;
 }) {
   const searchRef = useRef<HTMLInputElement>(null);
-  const resizerRef = useRef<HTMLDivElement>(null);
   const { ref: treeRef, width, height } = useResizeObserver();
 
-  const {
-    // assets,
-    clearAssetPreview,
-    assetPreview,
-    // areAssetsLoading,
-    focusedAsset,
-    setIsLineageLoading,
-    tags,
-    resources,
-    types,
-    fetchAssetPreview,
-  } = useAppContext();
+  const { clearAssetPreview, assetPreview } = useAppContext();
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isFilterPopoverOpen, setIsFilterPopoverOpen] = useState(false);
   const [treeData, setTreeData] = useState<any>([]);
@@ -127,17 +109,15 @@ export default function ActionBar({
   const router = useRouter();
   const isNotebook = pathName.includes("/notebooks/");
 
-
   useEffect(() => {
     const fetchAssetIndex = async () => {
       setIsLoading(true);
       const data = await getAssetIndex();
       setIsLoading(false);
       setResourceAssets(data);
-    }
+    };
     fetchAssetIndex();
   }, []);
-
 
   useEffect(() => {
     const fetchAndSetNotebooks = async () => {
@@ -153,8 +133,6 @@ export default function ActionBar({
     }
   }, [searchRef]);
 
-  console.log({ resourceAssets })
-
   function createTreeDataNode(
     resource: any,
     assets: {
@@ -163,7 +141,7 @@ export default function ActionBar({
       type: string;
     }[],
     getAssetIcon: Function,
-    groupBy: Function
+    groupBy: Function,
   ) {
     if (assets.length === 0) {
       return TreeDataNode({
@@ -183,13 +161,13 @@ export default function ActionBar({
       name: resource.name,
       count: Object.keys(groupedAssets).reduce(
         (acc, k) => acc + groupedAssets[k].length,
-        0
+        0,
       ),
       children: createChildrenNodes(
         resource,
         groupedAssets,
         getAssetIcon,
-        groupBy
+        groupBy,
       ),
     });
   }
@@ -198,7 +176,7 @@ export default function ActionBar({
     resource: any,
     groupedAssets: any,
     getAssetIcon: Function,
-    groupBy: Function
+    groupBy: Function,
   ) {
     return Object.keys(groupedAssets).flatMap((k) => {
       if (resource.subtype.toLowerCase() === "looker") {
@@ -207,7 +185,7 @@ export default function ActionBar({
           k,
           groupedAssets[k],
           getAssetIcon,
-          groupBy
+          groupBy,
         );
       } else {
         return createChildNode(resource, k, groupedAssets[k], getAssetIcon);
@@ -220,7 +198,7 @@ export default function ActionBar({
     assetType: string,
     groupedAssets: any,
     getAssetIcon: Function,
-    groupBy: Function
+    groupBy: Function,
   ) {
     const nameGrouped = groupBy(groupedAssets, "type");
     return TreeDataNode({
@@ -233,13 +211,13 @@ export default function ActionBar({
         .map((name) =>
           nameGrouped[name].length > 1
             ? createChildNode(
-              resource,
-              assetType,
-              nameGrouped[name],
-              getAssetIcon,
-              name
-            )
-            : createFinalNode(nameGrouped[name][0], getLeafIcon(assetType))
+                resource,
+                assetType,
+                nameGrouped[name],
+                getAssetIcon,
+                name,
+              )
+            : createFinalNode(nameGrouped[name][0], getLeafIcon(assetType)),
         ),
     });
   }
@@ -249,7 +227,7 @@ export default function ActionBar({
     assetType: string,
     assets: Array<any>,
     getAssetIcon: Function,
-    overrideName: string | null = null
+    overrideName: string | null = null,
   ) {
     return TreeDataNode({
       id: `${resource.id}-${assetType}-${overrideName || ""}`,
@@ -276,9 +254,11 @@ export default function ActionBar({
     const treeData = resourceAssets.map((resource: ResourceAsset) => {
       return createTreeDataNode(
         resource,
-        resource.assets.filter((asset: any) => asset.name.includes(searchQuery)),
+        resource.assets.filter((asset: any) =>
+          asset.name.includes(searchQuery),
+        ),
         getAssetIcon,
-        groupBy
+        groupBy,
       );
     });
 
@@ -291,10 +271,7 @@ export default function ActionBar({
   return (
     <div className="text-muted-foreground w-full h-screen flex flex-col">
       <div
-        className={cn(
-          "flex h-[52px] items-center justify-center",
-          "h-[52px]"
-        )}
+        className={cn("flex h-[52px] items-center justify-center", "h-[52px]")}
       >
         <div className="flex space-x-2 w-full px-4">
           <input
@@ -317,8 +294,9 @@ export default function ActionBar({
         </div>
       </div>
       <div
-        className={`flex-grow border-t mt-0 h-500 ${isFilterPopoverOpen ? "z-[-1]" : ""
-          }`}
+        className={`flex-grow border-t mt-0 h-500 ${
+          isFilterPopoverOpen ? "z-[-1]" : ""
+        }`}
       >
         <Tabs defaultValue="assets" className="h-full">
           <TabsList
@@ -326,10 +304,10 @@ export default function ActionBar({
             style={
               !isNotebook
                 ? {
-                  opacity: 0,
-                  pointerEvents: "none",
-                  height: 0,
-                }
+                    opacity: 0,
+                    pointerEvents: "none",
+                    height: 0,
+                  }
                 : {}
             }
           >
@@ -338,9 +316,9 @@ export default function ActionBar({
               style={
                 !isNotebook
                   ? {
-                    opacity: 0,
-                    pointerEvents: "none",
-                  }
+                      opacity: 0,
+                      pointerEvents: "none",
+                    }
                   : {}
               }
             >
@@ -364,18 +342,7 @@ export default function ActionBar({
                           width={width}
                           data={treeData}
                           initialSlelectedItemId="f12"
-                          onSelectChange={(item) => {
-                            if (item?.isSelectable) {
-                              if (context === "LINEAGE") {
-                                if (focusedAsset?.id !== item.id) {
-                                  setIsLineageLoading(true);
-                                  router.push(`/lineage/${item.id}`);
-                                }
-                              } else {
-                                fetchAssetPreview(item.id);
-                              }
-                            }
-                          }}
+                          onSelectChange={onSelectChange}
                           folderIcon={Folder}
                           itemIcon={Workflow}
                         />
@@ -402,18 +369,7 @@ export default function ActionBar({
                             width={width}
                             data={treeData}
                             initialSlelectedItemId="f12"
-                            onSelectChange={(item) => {
-                              if (item?.isSelectable) {
-                                if (context === "LINEAGE") {
-                                  if (focusedAsset?.id !== item.id) {
-                                    setIsLineageLoading(true);
-                                    router.push(`/lineage/${item.id}`);
-                                  }
-                                } else {
-                                  fetchAssetPreview(item.id);
-                                }
-                              }
-                            }}
+                            onSelectChange={onSelectChange}
                             folderIcon={Folder}
                             itemIcon={Workflow}
                           />
@@ -422,25 +378,29 @@ export default function ActionBar({
                       </Fragment>
                     )}
                   </ResizablePanel>
-                  <ResizableHandle withHandle className="bg-gray-300" />
-                  <ResizablePanel
-                    defaultSize={75}
-                    className="p-0"
-                    onResize={(
-                      e: number | undefined,
-                      size: number | undefined
-                    ) => {
-                      setLowheight(
-                        ((size as number) / 100.0) * window.innerHeight
-                      );
-                    }}
-                  >
-                    <ModelPreviewer
-                      context={context}
-                      clearAsset={clearAssetPreview}
-                      asset={assetPreview}
-                    />
-                  </ResizablePanel>
+                  {context !== "EDITOR" && (
+                    <>
+                      <ResizableHandle withHandle className="bg-gray-300" />
+                      <ResizablePanel
+                        defaultSize={75}
+                        className="p-0"
+                        onResize={(
+                          e: number | undefined,
+                          size: number | undefined,
+                        ) => {
+                          setLowheight(
+                            ((size as number) / 100.0) * window.innerHeight,
+                          );
+                        }}
+                      >
+                        <ModelPreviewer
+                          context={context}
+                          clearAsset={clearAssetPreview}
+                          asset={assetPreview}
+                        />
+                      </ResizablePanel>
+                    </>
+                  )}
                 </ResizablePanelGroup>
               )}
             </div>
@@ -452,21 +412,24 @@ export default function ActionBar({
                   <Button
                     variant={"ghost"}
                     size="icon"
-                    className={`w-full ${isCurrentNotebook(pathName, notebook.id)
-                      ? "opacity-100"
-                      : "opacity-50"
-                      } ${isCurrentNotebook(pathName, notebook.id)
+                    className={`w-full ${
+                      isCurrentNotebook(pathName, notebook.id)
+                        ? "opacity-100"
+                        : "opacity-50"
+                    } ${
+                      isCurrentNotebook(pathName, notebook.id)
                         ? "bg-"
                         : "bg-transparent"
-                      } `}
+                    } `}
                     aria-label={notebook.title}
                   >
                     <Link href={`/notebooks/${notebook.id}`} className="w-full">
                       <div
-                        className={`${isCurrentNotebook(pathName, notebook.id)
-                          ? "bg-[#ebebeb]"
-                          : "hover:bg-[#ebebeb]"
-                          } px-4 p-2 w-full flex  space-x-2`}
+                        className={`${
+                          isCurrentNotebook(pathName, notebook.id)
+                            ? "bg-[#ebebeb]"
+                            : "hover:bg-[#ebebeb]"
+                        } px-4 p-2 w-full flex  space-x-2`}
                       >
                         <p className="font-normal text-[15px]">
                           {notebook.title}

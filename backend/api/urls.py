@@ -28,6 +28,7 @@ from app.views import (
     LineageViewSet,
     NotebookViewSet,
     ResourceViewSet,
+    EmbeddingViewSet,
     SSHViewSet,
     SyncResourceView,
     TestResourceView,
@@ -58,6 +59,7 @@ router.register(r"notebooks", NotebookViewSet, basename="notebook")
 router.register(r"blocks", BlockViewSet, basename="block")
 router.register(r"healthcheck", HealthCheckViewSet, basename="healthcheck")
 router.register(r"project", ProjectViewSet, basename="project")
+router.register(r"embedding", EmbeddingViewSet, basename="embedding")
 
 urlpatterns = [
     path("oauth/auth", OAuthView.as_view(), name="oauth-auth"),

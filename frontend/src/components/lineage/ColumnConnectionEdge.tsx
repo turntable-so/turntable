@@ -3,7 +3,7 @@ import React, { useContext, useMemo } from "react";
 import {
   BaseEdge,
   EdgeLabelRenderer,
-  EdgeProps,
+  type EdgeProps,
   getBezierPath,
   useEdges,
   useStoreApi,
@@ -193,8 +193,8 @@ export function CustomEdge({
   const detailsPosition = isSelected
     ? selectedEdge?.mousePosition
     : isHovered
-    ? hoveredEdge?.mousePosition
-    : null;
+      ? hoveredEdge?.mousePosition
+      : null;
 
   return (
     <>

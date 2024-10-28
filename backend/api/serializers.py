@@ -322,7 +322,7 @@ class TableauDetailsSerializer(ResourceDetailsSerializer):
 class MetabaseDetailsSerializer(ResourceDetailsSerializer):
     class Meta:
         model = MetabaseDetails
-        fields = ["username", "password", "connect_uri"]
+        fields = ["username", "password", "connect_uri", "api_key", "jwt_shared_secret"]
 
 
 class PowerBIDetailsSerializer(ResourceDetailsSerializer):

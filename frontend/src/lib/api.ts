@@ -1,11 +1,11 @@
 export async function fetchApi(
   url: string,
   options: RequestInit = {},
-  body: any | null = null
+  body: any | null = null,
 ) {
   const resp = "";
   const jwt = "await resp.getToken()";
-  let headers:any = options.headers || {};
+  const headers: any = options.headers || {};
 
   if (jwt) {
     // @ts-ignore

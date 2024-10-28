@@ -1,9 +1,9 @@
 "use client";
-import React, { useState } from "react";
 import { AuthActions } from "@/lib/auth";
-import { useRouter } from "next/navigation";
+import { SignInResponse, signIn } from "next-auth/react";
 import Link from "next/link";
-import { signIn, SignInResponse } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import React, { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -16,9 +16,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 import {
   Form,
   FormControl,
@@ -27,9 +24,12 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { PasswordInput } from "../ui/password-input";
-import { LoaderButton } from "../ui/LoadingSpinner";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { setCookie } from "cookies-next";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { LoaderButton } from "../ui/LoadingSpinner";
+import { PasswordInput } from "../ui/password-input";
 const FormSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, {
@@ -99,7 +99,7 @@ const LoginForm = ({ invitationCode = "" }: any) => {
       redirect: false,
     });
     if (res?.status === 401) {
-      setFormRespError(res?.error || '');
+      setFormRespError(res?.error || "");
     } else {
       router.replace("/");
     }

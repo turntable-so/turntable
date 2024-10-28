@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
-import { getCommandOptions, addRecentCommand } from "./command-panel-options";
-import CommandPanelActionBtn from "./command-panel-action-btn";
 import CommandInput from "./command-input";
+import CommandPanelActionBtn from "./command-panel-action-btn";
+import { addRecentCommand, getCommandOptions } from "./command-panel-options";
 
 export default function CommandPanelInput() {
   const [inputValue, setInputValue] = useState<string>("");
@@ -42,14 +42,16 @@ export default function CommandPanelInput() {
     return inputIndex === input.length;
   };
 
-  const filteredOptions = commandOptions.filter((option) => fuzzyMatch(inputValue, option));
+  const filteredOptions = commandOptions.filter((option) =>
+    fuzzyMatch(inputValue, option),
+  );
 
   const focusInputOnMount = () => {
     const timer = setTimeout(() => {
       inputRef.current?.focus();
     }, 0);
     return () => clearTimeout(timer);
-  }
+  };
   useEffect(focusInputOnMount, []);
 
   const setListenerOnClickOutside = () => {
@@ -67,12 +69,12 @@ export default function CommandPanelInput() {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }
+  };
   useEffect(setListenerOnClickOutside, []);
 
   const resetHighlightedIndexOnInputChange = () => {
     setHighlightedIndex(-1);
-  }
+  };
   useEffect(resetHighlightedIndexOnInputChange, [inputValue]);
 
   const handleRunCommand = () => {
@@ -112,7 +114,10 @@ export default function CommandPanelInput() {
             });
           } else if (e.key === "Enter") {
             e.preventDefault();
-            if (highlightedIndex >= 0 && highlightedIndex < filteredOptions.length) {
+            if (
+              highlightedIndex >= 0 &&
+              highlightedIndex < filteredOptions.length
+            ) {
               handleOptionClick(filteredOptions[highlightedIndex]);
             }
           }
@@ -140,9 +145,9 @@ export default function CommandPanelInput() {
           ))}
         </div>
       )}
-      <CommandPanelActionBtn 
-        inputValue={inputValue} 
-        setInputValue={setInputValue} 
+      <CommandPanelActionBtn
+        inputValue={inputValue}
+        setInputValue={setInputValue}
         onRunCommand={handleRunCommand}
       />
     </div>

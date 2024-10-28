@@ -1,21 +1,24 @@
-import { EditorBubble } from '../../../packages/headless/src/components/novel/editor-bubble';
-import { removeAIHighlight } from '../../../packages/headless/src/extensions/ai-highlight';
-Chrome
-import { } from "novel/plugins";
-import { Fragment, type ReactNode, useEffect } from "react";
-import { Button } from "../../ui/button";
-import Magic from "../../icons/magic";
-import { AISelector } from "./ai-selector";
+import { EditorBubble } from "../../../packages/headless/src/components/novel/editor-bubble";
+import { removeAIHighlight } from "../../../packages/headless/src/extensions/ai-highlight";
+Chrome;
 import { Chrome } from "lucide-react";
-import { useEditor } from '../../../packages/headless/src/components/novel'
+import {} from "novel/plugins";
+import { Fragment, type ReactNode, useEffect } from "react";
+import { useEditor } from "../../../packages/headless/src/components/novel";
+import Magic from "../../icons/magic";
+import { Button } from "../../ui/button";
+import { AISelector } from "./ai-selector";
 
 interface GenerativeMenuSwitchProps {
   children: ReactNode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
-const GenerativeMenuSwitch = ({ children, open, onOpenChange }: GenerativeMenuSwitchProps) => {
-
+const GenerativeMenuSwitch = ({
+  children,
+  open,
+  onOpenChange,
+}: GenerativeMenuSwitchProps) => {
   const { editor } = useEditor();
 
   useEffect(() => {

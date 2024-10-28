@@ -7,9 +7,7 @@
   "main": "dist/index.cjs",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -91,12 +89,5 @@
   "bugs": {
     "url": "https://github.com/steven-tey/novel/issues"
   },
-  "keywords": [
-    "ai",
-    "novel",
-    "editor",
-    "markdown",
-    "nextjs",
-    "react"
-  ]
+  "keywords": ["ai", "novel", "editor", "markdown", "nextjs", "react"]
 }

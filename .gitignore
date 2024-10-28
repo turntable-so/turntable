@@ -54,3 +54,4 @@ backend/.env
 **/node_modules/**
 **/.next/**
 .env.staging
+**/.pnpm-store/
