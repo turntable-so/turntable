@@ -457,7 +457,7 @@ function EditorPageContent() {
       if (preview.error) {
         setQueryPreviewError(preview.error);
       } else {
-        setQueryPreview(preview);
+        setQueryPreview(preview.data);
       }
     }
     setIsLoading(false);
