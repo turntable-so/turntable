@@ -40,7 +40,6 @@ from app.views.inference_views import InferenceView
 from app.views.project_views import ProjectViewSet
 from app.views.query_views import (
     DbtQueryPreviewView,
-    NotebookQueryView,
     QueryPreviewView,
 )
 from app.views.settings_view import SettingsView
@@ -63,11 +62,6 @@ router.register(r"embedding", EmbeddingViewSet, basename="embedding")
 
 urlpatterns = [
     path("oauth/auth", OAuthView.as_view(), name="oauth-auth"),
-    path(
-        "notebooks/<str:notebook_id>/blocks/<str:block_id>/query/",
-        NotebookQueryView.as_view(),
-        name="execute_query",
-    ),
     path(
         "query/dbt/",
         DbtQueryPreviewView.as_view(),

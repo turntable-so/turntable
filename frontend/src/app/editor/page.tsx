@@ -454,10 +454,11 @@ function EditorPageContent() {
     ) {
       const query = activeFile.content;
       const preview = await executeQueryPreview(query);
+      console.log({ preview })
       if (preview.error) {
         setQueryPreviewError(preview.error);
       } else {
-        setQueryPreview(preview.data);
+        setQueryPreview(preview);
       }
     }
     setIsLoading(false);

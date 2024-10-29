@@ -496,11 +496,8 @@ export async function fetchFileContents(path: string) {
 }
 
 type DbtQueryPreview = {
-  data: any;
-  error?: any;
-  columns: {
-    [name: string]: string;
-  }
+  signed_url: string;
+  error?: string;
 }
 
 export async function executeQueryPreview(dbtSql: string): Promise<DbtQueryPreview> {
