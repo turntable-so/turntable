@@ -107,7 +107,7 @@ def recreate_lineage_object(data: dict) -> Lineage:
 def run_query(query: str, resource_id: str):
     resource = Resource.objects.get(id=resource_id)
     connector = resource.details.get_connector()
-    return connector.sql_to_df(query)
+    return connector.run_query(query)[0]
 
 
 @cache.memoize(tag="eda2")

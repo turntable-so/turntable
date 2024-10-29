@@ -84,7 +84,7 @@ export default function AiSidebarChat() {
     const visibleLineage = lineageData[activeFile?.node.path || '']
 
     return (
-        <div className="p-4 flex flex-col overflow-y-scroll">
+        <div className="flex flex-col  w-full">
             <div className="space-y-2 relative bg-muted p-1 rounded">
                 <Badge variant="outline" className='text-xs text-muted-foreground'>
                     {activeFile?.node.name} (Current file)

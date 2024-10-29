@@ -78,33 +78,6 @@ def test_tableau_sync(remote_tableau, recache: bool, use_cache: bool):
     run_test_sync([remote_tableau], recache, use_cache)
 
 
-@pytest.mark.django_db
-@pyprofile()
-def test_edb(internal_bigquery):
-    connector = internal_bigquery.details.get_connector()
-    table = connector._get_table(
-        database="analytics-dev-372514", schema="posthog", table="event"
-    )
-    vinyltable = VinylTable(table._arg)
-
-    def get_sql(tbl, col):
-        return tbl.eda(
-            cols=[col],
-            topk=20,
-        )
-
-    sqls = [
-        vinyltable.eda(cols=[col], topk=20).to_sql(dialect="bigquery", node_name="")
-        for col in table.columns
-    ]
-    with WorkerPool(n_jobs=10, start_method="threading", use_dill=True) as pool:
-        dfs = pool.imap_unordered(connector.sql_to_df, sqls)
-    df = pd.concat(dfs)
-    df.reset_index(drop=True)
-    df.sort_values(by="position", inplace=True)
-    print(df)
-
-
 @require_env_vars("POWERBI_0_RESOURCE_NAME")
 def test_powerbi_sync(remote_powerbi, recache: bool, use_cache: bool):
     run_test_sync(
