@@ -531,6 +531,8 @@ class PowerBIDetails(ResourceDetails):
                         "workspace_id_pattern": {"allow": [self.powerbi_workspace_id]},
                         "tenant_id": self.powerbi_tenant_id,
                         "extract_dashboards": True,
+                        "extract_dataset_schema": True,
+                        "include_workspace_name_in_dataset_urn": True,
                         "profiling": {"enabled": False},
                         "extract_column_level_lineage": True,
                     },
