@@ -1,20 +1,20 @@
-'use client'
-import { useAppContext } from "../../contexts/AppContext";
+"use client";
 import { Loader2 } from "lucide-react";
-import { unstable_noStore as noStore } from 'next/cache';
+import { unstable_noStore as noStore } from "next/cache";
+import { useAppContext } from "../../contexts/AppContext";
 
 export default function Page() {
-    noStore()
+  noStore();
 
-    const { isLineageLoading } = useAppContext()
-    return (
-        <div className='w-full'>
-            <div className='absolute bg-zinc-200 w-full h-screen' />
-            {isLineageLoading && (
-                <div className='flex items-center w-full h-screen justify-center'>
-                    <Loader2 className="bg-zinc-200 h-8 w-8 animate-spin opacity-50" />
-                </div>
-            )}
+  const { isLineageLoading } = useAppContext();
+  return (
+    <div className="w-full">
+      <div className="absolute bg-zinc-200 w-full h-screen" />
+      {isLineageLoading && (
+        <div className="flex items-center w-full h-screen justify-center">
+          <Loader2 className="bg-zinc-200 h-8 w-8 animate-spin opacity-50" />
         </div>
-    )
+      )}
+    </div>
+  );
 }

@@ -1,17 +1,15 @@
 // @ts-nocheck
-'use client'
+"use client";
 
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { sql } from "@codemirror/lang-sql";
-import {
-  ColDef
-} from "ag-grid-community";
+import type { ColDef } from "ag-grid-community";
 
 import {
   BarChartBig,
@@ -22,7 +20,7 @@ import {
   EllipsisVertical,
   Filter,
   Loader2,
-  Play
+  Play,
 } from "lucide-react";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
@@ -30,29 +28,29 @@ import { useHotkeys } from "react-hotkeys-hook";
 import { AgGridReact } from "ag-grid-react"; // React Data Grid Component
 import "./ag-grid-custom-theme.css"; // Custom CSS Theme for Data Grid
 
-import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
-import {
-  executeQuery,
-  getWorkflow,
-} from "../app/actions/client-actions";
-import LoadingVinyl from "./loading-vinyl-spinner";
-import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
-import { Button } from "./ui/button";
-import { Card, CardContent } from "./ui/card";
 // import 'codemirror/keymap/sublime';
 // import 'codemirror/theme/quietlight.css';
 import { getQueryBlockResult } from "@/app/actions/query-actions";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CompletionContext, autocompletion } from "@codemirror/autocomplete";
+import {
+  type CompletionContext,
+  autocompletion,
+} from "@codemirror/autocomplete";
+import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 import { quietlight } from "@uiw/codemirror-theme-quietlight";
 import CodeMirror, {
-  EditorState,
+  type EditorState,
   EditorView,
-  ReactCodeMirrorRef
+  type ReactCodeMirrorRef,
 } from "@uiw/react-codemirror";
 import { useParams } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
+import { executeQuery, getWorkflow } from "../app/actions/client-actions";
 import { useAppContext } from "../contexts/AppContext";
+import LoadingVinyl from "./loading-vinyl-spinner";
+import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
+import { Button } from "./ui/button";
+import { Card, CardContent } from "./ui/card";
 
 import {
   Bar,
@@ -63,12 +61,12 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ViewType } from "./notebook/sql-node";
+import type { ViewType } from "./notebook/sql-node";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 
 import { ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
-import { ChartConfig, ChartContainer } from "@/components/ui/chart";
+import { type ChartConfig, ChartContainer } from "@/components/ui/chart";
 
 const chartData = [
   { month: "January", desktop: 186, mobile: 80 },
@@ -105,7 +103,7 @@ export function ChartComponent(props: any) {
   const setData = () => {
     if (isXAxisNumeric && data) {
       const filteredData = data.filter(
-        (row) => row[xAxis] >= xAxisRange[0] && row[xAxis] <= xAxisRange[1]
+        (row) => row[xAxis] >= xAxisRange[0] && row[xAxis] <= xAxisRange[1],
       );
       setFilteredData(filteredData);
     } else {
@@ -219,7 +217,12 @@ export default function QueryBlock(props: QueryBlockProps) {
   const codeMirrorRef = useRef<ReactCodeMirrorRef | null>(null);
 
   function codeMirrorRefCallack(editor: ReactCodeMirrorRef) {
-    if (editor?.editor && editor?.state && editor?.view && !codeMirrorRef.current) {
+    if (
+      editor?.editor &&
+      editor?.state &&
+      editor?.view &&
+      !codeMirrorRef.current
+    ) {
       setTimeout(() => {
         editor?.view?.focus();
       }, 100);
@@ -247,8 +250,8 @@ export default function QueryBlock(props: QueryBlockProps) {
   const timeIntervalRef = useRef<number | null>(null);
   const { id: notebookId } = useParams();
 
-  let columnAutocomplete = useRef<any[] | null>(null);
-  let tableAutocomplete = useRef<any[] | null>(null);
+  const columnAutocomplete = useRef<any[] | null>(null);
+  const tableAutocomplete = useRef<any[] | null>(null);
 
   const exportCsv = () => {
     gridRef.current!.api.exportDataAsCsv();
@@ -313,7 +316,7 @@ export default function QueryBlock(props: QueryBlockProps) {
     }
     const keywords = syntaxObject.keywords
       .filter((key: string) =>
-        key.toLowerCase().startsWith(lastWordCase.toLowerCase())
+        key.toLowerCase().startsWith(lastWordCase.toLowerCase()),
       )
       .map((keyword: any) => ({
         label: keyword,
@@ -323,7 +326,7 @@ export default function QueryBlock(props: QueryBlockProps) {
           view: EditorView,
           completion: any,
           from: number,
-          to: number
+          to: number,
         ) => {
           const insertText = `${transformWordTable(keyword, lastWordCase)}`;
           view.dispatch({
@@ -338,7 +341,7 @@ export default function QueryBlock(props: QueryBlockProps) {
 
     const functions = syntaxObject.functions
       .filter((func: any) =>
-        func.name.toLowerCase().startsWith(lastWordCase.toLowerCase())
+        func.name.toLowerCase().startsWith(lastWordCase.toLowerCase()),
       )
       .map((func: any) => ({
         label: func.name,
@@ -348,7 +351,7 @@ export default function QueryBlock(props: QueryBlockProps) {
           view: EditorView,
           completion: any,
           from: number,
-          to: number
+          to: number,
         ) => {
           const insertText = `${transformWordTable(func.name, lastWordCase)}`;
           view.dispatch({
@@ -372,7 +375,7 @@ export default function QueryBlock(props: QueryBlockProps) {
   const setTableCompletion = async (
     beforeSql: string,
     afterSql: string,
-    lastWordCase: string
+    lastWordCase: string,
   ): Promise<void> => {
     const ctesSuggestions = await getCTEAutocomplete({
       resourceId: props.node.attrs.resourceId,
@@ -383,7 +386,7 @@ export default function QueryBlock(props: QueryBlockProps) {
     const createCompletion = (
       label: string,
       type: string,
-      detail: string
+      detail: string,
     ): Suggestion => ({
       label,
       type,
@@ -397,25 +400,25 @@ export default function QueryBlock(props: QueryBlockProps) {
     });
 
     const tableCompletionsCte = ctesSuggestions.map((suggestion: string) =>
-      createCompletion(suggestion, "CTE", "CTE")
+      createCompletion(suggestion, "CTE", "CTE"),
     );
 
     const tableCompletions = (dbCatalog || []).map((suggestion: string[]) =>
-      createCompletion(suggestion.join("."), "table", "table")
+      createCompletion(suggestion.join("."), "table", "table"),
     );
 
     tableAutocomplete.current = [...tableCompletions, ...tableCompletionsCte];
   };
 
   const setApplyFunctionOnTableCompletion = (
-    lastWordCase: string
+    lastWordCase: string,
   ): Suggestion[] =>
     (tableAutocomplete.current || []).map((suggestion: Suggestion) => ({
       ...suggestion,
       apply: (view: EditorView, completion: any, from: number, to: number) => {
         const insertText = ` ${transformWordTable(
           suggestion.label,
-          lastWordCase
+          lastWordCase,
         )}`;
         view.dispatch({
           changes: { from, to, insert: insertText },
@@ -450,7 +453,7 @@ export default function QueryBlock(props: QueryBlockProps) {
 
   const setApplyFunctionOnColumnCompletion = (
     beforeSql: string,
-    lastWordCase: string
+    lastWordCase: string,
   ): Suggestion[] =>
     (columnAutocomplete.current || []).map((suggestion: Suggestion) => ({
       ...suggestion,
@@ -499,7 +502,7 @@ export default function QueryBlock(props: QueryBlockProps) {
             (suggestion) =>
               suggestion.label
                 .toLowerCase()
-                .startsWith(lastWord.toLowerCase()) || beforeSql.endsWith(" ")
+                .startsWith(lastWord.toLowerCase()) || beforeSql.endsWith(" "),
           );
           return {
             from: context.pos - lastWord.length,
@@ -518,7 +521,7 @@ export default function QueryBlock(props: QueryBlockProps) {
       if (columnAutocomplete.current && columnAutocomplete.current.length > 0) {
         const parsedColumnAutocomplete = setApplyFunctionOnColumnCompletion(
           beforeSql,
-          lastWordCase
+          lastWordCase,
         );
 
         if (lastChar === ".") {
@@ -530,7 +533,7 @@ export default function QueryBlock(props: QueryBlockProps) {
             (suggestion) =>
               suggestion.label
                 .toLowerCase()
-                .startsWith(lastWordDot.toLowerCase())
+                .startsWith(lastWordDot.toLowerCase()),
           );
           return {
             from: context.pos - lastWordDot.length,
@@ -547,7 +550,6 @@ export default function QueryBlock(props: QueryBlockProps) {
   };
 
   const deleteBlock = () => {
-    console.log(props);
     props.node.attrs.blockId && props.deleteNode();
   };
 
@@ -564,7 +566,7 @@ export default function QueryBlock(props: QueryBlockProps) {
       } else {
         const xAxis = colDefs[0].field;
         const isXAxisNumeric = rowData.every(
-          (row) => typeof row[xAxis] === "number"
+          (row) => typeof row[xAxis] === "number",
         );
         const data: any = {
           chartType: "BAR",
@@ -612,7 +614,6 @@ export default function QueryBlock(props: QueryBlockProps) {
         },
         cellClass: "p-0",
       }));
-      console.log({ defs, types: table.column_types });
       setColDefs(defs);
       setRowData(table.data);
       setDefaultDataChart(table.data, defs);
@@ -622,13 +623,15 @@ export default function QueryBlock(props: QueryBlockProps) {
 
   useEffect(() => {
     const fetchWorkflowState = async (id: string) => {
-      const data = await getWorkflow({ workflow_run_id: id }, abortControllerRef.current?.signal);
+      const data = await getWorkflow(
+        { workflow_run_id: id },
+        abortControllerRef.current?.signal,
+      );
       if (data.execute_query.status === "failed") {
         setError(data.execute_query.error);
         setIsLoading(false);
       }
       if (data.execute_query && data.execute_query.status === "success") {
-        console.log(data.execute_query.signed_url);
         getTablefromSignedUrl(data.execute_query.signed_url);
       }
       setIsLoading(false);
@@ -656,7 +659,7 @@ export default function QueryBlock(props: QueryBlockProps) {
 
   async function stopQuery() {
     if (abortControllerRef.current) {
-      abortControllerRef.current.abort('User aborted');
+      abortControllerRef.current.abort("User aborted");
       setIsLoading(false);
       setIsRunning(false);
       setWorkflowId(null);
@@ -677,12 +680,15 @@ export default function QueryBlock(props: QueryBlockProps) {
     abortControllerRef.current = abortController;
     let data: any;
     try {
-      data = await executeQuery({
-        notebook_id: notebookId as any,
-        resource_id: props.node.attrs.resourceId,
-        block_id: props.node.attrs.blockId,
-        sql: query,
-      }, abortController.signal);
+      data = await executeQuery(
+        {
+          notebook_id: notebookId as any,
+          resource_id: props.node.attrs.resourceId,
+          block_id: props.node.attrs.blockId,
+          sql: query,
+        },
+        abortController.signal,
+      );
     } catch (e: any) {
       setError(e?.toString() || "");
     }
@@ -740,7 +746,6 @@ export default function QueryBlock(props: QueryBlockProps) {
       });
     }
   }, [props.node.attrs.blockId]);
-
 
   // const getDBAutocomplete = async (resourceId: string) => {
   //   const answer = await getDBCatalogAutocomplete({ resourceId });
@@ -981,17 +986,14 @@ export default function QueryBlock(props: QueryBlockProps) {
                   Run
                 </Button>
               ) : (
-                <Button
-                  variant="outline"
-                  onClick={() => stopQuery()}
-                >
+                <Button variant="outline" onClick={() => stopQuery()}>
                   <CircleStop className="mr-2 w-4 h-4 text-green-500" />
                   Stop
                 </Button>
               )}
               <Popover>
                 <PopoverTrigger>
-                  <Button variant="outline" onClick={() => { }}>
+                  <Button variant="outline" onClick={() => {}}>
                     <EllipsisVertical className="w-4 h-4 text-green-500" />
                   </Button>
                 </PopoverTrigger>
@@ -1028,7 +1030,6 @@ export default function QueryBlock(props: QueryBlockProps) {
                 onChange={(value) => handleChangeSql(value)}
                 className="text-sm"
                 theme={quietlight}
-
                 // @ts-ignore
                 options={{
                   keyMap: "sublime",

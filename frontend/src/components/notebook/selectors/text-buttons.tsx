@@ -1,8 +1,14 @@
+import {
+  BoldIcon,
+  CodeIcon,
+  ItalicIcon,
+  StrikethroughIcon,
+  UnderlineIcon,
+} from "lucide-react";
+import { EditorBubbleItem, useEditor } from "novel";
+import { cn } from "../../../lib/utils";
 // @ts-nocheck
 import { Button } from "../../ui/button";
-import { cn } from "../../../lib/utils";
-import { BoldIcon, CodeIcon, ItalicIcon, StrikethroughIcon, UnderlineIcon } from "lucide-react";
-import { EditorBubbleItem, useEditor } from "novel";
 import type { SelectorItem } from "./node-selector";
 
 export const TextButtons = () => {

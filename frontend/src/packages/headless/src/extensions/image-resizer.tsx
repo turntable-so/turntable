@@ -8,7 +8,9 @@ export const ImageResizer: FC = () => {
   if (!editor?.isActive("image")) return null;
 
   const updateMediaSize = () => {
-    const imageInfo = document.querySelector(".ProseMirror-selectednode") as HTMLImageElement;
+    const imageInfo = document.querySelector(
+      ".ProseMirror-selectednode",
+    ) as HTMLImageElement;
     if (imageInfo) {
       const selection = editor.state.selection;
       const setImage = editor.commands.setImage as (options: {
@@ -28,7 +30,9 @@ export const ImageResizer: FC = () => {
 
   return (
     <Moveable
-      target={document.querySelector(".ProseMirror-selectednode") as HTMLDivElement}
+      target={
+        document.querySelector(".ProseMirror-selectednode") as HTMLDivElement
+      }
       container={null}
       origin={false}
       /* Resize event edges */

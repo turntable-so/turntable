@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo } from "react";
 
 function LoadingNode({ id, data }: any) {
   return (

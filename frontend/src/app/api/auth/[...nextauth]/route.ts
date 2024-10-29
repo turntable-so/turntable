@@ -1,16 +1,12 @@
-import NextAuth from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
-import GitHubProvider from "next-auth/providers/github";
-import CredentialsProvider from "next-auth/providers/credentials";
 import { AuthActions } from "@/lib/auth";
+import NextAuth from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
+import GitHubProvider from "next-auth/providers/github";
+import GoogleProvider from "next-auth/providers/google";
 import { NextResponse } from "next/server";
 const { login, storeToken, loginOauth } = AuthActions();
-import {
-  setCookie, deleteCookie,
-} from "cookies-next";
+import { deleteCookie, setCookie } from "cookies-next";
 import { cookies } from "next/headers";
-
-
 
 const handler = NextAuth({
   providers: [
@@ -37,7 +33,7 @@ const handler = NextAuth({
         try {
           const answer = await login(
             (credentials as any).email,
-            (credentials as any).password
+            (credentials as any).password,
           );
           const json: any = await answer.json();
           setCookie("accessToken", json.access, { cookies });
@@ -47,7 +43,7 @@ const handler = NextAuth({
             accessToken: json.access,
             refreshToken: json.refresh,
           } as any;
-        } catch (error : any) {
+        } catch (error: any) {
           console.error("Error errror:", error);
 
           const errorMessage = error.json.detail;
@@ -64,11 +60,15 @@ const handler = NextAuth({
     async signIn({ user, account, profile }: any) {
       if (account.provider === "google") {
         const cookieStore = cookies();
-        let invitationCode : any = cookieStore.get("invitationCode");
+        let invitationCode: any = cookieStore.get("invitationCode");
         invitationCode = invitationCode?.value;
         deleteCookie("invitationCode");
         try {
-          const response = await loginOauth(account.provider, account.id_token, invitationCode);
+          const response = await loginOauth(
+            account.provider,
+            account.id_token,
+            invitationCode,
+          );
 
           const data: any = await response.json();
           if (data.access && data.refresh) {
@@ -89,7 +89,7 @@ const handler = NextAuth({
         try {
           const response = await loginOauth(
             account.provider,
-            account.access_token
+            account.access_token,
           );
           const data: any = await response.json();
           if (data.access && data.refresh) {

@@ -324,7 +324,7 @@ class ResourceDetails(PolymorphicModel):
     def test_db_connection(self):
         try:
             connector = self.get_connector()
-            query = connector.sql_to_df("SELECT 1").iloc[0].iloc[0]
+            query = connector.run_query("SELECT 1")[0].iloc[0].iloc[0]
             if query != 1:
                 raise Exception("Query did not return expected value")
             return {"success": True}
@@ -480,6 +480,8 @@ class MetabaseDetails(ResourceDetails):
     username = encrypt(models.CharField(max_length=255, blank=False))
     password = encrypt(models.CharField(max_length=255, blank=False))
     connect_uri = encrypt(models.CharField(blank=False, max_length=255))
+    api_key = encrypt(models.CharField(max_length=255, blank=True, null=True))
+    jwt_shared_secret = encrypt(models.CharField(max_length=255, blank=True, null=True))
 
     @property
     def datahub_extras(self):

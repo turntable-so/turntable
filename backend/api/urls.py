@@ -30,12 +30,12 @@ from app.consumers import DBTCommandConsumer, WorkflowRunConsumer
 from app.views import (
     AssetViewSet,
     BlockViewSet,
-    ExecuteQueryView,
     HealthCheckViewSet,
     InvitationViewSet,
     LineageViewSet,
     NotebookViewSet,
     ResourceViewSet,
+    EmbeddingViewSet,
     SSHViewSet,
     SyncResourceView,
     TestResourceView,
@@ -44,7 +44,10 @@ from app.views import (
     WorkspaceViewSet,
 )
 from app.views.project_views import ProjectViewSet
-from app.views.query_views import DbtQueryPreviewView
+from app.views.query_views import (
+    DbtQueryPreviewView,
+    QueryPreviewView,
+)
 from app.views.settings_view import SettingsView
 
 from .views import CustomUserViewSet, LogoutView, OAuthView
@@ -61,18 +64,19 @@ router.register(r"notebooks", NotebookViewSet, basename="notebook")
 router.register(r"blocks", BlockViewSet, basename="block")
 router.register(r"healthcheck", HealthCheckViewSet, basename="healthcheck")
 router.register(r"project", ProjectViewSet, basename="project")
+router.register(r"embedding", EmbeddingViewSet, basename="embedding")
 
 urlpatterns = [
     path("oauth/auth", OAuthView.as_view(), name="oauth-auth"),
     path(
-        "notebooks/<str:notebook_id>/blocks/<str:block_id>/query/",
-        ExecuteQueryView.as_view(),
-        name="execute_query",
-    ),
-    path(
-        "query/preview/",
+        "query/dbt/",
         DbtQueryPreviewView.as_view(),
         name="dbt_query_preview",
+    ),
+    path(
+        "query/sql/",
+        QueryPreviewView.as_view(),
+        name="query_preview",
     ),
     path(
         "resources/<str:resource_id>/sync/",

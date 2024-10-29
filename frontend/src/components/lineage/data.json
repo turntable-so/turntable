@@ -1,1819 +1,1457 @@
 {
-    "success": true,
-    "stdout": {
-        "original_file_paths": {
-            "model.turntable_dbt.base_posthog__event": "models/staging/posthog/base/base_posthog__event.sql",
-            "model.turntable_dbt.dau": "models/marts/product/dau.sql",
-            "model.turntable_dbt.wau": "models/marts/product/wau.sql",
-            "model.turntable_dbt.product_funnel": "models/marts/engineering/product_funnel.sql",
-            "model.turntable_dbt.retention": "models/marts/engineering/retention.sql",
-            "model.turntable_dbt.user_feature_matrix": "models/marts/engineering/user_feature_matrix.sql",
-            "model.turntable_dbt.companies": "models/marts/common/companies.sql",
-            "model.turntable_dbt.stg_posthog__events": "models/staging/posthog/stg_posthog__events.sql",
-            "model.turntable_dbt.engagers": "models/marts/product/engagers.sql",
-            "source.turntable_dbt.posthog.event": "models/staging/posthog/_posthog__sources.yml"
-        },
-        "lineage": {
-            "directed": true,
-            "multigraph": false,
-            "graph": {},
-            "nodes": [
-                {
-                    "id": "dbt_itracey_____stg_posthog__users.email"
-                },
-                {
-                    "id": "dbt_itracey_____stg_posthog__users.id"
-                },
-                {
-                    "id": "model.turntable_dbt.stg_posthog__events.email"
-                },
-                {
-                    "id": "model.turntable_dbt.stg_posthog__events.date"
-                },
-                {
-                    "id": "model.turntable_dbt.companies.domain"
-                },
-                {
-                    "id": "model.turntable_dbt.companies.last_seen"
-                },
-                {
-                    "id": "model.turntable_dbt.companies.num_users"
-                },
-                {
-                    "id": "model.turntable_dbt.dau.date"
-                },
-                {
-                    "id": "model.turntable_dbt.engagers.date"
-                },
-                {
-                    "id": "model.turntable_dbt.dau.num_users"
-                },
-                {
-                    "id": "model.turntable_dbt.engagers.email"
-                },
-                {
-                    "id": "model.turntable_dbt.product_funnel.email"
-                },
-                {
-                    "id": "model.turntable_dbt.product_funnel.last_seen"
-                },
-                {
-                    "id": "model.turntable_dbt.product_funnel.download_page_views"
-                },
-                {
-                    "id": "model.turntable_dbt.stg_posthog__events.event"
-                },
-                {
-                    "id": "model.turntable_dbt.product_funnel.download_clicks"
-                },
-                {
-                    "id": "model.turntable_dbt.product_funnel.mounted"
-                },
-                {
-                    "id": "model.turntable_dbt.product_funnel.configuration_page_viewed"
-                },
-                {
-                    "id": "model.turntable_dbt.product_funnel.lineage_requests"
-                },
-                {
-                    "id": "model.turntable_dbt.product_funnel.ai_gen_docs_requests"
-                },
-                {
-                    "id": "model.turntable_dbt.product_funnel.docs_saves"
-                },
-                {
-                    "id": "model.turntable_dbt.product_funnel.table_lineage_loads"
-                },
-                {
-                    "id": "model.turntable_dbt.product_funnel.cll_loads"
-                },
-                {
-                    "id": "model.turntable_dbt.retention.email"
-                },
-                {
-                    "id": "model.turntable_dbt.retention.last_seen"
-                },
-                {
-                    "id": "model.turntable_dbt.retention.num_days_active"
-                },
-                {
-                    "id": "model.turntable_dbt.retention.num_weeks_active"
-                },
-                {
-                    "id": "model.turntable_dbt.stg_posthog__events.week"
-                },
-                {
-                    "id": "model.turntable_dbt.engagers.event"
-                },
-                {
-                    "id": "model.turntable_dbt.user_feature_matrix.email"
-                },
-                {
-                    "id": "model.turntable_dbt.user_feature_matrix.last_seen"
-                },
-                {
-                    "id": "model.turntable_dbt.user_feature_matrix.generate_docs"
-                },
-                {
-                    "id": "model.turntable_dbt.user_feature_matrix.query_preview"
-                },
-                {
-                    "id": "model.turntable_dbt.user_feature_matrix.ran_validation"
-                },
-                {
-                    "id": "model.turntable_dbt.user_feature_matrix.lineage"
-                },
-                {
-                    "id": "model.turntable_dbt.wau.week"
-                },
-                {
-                    "id": "model.turntable_dbt.engagers.week"
-                },
-                {
-                    "id": "model.turntable_dbt.wau.num_users"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.timestamp"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.person_is_identified"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.distinct_id"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.person_properties"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.event"
-                },
-                {
-                    "id": "model.turntable_dbt.stg_posthog__events.timestamp"
-                },
-                {
-                    "id": "model.turntable_dbt.stg_posthog__events.user_id"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.id"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.id"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event._fivetran_deleted"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event._fivetran_deleted"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event._fivetran_synced"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event._fivetran_synced"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.distinct_id"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.elements"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.elements"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.elements_chain"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.elements_chain"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.event"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.person_distinct_ids"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.person_distinct_ids"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.person_is_identified"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.person_properties"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.project_id"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.project_id"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_active_feature_flags"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_active_feature_flags"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_autocapture_disabled_server_side"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_autocapture_disabled_server_side"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_browser"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_browser"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_browser_language"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_browser_language"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_browser_version"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_browser_version"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_ce_version"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_ce_version"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_console_log_recording_enabled_server_side"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_console_log_recording_enabled_server_side"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_current_url"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_current_url"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_device"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_device"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_device_id"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_device_id"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_device_type"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_device_type"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_distinct_id"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_distinct_id"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_event_type"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_event_type"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_feature_flag_payloads"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_feature_flag_payloads"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_geoip_city_name"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_geoip_city_name"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_geoip_continent_code"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_geoip_continent_code"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_geoip_continent_name"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_geoip_continent_name"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_geoip_country_code"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_geoip_country_code"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_geoip_country_name"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_geoip_country_name"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_geoip_latitude"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_geoip_latitude"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_geoip_longitude"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_geoip_longitude"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_geoip_postal_code"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_geoip_postal_code"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_geoip_subdivision_1_code"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_geoip_subdivision_1_code"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_geoip_subdivision_1_name"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_geoip_subdivision_1_name"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_geoip_subdivision_2_code"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_geoip_subdivision_2_code"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_geoip_subdivision_2_name"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_geoip_subdivision_2_name"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_geoip_time_zone"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_geoip_time_zone"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_host"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_host"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_insert_id"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_insert_id"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_ip"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_ip"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_lib"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_lib"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_lib_version"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_lib_version"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_os"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_os"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_os_version"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_os_version"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_pageview_id"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_pageview_id"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_pathname"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_pathname"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_plugins_deferred"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_plugins_deferred"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_plugins_failed"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_plugins_failed"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_plugins_succeeded"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_plugins_succeeded"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_referrer"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_referrer"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_referring_domain"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_referring_domain"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_screen_height"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_screen_height"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_screen_width"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_screen_width"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_sent_at"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_sent_at"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_session_id"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_session_id"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_session_recording_recorder_version_server_side"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_session_recording_recorder_version_server_side"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_set"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_set"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_set_once"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_set_once"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_time"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_time"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_token"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_token"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_viewport_height"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_viewport_height"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_viewport_width"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_viewport_width"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_window_id"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_window_id"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.timestamp"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_title"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_title"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_column"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_column"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_model_column_count"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_model_column_count"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_compiled_sql"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_compiled_sql"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_model_schema"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_model_schema"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_model_name"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_model_name"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_description"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_description"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event.properties_geoip_disable"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_geoip_disable"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_anon_distinct_id"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_user_id"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_search_engine"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_vsc_version"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_utm_content"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_utm_source"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_utm_medium"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_feature_breaking_changes"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_el_text"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_feature_onboarding"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_feature_flag_response"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_feature_flag"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_raw_user_agent"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_client_session_props"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_command"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_session_recording_network_payload_capture"
-                },
-                {
-                    "id": "source.turntable_dbt.posthog.event.properties_had_persisted_distinct_id"
-                }
-            ],
-            "links": [
-                {
-                    "ntype": [
-                        "group_by",
-                        "transform",
-                        "as_is",
-                        "join_key",
-                        "filter"
-                    ],
-                    "source": "dbt_itracey_____stg_posthog__users.email",
-                    "target": "model.turntable_dbt.companies.domain"
-                },
-                {
-                    "ntype": [
-                        "transform",
-                        "join_key",
-                        "filter",
-                        "group_by"
-                    ],
-                    "source": "dbt_itracey_____stg_posthog__users.email",
-                    "target": "model.turntable_dbt.companies.last_seen"
-                },
-                {
-                    "ntype": [
-                        "group_by",
-                        "transform",
-                        "as_is",
-                        "join_key",
-                        "filter"
-                    ],
-                    "source": "dbt_itracey_____stg_posthog__users.email",
-                    "target": "model.turntable_dbt.companies.num_users"
-                },
-                {
-                    "ntype": [
-                        "transform",
-                        "as_is"
-                    ],
-                    "source": "dbt_itracey_____stg_posthog__users.id",
-                    "target": "model.turntable_dbt.companies.num_users"
-                },
-                {
-                    "ntype": [
-                        "transform",
-                        "join_key",
-                        "group_by"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.email",
-                    "target": "model.turntable_dbt.companies.domain"
-                },
-                {
-                    "ntype": [
-                        "group_by",
-                        "transform",
-                        "as_is",
-                        "join_key"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.email",
-                    "target": "model.turntable_dbt.companies.last_seen"
-                },
-                {
-                    "ntype": [
-                        "transform",
-                        "join_key",
-                        "group_by"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.email",
-                    "target": "model.turntable_dbt.companies.num_users"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.email",
-                    "target": "model.turntable_dbt.engagers.email"
-                },
-                {
-                    "ntype": [
-                        "as_is",
-                        "filter",
-                        "group_by"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.email",
-                    "target": "model.turntable_dbt.product_funnel.email"
-                },
-                {
-                    "ntype": [
-                        "filter",
-                        "group_by"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.email",
-                    "target": "model.turntable_dbt.product_funnel.last_seen"
-                },
-                {
-                    "ntype": [
-                        "filter",
-                        "group_by"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.email",
-                    "target": "model.turntable_dbt.product_funnel.download_page_views"
-                },
-                {
-                    "ntype": [
-                        "filter",
-                        "group_by"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.email",
-                    "target": "model.turntable_dbt.product_funnel.download_clicks"
-                },
-                {
-                    "ntype": [
-                        "filter",
-                        "group_by"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.email",
-                    "target": "model.turntable_dbt.product_funnel.mounted"
-                },
-                {
-                    "ntype": [
-                        "filter",
-                        "group_by"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.email",
-                    "target": "model.turntable_dbt.product_funnel.configuration_page_viewed"
-                },
-                {
-                    "ntype": [
-                        "filter",
-                        "group_by"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.email",
-                    "target": "model.turntable_dbt.product_funnel.lineage_requests"
-                },
-                {
-                    "ntype": [
-                        "filter",
-                        "group_by"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.email",
-                    "target": "model.turntable_dbt.product_funnel.ai_gen_docs_requests"
-                },
-                {
-                    "ntype": [
-                        "filter",
-                        "group_by"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.email",
-                    "target": "model.turntable_dbt.product_funnel.docs_saves"
-                },
-                {
-                    "ntype": [
-                        "filter",
-                        "group_by"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.email",
-                    "target": "model.turntable_dbt.product_funnel.table_lineage_loads"
-                },
-                {
-                    "ntype": [
-                        "filter",
-                        "group_by"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.email",
-                    "target": "model.turntable_dbt.product_funnel.cll_loads"
-                },
-                {
-                    "ntype": [
-                        "as_is",
-                        "filter",
-                        "group_by"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.email",
-                    "target": "model.turntable_dbt.retention.email"
-                },
-                {
-                    "ntype": [
-                        "filter",
-                        "group_by"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.email",
-                    "target": "model.turntable_dbt.retention.last_seen"
-                },
-                {
-                    "ntype": [
-                        "filter",
-                        "group_by"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.email",
-                    "target": "model.turntable_dbt.retention.num_days_active"
-                },
-                {
-                    "ntype": [
-                        "filter",
-                        "group_by"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.email",
-                    "target": "model.turntable_dbt.retention.num_weeks_active"
-                },
-                {
-                    "ntype": [
-                        "transform",
-                        "as_is"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.date",
-                    "target": "model.turntable_dbt.companies.last_seen"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.date",
-                    "target": "model.turntable_dbt.engagers.date"
-                },
-                {
-                    "ntype": [
-                        "transform"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.date",
-                    "target": "model.turntable_dbt.product_funnel.last_seen"
-                },
-                {
-                    "ntype": [
-                        "transform"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.date",
-                    "target": "model.turntable_dbt.retention.last_seen"
-                },
-                {
-                    "ntype": [
-                        "transform"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.date",
-                    "target": "model.turntable_dbt.retention.num_days_active"
-                },
-                {
-                    "ntype": [
-                        "as_is",
-                        "group_by"
-                    ],
-                    "source": "model.turntable_dbt.engagers.date",
-                    "target": "model.turntable_dbt.dau.date"
-                },
-                {
-                    "ntype": [
-                        "group_by"
-                    ],
-                    "source": "model.turntable_dbt.engagers.date",
-                    "target": "model.turntable_dbt.dau.num_users"
-                },
-                {
-                    "ntype": [
-                        "transform",
-                        "as_is"
-                    ],
-                    "source": "model.turntable_dbt.engagers.date",
-                    "target": "model.turntable_dbt.user_feature_matrix.last_seen"
-                },
-                {
-                    "ntype": [
-                        "transform",
-                        "as_is"
-                    ],
-                    "source": "model.turntable_dbt.engagers.date",
-                    "target": "model.turntable_dbt.user_feature_matrix.generate_docs"
-                },
-                {
-                    "ntype": [
-                        "transform",
-                        "as_is"
-                    ],
-                    "source": "model.turntable_dbt.engagers.date",
-                    "target": "model.turntable_dbt.user_feature_matrix.query_preview"
-                },
-                {
-                    "ntype": [
-                        "transform",
-                        "as_is"
-                    ],
-                    "source": "model.turntable_dbt.engagers.date",
-                    "target": "model.turntable_dbt.user_feature_matrix.ran_validation"
-                },
-                {
-                    "ntype": [
-                        "transform",
-                        "as_is"
-                    ],
-                    "source": "model.turntable_dbt.engagers.date",
-                    "target": "model.turntable_dbt.user_feature_matrix.lineage"
-                },
-                {
-                    "ntype": [
-                        "transform"
-                    ],
-                    "source": "model.turntable_dbt.engagers.email",
-                    "target": "model.turntable_dbt.dau.num_users"
-                },
-                {
-                    "ntype": [
-                        "as_is",
-                        "group_by"
-                    ],
-                    "source": "model.turntable_dbt.engagers.email",
-                    "target": "model.turntable_dbt.user_feature_matrix.email"
-                },
-                {
-                    "ntype": [
-                        "as_is",
-                        "group_by"
-                    ],
-                    "source": "model.turntable_dbt.engagers.email",
-                    "target": "model.turntable_dbt.user_feature_matrix.last_seen"
-                },
-                {
-                    "ntype": [
-                        "as_is",
-                        "group_by"
-                    ],
-                    "source": "model.turntable_dbt.engagers.email",
-                    "target": "model.turntable_dbt.user_feature_matrix.generate_docs"
-                },
-                {
-                    "ntype": [
-                        "as_is",
-                        "group_by"
-                    ],
-                    "source": "model.turntable_dbt.engagers.email",
-                    "target": "model.turntable_dbt.user_feature_matrix.query_preview"
-                },
-                {
-                    "ntype": [
-                        "as_is",
-                        "group_by"
-                    ],
-                    "source": "model.turntable_dbt.engagers.email",
-                    "target": "model.turntable_dbt.user_feature_matrix.ran_validation"
-                },
-                {
-                    "ntype": [
-                        "as_is",
-                        "group_by"
-                    ],
-                    "source": "model.turntable_dbt.engagers.email",
-                    "target": "model.turntable_dbt.user_feature_matrix.lineage"
-                },
-                {
-                    "ntype": [
-                        "transform"
-                    ],
-                    "source": "model.turntable_dbt.engagers.email",
-                    "target": "model.turntable_dbt.wau.num_users"
-                },
-                {
-                    "ntype": [
-                        "filter"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.event",
-                    "target": "model.turntable_dbt.engagers.date"
-                },
-                {
-                    "ntype": [
-                        "filter"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.event",
-                    "target": "model.turntable_dbt.engagers.email"
-                },
-                {
-                    "ntype": [
-                        "transform"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.event",
-                    "target": "model.turntable_dbt.product_funnel.download_page_views"
-                },
-                {
-                    "ntype": [
-                        "transform"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.event",
-                    "target": "model.turntable_dbt.product_funnel.download_clicks"
-                },
-                {
-                    "ntype": [
-                        "transform"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.event",
-                    "target": "model.turntable_dbt.product_funnel.mounted"
-                },
-                {
-                    "ntype": [
-                        "transform"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.event",
-                    "target": "model.turntable_dbt.product_funnel.configuration_page_viewed"
-                },
-                {
-                    "ntype": [
-                        "transform"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.event",
-                    "target": "model.turntable_dbt.product_funnel.lineage_requests"
-                },
-                {
-                    "ntype": [
-                        "transform"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.event",
-                    "target": "model.turntable_dbt.product_funnel.ai_gen_docs_requests"
-                },
-                {
-                    "ntype": [
-                        "transform"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.event",
-                    "target": "model.turntable_dbt.product_funnel.docs_saves"
-                },
-                {
-                    "ntype": [
-                        "transform"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.event",
-                    "target": "model.turntable_dbt.product_funnel.table_lineage_loads"
-                },
-                {
-                    "ntype": [
-                        "transform"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.event",
-                    "target": "model.turntable_dbt.product_funnel.cll_loads"
-                },
-                {
-                    "ntype": [
-                        "as_is",
-                        "filter"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.event",
-                    "target": "model.turntable_dbt.engagers.event"
-                },
-                {
-                    "ntype": [
-                        "filter"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.event",
-                    "target": "model.turntable_dbt.engagers.week"
-                },
-                {
-                    "ntype": [
-                        "transform"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.week",
-                    "target": "model.turntable_dbt.retention.num_weeks_active"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "model.turntable_dbt.stg_posthog__events.week",
-                    "target": "model.turntable_dbt.engagers.week"
-                },
-                {
-                    "ntype": [
-                        "transform",
-                        "as_is"
-                    ],
-                    "source": "model.turntable_dbt.engagers.event",
-                    "target": "model.turntable_dbt.user_feature_matrix.generate_docs"
-                },
-                {
-                    "ntype": [
-                        "transform",
-                        "as_is"
-                    ],
-                    "source": "model.turntable_dbt.engagers.event",
-                    "target": "model.turntable_dbt.user_feature_matrix.query_preview"
-                },
-                {
-                    "ntype": [
-                        "transform",
-                        "as_is"
-                    ],
-                    "source": "model.turntable_dbt.engagers.event",
-                    "target": "model.turntable_dbt.user_feature_matrix.ran_validation"
-                },
-                {
-                    "ntype": [
-                        "transform",
-                        "as_is"
-                    ],
-                    "source": "model.turntable_dbt.engagers.event",
-                    "target": "model.turntable_dbt.user_feature_matrix.lineage"
-                },
-                {
-                    "ntype": [
-                        "as_is",
-                        "group_by"
-                    ],
-                    "source": "model.turntable_dbt.engagers.week",
-                    "target": "model.turntable_dbt.wau.week"
-                },
-                {
-                    "ntype": [
-                        "group_by"
-                    ],
-                    "source": "model.turntable_dbt.engagers.week",
-                    "target": "model.turntable_dbt.wau.num_users"
-                },
-                {
-                    "ntype": [
-                        "transform",
-                        "as_is"
-                    ],
-                    "source": "model.turntable_dbt.base_posthog__event.timestamp",
-                    "target": "model.turntable_dbt.stg_posthog__events.date"
-                },
-                {
-                    "ntype": [
-                        "transform",
-                        "as_is"
-                    ],
-                    "source": "model.turntable_dbt.base_posthog__event.timestamp",
-                    "target": "model.turntable_dbt.stg_posthog__events.week"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "model.turntable_dbt.base_posthog__event.timestamp",
-                    "target": "model.turntable_dbt.stg_posthog__events.timestamp"
-                },
-                {
-                    "ntype": [
-                        "as_is",
-                        "filter"
-                    ],
-                    "source": "model.turntable_dbt.base_posthog__event.person_is_identified",
-                    "target": "model.turntable_dbt.stg_posthog__events.email"
-                },
-                {
-                    "ntype": [
-                        "transform",
-                        "filter"
-                    ],
-                    "source": "model.turntable_dbt.base_posthog__event.person_is_identified",
-                    "target": "model.turntable_dbt.stg_posthog__events.date"
-                },
-                {
-                    "ntype": [
-                        "as_is",
-                        "filter"
-                    ],
-                    "source": "model.turntable_dbt.base_posthog__event.person_is_identified",
-                    "target": "model.turntable_dbt.stg_posthog__events.event"
-                },
-                {
-                    "ntype": [
-                        "transform",
-                        "filter"
-                    ],
-                    "source": "model.turntable_dbt.base_posthog__event.person_is_identified",
-                    "target": "model.turntable_dbt.stg_posthog__events.week"
-                },
-                {
-                    "ntype": [
-                        "as_is",
-                        "filter"
-                    ],
-                    "source": "model.turntable_dbt.base_posthog__event.person_is_identified",
-                    "target": "model.turntable_dbt.stg_posthog__events.timestamp"
-                },
-                {
-                    "ntype": [
-                        "as_is",
-                        "filter"
-                    ],
-                    "source": "model.turntable_dbt.base_posthog__event.person_is_identified",
-                    "target": "model.turntable_dbt.stg_posthog__events.user_id"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "model.turntable_dbt.base_posthog__event.distinct_id",
-                    "target": "model.turntable_dbt.stg_posthog__events.user_id"
-                },
-                {
-                    "ntype": [
-                        "transform",
-                        "as_is"
-                    ],
-                    "source": "model.turntable_dbt.base_posthog__event.person_properties",
-                    "target": "model.turntable_dbt.stg_posthog__events.email"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "model.turntable_dbt.base_posthog__event.event",
-                    "target": "model.turntable_dbt.stg_posthog__events.event"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.id",
-                    "target": "model.turntable_dbt.base_posthog__event.id"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event._fivetran_deleted",
-                    "target": "model.turntable_dbt.base_posthog__event._fivetran_deleted"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event._fivetran_synced",
-                    "target": "model.turntable_dbt.base_posthog__event._fivetran_synced"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.distinct_id",
-                    "target": "model.turntable_dbt.base_posthog__event.distinct_id"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.elements",
-                    "target": "model.turntable_dbt.base_posthog__event.elements"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.elements_chain",
-                    "target": "model.turntable_dbt.base_posthog__event.elements_chain"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.event",
-                    "target": "model.turntable_dbt.base_posthog__event.event"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.person_distinct_ids",
-                    "target": "model.turntable_dbt.base_posthog__event.person_distinct_ids"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.person_is_identified",
-                    "target": "model.turntable_dbt.base_posthog__event.person_is_identified"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.person_properties",
-                    "target": "model.turntable_dbt.base_posthog__event.person_properties"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.project_id",
-                    "target": "model.turntable_dbt.base_posthog__event.project_id"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_active_feature_flags",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_active_feature_flags"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_autocapture_disabled_server_side",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_autocapture_disabled_server_side"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_browser",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_browser"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_browser_language",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_browser_language"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_browser_version",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_browser_version"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_ce_version",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_ce_version"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_console_log_recording_enabled_server_side",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_console_log_recording_enabled_server_side"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_current_url",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_current_url"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_device",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_device"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_device_id",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_device_id"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_device_type",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_device_type"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_distinct_id",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_distinct_id"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_event_type",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_event_type"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_feature_flag_payloads",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_feature_flag_payloads"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_geoip_city_name",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_geoip_city_name"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_geoip_continent_code",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_geoip_continent_code"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_geoip_continent_name",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_geoip_continent_name"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_geoip_country_code",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_geoip_country_code"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_geoip_country_name",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_geoip_country_name"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_geoip_latitude",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_geoip_latitude"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_geoip_longitude",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_geoip_longitude"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_geoip_postal_code",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_geoip_postal_code"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_geoip_subdivision_1_code",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_geoip_subdivision_1_code"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_geoip_subdivision_1_name",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_geoip_subdivision_1_name"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_geoip_subdivision_2_code",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_geoip_subdivision_2_code"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_geoip_subdivision_2_name",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_geoip_subdivision_2_name"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_geoip_time_zone",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_geoip_time_zone"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_host",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_host"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_insert_id",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_insert_id"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_ip",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_ip"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_lib",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_lib"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_lib_version",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_lib_version"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_os",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_os"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_os_version",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_os_version"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_pageview_id",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_pageview_id"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_pathname",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_pathname"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_plugins_deferred",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_plugins_deferred"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_plugins_failed",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_plugins_failed"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_plugins_succeeded",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_plugins_succeeded"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_referrer",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_referrer"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_referring_domain",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_referring_domain"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_screen_height",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_screen_height"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_screen_width",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_screen_width"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_sent_at",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_sent_at"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_session_id",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_session_id"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_session_recording_recorder_version_server_side",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_session_recording_recorder_version_server_side"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_set",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_set"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_set_once",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_set_once"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_time",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_time"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_token",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_token"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_viewport_height",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_viewport_height"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_viewport_width",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_viewport_width"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_window_id",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_window_id"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.timestamp",
-                    "target": "model.turntable_dbt.base_posthog__event.timestamp"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_title",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_title"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_column",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_column"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_model_column_count",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_model_column_count"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_compiled_sql",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_compiled_sql"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_model_schema",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_model_schema"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_model_name",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_model_name"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_description",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_description"
-                },
-                {
-                    "ntype": [
-                        "as_is"
-                    ],
-                    "source": "source.turntable_dbt.posthog.event.properties_geoip_disable",
-                    "target": "model.turntable_dbt.base_posthog__event.properties_geoip_disable"
-                }
-            ]
-        },
-        "table_lineage": {
-            "directed": true,
-            "multigraph": false,
-            "graph": {},
-            "nodes": [
-                {
-                    "id": "source.turntable_dbt.posthog.event"
-                },
-                {
-                    "id": "model.turntable_dbt.engagers"
-                },
-                {
-                    "id": "model.turntable_dbt.stg_posthog__events"
-                },
-                {
-                    "id": "model.turntable_dbt.companies"
-                },
-                {
-                    "id": "model.turntable_dbt.user_feature_matrix"
-                },
-                {
-                    "id": "model.turntable_dbt.product_funnel"
-                },
-                {
-                    "id": "model.turntable_dbt.wau"
-                },
-                {
-                    "id": "model.turntable_dbt.dau"
-                },
-                {
-                    "id": "model.turntable_dbt.retention"
-                },
-                {
-                    "id": "model.turntable_dbt.base_posthog__event"
-                }
-            ],
-            "links": [
-                {
-                    "source": "source.turntable_dbt.posthog.event",
-                    "target": "model.turntable_dbt.base_posthog__event"
-                },
-                {
-                    "source": "model.turntable_dbt.engagers",
-                    "target": "model.turntable_dbt.user_feature_matrix"
-                },
-                {
-                    "source": "model.turntable_dbt.engagers",
-                    "target": "model.turntable_dbt.wau"
-                },
-                {
-                    "source": "model.turntable_dbt.engagers",
-                    "target": "model.turntable_dbt.dau"
-                },
-                {
-                    "source": "model.turntable_dbt.stg_posthog__events",
-                    "target": "model.turntable_dbt.engagers"
-                },
-                {
-                    "source": "model.turntable_dbt.stg_posthog__events",
-                    "target": "model.turntable_dbt.companies"
-                },
-                {
-                    "source": "model.turntable_dbt.stg_posthog__events",
-                    "target": "model.turntable_dbt.product_funnel"
-                },
-                {
-                    "source": "model.turntable_dbt.stg_posthog__events",
-                    "target": "model.turntable_dbt.retention"
-                },
-                {
-                    "source": "model.turntable_dbt.base_posthog__event",
-                    "target": "model.turntable_dbt.stg_posthog__events"
-                }
-            ]
-        },
-        "errors": []
+  "success": true,
+  "stdout": {
+    "original_file_paths": {
+      "model.turntable_dbt.base_posthog__event": "models/staging/posthog/base/base_posthog__event.sql",
+      "model.turntable_dbt.dau": "models/marts/product/dau.sql",
+      "model.turntable_dbt.wau": "models/marts/product/wau.sql",
+      "model.turntable_dbt.product_funnel": "models/marts/engineering/product_funnel.sql",
+      "model.turntable_dbt.retention": "models/marts/engineering/retention.sql",
+      "model.turntable_dbt.user_feature_matrix": "models/marts/engineering/user_feature_matrix.sql",
+      "model.turntable_dbt.companies": "models/marts/common/companies.sql",
+      "model.turntable_dbt.stg_posthog__events": "models/staging/posthog/stg_posthog__events.sql",
+      "model.turntable_dbt.engagers": "models/marts/product/engagers.sql",
+      "source.turntable_dbt.posthog.event": "models/staging/posthog/_posthog__sources.yml"
     },
-    "stderr": ""
+    "lineage": {
+      "directed": true,
+      "multigraph": false,
+      "graph": {},
+      "nodes": [
+        {
+          "id": "dbt_itracey_____stg_posthog__users.email"
+        },
+        {
+          "id": "dbt_itracey_____stg_posthog__users.id"
+        },
+        {
+          "id": "model.turntable_dbt.stg_posthog__events.email"
+        },
+        {
+          "id": "model.turntable_dbt.stg_posthog__events.date"
+        },
+        {
+          "id": "model.turntable_dbt.companies.domain"
+        },
+        {
+          "id": "model.turntable_dbt.companies.last_seen"
+        },
+        {
+          "id": "model.turntable_dbt.companies.num_users"
+        },
+        {
+          "id": "model.turntable_dbt.dau.date"
+        },
+        {
+          "id": "model.turntable_dbt.engagers.date"
+        },
+        {
+          "id": "model.turntable_dbt.dau.num_users"
+        },
+        {
+          "id": "model.turntable_dbt.engagers.email"
+        },
+        {
+          "id": "model.turntable_dbt.product_funnel.email"
+        },
+        {
+          "id": "model.turntable_dbt.product_funnel.last_seen"
+        },
+        {
+          "id": "model.turntable_dbt.product_funnel.download_page_views"
+        },
+        {
+          "id": "model.turntable_dbt.stg_posthog__events.event"
+        },
+        {
+          "id": "model.turntable_dbt.product_funnel.download_clicks"
+        },
+        {
+          "id": "model.turntable_dbt.product_funnel.mounted"
+        },
+        {
+          "id": "model.turntable_dbt.product_funnel.configuration_page_viewed"
+        },
+        {
+          "id": "model.turntable_dbt.product_funnel.lineage_requests"
+        },
+        {
+          "id": "model.turntable_dbt.product_funnel.ai_gen_docs_requests"
+        },
+        {
+          "id": "model.turntable_dbt.product_funnel.docs_saves"
+        },
+        {
+          "id": "model.turntable_dbt.product_funnel.table_lineage_loads"
+        },
+        {
+          "id": "model.turntable_dbt.product_funnel.cll_loads"
+        },
+        {
+          "id": "model.turntable_dbt.retention.email"
+        },
+        {
+          "id": "model.turntable_dbt.retention.last_seen"
+        },
+        {
+          "id": "model.turntable_dbt.retention.num_days_active"
+        },
+        {
+          "id": "model.turntable_dbt.retention.num_weeks_active"
+        },
+        {
+          "id": "model.turntable_dbt.stg_posthog__events.week"
+        },
+        {
+          "id": "model.turntable_dbt.engagers.event"
+        },
+        {
+          "id": "model.turntable_dbt.user_feature_matrix.email"
+        },
+        {
+          "id": "model.turntable_dbt.user_feature_matrix.last_seen"
+        },
+        {
+          "id": "model.turntable_dbt.user_feature_matrix.generate_docs"
+        },
+        {
+          "id": "model.turntable_dbt.user_feature_matrix.query_preview"
+        },
+        {
+          "id": "model.turntable_dbt.user_feature_matrix.ran_validation"
+        },
+        {
+          "id": "model.turntable_dbt.user_feature_matrix.lineage"
+        },
+        {
+          "id": "model.turntable_dbt.wau.week"
+        },
+        {
+          "id": "model.turntable_dbt.engagers.week"
+        },
+        {
+          "id": "model.turntable_dbt.wau.num_users"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.timestamp"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.person_is_identified"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.distinct_id"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.person_properties"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.event"
+        },
+        {
+          "id": "model.turntable_dbt.stg_posthog__events.timestamp"
+        },
+        {
+          "id": "model.turntable_dbt.stg_posthog__events.user_id"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.id"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.id"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event._fivetran_deleted"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event._fivetran_deleted"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event._fivetran_synced"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event._fivetran_synced"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.distinct_id"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.elements"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.elements"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.elements_chain"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.elements_chain"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.event"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.person_distinct_ids"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.person_distinct_ids"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.person_is_identified"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.person_properties"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.project_id"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.project_id"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_active_feature_flags"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_active_feature_flags"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_autocapture_disabled_server_side"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_autocapture_disabled_server_side"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_browser"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_browser"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_browser_language"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_browser_language"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_browser_version"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_browser_version"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_ce_version"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_ce_version"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_console_log_recording_enabled_server_side"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_console_log_recording_enabled_server_side"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_current_url"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_current_url"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_device"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_device"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_device_id"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_device_id"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_device_type"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_device_type"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_distinct_id"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_distinct_id"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_event_type"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_event_type"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_feature_flag_payloads"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_feature_flag_payloads"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_geoip_city_name"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_geoip_city_name"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_geoip_continent_code"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_geoip_continent_code"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_geoip_continent_name"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_geoip_continent_name"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_geoip_country_code"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_geoip_country_code"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_geoip_country_name"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_geoip_country_name"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_geoip_latitude"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_geoip_latitude"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_geoip_longitude"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_geoip_longitude"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_geoip_postal_code"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_geoip_postal_code"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_geoip_subdivision_1_code"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_geoip_subdivision_1_code"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_geoip_subdivision_1_name"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_geoip_subdivision_1_name"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_geoip_subdivision_2_code"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_geoip_subdivision_2_code"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_geoip_subdivision_2_name"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_geoip_subdivision_2_name"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_geoip_time_zone"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_geoip_time_zone"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_host"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_host"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_insert_id"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_insert_id"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_ip"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_ip"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_lib"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_lib"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_lib_version"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_lib_version"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_os"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_os"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_os_version"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_os_version"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_pageview_id"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_pageview_id"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_pathname"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_pathname"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_plugins_deferred"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_plugins_deferred"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_plugins_failed"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_plugins_failed"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_plugins_succeeded"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_plugins_succeeded"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_referrer"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_referrer"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_referring_domain"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_referring_domain"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_screen_height"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_screen_height"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_screen_width"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_screen_width"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_sent_at"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_sent_at"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_session_id"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_session_id"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_session_recording_recorder_version_server_side"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_session_recording_recorder_version_server_side"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_set"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_set"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_set_once"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_set_once"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_time"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_time"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_token"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_token"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_viewport_height"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_viewport_height"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_viewport_width"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_viewport_width"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_window_id"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_window_id"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.timestamp"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_title"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_title"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_column"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_column"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_model_column_count"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_model_column_count"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_compiled_sql"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_compiled_sql"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_model_schema"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_model_schema"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_model_name"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_model_name"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_description"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_description"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event.properties_geoip_disable"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_geoip_disable"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_anon_distinct_id"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_user_id"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_search_engine"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_vsc_version"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_utm_content"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_utm_source"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_utm_medium"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_feature_breaking_changes"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_el_text"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_feature_onboarding"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_feature_flag_response"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_feature_flag"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_raw_user_agent"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_client_session_props"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_command"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_session_recording_network_payload_capture"
+        },
+        {
+          "id": "source.turntable_dbt.posthog.event.properties_had_persisted_distinct_id"
+        }
+      ],
+      "links": [
+        {
+          "ntype": ["group_by", "transform", "as_is", "join_key", "filter"],
+          "source": "dbt_itracey_____stg_posthog__users.email",
+          "target": "model.turntable_dbt.companies.domain"
+        },
+        {
+          "ntype": ["transform", "join_key", "filter", "group_by"],
+          "source": "dbt_itracey_____stg_posthog__users.email",
+          "target": "model.turntable_dbt.companies.last_seen"
+        },
+        {
+          "ntype": ["group_by", "transform", "as_is", "join_key", "filter"],
+          "source": "dbt_itracey_____stg_posthog__users.email",
+          "target": "model.turntable_dbt.companies.num_users"
+        },
+        {
+          "ntype": ["transform", "as_is"],
+          "source": "dbt_itracey_____stg_posthog__users.id",
+          "target": "model.turntable_dbt.companies.num_users"
+        },
+        {
+          "ntype": ["transform", "join_key", "group_by"],
+          "source": "model.turntable_dbt.stg_posthog__events.email",
+          "target": "model.turntable_dbt.companies.domain"
+        },
+        {
+          "ntype": ["group_by", "transform", "as_is", "join_key"],
+          "source": "model.turntable_dbt.stg_posthog__events.email",
+          "target": "model.turntable_dbt.companies.last_seen"
+        },
+        {
+          "ntype": ["transform", "join_key", "group_by"],
+          "source": "model.turntable_dbt.stg_posthog__events.email",
+          "target": "model.turntable_dbt.companies.num_users"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "model.turntable_dbt.stg_posthog__events.email",
+          "target": "model.turntable_dbt.engagers.email"
+        },
+        {
+          "ntype": ["as_is", "filter", "group_by"],
+          "source": "model.turntable_dbt.stg_posthog__events.email",
+          "target": "model.turntable_dbt.product_funnel.email"
+        },
+        {
+          "ntype": ["filter", "group_by"],
+          "source": "model.turntable_dbt.stg_posthog__events.email",
+          "target": "model.turntable_dbt.product_funnel.last_seen"
+        },
+        {
+          "ntype": ["filter", "group_by"],
+          "source": "model.turntable_dbt.stg_posthog__events.email",
+          "target": "model.turntable_dbt.product_funnel.download_page_views"
+        },
+        {
+          "ntype": ["filter", "group_by"],
+          "source": "model.turntable_dbt.stg_posthog__events.email",
+          "target": "model.turntable_dbt.product_funnel.download_clicks"
+        },
+        {
+          "ntype": ["filter", "group_by"],
+          "source": "model.turntable_dbt.stg_posthog__events.email",
+          "target": "model.turntable_dbt.product_funnel.mounted"
+        },
+        {
+          "ntype": ["filter", "group_by"],
+          "source": "model.turntable_dbt.stg_posthog__events.email",
+          "target": "model.turntable_dbt.product_funnel.configuration_page_viewed"
+        },
+        {
+          "ntype": ["filter", "group_by"],
+          "source": "model.turntable_dbt.stg_posthog__events.email",
+          "target": "model.turntable_dbt.product_funnel.lineage_requests"
+        },
+        {
+          "ntype": ["filter", "group_by"],
+          "source": "model.turntable_dbt.stg_posthog__events.email",
+          "target": "model.turntable_dbt.product_funnel.ai_gen_docs_requests"
+        },
+        {
+          "ntype": ["filter", "group_by"],
+          "source": "model.turntable_dbt.stg_posthog__events.email",
+          "target": "model.turntable_dbt.product_funnel.docs_saves"
+        },
+        {
+          "ntype": ["filter", "group_by"],
+          "source": "model.turntable_dbt.stg_posthog__events.email",
+          "target": "model.turntable_dbt.product_funnel.table_lineage_loads"
+        },
+        {
+          "ntype": ["filter", "group_by"],
+          "source": "model.turntable_dbt.stg_posthog__events.email",
+          "target": "model.turntable_dbt.product_funnel.cll_loads"
+        },
+        {
+          "ntype": ["as_is", "filter", "group_by"],
+          "source": "model.turntable_dbt.stg_posthog__events.email",
+          "target": "model.turntable_dbt.retention.email"
+        },
+        {
+          "ntype": ["filter", "group_by"],
+          "source": "model.turntable_dbt.stg_posthog__events.email",
+          "target": "model.turntable_dbt.retention.last_seen"
+        },
+        {
+          "ntype": ["filter", "group_by"],
+          "source": "model.turntable_dbt.stg_posthog__events.email",
+          "target": "model.turntable_dbt.retention.num_days_active"
+        },
+        {
+          "ntype": ["filter", "group_by"],
+          "source": "model.turntable_dbt.stg_posthog__events.email",
+          "target": "model.turntable_dbt.retention.num_weeks_active"
+        },
+        {
+          "ntype": ["transform", "as_is"],
+          "source": "model.turntable_dbt.stg_posthog__events.date",
+          "target": "model.turntable_dbt.companies.last_seen"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "model.turntable_dbt.stg_posthog__events.date",
+          "target": "model.turntable_dbt.engagers.date"
+        },
+        {
+          "ntype": ["transform"],
+          "source": "model.turntable_dbt.stg_posthog__events.date",
+          "target": "model.turntable_dbt.product_funnel.last_seen"
+        },
+        {
+          "ntype": ["transform"],
+          "source": "model.turntable_dbt.stg_posthog__events.date",
+          "target": "model.turntable_dbt.retention.last_seen"
+        },
+        {
+          "ntype": ["transform"],
+          "source": "model.turntable_dbt.stg_posthog__events.date",
+          "target": "model.turntable_dbt.retention.num_days_active"
+        },
+        {
+          "ntype": ["as_is", "group_by"],
+          "source": "model.turntable_dbt.engagers.date",
+          "target": "model.turntable_dbt.dau.date"
+        },
+        {
+          "ntype": ["group_by"],
+          "source": "model.turntable_dbt.engagers.date",
+          "target": "model.turntable_dbt.dau.num_users"
+        },
+        {
+          "ntype": ["transform", "as_is"],
+          "source": "model.turntable_dbt.engagers.date",
+          "target": "model.turntable_dbt.user_feature_matrix.last_seen"
+        },
+        {
+          "ntype": ["transform", "as_is"],
+          "source": "model.turntable_dbt.engagers.date",
+          "target": "model.turntable_dbt.user_feature_matrix.generate_docs"
+        },
+        {
+          "ntype": ["transform", "as_is"],
+          "source": "model.turntable_dbt.engagers.date",
+          "target": "model.turntable_dbt.user_feature_matrix.query_preview"
+        },
+        {
+          "ntype": ["transform", "as_is"],
+          "source": "model.turntable_dbt.engagers.date",
+          "target": "model.turntable_dbt.user_feature_matrix.ran_validation"
+        },
+        {
+          "ntype": ["transform", "as_is"],
+          "source": "model.turntable_dbt.engagers.date",
+          "target": "model.turntable_dbt.user_feature_matrix.lineage"
+        },
+        {
+          "ntype": ["transform"],
+          "source": "model.turntable_dbt.engagers.email",
+          "target": "model.turntable_dbt.dau.num_users"
+        },
+        {
+          "ntype": ["as_is", "group_by"],
+          "source": "model.turntable_dbt.engagers.email",
+          "target": "model.turntable_dbt.user_feature_matrix.email"
+        },
+        {
+          "ntype": ["as_is", "group_by"],
+          "source": "model.turntable_dbt.engagers.email",
+          "target": "model.turntable_dbt.user_feature_matrix.last_seen"
+        },
+        {
+          "ntype": ["as_is", "group_by"],
+          "source": "model.turntable_dbt.engagers.email",
+          "target": "model.turntable_dbt.user_feature_matrix.generate_docs"
+        },
+        {
+          "ntype": ["as_is", "group_by"],
+          "source": "model.turntable_dbt.engagers.email",
+          "target": "model.turntable_dbt.user_feature_matrix.query_preview"
+        },
+        {
+          "ntype": ["as_is", "group_by"],
+          "source": "model.turntable_dbt.engagers.email",
+          "target": "model.turntable_dbt.user_feature_matrix.ran_validation"
+        },
+        {
+          "ntype": ["as_is", "group_by"],
+          "source": "model.turntable_dbt.engagers.email",
+          "target": "model.turntable_dbt.user_feature_matrix.lineage"
+        },
+        {
+          "ntype": ["transform"],
+          "source": "model.turntable_dbt.engagers.email",
+          "target": "model.turntable_dbt.wau.num_users"
+        },
+        {
+          "ntype": ["filter"],
+          "source": "model.turntable_dbt.stg_posthog__events.event",
+          "target": "model.turntable_dbt.engagers.date"
+        },
+        {
+          "ntype": ["filter"],
+          "source": "model.turntable_dbt.stg_posthog__events.event",
+          "target": "model.turntable_dbt.engagers.email"
+        },
+        {
+          "ntype": ["transform"],
+          "source": "model.turntable_dbt.stg_posthog__events.event",
+          "target": "model.turntable_dbt.product_funnel.download_page_views"
+        },
+        {
+          "ntype": ["transform"],
+          "source": "model.turntable_dbt.stg_posthog__events.event",
+          "target": "model.turntable_dbt.product_funnel.download_clicks"
+        },
+        {
+          "ntype": ["transform"],
+          "source": "model.turntable_dbt.stg_posthog__events.event",
+          "target": "model.turntable_dbt.product_funnel.mounted"
+        },
+        {
+          "ntype": ["transform"],
+          "source": "model.turntable_dbt.stg_posthog__events.event",
+          "target": "model.turntable_dbt.product_funnel.configuration_page_viewed"
+        },
+        {
+          "ntype": ["transform"],
+          "source": "model.turntable_dbt.stg_posthog__events.event",
+          "target": "model.turntable_dbt.product_funnel.lineage_requests"
+        },
+        {
+          "ntype": ["transform"],
+          "source": "model.turntable_dbt.stg_posthog__events.event",
+          "target": "model.turntable_dbt.product_funnel.ai_gen_docs_requests"
+        },
+        {
+          "ntype": ["transform"],
+          "source": "model.turntable_dbt.stg_posthog__events.event",
+          "target": "model.turntable_dbt.product_funnel.docs_saves"
+        },
+        {
+          "ntype": ["transform"],
+          "source": "model.turntable_dbt.stg_posthog__events.event",
+          "target": "model.turntable_dbt.product_funnel.table_lineage_loads"
+        },
+        {
+          "ntype": ["transform"],
+          "source": "model.turntable_dbt.stg_posthog__events.event",
+          "target": "model.turntable_dbt.product_funnel.cll_loads"
+        },
+        {
+          "ntype": ["as_is", "filter"],
+          "source": "model.turntable_dbt.stg_posthog__events.event",
+          "target": "model.turntable_dbt.engagers.event"
+        },
+        {
+          "ntype": ["filter"],
+          "source": "model.turntable_dbt.stg_posthog__events.event",
+          "target": "model.turntable_dbt.engagers.week"
+        },
+        {
+          "ntype": ["transform"],
+          "source": "model.turntable_dbt.stg_posthog__events.week",
+          "target": "model.turntable_dbt.retention.num_weeks_active"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "model.turntable_dbt.stg_posthog__events.week",
+          "target": "model.turntable_dbt.engagers.week"
+        },
+        {
+          "ntype": ["transform", "as_is"],
+          "source": "model.turntable_dbt.engagers.event",
+          "target": "model.turntable_dbt.user_feature_matrix.generate_docs"
+        },
+        {
+          "ntype": ["transform", "as_is"],
+          "source": "model.turntable_dbt.engagers.event",
+          "target": "model.turntable_dbt.user_feature_matrix.query_preview"
+        },
+        {
+          "ntype": ["transform", "as_is"],
+          "source": "model.turntable_dbt.engagers.event",
+          "target": "model.turntable_dbt.user_feature_matrix.ran_validation"
+        },
+        {
+          "ntype": ["transform", "as_is"],
+          "source": "model.turntable_dbt.engagers.event",
+          "target": "model.turntable_dbt.user_feature_matrix.lineage"
+        },
+        {
+          "ntype": ["as_is", "group_by"],
+          "source": "model.turntable_dbt.engagers.week",
+          "target": "model.turntable_dbt.wau.week"
+        },
+        {
+          "ntype": ["group_by"],
+          "source": "model.turntable_dbt.engagers.week",
+          "target": "model.turntable_dbt.wau.num_users"
+        },
+        {
+          "ntype": ["transform", "as_is"],
+          "source": "model.turntable_dbt.base_posthog__event.timestamp",
+          "target": "model.turntable_dbt.stg_posthog__events.date"
+        },
+        {
+          "ntype": ["transform", "as_is"],
+          "source": "model.turntable_dbt.base_posthog__event.timestamp",
+          "target": "model.turntable_dbt.stg_posthog__events.week"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "model.turntable_dbt.base_posthog__event.timestamp",
+          "target": "model.turntable_dbt.stg_posthog__events.timestamp"
+        },
+        {
+          "ntype": ["as_is", "filter"],
+          "source": "model.turntable_dbt.base_posthog__event.person_is_identified",
+          "target": "model.turntable_dbt.stg_posthog__events.email"
+        },
+        {
+          "ntype": ["transform", "filter"],
+          "source": "model.turntable_dbt.base_posthog__event.person_is_identified",
+          "target": "model.turntable_dbt.stg_posthog__events.date"
+        },
+        {
+          "ntype": ["as_is", "filter"],
+          "source": "model.turntable_dbt.base_posthog__event.person_is_identified",
+          "target": "model.turntable_dbt.stg_posthog__events.event"
+        },
+        {
+          "ntype": ["transform", "filter"],
+          "source": "model.turntable_dbt.base_posthog__event.person_is_identified",
+          "target": "model.turntable_dbt.stg_posthog__events.week"
+        },
+        {
+          "ntype": ["as_is", "filter"],
+          "source": "model.turntable_dbt.base_posthog__event.person_is_identified",
+          "target": "model.turntable_dbt.stg_posthog__events.timestamp"
+        },
+        {
+          "ntype": ["as_is", "filter"],
+          "source": "model.turntable_dbt.base_posthog__event.person_is_identified",
+          "target": "model.turntable_dbt.stg_posthog__events.user_id"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "model.turntable_dbt.base_posthog__event.distinct_id",
+          "target": "model.turntable_dbt.stg_posthog__events.user_id"
+        },
+        {
+          "ntype": ["transform", "as_is"],
+          "source": "model.turntable_dbt.base_posthog__event.person_properties",
+          "target": "model.turntable_dbt.stg_posthog__events.email"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "model.turntable_dbt.base_posthog__event.event",
+          "target": "model.turntable_dbt.stg_posthog__events.event"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.id",
+          "target": "model.turntable_dbt.base_posthog__event.id"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event._fivetran_deleted",
+          "target": "model.turntable_dbt.base_posthog__event._fivetran_deleted"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event._fivetran_synced",
+          "target": "model.turntable_dbt.base_posthog__event._fivetran_synced"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.distinct_id",
+          "target": "model.turntable_dbt.base_posthog__event.distinct_id"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.elements",
+          "target": "model.turntable_dbt.base_posthog__event.elements"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.elements_chain",
+          "target": "model.turntable_dbt.base_posthog__event.elements_chain"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.event",
+          "target": "model.turntable_dbt.base_posthog__event.event"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.person_distinct_ids",
+          "target": "model.turntable_dbt.base_posthog__event.person_distinct_ids"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.person_is_identified",
+          "target": "model.turntable_dbt.base_posthog__event.person_is_identified"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.person_properties",
+          "target": "model.turntable_dbt.base_posthog__event.person_properties"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.project_id",
+          "target": "model.turntable_dbt.base_posthog__event.project_id"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_active_feature_flags",
+          "target": "model.turntable_dbt.base_posthog__event.properties_active_feature_flags"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_autocapture_disabled_server_side",
+          "target": "model.turntable_dbt.base_posthog__event.properties_autocapture_disabled_server_side"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_browser",
+          "target": "model.turntable_dbt.base_posthog__event.properties_browser"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_browser_language",
+          "target": "model.turntable_dbt.base_posthog__event.properties_browser_language"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_browser_version",
+          "target": "model.turntable_dbt.base_posthog__event.properties_browser_version"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_ce_version",
+          "target": "model.turntable_dbt.base_posthog__event.properties_ce_version"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_console_log_recording_enabled_server_side",
+          "target": "model.turntable_dbt.base_posthog__event.properties_console_log_recording_enabled_server_side"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_current_url",
+          "target": "model.turntable_dbt.base_posthog__event.properties_current_url"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_device",
+          "target": "model.turntable_dbt.base_posthog__event.properties_device"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_device_id",
+          "target": "model.turntable_dbt.base_posthog__event.properties_device_id"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_device_type",
+          "target": "model.turntable_dbt.base_posthog__event.properties_device_type"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_distinct_id",
+          "target": "model.turntable_dbt.base_posthog__event.properties_distinct_id"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_event_type",
+          "target": "model.turntable_dbt.base_posthog__event.properties_event_type"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_feature_flag_payloads",
+          "target": "model.turntable_dbt.base_posthog__event.properties_feature_flag_payloads"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_geoip_city_name",
+          "target": "model.turntable_dbt.base_posthog__event.properties_geoip_city_name"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_geoip_continent_code",
+          "target": "model.turntable_dbt.base_posthog__event.properties_geoip_continent_code"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_geoip_continent_name",
+          "target": "model.turntable_dbt.base_posthog__event.properties_geoip_continent_name"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_geoip_country_code",
+          "target": "model.turntable_dbt.base_posthog__event.properties_geoip_country_code"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_geoip_country_name",
+          "target": "model.turntable_dbt.base_posthog__event.properties_geoip_country_name"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_geoip_latitude",
+          "target": "model.turntable_dbt.base_posthog__event.properties_geoip_latitude"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_geoip_longitude",
+          "target": "model.turntable_dbt.base_posthog__event.properties_geoip_longitude"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_geoip_postal_code",
+          "target": "model.turntable_dbt.base_posthog__event.properties_geoip_postal_code"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_geoip_subdivision_1_code",
+          "target": "model.turntable_dbt.base_posthog__event.properties_geoip_subdivision_1_code"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_geoip_subdivision_1_name",
+          "target": "model.turntable_dbt.base_posthog__event.properties_geoip_subdivision_1_name"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_geoip_subdivision_2_code",
+          "target": "model.turntable_dbt.base_posthog__event.properties_geoip_subdivision_2_code"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_geoip_subdivision_2_name",
+          "target": "model.turntable_dbt.base_posthog__event.properties_geoip_subdivision_2_name"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_geoip_time_zone",
+          "target": "model.turntable_dbt.base_posthog__event.properties_geoip_time_zone"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_host",
+          "target": "model.turntable_dbt.base_posthog__event.properties_host"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_insert_id",
+          "target": "model.turntable_dbt.base_posthog__event.properties_insert_id"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_ip",
+          "target": "model.turntable_dbt.base_posthog__event.properties_ip"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_lib",
+          "target": "model.turntable_dbt.base_posthog__event.properties_lib"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_lib_version",
+          "target": "model.turntable_dbt.base_posthog__event.properties_lib_version"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_os",
+          "target": "model.turntable_dbt.base_posthog__event.properties_os"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_os_version",
+          "target": "model.turntable_dbt.base_posthog__event.properties_os_version"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_pageview_id",
+          "target": "model.turntable_dbt.base_posthog__event.properties_pageview_id"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_pathname",
+          "target": "model.turntable_dbt.base_posthog__event.properties_pathname"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_plugins_deferred",
+          "target": "model.turntable_dbt.base_posthog__event.properties_plugins_deferred"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_plugins_failed",
+          "target": "model.turntable_dbt.base_posthog__event.properties_plugins_failed"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_plugins_succeeded",
+          "target": "model.turntable_dbt.base_posthog__event.properties_plugins_succeeded"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_referrer",
+          "target": "model.turntable_dbt.base_posthog__event.properties_referrer"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_referring_domain",
+          "target": "model.turntable_dbt.base_posthog__event.properties_referring_domain"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_screen_height",
+          "target": "model.turntable_dbt.base_posthog__event.properties_screen_height"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_screen_width",
+          "target": "model.turntable_dbt.base_posthog__event.properties_screen_width"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_sent_at",
+          "target": "model.turntable_dbt.base_posthog__event.properties_sent_at"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_session_id",
+          "target": "model.turntable_dbt.base_posthog__event.properties_session_id"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_session_recording_recorder_version_server_side",
+          "target": "model.turntable_dbt.base_posthog__event.properties_session_recording_recorder_version_server_side"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_set",
+          "target": "model.turntable_dbt.base_posthog__event.properties_set"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_set_once",
+          "target": "model.turntable_dbt.base_posthog__event.properties_set_once"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_time",
+          "target": "model.turntable_dbt.base_posthog__event.properties_time"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_token",
+          "target": "model.turntable_dbt.base_posthog__event.properties_token"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_viewport_height",
+          "target": "model.turntable_dbt.base_posthog__event.properties_viewport_height"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_viewport_width",
+          "target": "model.turntable_dbt.base_posthog__event.properties_viewport_width"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_window_id",
+          "target": "model.turntable_dbt.base_posthog__event.properties_window_id"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.timestamp",
+          "target": "model.turntable_dbt.base_posthog__event.timestamp"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_title",
+          "target": "model.turntable_dbt.base_posthog__event.properties_title"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_column",
+          "target": "model.turntable_dbt.base_posthog__event.properties_column"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_model_column_count",
+          "target": "model.turntable_dbt.base_posthog__event.properties_model_column_count"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_compiled_sql",
+          "target": "model.turntable_dbt.base_posthog__event.properties_compiled_sql"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_model_schema",
+          "target": "model.turntable_dbt.base_posthog__event.properties_model_schema"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_model_name",
+          "target": "model.turntable_dbt.base_posthog__event.properties_model_name"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_description",
+          "target": "model.turntable_dbt.base_posthog__event.properties_description"
+        },
+        {
+          "ntype": ["as_is"],
+          "source": "source.turntable_dbt.posthog.event.properties_geoip_disable",
+          "target": "model.turntable_dbt.base_posthog__event.properties_geoip_disable"
+        }
+      ]
+    },
+    "table_lineage": {
+      "directed": true,
+      "multigraph": false,
+      "graph": {},
+      "nodes": [
+        {
+          "id": "source.turntable_dbt.posthog.event"
+        },
+        {
+          "id": "model.turntable_dbt.engagers"
+        },
+        {
+          "id": "model.turntable_dbt.stg_posthog__events"
+        },
+        {
+          "id": "model.turntable_dbt.companies"
+        },
+        {
+          "id": "model.turntable_dbt.user_feature_matrix"
+        },
+        {
+          "id": "model.turntable_dbt.product_funnel"
+        },
+        {
+          "id": "model.turntable_dbt.wau"
+        },
+        {
+          "id": "model.turntable_dbt.dau"
+        },
+        {
+          "id": "model.turntable_dbt.retention"
+        },
+        {
+          "id": "model.turntable_dbt.base_posthog__event"
+        }
+      ],
+      "links": [
+        {
+          "source": "source.turntable_dbt.posthog.event",
+          "target": "model.turntable_dbt.base_posthog__event"
+        },
+        {
+          "source": "model.turntable_dbt.engagers",
+          "target": "model.turntable_dbt.user_feature_matrix"
+        },
+        {
+          "source": "model.turntable_dbt.engagers",
+          "target": "model.turntable_dbt.wau"
+        },
+        {
+          "source": "model.turntable_dbt.engagers",
+          "target": "model.turntable_dbt.dau"
+        },
+        {
+          "source": "model.turntable_dbt.stg_posthog__events",
+          "target": "model.turntable_dbt.engagers"
+        },
+        {
+          "source": "model.turntable_dbt.stg_posthog__events",
+          "target": "model.turntable_dbt.companies"
+        },
+        {
+          "source": "model.turntable_dbt.stg_posthog__events",
+          "target": "model.turntable_dbt.product_funnel"
+        },
+        {
+          "source": "model.turntable_dbt.stg_posthog__events",
+          "target": "model.turntable_dbt.retention"
+        },
+        {
+          "source": "model.turntable_dbt.base_posthog__event",
+          "target": "model.turntable_dbt.stg_posthog__events"
+        }
+      ]
+    },
+    "errors": []
+  },
+  "stderr": ""
 }

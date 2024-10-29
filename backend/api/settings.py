@@ -297,13 +297,6 @@ if overwrite := os.getenv("AWS_S3_FILE_OVERWRITE"):
     AWS_S3_FILE_OVERWRITE = True if overwrite == "true" else False
 
 
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
-        "LOCATION": "cache_table",
-    }
-}
-
 if os.getenv("LOCAL_REDIS") == "true":
     redis_hosts = [
         (
@@ -322,9 +315,11 @@ else:
 IS_TEST_MODE = "test" in sys.argv or "pytest" in sys.modules
 CHANNEL_LAYERS = {
     "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer"
-        if not IS_TEST_MODE
-        else "channels.layers.InMemoryChannelLayer",
+        "BACKEND": (
+            "channels_redis.core.RedisChannelLayer"
+            if not IS_TEST_MODE
+            else "channels.layers.InMemoryChannelLayer"
+        ),
         "CONFIG": {"hosts": redis_hosts} if not IS_TEST_MODE else {},
     }
 }

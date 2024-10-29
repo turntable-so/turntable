@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface UseWebSocketOptions {
   onOpen?: (event: Event) => void;
@@ -18,7 +18,7 @@ export function useWebSocket(url: string, options?: UseWebSocketOptions) {
 
   const startWebSocket = useCallback(() => {
     if (ws.current) {
-      console.warn('WebSocket is already connected.');
+      console.warn("WebSocket is already connected.");
       return;
     }
 
@@ -35,7 +35,9 @@ export function useWebSocket(url: string, options?: UseWebSocketOptions) {
           clearTimeout(timeoutIdRef.current);
         }
         timeoutIdRef.current = window.setTimeout(() => {
-          console.warn('WebSocket timeout: No events received within the specified time.');
+          console.warn(
+            "WebSocket timeout: No events received within the specified time.",
+          );
           ws.current?.close();
         }, options.timeout);
       }
@@ -50,7 +52,9 @@ export function useWebSocket(url: string, options?: UseWebSocketOptions) {
           clearTimeout(timeoutIdRef.current);
         }
         timeoutIdRef.current = window.setTimeout(() => {
-          console.warn('WebSocket timeout: No events received within the specified time.');
+          console.warn(
+            "WebSocket timeout: No events received within the specified time.",
+          );
           ws.current?.close();
         }, options.timeout);
       }
@@ -95,10 +99,10 @@ export function useWebSocket(url: string, options?: UseWebSocketOptions) {
       if (ws.current && ws.current.readyState === WebSocket.OPEN) {
         ws.current.send(message);
       } else {
-        console.warn('WebSocket is not open.');
+        console.warn("WebSocket is not open.");
       }
     },
-    []
+    [],
   );
 
   useEffect(() => {

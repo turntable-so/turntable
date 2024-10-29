@@ -1,4 +1,4 @@
-'use client'
+"use client";
 import dynamic from "next/dynamic";
 import { Inter as FontSans } from "next/font/google";
 import { usePathname } from "next/navigation";
@@ -10,22 +10,18 @@ import "./globals.css";
 import AuthenticatedAppLayout from "./layout/authenticated-app-layout";
 import { PHProvider } from "./providers";
 
-const PostHogPageView = dynamic(() => import('./PostHogPageView'), {
+const PostHogPageView = dynamic(() => import("./PostHogPageView"), {
   ssr: false,
-})
+});
 
-const AnonPostHogPageView = dynamic(() => import('./AnonPostHogPageView'), {
+const AnonPostHogPageView = dynamic(() => import("./AnonPostHogPageView"), {
   ssr: false,
-})
-
+});
 
 const fontSans = FontSans({
   subsets: ["latin"],
   variable: "--font-sans",
 });
-
-
-
 
 export default function RootLayout({
   children,
@@ -38,15 +34,15 @@ export default function RootLayout({
     <Fragment>
       {/* eventually we want to remove this and do nested layouts */}
       {pathName.includes("/signin") ||
-        pathName.includes("/signup") ||
-        pathName.includes("/workspace") ? (
+      pathName.includes("/signup") ||
+      pathName.includes("/workspace") ? (
         <html lang="en" suppressHydrationWarning>
           <head />
           <PHProvider>
             <body
               className={cn(
                 "min-h-screen bg-muted font-sans antialiased",
-                fontSans.variable
+                fontSans.variable,
               )}
             >
               <AnonPostHogPageView />
@@ -61,7 +57,7 @@ export default function RootLayout({
             <body
               className={cn(
                 "min-h-screen bg-muted font-sans antialiased",
-                fontSans.variable
+                fontSans.variable,
               )}
             >
               <AuthenticatedAppLayout>
@@ -72,8 +68,7 @@ export default function RootLayout({
             </body>
           </PHProvider>
         </html>
-      )
-      }
-    </Fragment >
+      )}
+    </Fragment>
   );
 }
