@@ -310,7 +310,7 @@ export default function JobsPage() {
                             </div>
                             <div className="w-full flex justify-between items-center">
                                 <div className="space-y-1">
-                                    <CardTitle>Product run</CardTitle>
+                                    <CardTitle>Production run</CardTitle>
                                     <CardDescription>{`Last ran 47 minutes ago `}</CardDescription>
                                     <CardDescription>{`Scheduled daily at 12pm UTC`}</CardDescription>
                                 </div>
