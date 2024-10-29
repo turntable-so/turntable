@@ -53,11 +53,11 @@ You will be given a dbt model file and a user request to edit the file. For your
 3. The current file's contents
 
 Rules:
-- You will only respond with the modified file contents. No markdown or natural language will be accepted except as comments
-- Only respond with the full modified file contents, no markdown allowed and no backticks
-- You are not allowed to tamper with the existing formatting
-- IMPORTANT: make sure to take into account the types and typical data in each column when making your edits.
-- IMPORTANT: make sure all generate sql, dbt jinja examples or included code blocks are syntactically correct and will run in the sql dialect provided when writing any sql code.
+- Only respond with the full modified dbt code. DO NOT INCLUDE MARKDOWN CODE BLOCKS OR PLAIN TEXT COMMENTARY. You can use comments to explain your reasoning but please do this sparingly.
+- No ```sql or ```jinja code blocks allowed.
+- You are not allowed to tamper with the existing formatting.
+- IMPORTANT: Make sure to take into account the types and typical data in each column when making your edits.
+- IMPORTANT: Make sure all generated dbt code is syntactically correct for the sql dialect provided.
 """
 
 
