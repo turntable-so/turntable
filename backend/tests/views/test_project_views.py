@@ -147,4 +147,3 @@ class TestFileChanges:
         assert response.status_code == 200
         assert len(response.json()["untracked"]) == 1
         assert len(response.json()["modified"]) == 1
-        breakpoint()
