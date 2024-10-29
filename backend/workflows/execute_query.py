@@ -62,4 +62,7 @@ class DBTQueryPreviewWorkflow:
             dbt_sql=dbt_sql,
             workspace_id=workspace_id,
         )
-        return dbt_query.run(use_fast_compile=use_fast_compile, limit=limit)
+        try:
+            return dbt_query.run(use_fast_compile=use_fast_compile, limit=limit)
+        except Exception as e:
+            return {"error": str(e)}
