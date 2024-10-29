@@ -98,7 +98,7 @@ def test_edb(internal_bigquery):
         for col in table.columns
     ]
     with WorkerPool(n_jobs=10, start_method="threading", use_dill=True) as pool:
-        dfs = pool.imap(connector.sql_to_df, sqls)
+        dfs = pool.imap_unordered(connector.sql_to_df, sqls)
     df = pd.concat(dfs)
     df.reset_index(drop=True)
     df.sort_values(by="position", inplace=True)

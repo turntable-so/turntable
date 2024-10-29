@@ -48,6 +48,7 @@ x-hatchet-credentials: &hatchet-credentials
 
 x-ai-credentials: &ai-credentials
   OPENAI_API_KEY: ${OPENAI_API_KEY}
+  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
 
 x-dev-credentials: &dev-credentials
   DEV: "false"
@@ -99,6 +100,7 @@ x-common-backend: &common-backend
       condition: service_healthy
   volumes:
     - .hatchetconfig:/.hatchetconfig
+    - ./backend/cache:/cache
     - code_repos:/data/code
 
 name: turntable

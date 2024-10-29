@@ -23,7 +23,7 @@ class AIChatConsumer(AsyncWebsocketConsumer):
         print(f"AI Chat WebSocket Disconnected with code: {close_code}")
 
     async def receive(self, text_data):
-        print(f"Received message: {text_data}")
+        print(f"Received message: {text_data[:100]}...")
         data = json.loads(text_data)
         user = self.scope["user"]
         # print(data, flush=True)
@@ -36,8 +36,8 @@ class AIChatConsumer(AsyncWebsocketConsumer):
             )
 
             response = completion(
-                temperature=0.1,
-                model="gpt-4o",
+                temperature=0,
+                model="claude-3-5-sonnet-20241022",
                 messages=[
                     {"content": SYSTEM_PROMPT, "role": "system"},
                     {"role": "user", "content": prompt},
@@ -66,8 +66,8 @@ class AIChatConsumer(AsyncWebsocketConsumer):
             )
 
             response = completion(
-                temperature=0.1,
-                model="gpt-4o",
+                temperature=0,
+                model="claude-3-5-sonnet-20241022",
                 messages=[
                     {"content": EDIT_PROMPT_SYSTEM, "role": "system"},
                     {"role": "user", "content": prompt},

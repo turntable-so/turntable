@@ -84,7 +84,6 @@ dependencies = [
     "psycopg[binary]>=3.1.19",
     "gitpython>=3.1.43",
     "daphne>=4.1.2",
-    "django-cache-memoize>=0.2.0",
 ]
 
 [project.scripts]

@@ -1406,6 +1406,7 @@ class VinylTable:
         descriptive_stats: bool = True,
         with_docs=False,
         docs_class_name=False,
+        topk_col_name: bool = True,
     ) -> VinylTable:
         """
         Return summary statistics for each column in the table.
@@ -1477,9 +1478,17 @@ class VinylTable:
             agg = agg.aggregate(**column_dict)
 
             if topk > 0:
-                rename_dict[f"top_{topk}_values"] = "values"
-                rename_dict[f"top_{topk}_value_counts"] = "counts"
-                vc = tbl[colname].topk(topk)
+                topk_col_name_helper = topk + "_" if topk_col_name else ""
+                rename_dict[f"top_{topk_col_name_helper}values"] = "values"
+                rename_dict[f"top_{topk_col_name_helper}value_counts"] = "counts"
+                vc = tbl.select(colname).drop_null(colname)
+                if typ == dt.JSON:
+                    vc = vc.filter(_[colname] != {})
+                if typ == dt.String:
+                    vc = vc.filter(_[colname] != "")
+                elif typ == dt.Array:
+                    vc = vc.filter(_[colname] != [])
+                vc = vc[colname].topk(topk)
                 if backend is None:
                     raise ValueError("No backend found")
                 elif backend.has_operation(ops.ArrayCollect):

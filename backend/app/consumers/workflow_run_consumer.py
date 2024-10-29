@@ -1,11 +1,12 @@
+import asyncio
 import json
 import logging
-import asyncio
-from app.core.inference.chat import EDIT_PROMPT_SYSTEM, SYSTEM_PROMPT, build_context
 
+from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from litellm import completion
-from asgiref.sync import sync_to_async
+
+from app.core.inference.chat import EDIT_PROMPT_SYSTEM, SYSTEM_PROMPT, build_context
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +66,7 @@ class ChatInferenceConsumer(AsyncWebsocketConsumer):
             )
 
             response = completion(
-                temperature=0.1,
+                temperature=0,
                 model="gpt-4o",
                 messages=[
                     {"content": SYSTEM_PROMPT, "role": "system"},
@@ -96,11 +97,10 @@ class ChatInferenceConsumer(AsyncWebsocketConsumer):
                 related_assets=related_assets,
                 instructions=data.get("instructions"),
                 current_file=data.get("current_file"),
-                asset_links=data.get("asset_links"),
+                asset_links=data.fget("asset_links"),
             )
-
             response = completion(
-                temperature=0.1,
+                temperature=0,
                 model="gpt-4o",
                 messages=[
                     {"content": EDIT_PROMPT_SYSTEM, "role": "system"},

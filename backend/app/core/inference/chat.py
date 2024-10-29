@@ -13,43 +13,51 @@ import os
 import re
 from typing import List
 
+import pandas as pd
+from diskcache import FanoutCache
+from ibis.expr.types import Table
 from litellm import completion
+from mpire import WorkerPool
 from pydantic import BaseModel
 
 from app.core.dbt import LiveDBTParser
-from app.models import Asset, AssetLink, Column, ColumnLink, User
+from app.models import Asset, AssetLink, Column, ColumnLink, Resource, User
 from app.services.lineage_service import Lineage
+from app.utils.df import get_first_n_values, truncate_values
+from scripts.debug.pyinstrument import pyprofile
+from vinyl.lib.table import VinylTable
+
+cache = FanoutCache(directory="/cache", shards=10, timeout=300)
 
 SYSTEM_PROMPT = """
-You are an expert data analyst and data engineer who is a world expert at dbt (data build tool.
-You have mastery in writing sql, jinja, dbt macros and architecturing data pipelines using marts, star schema architecures and designs for efficient and effective analytics data pipelines.
-You will be provided with dbt project context that includes:
+You are an expert data analyst and data engineer who specializes in architecting data pipelines using dbt (data build tool). 
+
+You will be asked to provide your expertise to answer questions about a dbt project. For your task, you will be provided with dbt project context that includes:
 1. The data lineage
-2. table schemas 
-3. file contents
+2. Table schema and profiling info
+3. The current file's contents
 
 Rules:
-- Be as helpful as possible and answer all questions to the best of your ability.
-- Please reference the latest dbt documentation at docs.getdbt.com if needed
-- You may reference parts of the cntext that was passed in
 - You will only respond in markdown, using headers, paragraph, bulleted lists and sql/dbt code blocks if needed for the best answer quality possible
-- IMPORTANT: make sure all generate sql, dbt jinja examples or included code blocks are syntactically correct and will run on the target database postgres
-- You will be provided the sql dialect. Make sure to use it when writing any sql code.
+- IMPORTANT: Make sure to inspect the types and typical data in each column when writing sql code.
+- IMPORTANT: make sure all generate sql, dbt jinja examples or included code blocks are syntactically correct and will run in the sql dialect provided when writing any sql code.
 """
 
 EDIT_PROMPT_SYSTEM = """
-You are an expert data analyst and data engineer who is a world expert at dbt (data build tool).
-You have mastery in writing sql, jinja, dbt macros and architecturing data pipelines using marts, star schema architecures and designs for efficient and effective analytics data pipelines.
+You are an expert data analyst and data engineer who specializes in architecting data pipelines using dbt (data build tool). 
 
-You are given a dbt model file and a user request to edit the file.
+
+You will be given a dbt model file and a user request to edit the file. For your task, you will also be provided with more context on the dbt project:
+1. The data lineage
+2. Table schema and profiling info
+3. The current file's contents
 
 Rules:
 - You will only respond with the modified file contents. No markdown or natural language will be accepted except as comments
-- IMPORTANT: make sure all generate sql, dbt jinja examples or included code blocks are syntactically correct and will run on the target database postgres
-- IMPORTANT: only respond with the full modified file contents, no markdown allowed and no backticks
-- You will be given context for tables upstream and downstream of a current_file. current_file is the file to edit and no other files.
+- Only respond with the full modified file contents, no markdown allowed and no backticks
 - You are not allowed to tamper with the existing formatting
-- You will be provided the sql dialect. Make sure to use it when writing any sql code.
+- IMPORTANT: make sure to take into account the types and typical data in each column when making your edits.
+- IMPORTANT: make sure all generate sql, dbt jinja examples or included code blocks are syntactically correct and will run in the sql dialect provided when writing any sql code.
 """
 
 
@@ -95,22 +103,74 @@ def recreate_lineage_object(data: dict) -> Lineage:
     )
 
 
-def asset_md(lineage: Lineage, asset: Asset, contents: str):
-    columns = [c for c in lineage.columns if c.asset_id == asset.id]
-    column_table = (
-        "| Name | Type | Description |\n|-------------|-----------|-------------|\n"
+@cache.memoize(tag="query2")
+def run_query(query: str, resource_id: str):
+    resource = Resource.objects.get(id=resource_id)
+    connector = resource.details.get_connector()
+    return connector.sql_to_df(query)
+
+
+@cache.memoize(tag="eda2")
+def get_eda_sql(table: Table, column: str, dialect: str, topk: int = 5):
+    vinyltable = VinylTable(table._arg)
+    return vinyltable.eda(cols=[column], topk=topk, topk_col_name=False).to_sql(
+        dialect=dialect, node_name=""
     )
-    for column in columns:
-        column_table += (
-            f"| {column.name} | {column.type} | {column.description or ''} |\n"
+
+
+def get_asset_eda(asset: Asset, resource: Resource, topk: int = 5):
+    db, schema, table = asset.db_location
+    connector = resource.details.get_connector()
+    table = connector._get_table(database=db, schema=schema, table=table)
+    dialect = resource.details.subtype
+    sqls = [get_eda_sql(table, col, dialect, topk) for col in table.columns]
+
+    with WorkerPool(n_jobs=10, start_method="threading", use_dill=True) as pool:
+        dfs = pool.imap_unordered(run_query, [(sql, resource.id) for sql in sqls])
+    df = pd.concat(dfs)
+    df["distinct_frac"] = df["distinct_frac"].round(3)
+
+    # Truncate max/min values that are too long
+    df["max"] = df["max"].apply(truncate_values())
+    df["min"] = df["min"].apply(truncate_values())
+
+    # For low cardinality columns, only show first value
+    def transform_row(row):
+        values, n_added = get_first_n_values()(row["top_values"])
+        return pd.Series(
+            {
+                "top_values": values,
+                "top_value_counts": row["top_value_counts"][:n_added],
+            }
         )
 
+    filter = (df["n_distinct"] > 1000) | (df["distinct_frac"] < 0.001)
+
+    df.loc[filter, ["top_values", "top_value_counts"]] = df[filter].apply(
+        transform_row,
+        axis=1,
+    )
+
+    # for non-json columns, truncate the values
+    filter = df["type"] != "json"
+    for col in ["min", "max"]:
+        df.loc[filter, col] = df.loc[filter, col].apply(truncate_values())
+    df.loc[filter, "top_values"] = df.loc[filter, col].apply(
+        lambda x: [truncate_values()(v) for v in x]
+    )
+    df.reset_index(drop=True)
+    df.sort_values(by="position", inplace=True)
+    return df
+
+
+def asset_md(asset: Asset, resource: Resource, contents: str):
+    column_table = get_asset_eda(asset, resource, 10).to_csv(index=False)
     description = asset.description or ""
     return f"""
 ## {asset.name}
 {description}
 
-## Schema
+## Schema and profiling info
 {column_table}
 
 ## Contents
@@ -164,6 +224,7 @@ def lineage_ascii(edges):
     return ascii_graph
 
 
+@pyprofile()
 def build_context(
     user: User,
     lineage: Lineage,
@@ -175,6 +236,7 @@ def build_context(
         return f"\nUser Instructions: {instructions}\n"
     workspace = user.current_workspace()
     dbt_details = workspace.get_dbt_details()
+    resource = dbt_details.resource
     with dbt_details.dbt_transition_context() as (
         transition,
         project_path,
@@ -184,6 +246,10 @@ def build_context(
         asset_mds = []
         # schemas
         for asset in lineage.assets:
+            # don't include the current asset
+            if asset.id == lineage.asset_id:
+                continue
+
             # find each file for the related assets
             manifest_node = LiveDBTParser.get_manifest_node(
                 transition.after, asset.unique_name
@@ -195,7 +261,13 @@ def build_context(
                 continue
             with open(path) as file:
                 contents = file.read()
-                asset_mds.append(asset_md(lineage, asset, contents))
+                asset_mds.append(
+                    asset_md(
+                        asset,
+                        resource,
+                        contents,
+                    )
+                )
 
         # lineage information
         edges = []
@@ -206,7 +278,7 @@ def build_context(
 
         dialect_md = f"""
 # Dialect
-Use the {dbt_details.resource.details.subtype} dialect when writing any sql code.
+Use the {resource.details.subtype} dialect when writing any sql code.
 """
 
         lineage_md = f"""
@@ -245,7 +317,7 @@ class Context(BaseModel):
 
 def chat_completion(user_prompt: str):
     return completion(
-        temperature=0.5,
+        temperature=0,
         model="gpt-4o",
         messages=[
             {"content": CHAT_PROMPT_NO_CONTEXT, "role": "system"},

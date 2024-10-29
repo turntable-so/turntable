@@ -179,7 +179,6 @@ django==5.0.6
     # via social-auth-app-django
 django-allauth==0.61.1
     # via dj-rest-auth
-django-cache-memoize==0.2.0
 django-cors-headers==4.4.0
 django-health-check==3.18.3
 django-invitations==2.1.0

@@ -21,6 +21,9 @@ exports/
 # DS Store files
 .DS_Store
 
+# cache files
+cache/**
+
 # Profiling info
 scripts/debug/profile/*
 
