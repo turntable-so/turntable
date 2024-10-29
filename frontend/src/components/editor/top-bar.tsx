@@ -29,6 +29,8 @@ import {
 import WorkspaceSwitcher from "../workspace-switcher";
 import BranchReviewDialog from "./branch-review-dialog";
 import { FilesProvider } from "@/app/contexts/FilesContext";
+import { Input } from "@/components/ui/input";
+import SearchBar from "@/components/editor/search-bar/search-bar";
 
 const AppContent = () => {
   const { appSidebarCollapsed } = useLayoutContext();
@@ -135,8 +137,10 @@ const EditorContent = () => {
               <p>Home</p>
             </TooltipContent>
           </Tooltip>
-          <BranchReviewDialog open={branchReviewDialogOpen} onOpenChange={setBranchReviewDialogOpen} />
-
+          <BranchReviewDialog
+            open={branchReviewDialogOpen}
+            onOpenChange={setBranchReviewDialogOpen}
+          />
           <Button
             onClick={() => setBranchReviewDialogOpen(true)}
             variant="ghost"
@@ -146,11 +150,8 @@ const EditorContent = () => {
             <div className="text-sm font-medium">posthog-events</div>
           </Button>
         </div>
+        <SearchBar />
         <div className=" flex justify-center items-start space-x-2 ">
-          {/* <Button variant='ghost' size='sm' className='bg-white w-full hover:bg-gray-200 flex items-center space-x-1'>
-                        <Search className='w-4 h-4' />
-                        <div className="text-xs ">Search & Commands (⌘K)</div>
-                    </Button> */}
           <Button
             variant="ghost"
             size="sm"
