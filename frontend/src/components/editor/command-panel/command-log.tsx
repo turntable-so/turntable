@@ -12,6 +12,7 @@ export default function CommandLog({
 
   const logs = commandHistory[selectedCommandIndex]?.logs || [];
   const showLoader = commandPanelState === "running" && logs.length === 0;
+  console.log({ showLoader, commandPanelState, logs: logs.length });
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {

@@ -76,7 +76,7 @@ export default function SearchBar() {
     isOpen && filteredSections.some((section) => section.items.length > 0);
 
   const onFileClick = (value: string) => {
-    console.log(`File clicked: ${value}`);
+
   };
 
   const onCommandClick = (value: string) => {

@@ -28,6 +28,7 @@ import { Button } from "../ui/button";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import CommandPanel from "./command-panel";
 import {LocalStorageKeys} from "@/app/constants/local-storage-keys";
+import {useBottomPanelTabs} from "@/components/editor/use-bottom-panel-tabs";
 
 const SkeletonLoadingTable = () => {
   return (
@@ -87,9 +88,7 @@ export default function BottomPanel({
   isLoading: boolean;
   queryPreviewError: string | null;
 }) {
-  const [activeTab, setActiveTab] = useLocalStorage<
-    "lineage" | "results" | "command"
-  >(LocalStorageKeys.bottomPanelTab, "lineage");
+  const [activeTab, setActiveTab] = useBottomPanelTabs();
 
   const { fetchFileBasedLineage, lineageData } = useLineage();
   const { activeFile } = useFiles();

@@ -21,6 +21,7 @@ import {
   addRecentCommand,
   getCommandOptions,
 } from "@/components/editor/command-panel/command-panel-options";
+import { useBottomPanelTabs } from "@/components/editor/use-bottom-panel-tabs";
 
 interface CommandPanelContextType {
   commandPanelState: CommandPanelState;
@@ -88,6 +89,7 @@ export const CommandPanelProvider: React.FC<CommandPanelProviderProps> = ({
     LocalStorageKeys.commandHistory,
     [],
   );
+  const [_, setActiveTab] = useBottomPanelTabs();
   const MAX_COMMAND_HISTORY_SIZE = 20;
 
   const addCommandToHistory = (newCommand: Command) => {
@@ -179,7 +181,6 @@ export const CommandPanelProvider: React.FC<CommandPanelProviderProps> = ({
       }
     },
     onError: ({ event }) => {
-      console.error("WebSocket error:", event);
       updateCommandLogById(
         newCommandIdRef.current,
         `WebSocket error: ${event}`,
@@ -191,8 +192,6 @@ export const CommandPanelProvider: React.FC<CommandPanelProviderProps> = ({
       setCommandPanelState("idling");
     },
   });
-
-  console.log({ commandPanelState });
 
   const _runCommandCore = (command?: string) => {
     const payloadCommand = command ?? inputValue;
@@ -231,6 +230,7 @@ export const CommandPanelProvider: React.FC<CommandPanelProviderProps> = ({
   };
 
   const runCommandFromSearchBar = (command: string) => {
+    setActiveTab("command");
     _runCommandCore(command);
   };
 
