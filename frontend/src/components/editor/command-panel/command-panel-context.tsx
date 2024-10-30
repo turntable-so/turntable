@@ -6,6 +6,7 @@ import type {
   CommandPanelState,
   CommandStatus,
 } from "./command-panel-types";
+import { LocalStorageKeys } from "@/app/constants/local-storage-keys";
 
 interface CommandPanelContextType {
   commandPanelState: CommandPanelState;
@@ -60,7 +61,7 @@ export const CommandPanelProvider: React.FC<CommandPanelProviderProps> = ({
     useState<CommandPanelState>("idling");
   const [selectedCommandIndex, setSelectedCommandIndex] = useState<number>(0);
   const [commandHistory, setCommandHistory] = useLocalStorage<Command[]>(
-    "command-history",
+    LocalStorageKeys.commandHistory,
     [],
   );
   const MAX_COMMAND_HISTORY_SIZE = 20;

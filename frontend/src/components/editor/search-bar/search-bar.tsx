@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
-
-interface Section {
-  title: string;
-  items: string[];
-}
+import { useLocalStorage } from "usehooks-ts";
+import type { Command } from "@/components/editor/command-panel/command-panel-types";
+import { LocalStorageKeys } from "@/app/constants/local-storage-keys";
+import { getTopNCommands } from "@/components/editor/search-bar/get-top-n-commands";
+import type { Section } from "@/components/editor/search-bar/types";
 
 export default function SearchBar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -12,24 +12,42 @@ export default function SearchBar() {
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [commandHistory, _] = useLocalStorage<Command[]>(
+    LocalStorageKeys.commandHistory,
+    [],
+  );
+
+  const topCommands = getTopNCommands({
+    commandHistory,
+    N: 5,
+  });
+  const allCommands = Array.from(new Set(commandHistory.map(({ command }) => command)));
 
   const sections: Section[] = [
-    { title: "Recent", items: ["Recent 1", "Recent 2", "Recent 3"] },
-    { title: "Commands", items: ["Command 1", "Command 2", "Command 3"] },
-    { title: "Files", items: ["File 1", "File 2", "File 3"] },
+    { title: "Files", topLevelItems: ["Wow"], allItems: ["Wow", "Panda", "ls"], type: "file" },
+    {
+      title: "Commands",
+      topLevelItems: topCommands,
+      allItems: allCommands,
+      type: "command",
+    },
   ];
 
+  // Adjusted code starts here
   const filteredSections = sections
     .map((section) => ({
       ...section,
-      items: section.items.filter((item) =>
-        item.toLowerCase().includes(searchTerm.toLowerCase())
-      ),
+      // Use 'topLevelItems' when searchTerm is empty, otherwise filter 'allItems'
+      items: searchTerm
+        ? section.allItems.filter((item) =>
+            item.toLowerCase().includes(searchTerm.toLowerCase()),
+          )
+        : section.topLevelItems,
     }))
     .filter((section) => section.items.length > 0);
 
   const flatItems = filteredSections.flatMap((section) =>
-    section.items.map((item) => ({ sectionTitle: section.title, item }))
+    section.items.map((item) => ({ sectionTitle: section.title, item })),
   );
 
   const showDropDown =
@@ -51,14 +69,12 @@ export default function SearchBar() {
         case "ArrowDown":
           e.preventDefault();
           setSelectedIndex((prevIndex) =>
-            prevIndex < flatItems.length - 1 ? prevIndex + 1 : prevIndex
+            prevIndex < flatItems.length - 1 ? prevIndex + 1 : prevIndex,
           );
           break;
         case "ArrowUp":
           e.preventDefault();
-          setSelectedIndex((prevIndex) =>
-            prevIndex > 0 ? prevIndex - 1 : 0
-          );
+          setSelectedIndex((prevIndex) => (prevIndex > 0 ? prevIndex - 1 : 0));
           break;
         case "Enter":
           if (selectedIndex >= 0) {
@@ -142,7 +158,7 @@ export default function SearchBar() {
                   return (
                     <div
                       key={item}
-                      className={`px-4 py-2 cursor-pointer text-sm ${
+                      className={`px-4 py-2 cursor-pointer ${
                         itemCounter === selectedIndex
                           ? "bg-gray-100"
                           : "hover:bg-gray-100"
@@ -152,7 +168,10 @@ export default function SearchBar() {
                         setIsOpen(false);
                       }}
                     >
-                      {item}
+                      <span className={"text-sm font-medium"}>{item}</span>{" "}
+                      {section.type === "command" ? (
+                        <span className={"text-xs ml-1"}>Click to run</span>
+                      ) : null}
                     </div>
                   );
                 })}

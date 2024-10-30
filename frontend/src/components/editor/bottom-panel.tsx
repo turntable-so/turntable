@@ -27,6 +27,7 @@ import { LineageView } from "../lineage/LineageView";
 import { Button } from "../ui/button";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import CommandPanelWrapper from "./command-panel";
+import {LocalStorageKeys} from "@/app/constants/local-storage-keys";
 
 const SkeletonLoadingTable = () => {
   return (
@@ -88,7 +89,7 @@ export default function BottomPanel({
 }) {
   const [activeTab, setActiveTab] = useLocalStorage<
     "lineage" | "results" | "command"
-  >("bottom-panel-tab", "lineage");
+  >(LocalStorageKeys.bottomPanelTab, "lineage");
 
   const { fetchFileBasedLineage, lineageData } = useLineage();
   const { activeFile } = useFiles();
