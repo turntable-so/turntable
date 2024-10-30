@@ -16,6 +16,7 @@ import {
   Network,
   Settings,
   Users,
+  Workflow,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -97,6 +98,12 @@ const links = [
     icon: FolderGit2,
     variant: "ghost",
     link: "/projects",
+  },
+  {
+    title: "Jobs",
+    icon: Workflow,
+    variant: "ghost",
+    link: "/jobs",
   },
   {
     title: "Lineage",
