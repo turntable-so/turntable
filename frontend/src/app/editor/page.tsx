@@ -23,6 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type React from "react";
 import { useLayoutContext } from "../contexts/LayoutContext";
 import { LineageProvider } from "../contexts/LineageContext";
+import { CommandPanelProvider } from "@/components/editor/command-panel/command-panel-context";
 
 const PromptBox = ({
   setPromptBoxOpen,
@@ -625,7 +626,9 @@ export default function EditorPage() {
   return (
     <FilesProvider>
       <LineageProvider>
-        <EditorPageContent />
+        <CommandPanelProvider>
+          <EditorPageContent />
+        </CommandPanelProvider>
       </LineageProvider>
     </FilesProvider>
   );

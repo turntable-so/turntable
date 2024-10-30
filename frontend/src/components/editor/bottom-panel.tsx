@@ -26,7 +26,7 @@ import { useLocalStorage } from "usehooks-ts";
 import { LineageView } from "../lineage/LineageView";
 import { Button } from "../ui/button";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
-import CommandPanelWrapper from "./command-panel";
+import CommandPanel from "./command-panel";
 import {LocalStorageKeys} from "@/app/constants/local-storage-keys";
 
 const SkeletonLoadingTable = () => {
@@ -259,7 +259,7 @@ export default function BottomPanel({
             </div>
           )}
           {activeTab === "command" && (
-            <CommandPanelWrapper bottomPanelHeight={bottomPanelHeight} />
+            <CommandPanel bottomPanelHeight={bottomPanelHeight} />
           )}
         </div>
       </Panel>

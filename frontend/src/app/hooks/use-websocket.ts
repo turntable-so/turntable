@@ -1,92 +1,116 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-interface UseWebSocketOptions {
-  onOpen?: (event: Event) => void;
-  onMessage?: (event: MessageEvent) => void;
-  onError?: (event: Event) => void;
-  onClose?: (event: CloseEvent) => void;
-  /**
-   * Timeout in milliseconds after which the WebSocket connection will be closed if no events are received.
-   */
-  timeout?: number;
-}
+type UseWebSocketOptions<P = undefined> = P extends undefined
+  ? {
+      onOpen?: (data: { event: Event }) => void;
+      onMessage?: (data: { event: MessageEvent }) => void;
+      onError?: (data: { event: Event }) => void;
+      onClose?: (data: { event: CloseEvent }) => void;
+    }
+  : {
+      onOpen?: (data: { event: Event; payload: P }) => void;
+      onMessage?: (data: { event: MessageEvent; payload: P }) => void;
+      onError?: (data: { event: Event; payload: P }) => void;
+      onClose?: (data: { event: CloseEvent; payload: P }) => void;
+    };
 
-export function useWebSocket(url: string, options?: UseWebSocketOptions) {
+export function useWebSocket<P = undefined>(
+  url: string,
+  options?: UseWebSocketOptions<P>,
+) {
   const ws = useRef<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState<boolean>(false);
-  const timeoutIdRef = useRef<number | null>(null);
+  const payloadRef = useRef<P | undefined>(undefined);
 
-  const startWebSocket = useCallback(() => {
-    if (ws.current) {
-      console.warn("WebSocket is already connected.");
-      return;
-    }
+  const startWebSocket = useCallback(
+    (payload: P extends undefined ? void : P) => {
+      if (ws.current) {
+        console.warn("WebSocket is already connected.");
+        return;
+      }
 
-    ws.current = new WebSocket(url);
+      payloadRef.current = payload as P;
 
-    ws.current.onopen = (event) => {
-      setIsConnected(true);
-      options?.onOpen?.(event);
+      ws.current = new WebSocket(url);
 
-      if (options?.timeout) {
-        if (timeoutIdRef.current) {
-          clearTimeout(timeoutIdRef.current);
+      ws.current.onopen = (event) => {
+        setIsConnected(true);
+        if (options?.onOpen) {
+          if (payloadRef.current !== undefined) {
+            // When P is defined
+            (options.onOpen as (data: { event: Event; payload: P }) => void)({
+              event,
+              payload: payloadRef.current,
+            });
+          } else {
+            // When P is undefined
+            (options.onOpen as (data: { event: Event }) => void)({ event });
+          }
         }
-        timeoutIdRef.current = window.setTimeout(() => {
-          console.warn(
-            "WebSocket timeout: No events received within the specified time.",
-          );
-          ws.current?.close();
-        }, options.timeout);
-      }
-    };
+      };
 
-    ws.current.onmessage = (event) => {
-      options?.onMessage?.(event);
-
-      if (options?.timeout) {
-        if (timeoutIdRef.current) {
-          clearTimeout(timeoutIdRef.current);
+      ws.current.onmessage = (event) => {
+        if (options?.onMessage) {
+          if (payloadRef.current !== undefined) {
+            // When P is defined
+            (
+              options.onMessage as (data: {
+                event: MessageEvent;
+                payload: P;
+              }) => void
+            )({
+              event,
+              payload: payloadRef.current,
+            });
+          } else {
+            // When P is undefined
+            (options.onMessage as (data: { event: MessageEvent }) => void)({
+              event,
+            });
+          }
         }
-        timeoutIdRef.current = window.setTimeout(() => {
-          console.warn(
-            "WebSocket timeout: No events received within the specified time.",
-          );
-          ws.current?.close();
-        }, options.timeout);
-      }
-    };
+      };
 
-    ws.current.onerror = (event) => {
-      options?.onError?.(event);
+      ws.current.onerror = (event) => {
+        if (options?.onError) {
+          if (payloadRef.current !== undefined) {
+            // When P is defined
+            (options.onError as (data: { event: Event; payload: P }) => void)({
+              event,
+              payload: payloadRef.current,
+            });
+          } else {
+            // When P is undefined
+            (options.onError as (data: { event: Event }) => void)({ event });
+          }
+        }
+      };
 
-      if (timeoutIdRef.current) {
-        clearTimeout(timeoutIdRef.current);
-        timeoutIdRef.current = null;
-      }
-    };
+      ws.current.onclose = (event) => {
+        setIsConnected(false);
+        ws.current = null;
 
-    ws.current.onclose = (event) => {
-      setIsConnected(false);
-      ws.current = null;
-      options?.onClose?.(event);
-
-      if (timeoutIdRef.current) {
-        clearTimeout(timeoutIdRef.current);
-        timeoutIdRef.current = null;
-      }
-    };
-  }, [url, options]);
+        if (options?.onClose) {
+          if (payloadRef.current !== undefined) {
+            // When P is defined
+            (options.onClose as (data: { event: Event; payload: P }) => void)({
+              event,
+              payload: payloadRef.current,
+            });
+          } else {
+            // When P is undefined
+            (options.onClose as (data: { event: Event }) => void)({ event });
+          }
+        }
+      };
+    },
+    [url, options],
+  );
 
   const stopWebSocket = useCallback(() => {
     if (ws.current) {
       ws.current.close();
       ws.current = null;
-    }
-
-    if (timeoutIdRef.current) {
-      clearTimeout(timeoutIdRef.current);
-      timeoutIdRef.current = null;
     }
   }, []);
 
@@ -106,13 +130,13 @@ export function useWebSocket(url: string, options?: UseWebSocketOptions) {
       if (ws.current) {
         ws.current.close();
       }
-
-      if (timeoutIdRef.current) {
-        clearTimeout(timeoutIdRef.current);
-        timeoutIdRef.current = null;
-      }
     };
   }, []);
 
-  return { startWebSocket, stopWebSocket, sendMessage, isConnected };
+  return {
+    startWebSocket,
+    stopWebSocket,
+    sendMessage,
+    isConnected,
+  };
 }

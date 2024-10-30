@@ -9,6 +9,7 @@ import type {
   Section,
   SectionType,
 } from "@/components/editor/search-bar/types";
+import { useCommandPanelContext } from "@/components/editor/command-panel/command-panel-context";
 
 export default function SearchBar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -16,11 +17,7 @@ export default function SearchBar() {
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [commandHistory] = useLocalStorage<Command[]>(
-    LocalStorageKeys.commandHistory,
-    [],
-  );
-
+  const { commandHistory, runCommandFromSearchBar } = useCommandPanelContext();
   const topCommands: Item[] = getTopNCommands({
     commandHistory,
     N: 5,
@@ -83,7 +80,7 @@ export default function SearchBar() {
   };
 
   const onCommandClick = (value: string) => {
-    console.log(`Command executed: ${value}`);
+    runCommandFromSearchBar(value);
   };
 
   const actionMap: Record<SectionType, (item: Item) => void> = {

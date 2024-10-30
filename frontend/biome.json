@@ -21,6 +21,9 @@
     "enabled": true,
     "rules": {
       "recommended": true,
+      "suspicious": {
+        "noConfusingVoidType": "off"
+      },
       "correctness": {
         "useExhaustiveDependencies": {
           "level": "off",
