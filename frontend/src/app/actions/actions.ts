@@ -4,8 +4,8 @@ import { fetcher } from "@/app/fetcher";
 import getUrl from "@/app/url";
 import { revalidateTag } from "next/cache";
 import { cookies } from "next/headers";
-import type { Settings } from "../settings/types";
 import { ProjectChanges } from "../contexts/FilesContext";
+import type { Settings } from "../settings/types";
 
 export async function createWorkspace(body: FormData) {
   const response = await fetcher("/workspaces/", {
@@ -500,7 +500,9 @@ type DbtQueryPreview = {
   error?: string;
 }
 
-export async function executeQueryPreview(dbtSql: string): Promise<DbtQueryPreview> {
+export async function executeQueryPreview(
+  dbtSql: string,
+): Promise<DbtQueryPreview> {
   const response = await fetcher(`/query/dbt/`, {
     cookies,
     method: "POST",
@@ -600,7 +602,7 @@ export async function makeMetabaseAssetEmbeddable(assetId: string) {
   return response.json();
 }
 
-type ProjectChanges = {
+export type ProjectChanges = {
   untracked: Array<{
     path: string;
     before: string;
@@ -616,7 +618,7 @@ type ProjectChanges = {
     before: string;
     after: string;
   }>;
-}
+};
 
 export async function getProjectChanges(): Promise<ProjectChanges> {
   const response = await fetcher(`/project/changes/`, {

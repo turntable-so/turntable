@@ -1,9 +1,9 @@
-import CommandLog from "./command-log";
-import { useCommandPanelContext } from "./command-panel-context";
-import CommandPanelInput from "./command-panel-input";
-import CommandPanelList from "./command-panel-list";
+import CommandLog from "@/components/editor/command-panel/command-log";
+import { useCommandPanelContext } from "@/components/editor/command-panel/command-panel-context";
+import CommandPanelInput from "@/components/editor/command-panel/command-panel-input";
+import CommandPanelList from "@/components/editor/command-panel/command-panel-list";
 
-export default function CommandPanelContent({
+export default function CommandPanel({
   bottomPanelHeight,
 }: { bottomPanelHeight: number | undefined }) {
   const { commandHistory } = useCommandPanelContext();

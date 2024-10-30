@@ -1,4 +1,4 @@
-import type React from "react";
+import { LocalStorageKeys } from "@/app/constants/local-storage-keys";
 import {
   type ReactNode,
   createContext,
@@ -7,7 +7,9 @@ import {
   useEffect,
   useState,
 } from "react";
+import { useLocalStorage } from "usehooks-ts";
 import {
+  type ProjectChanges,
   createFile,
   deleteFile,
   fetchFileContents,
@@ -15,6 +17,8 @@ import {
   getProjectChanges,
   persistFile,
 } from "../actions/actions";
+
+export const MAX_RECENT_COMMANDS = 5;
 
 type NodeType = "file" | "directory" | "url" | "loader" | "error";
 
@@ -46,7 +50,11 @@ type FilesContextType = {
     id,
     name,
     url,
-  }: { id: string; name: string; url: string }) => void;
+  }: {
+    id: string;
+    name: string;
+    url: string;
+  }) => void;
   openLoader: ({ id, name }: { id: string; name: string }) => void;
   closeFile: (file: OpenedFile) => void;
   activeFile: OpenedFile | null;
@@ -68,6 +76,7 @@ type FilesContextType = {
   createNewFileTab: () => void;
   changes: ProjectChanges | null;
   fetchChanges: () => void;
+  recentFiles: FileNode[]; // New state added here
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
@@ -77,9 +86,7 @@ type Changes = Array<{
   before: string;
   after: string;
   type: "untracked" | "modified" | "staged";
-}>
-
-
+}>;
 
 export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   children,
@@ -102,20 +109,30 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   );
   const [searchFileIndex, setSearchFileIndex] = useState<FileNode[]>([]);
   const [changes, setChanges] = useState<Changes | null>(null);
+  const [recentFiles, setRecentFiles] = useLocalStorage<FileNode[]>(
+    LocalStorageKeys.recentFiles,
+    [],
+  );
 
   const fetchChanges = async () => {
     const result = await getProjectChanges();
-    const flattenedChanges = result.untracked.map((change) => ({
-      ...change,
-      type: "untracked",
-    })).concat(result.modified.map((change) => ({
-      ...change,
-      type: "modified",
-    }))).concat(result.staged.map((change) => ({
-      ...change,
-      type: "staged",
-    })),
-    );
+    const flattenedChanges = result.untracked
+      .map((change) => ({
+        ...change,
+        type: "untracked",
+      }))
+      .concat(
+        result.modified.map((change) => ({
+          ...change,
+          type: "modified",
+        })),
+      )
+      .concat(
+        result.staged.map((change) => ({
+          ...change,
+          type: "staged",
+        })),
+      );
     setChanges(flattenedChanges as Changes);
   };
 
@@ -133,10 +150,12 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     };
 
     const flattenedFiles = flattenFileIndex(fileIndex);
-    const searchableFiles = flattenedFiles
-      .filter((file) => file.type === "file")
-      .filter((file) => !file.path.includes("dbt_packages/"))
-      .filter((file) => !file.path.includes("target/"));
+    const searchableFiles = flattenedFiles.filter(
+      (file) =>
+        file.type === "file" &&
+        !file.path.includes("dbt_packages/") &&
+        !file.path.includes("target/"),
+    );
     setSearchFileIndex(searchableFiles);
   };
 
@@ -156,11 +175,24 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
             isDirty: false,
             view: "edit",
           };
-          setOpenedFiles((prev) => [...prev, newFile]);
+          setOpenedFiles((prev) => {
+            return [...prev, newFile];
+          });
           setActiveFile(newFile);
         } else {
           setActiveFile(existingFile);
         }
+
+        setRecentFiles((prevRecentFiles) => {
+          const updatedRecentFiles = prevRecentFiles.filter(
+            (file) => file.path !== node.path,
+          );
+          updatedRecentFiles.unshift(node);
+          if (updatedRecentFiles.length > MAX_RECENT_COMMANDS) {
+            updatedRecentFiles.pop();
+          }
+          return updatedRecentFiles;
+        });
       }
     },
     [openedFiles],
@@ -240,10 +272,10 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         prev.map((f) =>
           f.node.path === path
             ? {
-              ...f,
-              content,
-              node: { ...f.node, type: newNodeType },
-            }
+                ...f,
+                content,
+                node: { ...f.node, type: newNodeType },
+              }
             : f,
         ),
       );
@@ -320,6 +352,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         createNewFileTab,
         changes,
         fetchChanges,
+        recentFiles,
       }}
     >
       {children}

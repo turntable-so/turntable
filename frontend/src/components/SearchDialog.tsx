@@ -27,8 +27,8 @@ export const BigQueryLogo = () => (
       y1="7.034"
       y2="120.789"
     >
-      <stop offset="0" stop-color="#4387fd" />
-      <stop offset="1" stop-color="#4683ea" />
+      <stop offset="0" stopColor="#4387fd" />
+      <stop offset="1" stopColor="#4683ea" />
     </linearGradient>
     <path
       d="M27.79 115.217L1.54 69.749a11.499 11.499 0 0 1 0-11.499l26.25-45.467a11.5 11.5 0 0 1 9.96-5.75h52.5a11.5 11.5 0 0 1 9.959 5.75l26.25 45.467a11.499 11.499 0 0 1 0 11.5l-26.25 45.467a11.5 11.5 0 0 1-9.959 5.749h-52.5a11.499 11.499 0 0 1-9.96-5.75z"

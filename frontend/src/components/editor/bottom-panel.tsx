@@ -1,5 +1,6 @@
 import { useFiles } from "@/app/contexts/FilesContext";
 import { useLineage } from "@/app/contexts/LineageContext";
+import { useBottomPanelTabs } from "@/components/editor/use-bottom-panel-tabs";
 import {
   Table,
   TableBody,
@@ -22,11 +23,10 @@ import { Fragment } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { Panel, PanelResizeHandle } from "react-resizable-panels";
 import useResizeObserver from "use-resize-observer";
-import { useLocalStorage } from "usehooks-ts";
 import { LineageView } from "../lineage/LineageView";
 import { Button } from "../ui/button";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
-import CommandPanelWrapper from "./command-panel";
+import CommandPanel from "./command-panel";
 
 const SkeletonLoadingTable = () => {
   return (
@@ -86,9 +86,7 @@ export default function BottomPanel({
   isLoading: boolean;
   queryPreviewError: string | null;
 }) {
-  const [activeTab, setActiveTab] = useLocalStorage<
-    "lineage" | "results" | "command"
-  >("bottom-panel-tab", "lineage");
+  const [activeTab, setActiveTab] = useBottomPanelTabs();
 
   const { fetchFileBasedLineage, lineageData } = useLineage();
   const { activeFile } = useFiles();
@@ -258,7 +256,7 @@ export default function BottomPanel({
             </div>
           )}
           {activeTab === "command" && (
-            <CommandPanelWrapper bottomPanelHeight={bottomPanelHeight} />
+            <CommandPanel bottomPanelHeight={bottomPanelHeight} />
           )}
         </div>
       </Panel>

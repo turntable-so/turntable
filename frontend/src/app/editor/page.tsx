@@ -17,6 +17,7 @@ import {
 } from "../contexts/FilesContext";
 import "@/components/ag-grid-custom-theme.css"; // Custom CSS Theme for Data Grid
 import BottomPanel from "@/components/editor/bottom-panel";
+import { CommandPanelProvider } from "@/components/editor/command-panel/command-panel-context";
 import EditorSidebar from "@/components/editor/editor-sidebar";
 import FileTabs from "@/components/editor/file-tabs";
 import { Textarea } from "@/components/ui/textarea";
@@ -623,11 +624,5 @@ function EditorPageContent() {
 }
 
 export default function EditorPage() {
-  return (
-    <FilesProvider>
-      <LineageProvider>
-        <EditorPageContent />
-      </LineageProvider>
-    </FilesProvider>
-  );
+  return <EditorPageContent />;
 }
