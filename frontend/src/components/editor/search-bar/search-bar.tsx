@@ -10,6 +10,7 @@ import type {
   SectionType,
 } from "@/components/editor/search-bar/types";
 import { useCommandPanelContext } from "@/components/editor/command-panel/command-panel-context";
+import { useFiles } from "@/app/contexts/FilesContext";
 
 export default function SearchBar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -17,12 +18,26 @@ export default function SearchBar() {
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  /*
+   * File logic
+   */
+  const { searchFileIndex } = useFiles();
+  const allFiles = searchFileIndex.map((file) => ({
+   value: file.path,
+   display: file.name
+  }));
+  // TODO make it the most recent 5
+  const topFiles = allFiles.slice(0, 5);
+
+  /*
+   * Command logic
+   */
   const { commandHistory, runCommandFromSearchBar } = useCommandPanelContext();
   const topCommands: Item[] = getTopNCommands({
     commandHistory,
     N: 5,
   });
-
   const allCommands = commandHistory.reduce((uniqueCommands, { command }) => {
     if (!uniqueCommands.some((item) => item.value === command)) {
       uniqueCommands.push({ value: command, display: command });
@@ -30,19 +45,14 @@ export default function SearchBar() {
     return uniqueCommands;
   }, [] as Item[]);
 
+  /*
+   * Define the sections
+   */
   const sections: Section[] = [
     {
       title: "Files",
-      topLevelItems: [
-        { value: "wow.txt", display: "Wow Text File" },
-        { value: "panda.png", display: "Panda Image" },
-      ],
-      allItems: [
-        { value: "wow.txt", display: "Wow Text File" },
-        { value: "panda.png", display: "Panda Image" },
-        { value: "ls", display: "List Files" },
-        { value: "wow2.txt", display: "Wow Text File 2" },
-      ],
+      topLevelItems: topFiles,
+      allItems: allFiles,
       type: "file",
     },
     {
@@ -75,9 +85,7 @@ export default function SearchBar() {
   const showDropDown =
     isOpen && filteredSections.some((section) => section.items.length > 0);
 
-  const onFileClick = (value: string) => {
-
-  };
+  const onFileClick = (value: string) => {};
 
   const onCommandClick = (value: string) => {
     runCommandFromSearchBar(value);
@@ -166,7 +174,7 @@ export default function SearchBar() {
   }, [isOpen]);
 
   return (
-    <div className="relative w-1/3">
+    <div className="relative w-[40%]">
       <Input
         ref={inputRef}
         type="text"

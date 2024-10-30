@@ -14,6 +14,7 @@ import {
   getFileIndex,
   getProjectChanges,
   persistFile,
+  type ProjectChanges,
 } from "../actions/actions";
 
 type NodeType = "file" | "directory" | "url" | "loader" | "error";
@@ -77,8 +78,7 @@ type Changes = Array<{
   before: string;
   after: string;
   type: "untracked" | "modified" | "staged";
-}>
-
+}>;
 
 export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   children,
@@ -104,17 +104,23 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
 
   const fetchChanges = async () => {
     const result = await getProjectChanges();
-    const flattenedChanges = result.untracked.map((change) => ({
-      ...change,
-      type: "untracked",
-    })).concat(result.modified.map((change) => ({
-      ...change,
-      type: "modified",
-    }))).concat(result.staged.map((change) => ({
-      ...change,
-      type: "staged",
-    })),
-    );
+    const flattenedChanges = result.untracked
+      .map((change) => ({
+        ...change,
+        type: "untracked",
+      }))
+      .concat(
+        result.modified.map((change) => ({
+          ...change,
+          type: "modified",
+        })),
+      )
+      .concat(
+        result.staged.map((change) => ({
+          ...change,
+          type: "staged",
+        })),
+      );
     setChanges(flattenedChanges as Changes);
   };
 
@@ -135,7 +141,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     const searchableFiles = flattenedFiles
       .filter((file) => file.type === "file")
       .filter((file) => !file.path.includes("dbt_packages/"))
-      .filter((file) => !file.path.includes("target/"))
+      .filter((file) => !file.path.includes("target/"));
     setSearchFileIndex(searchableFiles);
   };
 
@@ -239,10 +245,10 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         prev.map((f) =>
           f.node.path === path
             ? {
-              ...f,
-              content,
-              node: { ...f.node, type: newNodeType },
-            }
+                ...f,
+                content,
+                node: { ...f.node, type: newNodeType },
+              }
             : f,
         ),
       );

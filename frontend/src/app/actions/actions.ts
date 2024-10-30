@@ -603,7 +603,7 @@ export async function makeMetabaseAssetEmbeddable(assetId: string) {
   return response.json();
 }
 
-type ProjectChanges = {
+export type ProjectChanges = {
   untracked: Array<{
     path: string;
     before: string;
