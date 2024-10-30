@@ -1,10 +1,14 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useLocalStorage } from "usehooks-ts";
 import type { Command } from "@/components/editor/command-panel/command-panel-types";
 import { LocalStorageKeys } from "@/app/constants/local-storage-keys";
 import { getTopNCommands } from "@/components/editor/search-bar/get-top-n-commands";
-import type { Section } from "@/components/editor/search-bar/types";
+import type {
+  Item,
+  Section,
+  SectionType,
+} from "@/components/editor/search-bar/types";
 
 export default function SearchBar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -12,19 +16,38 @@ export default function SearchBar() {
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [commandHistory, _] = useLocalStorage<Command[]>(
+  const [commandHistory] = useLocalStorage<Command[]>(
     LocalStorageKeys.commandHistory,
     [],
   );
 
-  const topCommands = getTopNCommands({
+  const topCommands: Item[] = getTopNCommands({
     commandHistory,
     N: 5,
   });
-  const allCommands = Array.from(new Set(commandHistory.map(({ command }) => command)));
+
+  const allCommands = commandHistory.reduce((uniqueCommands, { command }) => {
+    if (!uniqueCommands.some((item) => item.value === command)) {
+      uniqueCommands.push({ value: command, display: command });
+    }
+    return uniqueCommands;
+  }, [] as Item[]);
 
   const sections: Section[] = [
-    { title: "Files", topLevelItems: ["Wow"], allItems: ["Wow", "Panda", "ls"], type: "file" },
+    {
+      title: "Files",
+      topLevelItems: [
+        { value: "wow.txt", display: "Wow Text File" },
+        { value: "panda.png", display: "Panda Image" },
+      ],
+      allItems: [
+        { value: "wow.txt", display: "Wow Text File" },
+        { value: "panda.png", display: "Panda Image" },
+        { value: "ls", display: "List Files" },
+        { value: "wow2.txt", display: "Wow Text File 2" },
+      ],
+      type: "file",
+    },
     {
       title: "Commands",
       topLevelItems: topCommands,
@@ -33,25 +56,40 @@ export default function SearchBar() {
     },
   ];
 
-  // Adjusted code starts here
   const filteredSections = sections
     .map((section) => ({
       ...section,
-      // Use 'topLevelItems' when searchTerm is empty, otherwise filter 'allItems'
       items: searchTerm
         ? section.allItems.filter((item) =>
-            item.toLowerCase().includes(searchTerm.toLowerCase()),
+            item.display.toLowerCase().includes(searchTerm.toLowerCase()),
           )
         : section.topLevelItems,
     }))
     .filter((section) => section.items.length > 0);
 
   const flatItems = filteredSections.flatMap((section) =>
-    section.items.map((item) => ({ sectionTitle: section.title, item })),
+    section.items.map((item) => ({
+      sectionTitle: section.title,
+      item,
+      type: section.type,
+    })),
   );
 
   const showDropDown =
     isOpen && filteredSections.some((section) => section.items.length > 0);
+
+  const onFileClick = (value: string) => {
+    console.log(`File clicked: ${value}`);
+  };
+
+  const onCommandClick = (value: string) => {
+    console.log(`Command executed: ${value}`);
+  };
+
+  const actionMap: Record<SectionType, (item: Item) => void> = {
+    file: (item) => onFileClick(item.value),
+    command: (item) => onCommandClick(item.value),
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -63,7 +101,9 @@ export default function SearchBar() {
         return;
       }
 
-      if (!isOpen) return;
+      if (!isOpen) {
+        return;
+      }
 
       switch (e.key) {
         case "ArrowDown":
@@ -79,8 +119,14 @@ export default function SearchBar() {
         case "Enter":
           if (selectedIndex >= 0) {
             const selectedItem = flatItems[selectedIndex];
-            setSearchTerm(selectedItem.item);
+            setSearchTerm(selectedItem.item.display);
             setIsOpen(false);
+
+            if (selectedItem.type === "file") {
+              onFileClick(selectedItem.item.value);
+            } else if (selectedItem.type === "command") {
+              onCommandClick(selectedItem.item.value);
+            }
           }
           break;
         case "Escape":
@@ -98,7 +144,6 @@ export default function SearchBar() {
     };
   }, [isOpen, selectedIndex, flatItems]);
 
-  // Handle clicks outside the component
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -146,38 +191,41 @@ export default function SearchBar() {
           ref={dropdownRef}
           className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg overflow-hidden"
         >
-          {(() => {
-            let itemCounter = -1;
-            return filteredSections.map((section) => (
-              <div key={section.title}>
-                <div className="px-4 py-2 font-semibold text-sm text-gray-600 border-t border-gray-300">
-                  {section.title}
+          {flatItems.map((flatItem, index) => {
+            const isFirstInSection =
+              index === 0 ||
+              flatItem.sectionTitle !== flatItems[index - 1].sectionTitle;
+
+            return (
+              <Fragment key={`${flatItem.sectionTitle}-${flatItem.item.value}`}>
+                {isFirstInSection && (
+                  <div className="px-4 py-2 font-semibold text-sm text-gray-600 border-t border-gray-300">
+                    {flatItem.sectionTitle}
+                  </div>
+                )}
+                <div
+                  className={`px-4 py-2 cursor-pointer ${
+                    index === selectedIndex
+                      ? "bg-gray-100"
+                      : "hover:bg-gray-100"
+                  }`}
+                  onMouseDown={() => {
+                    setSearchTerm(flatItem.item.display);
+                    setIsOpen(false);
+                    actionMap[flatItem.type]?.(flatItem.item);
+                  }}
+                >
+                  <span className={"text-sm font-medium"}>
+                    {flatItem.type === "command" ? "dbt " : null}
+                    {flatItem.item.display}
+                  </span>{" "}
+                  {flatItem.type === "command" ? (
+                    <span className={"text-xs ml-1"}>Click to run</span>
+                  ) : null}
                 </div>
-                {section.items.map((item) => {
-                  itemCounter++;
-                  return (
-                    <div
-                      key={item}
-                      className={`px-4 py-2 cursor-pointer ${
-                        itemCounter === selectedIndex
-                          ? "bg-gray-100"
-                          : "hover:bg-gray-100"
-                      }`}
-                      onMouseDown={() => {
-                        setSearchTerm(item);
-                        setIsOpen(false);
-                      }}
-                    >
-                      <span className={"text-sm font-medium"}>{item}</span>{" "}
-                      {section.type === "command" ? (
-                        <span className={"text-xs ml-1"}>Click to run</span>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
-            ));
-          })()}
+              </Fragment>
+            );
+          })}
         </div>
       )}
     </div>
