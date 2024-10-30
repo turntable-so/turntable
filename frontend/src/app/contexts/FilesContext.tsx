@@ -195,7 +195,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         });
       }
     },
-    [openedFiles, setRecentFiles],
+    [openedFiles],
   );
 
   const openUrl = useCallback(
