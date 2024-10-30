@@ -75,7 +75,7 @@ const TableauLogo = () => (
       clip-rule="evenodd"
       d="M44.3 53.2h2.8v-8h7.5v-2.5h-7.5v-8.1h-2.8v8.1h-7.4v2.5h7.4z"
       fill="#1f457e"
-      fill-rule="evenodd"
+      fillRule="evenodd"
     />
     <path
       d="M36.1 7.2V5.5h-5V0h-1.8v5.5h-5v1.7h5v5.5h1.8V7.2zM5 35.9h1.8v-5.5h5v-1.7h-5v-5.4H5v5.4H0v1.8l5-.1z"

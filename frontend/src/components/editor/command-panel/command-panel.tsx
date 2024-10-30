@@ -1,7 +1,7 @@
+import CommandLog from "@/components/editor/command-panel/command-log";
 import { useCommandPanelContext } from "@/components/editor/command-panel/command-panel-context";
 import CommandPanelInput from "@/components/editor/command-panel/command-panel-input";
 import CommandPanelList from "@/components/editor/command-panel/command-panel-list";
-import CommandLog from "@/components/editor/command-panel/command-log";
 
 export default function CommandPanel({
   bottomPanelHeight,

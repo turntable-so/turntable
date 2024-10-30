@@ -1,16 +1,17 @@
-import { Fragment, useEffect, useRef, useState } from "react";
-import { Input } from "@/components/ui/input";
-import { useLocalStorage } from "usehooks-ts";
-import type { Command } from "@/components/editor/command-panel/command-panel-types";
-import { LocalStorageKeys } from "@/app/constants/local-storage-keys";
+import { useFiles } from "@/app/contexts/FilesContext";
+import { useCommandPanelContext } from "@/components/editor/command-panel/command-panel-context";
 import { getTopNCommands } from "@/components/editor/search-bar/get-top-n-commands";
 import type {
+  CommandSection,
+  CommandValue,
+  FileSection,
+  FileValue,
+  FilteredSection,
+  FlatItem,
   Item,
-  Section,
-  SectionType,
 } from "@/components/editor/search-bar/types";
-import { useCommandPanelContext } from "@/components/editor/command-panel/command-panel-context";
-import { useFiles } from "@/app/contexts/FilesContext";
+import { Input } from "@/components/ui/input";
+import { Fragment, useEffect, useRef, useState } from "react";
 
 export default function SearchBar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -22,10 +23,13 @@ export default function SearchBar() {
   /*
    * File logic
    */
-  const { searchFileIndex } = useFiles();
-  const allFiles = searchFileIndex.map((file) => ({
-   value: file.path,
-   display: file.name
+  const { searchFileIndex, openFile } = useFiles();
+  const allFiles: Array<Item<FileValue>> = searchFileIndex.map((file) => ({
+    value: {
+      path: file.path,
+      name: file.name,
+    },
+    display: file.name,
   }));
   // TODO make it the most recent 5
   const topFiles = allFiles.slice(0, 5);
@@ -34,7 +38,7 @@ export default function SearchBar() {
    * Command logic
    */
   const { commandHistory, runCommandFromSearchBar } = useCommandPanelContext();
-  const topCommands: Item[] = getTopNCommands({
+  const topCommands: Array<Item<CommandValue>> = getTopNCommands({
     commandHistory,
     N: 5,
   });
@@ -43,38 +47,43 @@ export default function SearchBar() {
       uniqueCommands.push({ value: command, display: command });
     }
     return uniqueCommands;
-  }, [] as Item[]);
+  }, [] as Item<CommandValue>[]);
 
   /*
    * Define the sections
    */
-  const sections: Section[] = [
+  const sections = [
     {
       title: "Files",
       topLevelItems: topFiles,
       allItems: allFiles,
       type: "file",
-    },
+    } as FileSection,
     {
       title: "Commands",
       topLevelItems: topCommands,
       allItems: allCommands,
       type: "command",
-    },
+    } as CommandSection,
   ];
 
-  const filteredSections = sections
-    .map((section) => ({
-      ...section,
-      items: searchTerm
+  const filteredSections: FilteredSection[] = sections
+    .map((section) => {
+      const items = searchTerm
         ? section.allItems.filter((item) =>
             item.display.toLowerCase().includes(searchTerm.toLowerCase()),
           )
-        : section.topLevelItems,
-    }))
+        : section.topLevelItems;
+
+      return {
+        title: section.title,
+        items,
+        type: section.type,
+      } as FilteredSection;
+    })
     .filter((section) => section.items.length > 0);
 
-  const flatItems = filteredSections.flatMap((section) =>
+  const flatItems: FlatItem[] = filteredSections.flatMap((section) =>
     section.items.map((item) => ({
       sectionTitle: section.title,
       item,
@@ -85,15 +94,25 @@ export default function SearchBar() {
   const showDropDown =
     isOpen && filteredSections.some((section) => section.items.length > 0);
 
-  const onFileClick = (value: string) => {};
+  const resetState = () => {
+    setIsOpen(false);
+    setSearchTerm("");
+    setSelectedIndex(-1);
+    inputRef.current?.blur();
+  }
 
-  const onCommandClick = (value: string) => {
-    runCommandFromSearchBar(value);
+  const onFileClick = (item: FileValue) => {
+    openFile({
+      type: "file",
+      name: item.name,
+      path: item.path,
+    });
+    resetState();
   };
 
-  const actionMap: Record<SectionType, (item: Item) => void> = {
-    file: (item) => onFileClick(item.value),
-    command: (item) => onCommandClick(item.value),
+  const onCommandClick = (item: CommandValue) => {
+    runCommandFromSearchBar(item);
+    resetState();
   };
 
   useEffect(() => {
@@ -128,9 +147,9 @@ export default function SearchBar() {
             setIsOpen(false);
 
             if (selectedItem.type === "file") {
-              onFileClick(selectedItem.item.value);
+              onFileClick(selectedItem.item.value as FileValue);
             } else if (selectedItem.type === "command") {
-              onCommandClick(selectedItem.item.value);
+              onCommandClick(selectedItem.item.value as CommandValue);
             }
           }
           break;
@@ -202,7 +221,9 @@ export default function SearchBar() {
               flatItem.sectionTitle !== flatItems[index - 1].sectionTitle;
 
             return (
-              <Fragment key={`${flatItem.sectionTitle}-${flatItem.item.value}`}>
+              <Fragment
+                key={`${flatItem.sectionTitle}-${JSON.stringify(flatItem.item.value)}-${index}`}
+              >
                 {isFirstInSection && (
                   <div className="px-4 py-2 font-semibold text-sm text-gray-600 border-t border-gray-300">
                     {flatItem.sectionTitle}
@@ -217,7 +238,12 @@ export default function SearchBar() {
                   onMouseDown={() => {
                     setSearchTerm(flatItem.item.display);
                     setIsOpen(false);
-                    actionMap[flatItem.type]?.(flatItem.item);
+
+                    if (flatItem.type === "file") {
+                      onFileClick(flatItem.item.value as FileValue);
+                    } else if (flatItem.type === "command") {
+                      onCommandClick(flatItem.item.value as CommandValue);
+                    }
                   }}
                 >
                   <span className={"text-sm font-medium"}>

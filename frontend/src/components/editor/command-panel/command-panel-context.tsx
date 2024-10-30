@@ -1,6 +1,16 @@
+import { LocalStorageKeys } from "@/app/constants/local-storage-keys";
+import { useWebSocket } from "@/app/hooks/use-websocket";
+import getUrl from "@/app/url";
+import {
+  addRecentCommand,
+  getCommandOptions,
+} from "@/components/editor/command-panel/command-panel-options";
+import { useBottomPanelTabs } from "@/components/editor/use-bottom-panel-tabs";
+import { AuthActions } from "@/lib/auth";
 import {
   createContext,
   type Dispatch,
+  type FC,
   type ReactNode,
   type SetStateAction,
   useContext,
@@ -13,15 +23,6 @@ import type {
   CommandPanelState,
   CommandStatus,
 } from "./command-panel-types";
-import { LocalStorageKeys } from "@/app/constants/local-storage-keys";
-import { useWebSocket } from "@/app/hooks/use-websocket";
-import getUrl from "@/app/url";
-import { AuthActions } from "@/lib/auth";
-import {
-  addRecentCommand,
-  getCommandOptions,
-} from "@/components/editor/command-panel/command-panel-options";
-import { useBottomPanelTabs } from "@/components/editor/use-bottom-panel-tabs";
 
 interface CommandPanelContextType {
   commandPanelState: CommandPanelState;
@@ -77,7 +78,7 @@ interface CommandPanelProviderProps {
   children: ReactNode;
 }
 
-export const CommandPanelProvider: React.FC<CommandPanelProviderProps> = ({
+export const CommandPanelProvider: FC<CommandPanelProviderProps> = ({
   children,
 }) => {
   const [inputValue, setInputValue] = useState<string>("");

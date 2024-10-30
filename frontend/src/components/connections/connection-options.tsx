@@ -62,7 +62,7 @@ export const DuckDBLogo = () => (
         <g opacity="1" transform="matrix(1,0,0,1,150,150)">
           <path
             fill="rgb(0,0,0)"
-            fill-opacity="1"
+            fillOpacity="1"
             d=" M0,148 C0,148 0,148 0,148 C-81.85299682617188,148 -148,81.85399627685547 -148,0 C-148,-81.85399627685547 -81.85299682617188,-148 0,-148 C81.85399627685547,-148 148,-81.85399627685547 148,0 C148,81.85399627685547 81.85399627685547,148 0,148z"
           ></path>
         </g>
@@ -71,7 +71,7 @@ export const DuckDBLogo = () => (
         <g opacity="1" transform="matrix(1,0,0,1,119.19100189208984,150)">
           <path
             fill="rgb(255,240,0)"
-            fill-opacity="1"
+            fillOpacity="1"
             d=" M-61.31399917602539,0 C-61.31399917602539,33.827999114990234 -33.827999114990234,61.31399917602539 0,61.31399917602539 C33.82899856567383,61.31399917602539 61.31399917602539,33.827999114990234 61.31399917602539,0 C61.31399917602539,-33.827999114990234 33.82899856567383,-61.31399917602539 0,-61.31399917602539 C-33.827999114990234,-61.31399917602539 -61.31399917602539,-33.827999114990234 -61.31399917602539,0z"
           ></path>
         </g>
@@ -86,7 +86,7 @@ export const DuckDBLogo = () => (
         >
           <path
             fill="rgb(255,240,0)"
-            fill-opacity="1"
+            fillOpacity="1"
             d=" M3.4739999771118164,-21.898000717163086 C3.4739999771118164,-21.898000717163086 -25.52199935913086,-21.898000717163086 -25.52199935913086,-21.898000717163086 C-25.52199935913086,-21.898000717163086 -25.52199935913086,21.898000717163086 -25.52199935913086,21.898000717163086 C-25.52199935913086,21.898000717163086 3.4739999771118164,21.898000717163086 3.4739999771118164,21.898000717163086 C15.555999755859375,21.898000717163086 25.523000717163086,11.930000305175781 25.523000717163086,-0.1509999930858612 C25.523000717163086,-12.232999801635742 15.555999755859375,-21.898000717163086 3.4739999771118164,-21.898000717163086z"
           ></path>
         </g>
@@ -155,12 +155,12 @@ export const PowerBiLogo = ({
   >
     <defs>
       <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="linearGradient-1">
-        <stop stop-color="#EBBB14" offset="0%"></stop>
-        <stop stop-color="#B25400" offset="100%"></stop>
+        <stop stopColor="#EBBB14" offset="0%"></stop>
+        <stop stopColor="#B25400" offset="100%"></stop>
       </linearGradient>
       <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="linearGradient-2">
-        <stop stop-color="#F9E583" offset="0%"></stop>
-        <stop stop-color="#DE9800" offset="100%"></stop>
+        <stop stopColor="#F9E583" offset="0%"></stop>
+        <stop stopColor="#DE9800" offset="100%"></stop>
       </linearGradient>
       <path
         d="M346,604 L346,630 L320,630 L153,630 C138.640597,630 127,618.359403 127,604 L127,183 C127,168.640597 138.640597,157 153,157 L320,157 C334.359403,157 346,168.640597 346,183 L346,604 Z"
@@ -192,16 +192,16 @@ export const PowerBiLogo = ({
         ></feColorMatrix>
       </filter>
       <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="linearGradient-5">
-        <stop stop-color="#F9E68B" offset="0%"></stop>
-        <stop stop-color="#F3CD32" offset="100%"></stop>
+        <stop stopColor="#F9E68B" offset="0%"></stop>
+        <stop stopColor="#F3CD32" offset="100%"></stop>
       </linearGradient>
     </defs>
     <g
       id="PBI-Logo"
       stroke="none"
-      stroke-width="1"
+      strokeWidth="1"
       fill="none"
-      fill-rule="evenodd"
+      fillRule="evenodd"
     >
       <g id="Group" transform="translate(77.500000, 0.000000)">
         <rect
@@ -216,13 +216,13 @@ export const PowerBiLogo = ({
         <g id="Combined-Shape">
           <use
             fill="black"
-            fill-opacity="1"
+            fillOpacity="1"
             filter="url(#filter-4)"
             xlinkHref="#path-3"
           ></use>
           <use
             fill="url(#linearGradient-2)"
-            fill-rule="evenodd"
+            fillRule="evenodd"
             xlinkHref="#path-3"
           ></use>
         </g>
@@ -245,25 +245,25 @@ export const SqlMeshLogo = () => (
     xmlns="http://www.w3.org/2000/svg"
   >
     <path
-      fill-rule="evenodd"
+      fillRule="evenodd"
       clip-rule="evenodd"
       d="M0.932727 13.9523V11.0062C0.932727 6.98223 4.28727 3.60477 8.46545 3.60477C12.6436 3.60477 16.0003 6.98223 16.0003 11.0062V13.9523H18.2727V11.0062C18.2727 5.27655 13.8945 0.872726 8.46545 0.872726C3.03636 0.872726 -1.34468e-05 5.27655 -1.34468e-05 11.0062V13.9523H0.932727Z"
       fill="url(#paint0_linear_353_16501)"
     />
     <path
-      fill-rule="evenodd"
+      fillRule="evenodd"
       clip-rule="evenodd"
       d="M7.29091 13.9516V15.9764C7.29091 18.3193 9.49091 20.3945 12.1818 20.3945C14.8727 20.3945 17.0727 18.3193 17.0727 15.9764V13.9516H18.2727V15.9764C18.2727 20.0233 15.5636 23.1274 12.1818 23.1274C8.8 23.1274 6.09091 20.0233 6.09091 15.9764V13.9516H7.29091Z"
       fill="url(#paint1_linear_353_16501)"
     />
     <path
-      fill-rule="evenodd"
+      fillRule="evenodd"
       clip-rule="evenodd"
       d="M14.0364 13.9516V14.9641C14.0364 15.7095 14.6182 16.4913 15.5636 16.4913C16.5091 16.4913 17.0909 15.7095 17.0909 14.9641V13.9516H18.2909V14.9641C18.2909 17.4168 16.9818 19.2232 15.5636 19.2232C14.1455 19.2232 12.8364 17.4168 12.8364 14.9641V13.9516H14.0364Z"
       fill="#4579DF"
     />
     <path
-      fill-rule="evenodd"
+      fillRule="evenodd"
       clip-rule="evenodd"
       d="M0.932727 13.9531V11.9283C0.932727 9.58541 3.13273 7.51025 5.82364 7.51025C8.51455 7.51025 10.7145 9.58541 10.7145 11.9283V13.9531H11.9145V11.9283C11.9145 7.88136 9.20545 4.77734 5.82364 4.77734C2.44182 4.77734 -0.267273 7.88136 -0.267273 11.9283V13.9531H0.932727Z"
       fill="#4579DF"
@@ -293,8 +293,8 @@ export const SqlMeshLogo = () => (
         y2="14.5202"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stop-color="#162CC1" />
-        <stop offset="1" stop-color="#4D94FF" />
+        <stop stopColor="#162CC1" />
+        <stop offset="1" stopColor="#4D94FF" />
       </linearGradient>
       <linearGradient
         id="paint1_linear_353_16501"
@@ -304,8 +304,8 @@ export const SqlMeshLogo = () => (
         y2="22.3847"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stop-color="#162CC1" />
-        <stop offset="1" stop-color="#4D94FF" />
+        <stop stopColor="#162CC1" />
+        <stop offset="1" stopColor="#4D94FF" />
       </linearGradient>
     </defs>
   </svg>
@@ -427,7 +427,7 @@ export const TableauLogo = ({
       clip-rule="evenodd"
       d="M44.3 53.2h2.8v-8h7.5v-2.5h-7.5v-8.1h-2.8v8.1h-7.4v2.5h7.4z"
       fill="#1f457e"
-      fill-rule="evenodd"
+      fillRule="evenodd"
     />
     <path
       d="M36.1 7.2V5.5h-5V0h-1.8v5.5h-5v1.7h5v5.5h1.8V7.2zM5 35.9h1.8v-5.5h5v-1.7h-5v-5.4H5v5.4H0v1.8l5-.1z"

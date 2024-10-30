@@ -37,7 +37,9 @@ export default function RootLayout({
       pathName.includes("/signup") ||
       pathName.includes("/workspace") ? (
         <html lang="en" suppressHydrationWarning>
-          <head />
+          <head>
+            <link rel="shortcut icon" href="/images/favicon.ico" />
+          </head>
           <PHProvider>
             <body
               className={cn(
@@ -52,7 +54,9 @@ export default function RootLayout({
         </html>
       ) : (
         <html lang="en" suppressHydrationWarning>
-          <head />
+          <head>
+            <link rel="shortcut icon" href="/images/favicon.ico" />
+          </head>
           <PHProvider>
             <body
               className={cn(

@@ -1,5 +1,7 @@
+import { LocalStorageKeys } from "@/app/constants/local-storage-keys";
 import { useFiles } from "@/app/contexts/FilesContext";
 import { useLineage } from "@/app/contexts/LineageContext";
+import { useBottomPanelTabs } from "@/components/editor/use-bottom-panel-tabs";
 import {
   Table,
   TableBody,
@@ -27,8 +29,6 @@ import { LineageView } from "../lineage/LineageView";
 import { Button } from "../ui/button";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import CommandPanel from "./command-panel";
-import {LocalStorageKeys} from "@/app/constants/local-storage-keys";
-import {useBottomPanelTabs} from "@/components/editor/use-bottom-panel-tabs";
 
 const SkeletonLoadingTable = () => {
   return (

@@ -1,11 +1,12 @@
-import React, {useEffect, useRef, useState} from "react";
+import { useCommandPanelContext } from "@/components/editor/command-panel/command-panel-context";
+import React, { useEffect, useRef, useState } from "react";
 import CommandInput from "./command-input";
 import CommandPanelActionBtn from "./command-panel-action-btn";
-import {getCommandOptions} from "./command-panel-options";
-import {useCommandPanelContext} from "@/components/editor/command-panel/command-panel-context";
+import { getCommandOptions } from "./command-panel-options";
 
 export default function CommandPanelInput() {
-  const { inputValue, setInputValue, commandOptions, setCommandOptions } = useCommandPanelContext();
+  const { inputValue, setInputValue, commandOptions, setCommandOptions } =
+    useCommandPanelContext();
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
   const inputRef = useRef<HTMLInputElement>(null);

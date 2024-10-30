@@ -1,15 +1,16 @@
 import {
   CircleSlash,
-  Command as PlayIcon,
   CornerDownLeft,
   Loader2,
+  Command as PlayIcon,
 } from "lucide-react";
 import { useEffect } from "react";
 import { Button } from "../../ui/button";
 import { useCommandPanelContext } from "./command-panel-context";
 
 export default function CommandPanelActionBtn() {
-  const { commandPanelState, runCommand, inputValue } = useCommandPanelContext();
+  const { commandPanelState, runCommand, inputValue } =
+    useCommandPanelContext();
 
   const componentMap = {
     idling: (

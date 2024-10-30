@@ -1,4 +1,3 @@
-import type React from "react";
 import {
   type ReactNode,
   createContext,
@@ -8,13 +7,13 @@ import {
   useState,
 } from "react";
 import {
+  type ProjectChanges,
   createFile,
   deleteFile,
   fetchFileContents,
   getFileIndex,
   getProjectChanges,
   persistFile,
-  type ProjectChanges,
 } from "../actions/actions";
 
 type NodeType = "file" | "directory" | "url" | "loader" | "error";
@@ -138,10 +137,12 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     };
 
     const flattenedFiles = flattenFileIndex(fileIndex);
-    const searchableFiles = flattenedFiles
-      .filter((file) => file.type === "file")
-      .filter((file) => !file.path.includes("dbt_packages/"))
-      .filter((file) => !file.path.includes("target/"));
+    const searchableFiles = flattenedFiles.filter(
+      (file) =>
+        file.type === "file" &&
+        !file.path.includes("dbt_packages/") &&
+        !file.path.includes("target/"),
+    );
     setSearchFileIndex(searchableFiles);
   };
 
@@ -161,7 +162,9 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
             isDirty: false,
             view: "edit",
           };
-          setOpenedFiles((prev) => [...prev, newFile]);
+          setOpenedFiles((prev) => {
+            return [...prev, newFile]
+          });
           setActiveFile(newFile);
         } else {
           setActiveFile(existingFile);

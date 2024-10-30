@@ -1,4 +1,4 @@
 export const LocalStorageKeys = {
-    bottomPanelTab: "bottom-panel-tab",
-    commandHistory: "command-history",
-}
+  bottomPanelTab: "bottom-panel-tab",
+  commandHistory: "command-history",
+};

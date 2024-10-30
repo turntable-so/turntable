@@ -1,7 +1,9 @@
+import { CommandPanelProvider } from "@/components/editor/command-panel/command-panel-context";
 import AppContextProvider from "@/contexts/AppContext";
 import { LayoutProvider } from "../contexts/LayoutContext";
 import AppLayout from "./app-layout";
-import { CommandPanelProvider } from "@/components/editor/command-panel/command-panel-context";
+import { FilesProvider } from "../contexts/FilesContext";
+import {LineageProvider} from "@/app/contexts/LineageContext";
 
 export default function WorkspaceLayout({
   children,
@@ -9,9 +11,15 @@ export default function WorkspaceLayout({
   return (
     <LayoutProvider>
       <AppContextProvider>
-        <CommandPanelProvider>
-          <AppLayout>{children}</AppLayout>
-        </CommandPanelProvider>
+        <LayoutProvider>
+          <FilesProvider>
+            <LineageProvider>
+              <CommandPanelProvider>
+                <AppLayout>{children}</AppLayout>
+              </CommandPanelProvider>
+            </LineageProvider>
+          </FilesProvider>
+        </LayoutProvider>
       </AppContextProvider>
     </LayoutProvider>
   );
