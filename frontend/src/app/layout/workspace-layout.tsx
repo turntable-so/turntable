@@ -1,9 +1,9 @@
+import { LineageProvider } from "@/app/contexts/LineageContext";
 import { CommandPanelProvider } from "@/components/editor/command-panel/command-panel-context";
 import AppContextProvider from "@/contexts/AppContext";
+import { FilesProvider } from "../contexts/FilesContext";
 import { LayoutProvider } from "../contexts/LayoutContext";
 import AppLayout from "./app-layout";
-import { FilesProvider } from "../contexts/FilesContext";
-import {LineageProvider} from "@/app/contexts/LineageContext";
 
 export default function WorkspaceLayout({
   children,

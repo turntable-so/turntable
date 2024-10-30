@@ -1,3 +1,4 @@
+import { LocalStorageKeys } from "@/app/constants/local-storage-keys";
 import {
   type ReactNode,
   createContext,
@@ -6,6 +7,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { useLocalStorage } from "usehooks-ts";
 import {
   type ProjectChanges,
   createFile,
@@ -15,6 +17,8 @@ import {
   getProjectChanges,
   persistFile,
 } from "../actions/actions";
+
+export const MAX_RECENT_COMMANDS = 5;
 
 type NodeType = "file" | "directory" | "url" | "loader" | "error";
 
@@ -46,7 +50,11 @@ type FilesContextType = {
     id,
     name,
     url,
-  }: { id: string; name: string; url: string }) => void;
+  }: {
+    id: string;
+    name: string;
+    url: string;
+  }) => void;
   openLoader: ({ id, name }: { id: string; name: string }) => void;
   closeFile: (file: OpenedFile) => void;
   activeFile: OpenedFile | null;
@@ -68,6 +76,7 @@ type FilesContextType = {
   createNewFileTab: () => void;
   changes: ProjectChanges | null;
   fetchChanges: () => void;
+  recentFiles: FileNode[]; // New state added here
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
@@ -100,6 +109,10 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   );
   const [searchFileIndex, setSearchFileIndex] = useState<FileNode[]>([]);
   const [changes, setChanges] = useState<Changes | null>(null);
+  const [recentFiles, setRecentFiles] = useLocalStorage<FileNode[]>(
+    LocalStorageKeys.recentFiles,
+    [],
+  );
 
   const fetchChanges = async () => {
     const result = await getProjectChanges();
@@ -163,15 +176,26 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
             view: "edit",
           };
           setOpenedFiles((prev) => {
-            return [...prev, newFile]
+            return [...prev, newFile];
           });
           setActiveFile(newFile);
         } else {
           setActiveFile(existingFile);
         }
+
+        setRecentFiles((prevRecentFiles) => {
+          const updatedRecentFiles = prevRecentFiles.filter(
+            (file) => file.path !== node.path,
+          );
+          updatedRecentFiles.unshift(node);
+          if (updatedRecentFiles.length > MAX_RECENT_COMMANDS) {
+            updatedRecentFiles.pop();
+          }
+          return updatedRecentFiles;
+        });
       }
     },
-    [openedFiles],
+    [openedFiles, setRecentFiles],
   );
 
   const openUrl = useCallback(
@@ -328,6 +352,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         createNewFileTab,
         changes,
         fetchChanges,
+        recentFiles,
       }}
     >
       {children}

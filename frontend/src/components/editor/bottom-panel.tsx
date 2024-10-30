@@ -1,4 +1,3 @@
-import { LocalStorageKeys } from "@/app/constants/local-storage-keys";
 import { useFiles } from "@/app/contexts/FilesContext";
 import { useLineage } from "@/app/contexts/LineageContext";
 import { useBottomPanelTabs } from "@/components/editor/use-bottom-panel-tabs";
@@ -24,7 +23,6 @@ import { Fragment } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { Panel, PanelResizeHandle } from "react-resizable-panels";
 import useResizeObserver from "use-resize-observer";
-import { useLocalStorage } from "usehooks-ts";
 import { LineageView } from "../lineage/LineageView";
 import { Button } from "../ui/button";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";

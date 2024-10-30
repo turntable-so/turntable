@@ -1,4 +1,4 @@
-import { useFiles } from "@/app/contexts/FilesContext";
+import { MAX_RECENT_COMMANDS, useFiles } from "@/app/contexts/FilesContext";
 import { useCommandPanelContext } from "@/components/editor/command-panel/command-panel-context";
 import { getTopNCommands } from "@/components/editor/search-bar/get-top-n-commands";
 import type {
@@ -23,7 +23,7 @@ export default function SearchBar() {
   /*
    * File logic
    */
-  const { searchFileIndex, openFile } = useFiles();
+  const { searchFileIndex, openFile, recentFiles } = useFiles();
   const allFiles: Array<Item<FileValue>> = searchFileIndex.map((file) => ({
     value: {
       path: file.path,
@@ -31,8 +31,13 @@ export default function SearchBar() {
     },
     display: file.name,
   }));
-  // TODO make it the most recent 5
-  const topFiles = allFiles.slice(0, 5);
+  const topFiles = recentFiles.map((file) => ({
+    value: {
+      path: file.path,
+      name: file.name,
+    },
+    display: file.name,
+  }));
 
   /*
    * Command logic
@@ -55,7 +60,10 @@ export default function SearchBar() {
   const sections = [
     {
       title: "Files",
-      topLevelItems: topFiles,
+      topLevelItems:
+        topFiles.length >= 2
+          ? topFiles
+          : allFiles.slice(0, MAX_RECENT_COMMANDS),
       allItems: allFiles,
       type: "file",
     } as FileSection,
@@ -99,7 +107,7 @@ export default function SearchBar() {
     setSearchTerm("");
     setSelectedIndex(-1);
     inputRef.current?.blur();
-  }
+  };
 
   const onFileClick = (item: FileValue) => {
     openFile({
