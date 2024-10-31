@@ -1,6 +1,6 @@
+import uvicorn
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
-from uvicorn import run
 
 
 class Command(BaseCommand):
@@ -30,4 +30,4 @@ class Command(BaseCommand):
             uvicorn_args["reload"] = True
             uvicorn_args["reload_excludes"] = ["/code/media/ws/"]
 
-        run("api.asgi:application", **uvicorn_args)
+        uvicorn.run("api.asgi:application", **uvicorn_args)
