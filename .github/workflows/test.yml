@@ -1,6 +1,9 @@
 name: Run Tests
 
-on: [pull_request]
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
