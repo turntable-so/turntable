@@ -28,7 +28,7 @@ def returns_helper(outs):
 
 @shared_task
 def run_dbt_command(
-    resource_id: str, dbt_resource_id: str, branch_id: str | None, command: str
+    resource_id: str, dbt_resource_id: str, command: str, branch_id: str | None = None
 ):
     dbt_resource = DBTResource.objects.get(id=dbt_resource_id)
     with dbt_resource.dbt_repo_context(branch_id=branch_id, isolate=True) as (
@@ -55,7 +55,10 @@ def run_dbt_command(
 
 @shared_task
 def run_dbt_commands(
-    resource_id: str, dbt_resource_id: str, branch_id: str | None, commands: list[str]
+    resource_id: str,
+    dbt_resource_id: str,
+    commands: list[str],
+    branch_id: str | None = None,
 ):
     outs = []
     for i, command in enumerate(commands):
@@ -63,8 +66,8 @@ def run_dbt_commands(
             run_dbt_command.s(
                 resource_id=resource_id,
                 dbt_resource_id=dbt_resource_id,
-                branch_id=branch_id,
                 command=command,
+                branch_id=branch_id,
             )
             .apply()
             .get()
