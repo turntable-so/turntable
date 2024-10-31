@@ -47,7 +47,7 @@
     "@types/uuid": "^9.0.8",
     "@uiw/codemirror-theme-quietlight": "^4.22.2",
     "@uiw/react-codemirror": "^4.22.2",
-    "ag-grid-community": "^32.0.1",
+    "ag-grid-community": "^32.2.0",
     "ag-grid-react": "^31.2.0",
     "ag-theme-balham.css": "link:ag-grid-community/styles/ag-theme-balham.css",
     "ai": "^3.1.14",

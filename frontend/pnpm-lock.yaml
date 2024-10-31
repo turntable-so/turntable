@@ -123,8 +123,8 @@ importers:
         specifier: ^4.22.2
         version: 4.22.2(@babel/runtime@7.24.7)(@codemirror/autocomplete@6.16.3(@codemirror/language@6.10.2)(@codemirror/state@6.4.1)(@codemirror/view@6.28.2)(@lezer/common@1.2.1))(@codemirror/language@6.10.2)(@codemirror/lint@6.8.1)(@codemirror/search@6.5.6)(@codemirror/state@6.4.1)(@codemirror/theme-one-dark@6.1.2)(@codemirror/view@6.28.2)(codemirror@6.0.1(@lezer/common@1.2.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       ag-grid-community:
-        specifier: ^32.0.1
-        version: 32.1.0
+        specifier: ^32.2.0
+        version: 32.2.0
       ag-grid-react:
         specifier: ^31.2.0
         version: 31.3.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -1883,14 +1883,14 @@ packages:
     engines: {node: '>=0.4.0'}
     hasBin: true
 
-  ag-charts-types@10.1.0:
-    resolution: {integrity: sha512-pk9ft8hbgTXJ/thI/SEUR1BoauNplYExpcHh7tMOqVikoDsta1O15TB1ZL4XWnl4TPIzROBmONKsz7d8a2HBuQ==}
+  ag-charts-types@10.2.0:
+    resolution: {integrity: sha512-PUqH1QtugpYLnlbMdeSZVf5PpT1XZVsP69qN1JXhetLtQpVC28zaj7ikwu9CMA9N9b+dBboA9QcjUQUJZVUokQ==}
 
   ag-grid-community@31.3.2:
     resolution: {integrity: sha512-GxqFRD0OcjaVRE1gwLgoP0oERNPH8Lk8wKJ1txulsxysEQ5dZWHhiIoXXSiHjvOCVMkK/F5qzY6HNrn6VeDMTQ==}
 
-  ag-grid-community@32.1.0:
-    resolution: {integrity: sha512-RVvkjRH61nuCXwIqTKQPqNbKR+8cGBKw7S1qmmMXsy0pCBAJaQn4kL3v31hKHxDtV4bPscBXLFKGnKzHuss0GQ==}
+  ag-grid-community@32.2.0:
+    resolution: {integrity: sha512-zr29DGo6U4JR6pSOgZrZWuN1CTWdpUCfZWWpF47us6MzdFWGN5gcdiXGw40wg9XMGacShNX1aW8o33S4yVkzMw==}
 
   ag-grid-react@31.3.2:
     resolution: {integrity: sha512-SFHN05bsXp901rIT00Fa6iQLCtyavoJiKaXEDUtAU5LMu+GTkjs/FPQBQ8754omgdDFr4NsS3Ri6QbqBne3rug==}
@@ -5227,13 +5227,13 @@ snapshots:
 
   acorn@8.12.0: {}
 
-  ag-charts-types@10.1.0: {}
+  ag-charts-types@10.2.0: {}
 
   ag-grid-community@31.3.2: {}
 
-  ag-grid-community@32.1.0:
+  ag-grid-community@32.2.0:
     dependencies:
-      ag-charts-types: 10.1.0
+      ag-charts-types: 10.2.0
 
   ag-grid-react@31.3.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
