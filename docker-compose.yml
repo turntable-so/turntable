@@ -114,11 +114,7 @@ services:
     <<: *common-backend
     ports:
       - "8000:8000"
-    command: >
-      /bin/sh -c "
-      python manage.py migrate &&
-      python manage.py custom_create_superuser &&
-      uvicorn api.asgi:application --host 0.0.0.0 --port 8000"
+    command: ["django-admin", "start"]
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/healthcheck/health/"]
       interval: 30s
@@ -268,7 +264,7 @@ services:
 
   flower:
     <<: *common-backend
-    command: ["python", "scripts/start_flower.py"]
+    command: ["django-admin", "flower"]
     depends_on:
       celery_worker:
         condition: service_healthy
