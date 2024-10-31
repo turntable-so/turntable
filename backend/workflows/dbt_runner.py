@@ -7,7 +7,6 @@ from app.models import Resource
 from app.models.resources import DBTCoreDetails
 from vinyl.lib.utils.files import load_orjson
 from workflows.hatchet import hatchet
-from workflows.utils.debug import spawn_workflow
 from workflows.utils.log import inject_workflow_run_logging
 
 
@@ -102,30 +101,3 @@ class DBTStreamerWorkflow:
                 command, should_terminate=should_terminate
             ):
                 context.put_stream(line)
-
-
-@hatchet.workflow(on_events=["test"], timeout="30m")
-@inject_workflow_run_logging(hatchet)
-class ParentWorkflow:
-    @hatchet.step()
-    def parent_step(self, context: Context):
-        resource_id = context.workflow_input()["resource_id"]
-        results = ["parent"]
-        for i in range(10):
-            results.append(
-                spawn_workflow(
-                    context,
-                    ChildWorkflow,
-                    {"a": str(i), "resource_id": resource_id},
-                    key=f"child{i}",
-                )
-            )
-        return results
-
-
-@hatchet.workflow(on_events=["test2"], timeout="30m")
-@inject_workflow_run_logging(hatchet)
-class ChildWorkflow:
-    @hatchet.step()
-    def child_step(self, context: Context):
-        return "child" + context.workflow_input()["a"]
