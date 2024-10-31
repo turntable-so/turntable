@@ -2,8 +2,6 @@
 
 import { fetcher } from "@/app/fetcher";
 
-const isDev = process.env.DEV ? true : false;
-
 export async function executeQuery(
   {
     notebook_id,

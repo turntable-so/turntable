@@ -1,6 +1,6 @@
 import useSession from "@/app/hooks/use-session";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import WorkspaceLayout from "./workspace-layout";
 
 export default function AuthenticatedAppLayout({
