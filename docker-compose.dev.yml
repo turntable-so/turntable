@@ -35,6 +35,7 @@ services:
     command: >
       /bin/sh -c "
       python manage.py migrate &&
+      python manage.py custom_create_superuser &&
       python manage.py seed_data &&
       uvicorn api.asgi:application --host 0.0.0.0 --port 8000 --reload --reload-exclude /code/media/ws/"
     environment:
@@ -112,6 +113,28 @@ services:
       - ./backend:/code
     stdin_open: true
     tty: true
+
+  celery_worker:
+    build:
+      args:
+        - ENV=dev
+    extends:
+      file: docker-compose.demo.yml
+      service: celery_worker
+    environment:
+      <<: *dev-credentials
+    volumes:
+      - ./backend:/code
+    stdin_open: true
+    tty: true
+
+  flower:
+    build:
+      args:
+        - ENV=dev
+    extends:
+      file: docker-compose.demo.yml
+      service: flower
 
   ## Test resources
   postgres_test_db:

@@ -16,6 +16,7 @@ Including another URLconf
 """
 
 from django.contrib import admin
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.urls import include, path, re_path
 from rest_framework import routers
 
@@ -23,12 +24,12 @@ from app.consumers import DBTCommandConsumer, WorkflowRunConsumer
 from app.views import (
     AssetViewSet,
     BlockViewSet,
+    EmbeddingViewSet,
     HealthCheckViewSet,
     InvitationViewSet,
     LineageViewSet,
     NotebookViewSet,
     ResourceViewSet,
-    EmbeddingViewSet,
     SSHViewSet,
     SyncResourceView,
     TestResourceView,
@@ -113,3 +114,5 @@ urlpatterns = [
     path("infer/", InferenceView.as_view(), name="inference"),
     path("", include(router.urls)),
 ]
+
+urlpatterns += staticfiles_urlpatterns()

@@ -124,12 +124,10 @@ services:
     extends:
       file: docker-compose.dev.yml
       service: api
-    build:
-      args:
-        - ENV=dev-internal
     command: >
       /bin/sh -c "
       python manage.py migrate &&
+      python manage.py custom_create_superuser &&
       python manage.py seed_data &&
       python manage.py seed_data_staging &&
       uvicorn api.asgi:application --host 0.0.0.0 --port 8000 --reload --reload-exclude /code/media/ws/"
@@ -184,12 +182,21 @@ services:
     extends:
       file: docker-compose.dev.yml
       service: worker
-    build:
-      args:
-        - ENV=dev-internal
     environment:
       <<: [*internal-credentials, *storage-credentials]
-      
+
+  celery_worker:
+    extends:
+      file: docker-compose.dev.yml
+      service: celery_worker
+    environment:
+      <<: [*internal-credentials, *storage-credentials]
+
+  flower:
+    extends:
+      file: docker-compose.dev.yml
+      service: flower
+
   ## Test resources
   postgres_test_db:
     extends:

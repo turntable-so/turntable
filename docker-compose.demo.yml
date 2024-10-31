@@ -16,6 +16,7 @@ services:
       /bin/sh -c "
       python manage.py migrate &&
       python manage.py seed_data &&
+      python manage.py custom_create_superuser &&
       uvicorn api.asgi:application --host 0.0.0.0 --port 8000"
     depends_on:
       ensure_populate_test_db:
@@ -72,6 +73,16 @@ services:
         condition: service_completed_successfully
       metabase:
         condition: service_healthy
+
+  celery_worker:
+    extends:
+      file: docker-compose.yml
+      service: celery_worker
+
+  flower:
+    extends:
+      file: docker-compose.yml
+      service: flower
 
   ## Test resources
   postgres_test_db:
