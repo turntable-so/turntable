@@ -334,7 +334,7 @@ type QueryPreview = {
 };
 
 function EditorPageContent() {
-  const [leftWidth, setLeftWidth] = useState(15);
+  const [leftWidth, setLeftWidth] = useState(20);
   const [rightWidth, setRightWidth] = useState(20);
   const [branches, setBranches] = useState([]);
   const [activeBranch, setActiveBranch] = useState("");

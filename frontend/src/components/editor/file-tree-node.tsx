@@ -117,7 +117,7 @@ export default function Node({
         </div>
       )}
       {node.isLeaf && node.data.name.endsWith(".yml") && (
-        <FileText className="mr-1 h-4 w-4" />
+        <FileText className="mr-1 h-4 w-4 flex-shrink-0" />
       )}
       {node.isLeaf &&
         !node.data.name.endsWith(".sql") &&

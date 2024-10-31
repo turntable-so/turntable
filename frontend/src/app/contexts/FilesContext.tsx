@@ -92,22 +92,28 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [files, setFiles] = useState<FileNode[]>([]);
-  const [openedFiles, setOpenedFiles] = useState<OpenedFile[]>([
-    {
-      node: {
-        name: "New tab",
-        path: `Untitled-${crypto.randomUUID()}`,
-        type: "file",
+  const [openedFiles, setOpenedFiles] = useLocalStorage<OpenedFile[]>(
+    LocalStorageKeys.fileTabs,
+    [
+      {
+        node: {
+          name: "New tab",
+          path: `Untitled-${crypto.randomUUID()}`,
+          type: "file",
+        },
+        content: "",
+        isDirty: false,
+        view: "new",
       },
-      content: "",
-      isDirty: false,
-      view: "new",
-    },
-  ]);
-  const [activeFile, setActiveFile] = useState<OpenedFile | null>(
+    ],
+  );
+  const [activeFile, setActiveFile] = useLocalStorage<OpenedFile | null>(
+    LocalStorageKeys.activeFile,
     openedFiles[0] || null,
   );
-  const [searchFileIndex, setSearchFileIndex] = useState<FileNode[]>([]);
+  const [searchFileIndex, setSearchFileIndex] = useState<FileNode[]>(
+    [],
+  );
   const [changes, setChanges] = useState<Changes | null>(null);
   const [recentFiles, setRecentFiles] = useLocalStorage<FileNode[]>(
     LocalStorageKeys.recentFiles,
@@ -272,10 +278,10 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         prev.map((f) =>
           f.node.path === path
             ? {
-                ...f,
-                content,
-                node: { ...f.node, type: newNodeType },
-              }
+              ...f,
+              content,
+              node: { ...f.node, type: newNodeType },
+            }
             : f,
         ),
       );
