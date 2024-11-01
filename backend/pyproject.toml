@@ -120,6 +120,7 @@ dev-dependencies = [
     "google-cloud-dataproc>=5.9.3",
     "pytest-django>=4.8.0",
     "harlequin>=1.23.1",
+    "pytest-xdist>=3.6.1",
 ]
 
 [tool.vinyl]

@@ -388,11 +388,18 @@ class DatabaseFileConnector(_FileConnector, _DatabaseConnector):
         # caching ensures we don't attach a database from the same path twice
         name = cls._get_db_name(path)
         if path.endswith(".duckdb") or path.endswith(".db"):
-            conn.attach(path, name, read_only=os.getenv("VINYL_READ_ONLY", False))
+            conn.attach(
+                path,
+                name,
+                read_only=os.getenv("VINYL_READ_ONLY") == "true",
+            )
 
         elif path.endswith(".sqlite"):
             conn.attach(
-                path, name, read_only=os.getenv("VINYL_READ_ONLY", False), sqlite=True
+                path,
+                name,
+                read_only=os.getenv("VINYL_READ_ONLY") == "true",
+                sqlite=True,
             )
 
         else:

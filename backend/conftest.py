@@ -189,5 +189,10 @@ def bypass_hatchet(monkeypatch):
 
 
 @pytest.fixture
+def vinyl_read_only(monkeypatch):
+    monkeypatch.setenv("VINYL_READ_ONLY", "true")
+
+
+@pytest.fixture
 def enable_django_allow_async_unsafe(monkeypatch):
     monkeypatch.setenv("DJANGO_ALLOW_ASYNC_UNSAFE", "true")

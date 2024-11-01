@@ -13,7 +13,7 @@ def test_correct_dataset():
     assert result == 100000
 
 
-def test_fill():
+def test_fill(vinyl_read_only):
     taxi = TaxiSample()
     query = taxi.aggregate(
         by=[taxi.store_and_fwd_flag],
@@ -31,7 +31,7 @@ def test_fill():
     )  # still some nulls left over since can't fill last row
 
 
-def test_metric():
+def test_metric(vinyl_read_only):
     taxi = TaxiSample()
     store = MetricStore()
     store = store.metric(

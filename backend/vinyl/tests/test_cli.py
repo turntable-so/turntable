@@ -11,7 +11,7 @@ def test_generate_sources():
     assert test() == {}
 
 
-def test_preview_model():
+def test_preview_model(vinyl_read_only):
     import vinyl.cli.preview as preview_cli
 
     preview_cli.preview_model(name="amount_base", twin=False, shutdown_seconds=1)
@@ -19,7 +19,7 @@ def test_preview_model():
     assert True
 
 
-def test_preview_metric():
+def test_preview_metric(vinyl_read_only):
     import vinyl.cli.preview as preview_cli
 
     preview_cli.preview_metric(name="fare_metrics", grain="days=1", shutdown_seconds=1)
