@@ -2,6 +2,7 @@
 import getUrl from "@/app/url";
 import { AuthActions } from "@/lib/auth";
 import { useEffect, useRef, useState } from "react";
+import jwt_decode from "jwt-decode"; // Import jwt-decode
 
 const baseUrl = getUrl();
 const protocol = process.env.NODE_ENV === "development" ? "ws" : "wss";
@@ -13,11 +14,30 @@ const useWorkflowUpdates = (workspaceId: string) => {
   const heartbeatInterval = useRef<number | null>(null);
   const reconnectTimeout = useRef<number | null>(null);
   const retryDelay = useRef<number>(2000); // Start with 2 seconds delay
-  const { getToken } = AuthActions();
-  const accessToken = getToken("access");
+  const { getToken, handleJWTRefresh, storeToken, removeTokens, isTokenExpired } = AuthActions();
 
-  const connectWebSocket = () => {
-    // Construct the WebSocket URL
+  const connectWebSocket = async () => {
+    let accessToken = getToken("access");
+
+    if (!accessToken || isTokenExpired(accessToken)) {
+      try {
+        // Refresh the token
+        const refreshResponse = await handleJWTRefresh();
+        const refreshData: any = await refreshResponse.json();
+        if (refreshData.access) {
+          accessToken = refreshData.access;
+          storeToken(accessToken as string, "access");
+        } else {
+          removeTokens();
+          return;
+        }
+      } catch (err) {
+        removeTokens();
+        return;
+      }
+    }
+
+    // Construct the WebSocket URL with the (possibly refreshed) token
     const base = new URL(baseUrl).host;
     const socketUrl = `${protocol}://${base}/ws/subscribe/${workspaceId}/?token=${accessToken}`;
 
@@ -54,9 +74,39 @@ const useWorkflowUpdates = (workspaceId: string) => {
       console.error("WebSocket error:", error);
     };
 
-    socket.onclose = () => {
+    socket.onclose = async (event) => {
       if (heartbeatInterval.current) {
         clearInterval(heartbeatInterval.current);
+      }
+
+      // If the close was due to authentication (e.g., token expired)
+      if (event.code === 4401 || event.code === 4001) { // Custom codes for authentication errors
+        // Attempt to refresh the token and reconnect
+        try {
+          const refreshResponse = await handleJWTRefresh();
+          const refreshData = await refreshResponse.json();
+          if (refreshResponse.ok && refreshData.access) {
+            accessToken = refreshData.access;
+            storeToken(accessToken, "access");
+            retryDelay.current = 2000; // Reset retry delay
+            connectWebSocket(); // Reconnect with new token
+            return;
+          } else {
+            // Token refresh failed
+            removeTokens();
+            if (typeof window !== "undefined") {
+              window.location.replace("/");
+            }
+            return;
+          }
+        } catch (err) {
+          // Handle errors during token refresh
+          removeTokens();
+          if (typeof window !== "undefined") {
+            window.location.replace("/");
+          }
+          return;
+        }
       }
 
       // RECONNECT with exponential backoff

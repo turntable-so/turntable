@@ -1,10 +1,25 @@
 import getUrl from "@/app/url";
 import { AuthActions } from "@/lib/auth";
 // Extract necessary functions from the AuthActions utility.
-const { handleJWTRefresh, storeToken, getToken, removeTokens } = AuthActions();
+const { handleJWTRefresh, storeToken, getToken, removeTokens, isTokenExpired } =
+  AuthActions();
 const baseUrl = getUrl();
 const fetchWithAuth = async (url: string, options = {} as any) => {
-  const token = getToken("access", options?.cookies);
+  let token = getToken("access", options?.cookies);
+
+  if (token && isTokenExpired(token as string)) {
+    try {
+      const { access } = (await (
+        await handleJWTRefresh(options?.cookies)
+      ).json()) as any;
+      storeToken(access, "access");
+      token = access;
+    } catch (e) {
+      removeTokens();
+      return;
+    }
+  }
+
   const headers = {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(options.headers || {}),
