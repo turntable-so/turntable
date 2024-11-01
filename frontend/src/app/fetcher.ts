@@ -9,7 +9,7 @@ const fetchWithAuth = async (url: string, options = {} as any) => {
 
   if (token && isTokenExpired(token as string)) {
     try {
-      console.log(`Token ${token} is expired, attempting a refresh`)
+      console.log(`Token ${token} is expired, attempting a refresh`);
       const { access, refresh } = (await (
         await handleJWTRefresh(options?.cookies)
       ).json()) as any;
