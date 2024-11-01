@@ -36,10 +36,10 @@ class ResourceViewSet(viewsets.ModelViewSet):
         data = resource_service.get(resource_id=pk)
         return Response(data)
 
-    def partial_update(self, request, pk=None):
+    def update(self, request, pk=None):
         workspace, resource_service = self._get_workspace_and_resource_service(request)
         data = request.data
-        resource = resource_service.partial_update(resource_id=pk, data=data)
+        resource = resource_service.update(resource_id=pk, data=data)
         serializer = self.get_serializer(resource)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
