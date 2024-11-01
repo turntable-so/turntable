@@ -13,7 +13,7 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         email = os.getenv("SUPERUSER_EMAIL")
         password = os.getenv("SUPERUSER_PASSWORD")
-        assert email and password, "SUPERUSER_EMAIL and SUPERUSER_PASSWORD must be set"
+        if not email or not password: raise EnvironmentError("SUPERUSER_EMAIL and SUPERUSER_PASSWORD must be set")
         if User.objects.filter(email=email).exists():
             self.stdout.write(self.style.WARNING("Superuser already exists"))
         else:
