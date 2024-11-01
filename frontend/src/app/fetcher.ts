@@ -1,5 +1,5 @@
 import getUrl from "@/app/url";
-import { AuthActions } from "@/lib/auth";
+import {AuthActions} from "@/lib/auth";
 // Extract necessary functions from the AuthActions utility.
 const { handleJWTRefresh, storeToken, getToken, removeTokens, isTokenExpired } =
   AuthActions();
@@ -9,12 +9,16 @@ const fetchWithAuth = async (url: string, options = {} as any) => {
 
   if (token && isTokenExpired(token as string)) {
     try {
-      const { access } = (await (
+      console.log(`Token ${token} is expired, attempting a refresh`)
+      const { access, refresh } = (await (
         await handleJWTRefresh(options?.cookies)
       ).json()) as any;
+      console.log("Got new tokens: ", { access, refresh });
       storeToken(access, "access");
+      storeToken(refresh, "refresh");
       token = access;
     } catch (e) {
+      console.error("Error during token refresh:", e.message);
       removeTokens();
       return;
     }
@@ -33,10 +37,11 @@ const fetchWithAuth = async (url: string, options = {} as any) => {
 
   if (response.status === 401) {
     try {
-      const { access } = (await (
+      const { access, refresh } = (await (
         await handleJWTRefresh(options?.cookies)
       ).json()) as any;
       storeToken(access, "access");
+      storeToken(refresh, "refresh");
 
       const retryHeaders = {
         ...headers,
@@ -49,17 +54,11 @@ const fetchWithAuth = async (url: string, options = {} as any) => {
       });
       if (retryResponse.status === 401) {
         removeTokens();
-        if (typeof window !== "undefined") {
-          window.location.replace("/");
-        }
       }
 
       return retryResponse.json();
     } catch (err) {
       removeTokens();
-      if (typeof window !== "undefined") {
-        window.location.replace("/");
-      }
     }
   }
 

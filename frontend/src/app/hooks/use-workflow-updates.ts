@@ -27,6 +27,7 @@ const useWorkflowUpdates = (workspaceId: string) => {
         if (refreshData.access) {
           accessToken = refreshData.access;
           storeToken(accessToken as string, "access");
+          storeToken(refreshData.refresh, "refresh");
         } else {
           removeTokens();
           return;
@@ -84,27 +85,22 @@ const useWorkflowUpdates = (workspaceId: string) => {
         // Attempt to refresh the token and reconnect
         try {
           const refreshResponse = await handleJWTRefresh();
-          const refreshData = await refreshResponse.json();
+          const refreshData: any = await refreshResponse.json();
           if (refreshResponse.ok && refreshData.access) {
             accessToken = refreshData.access;
             storeToken(accessToken, "access");
+            storeToken(refreshData.refresh, "refresh");
             retryDelay.current = 2000; // Reset retry delay
             connectWebSocket(); // Reconnect with new token
             return;
           } else {
             // Token refresh failed
             removeTokens();
-            if (typeof window !== "undefined") {
-              window.location.replace("/");
-            }
             return;
           }
         } catch (err) {
           // Handle errors during token refresh
           removeTokens();
-          if (typeof window !== "undefined") {
-            window.location.replace("/");
-          }
           return;
         }
       }
