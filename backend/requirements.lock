@@ -7,7 +7,6 @@
 #   all-features: false
 #   with-sources: false
 #   generate-hashes: false
-#   universal: false
 
 acryl-datahub==0.14.1
 adrf==0.1.7
@@ -26,6 +25,8 @@ aiosignal==1.3.1
     # via aiohttp
 aiostream==0.5.2
     # via hatchet-sdk
+amqp==5.2.0
+    # via kombu
 annotated-types==0.7.0
     # via pydantic
 anyio==4.6.0
@@ -69,6 +70,8 @@ beautifulsoup4==4.12.3
     # via bs4
 bidict==0.23.1
     # via turntable-spoonbill
+billiard==4.2.1
+    # via celery
 bitarray==2.9.2
     # via netext
 black==24.8.0
@@ -84,6 +87,10 @@ cached-property==1.5.2
 cachetools==5.5.0
     # via google-auth
     # via netext
+celery==5.4.0
+    # via django-celery-beat
+    # via django-celery-results
+    # via flower
 certifi==2024.8.30
     # via httpcore
     # via httpx
@@ -105,19 +112,31 @@ charset-normalizer==3.3.2
 click==8.1.7
     # via acryl-datahub
     # via black
+    # via celery
     # via click-default-group
+    # via click-didyoumean
+    # via click-plugins
+    # via click-repl
     # via litellm
     # via shandy-sqlfmt
     # via typer
     # via uvicorn
 click-default-group==1.2.4
     # via acryl-datahub
+click-didyoumean==0.3.1
+    # via celery
+click-plugins==1.1.1
+    # via celery
+click-repl==0.3.0
+    # via celery
 click-spinner==0.1.10
     # via acryl-datahub
 constantly==23.10.4
     # via twisted
 contourpy==1.3.0
     # via matplotlib
+cron-descriptor==1.4.5
+    # via django-celery-beat
 cryptography==43.0.1
     # via autobahn
     # via pyjwt
@@ -156,26 +175,33 @@ django==5.1.1
     # via dj-database-url
     # via dj-rest-auth
     # via django-allauth
+    # via django-celery-beat
+    # via django-celery-results
     # via django-cors-headers
     # via django-health-check
     # via django-invitations
     # via django-pgbulk
     # via django-polymorphic
     # via django-storages
+    # via django-timezone-field
     # via djangorestframework
     # via djangorestframework-simplejwt
     # via djoser
     # via social-auth-app-django
 django-allauth==0.61.1
     # via dj-rest-auth
+django-celery-beat==2.7.0
+django-celery-results==2.5.1
 django-cors-headers==4.4.0
 django-health-check==3.18.3
 django-invitations==2.1.0
 django-pgbulk==3.0.1
-django-polymorphic @ git+https://github.com/jazzband/django-polymorphic.git@1039f882b99f97bf657bd958c949ee6a3b00377a#egg=django-polymorphic
+django-polymorphic @ git+https://github.com/jazzband/django-polymorphic.git@1039f882b99f97bf657bd958c949ee6a3b00377a
 django-storages==1.14.4
 django-templated-mail==1.1.1
     # via djoser
+django-timezone-field==7.0
+    # via django-celery-beat
 djangorestframework==3.15.2
     # via adrf
     # via dj-rest-auth
@@ -198,6 +224,7 @@ fernet==1.0.1
 filelock==3.16.1
     # via huggingface-hub
     # via snowflake-connector-python
+flower==2.0.1
 fonttools==4.54.1
     # via matplotlib
 frozenlist==1.4.1
@@ -277,6 +304,8 @@ huggingface-hub==0.25.1
     # via tokenizers
 humanfriendly==10.0
     # via acryl-datahub
+humanize==4.11.0
+    # via flower
 hyperframe==6.0.1
     # via h2
 hyperlink==21.0.0
@@ -298,8 +327,9 @@ incremental==24.7.2
     # via twisted
 iniconfig==2.0.0
     # via pytest
-instructor==1.4.3
+instructor==1.6.2
 jinja2==3.1.4
+    # via instructor
     # via litellm
     # via shandy-sqlfmt
 jiter==0.5.0
@@ -317,6 +347,8 @@ jsonschema-specifications==2023.12.1
     # via jsonschema
 kiwisolver==1.4.7
     # via matplotlib
+kombu==5.4.2
+    # via celery
 lets-plot==4.4.1
 linkify-it-py==2.0.3
     # via markdown-it-py
@@ -433,6 +465,10 @@ posthog==3.6.6
     # via turntable-cli
 progressbar2==4.5.0
     # via acryl-datahub
+prometheus-client==0.21.0
+    # via flower
+prompt-toolkit==3.0.48
+    # via click-repl
 proto-plus==1.24.0
     # via google-api-core
     # via google-cloud-bigquery-storage
@@ -512,14 +548,18 @@ pyproj==3.6.1
 pytest==8.3.3
     # via pytest-asyncio
 pytest-asyncio==0.24.0
+python-crontab==3.2.0
+    # via django-celery-beat
 python-dateutil==2.9.0.post0
     # via acryl-datahub
     # via botocore
+    # via celery
     # via google-cloud-bigquery
     # via hatchet-sdk
     # via matplotlib
     # via pandas
     # via posthog
+    # via python-crontab
     # via realtime
     # via storage3
     # via turntable-cli
@@ -534,6 +574,7 @@ python3-openid==3.2.0
     # via django-allauth
     # via social-auth-core
 pytz==2024.2
+    # via flower
     # via pandas
     # via snowflake-connector-python
     # via turntable-spoonbill
@@ -548,6 +589,7 @@ pyyaml==6.0.2
 realtime==2.0.5
     # via supabase
 redis==5.1.0
+    # via celery
     # via channels-redis
     # via redis-cli
 redis-cli==1.0.1
@@ -665,7 +707,7 @@ supafunc==0.6.0
 tabulate==0.9.0
     # via acryl-datahub
     # via turntable-cli
-tenacity==8.5.0
+tenacity==9.0.0
     # via hatchet-sdk
     # via instructor
 termcolor==2.4.0
@@ -683,6 +725,8 @@ tomlkit==0.13.2
     # via snowflake-connector-python
 toolz==0.12.1
     # via turntable-spoonbill
+tornado==6.4.1
+    # via flower
 tqdm==4.66.5
     # via huggingface-hub
     # via mpire
@@ -724,6 +768,9 @@ typing-extensions==4.12.2
 typing-inspect==0.9.0
     # via acryl-datahub
 tzdata==2024.2
+    # via celery
+    # via django-celery-beat
+    # via kombu
     # via pandas
 uc-micro-py==1.0.3
     # via linkify-it-py
@@ -742,9 +789,15 @@ uvicorn==0.31.0
     # via sse-starlette
 uvloop==0.20.0
     # via uvicorn
+vine==5.1.0
+    # via amqp
+    # via celery
+    # via kombu
 watchdog==5.0.3
 watchfiles==0.24.0
     # via uvicorn
+wcwidth==0.2.13
+    # via prompt-toolkit
 websockets==13.1
     # via realtime
     # via uvicorn

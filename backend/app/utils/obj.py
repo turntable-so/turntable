@@ -12,7 +12,10 @@ ID_FIELD = "id"
 
 def make_values_serializable(val):
     if isinstance(val, dict):
-        return {k: make_values_serializable(v) for k, v in val.items()}
+        return {
+            make_values_serializable(k): make_values_serializable(v)
+            for k, v in val.items()
+        }
     elif isinstance(val, list):
         return [make_values_serializable(item) for item in val]
     elif isinstance(val, uuid.UUID):
