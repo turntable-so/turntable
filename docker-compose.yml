@@ -52,11 +52,16 @@ x-ai-credentials: &ai-credentials
 
 x-dev-credentials: &dev-credentials
   DEV: "false"
-  ENCRYPTION_KEY: ${ENCRYPTION_KEY}
   DJANGO_SETTINGS_MODULE: api.settings
   LOCAL_DB: "true"
   LOCAL_HOST: "true"
   LOCAL_REDIS: "true"
+  CLI_MODE: "false"
+  ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+  SUPERUSER_EMAIL: ${SUPERUSER_EMAIL}
+  SUPERUSER_PASSWORD: ${SUPERUSER_PASSWORD}
+
+
 
 x-redis-credentials: &redis-credentials
   REDIS_HOST: "redis"
@@ -110,10 +115,7 @@ services:
     <<: *common-backend
     ports:
       - "8000:8000"
-    command: >
-      /bin/sh -c "
-      python manage.py migrate &&
-      uvicorn api.asgi:application --host 0.0.0.0 --port 8000"
+    command: ["django-admin", "start"]
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/healthcheck/health/"]
       interval: 30s
@@ -133,6 +135,8 @@ services:
         condition: service_healthy
       worker:
         condition: service_started
+      celery_worker:
+        condition: service_healthy
     environment:
       <<: [*next-credentials, *telemetry-credentials]
 
@@ -259,6 +263,31 @@ services:
       api:
         condition: service_healthy
 
+  celery_worker:
+    <<: *common-backend
+    command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info"]
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "celery", "-A", "app.celery_app", "status"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+
+  flower:
+    <<: *common-backend
+    command: ["django-admin", "flower"]
+    depends_on:
+      celery_worker:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "5555:5555"
+
   ready:
     image: busybox:latest
     command: sh -c "echo 'The app is ready! Visit http://localhost:3000/ to get started'"
@@ -270,6 +299,8 @@ services:
         condition: service_started
       worker:
         condition: service_started
+      celery_worker:
+        condition: service_healthy
 
 volumes:
   postgres_data:

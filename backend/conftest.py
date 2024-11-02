@@ -22,6 +22,8 @@ from workflows.utils.debug import ContextDebugger
 
 MOCK_WORKSPACE_ID = "mock_"
 
+pytest_plugins = ["celery.contrib.pytest"]
+
 
 def pytest_addoption(parser):
     parser.addoption(
