@@ -23,6 +23,9 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
+# Install juicefs
+RUN curl -sSL https://d.juicefs.com/install | sh - 
+
 # Install uv
 ADD --chmod=755 https://astral.sh/uv/0.2.18/install.sh /install.sh
 RUN bash /install.sh && rm /install.sh

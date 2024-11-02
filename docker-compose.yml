@@ -11,6 +11,7 @@ x-storage-credentials: &storage-credentials
   AWS_S3_SECRET_ACCESS_KEY: &s3-key ${AWS_S3_SECRET_ACCESS_KEY:-minio_password}
   AWS_STORAGE_BUCKET_NAME: &s3-bucket ${AWS_STORAGE_BUCKET_NAME:-artifacts}
   AWS_S3_ENDPOINT_URL: &s3-url ${AWS_S3_ENDPOINT_URL:-http://minio:9000}
+  JUICEFS_BUCKET_NAME: ${JUICEFS_BUCKET_NAME:-juicefs}
 
   # minio replicas
   MINIO_ROOT_USER: *s3-id
@@ -187,17 +188,31 @@ services:
     volumes:
       - minio_data:/data
 
+  start_juicefs:
+    image: juicefs/juicefs:latest
+    depends_on:
+      - redis
+      - minio
+    environment:
+      <<: *storage-credentials
+    command: >
+      format --storage s3 --bucket $${AWS_S3_ENDPOINT_URL}
+      --access-key $${AWS_S3_ACCESS_KEY_ID} --secret-key $${AWS_S3_SECRET_ACCESS_KEY}
+      redis://redis:6379/6 $${JUICEFS_BUCKET_NAME}
+    restart: no
+
   createbuckets:
     image: minio/mc
     depends_on:
       - minio
     environment:
       <<: *storage-credentials
-    entrypoint: >
+    command: >
       /bin/sh -c "
       until (/usr/bin/mc config host add myminio $${MINIO_ENDPOINT} $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD}) do echo '...waiting...' && sleep 1; done;
       /usr/bin/mc mb --ignore-existing myminio/public-assets;
       /usr/bin/mc mb --ignore-existing myminio/$${MINIO_BUCKET_NAME};
+      /usr/bin/mc mb --ignore-existing myminio/$${JUICEFS_BUCKET_NAME};
       /usr/bin/mc anonymous set public myminio/public-assets;
       exit 0;
       "

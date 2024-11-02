@@ -10,7 +10,6 @@ from contextlib import contextmanager
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from django.conf import settings
 from django.db import models, transaction
 from git import Repo as GitRepo
 from git.exc import GitCommandError
@@ -186,7 +185,7 @@ class Branch(models.Model):
             with tempfile.TemporaryDirectory() as temp_dir:
                 yield os.path.join(temp_dir, path)
         else:
-            yield os.path.join(settings.MEDIA_ROOT, path)
+            yield os.path.join(path)
 
     @contextmanager
     def repo_context(
