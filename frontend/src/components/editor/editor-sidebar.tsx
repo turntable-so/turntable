@@ -28,7 +28,7 @@ export default function EditorSidebar() {
     parentId,
     index,
     type,
-  }: { parentId: string; index: number; type: string }) => {};
+  }: { parentId: string; index: number; type: string }) => { };
   const onRename = ({ id, name }: { id: string; name: string }) => {
     console.log("renaming!", { id, name });
   };
@@ -111,7 +111,7 @@ export default function EditorSidebar() {
   return (
     <div className="h-full flex flex-col bg-muted">
       <ResizablePanelGroup direction="vertical" className="py-2">
-        <ResizablePanel defaultSize={50} minSize={30} maxSize={70}>
+        <ResizablePanel defaultSize={75} minSize={30} maxSize={75}>
           <div className="h-full w-full px-2">
             <div className="flex items-center space-x-2">
               <div className="px-1 text-black text-sm font-medium">Files </div>
@@ -125,7 +125,6 @@ export default function EditorSidebar() {
                 openByDefault={false}
                 indent={12}
                 ref={treeRef}
-                openNodes={[files[0]?.path]}
                 // @ts-ignore
                 onCreate={onCreate}
                 // @ts-ignore
@@ -143,7 +142,7 @@ export default function EditorSidebar() {
         <div className="px-2 pb-2">
           <ResizableHandle className="h-10" withHandle />
         </div>
-        <ResizablePanel defaultSize={70} minSize={30} maxSize={70}>
+        <ResizablePanel defaultSize={25} minSize={25} maxSize={70}>
           <div className="h-full w-full">
             <div className="flex items-center space-x-2 px-2">
               <div className="px-1 text-black text-sm font-medium">
