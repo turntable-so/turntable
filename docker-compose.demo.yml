@@ -49,6 +49,11 @@ services:
       file: docker-compose.yml
       service: createbuckets
 
+  juicefs:
+    extends:
+      file: docker-compose.yml
+      service: juicefs
+
   hatchet-lite:
     extends:
       file: docker-compose.yml

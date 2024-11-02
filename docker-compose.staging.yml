@@ -118,6 +118,13 @@ services:
     entrypoint: ["echo", "Service minio disabled"]
     restart: no
 
+  juicefs:
+    extends:
+      file: docker-compose.dev-internal.yml
+      service: juicefs
+    entrypoint: ["echo", "Service juicefs disabled"]
+    restart: no
+
   hatchet-lite:
     extends:
       file: docker-compose.dev-internal.yml

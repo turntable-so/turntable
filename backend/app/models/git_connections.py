@@ -10,6 +10,7 @@ from contextlib import contextmanager
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
+from django.conf import settings
 from django.db import models, transaction
 from git import Repo as GitRepo
 from git.exc import GitCommandError
@@ -175,7 +176,7 @@ class Branch(models.Model):
     @contextmanager
     def _code_repo_path(self, isolate: bool = False):
         path = os.path.join(
-            "ws",
+            settings.JUICEFS_MOUNT_POINT,
             str(self.workspace.id),
             str(self.repository.id),
             str(self.id),

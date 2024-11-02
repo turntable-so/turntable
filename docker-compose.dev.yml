@@ -37,6 +37,7 @@ services:
       <<: *dev-credentials
     volumes:
       - ./backend:/code
+      - ./ws1:/ws:rw,rshared
     stdin_open: true
     tty: true
 
@@ -76,6 +77,11 @@ services:
     extends:
       file: docker-compose.demo.yml
       service: minio
+
+  juicefs:
+    extends:
+      file: docker-compose.demo.yml
+      service: juicefs
 
   createbuckets:
     extends:

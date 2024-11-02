@@ -11,6 +11,9 @@
 .hatchetconfig
 private/
 
+# shared ws volumne
+.ws*
+
 # dependencies
 /node_modules
 /.pnp

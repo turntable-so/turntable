@@ -92,6 +92,7 @@ x-common-backend: &common-backend
         *redis-credentials,
         *dev-credentials,
       ]
+  privileged: true
   depends_on:
     postgres:
       condition: service_healthy
@@ -103,9 +104,9 @@ x-common-backend: &common-backend
       condition: service_completed_successfully
     redis:
       condition: service_healthy
-  volumes:
-    - .hatchetconfig:/.hatchetconfig
-    - code_repos:/data/code
+    juicefs:
+      condition: service_completed_successfully
+
 
 name: turntable
 
@@ -122,6 +123,9 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+    volumes:
+      - .hatchetconfig:/.hatchetconfig
+      - .ws1/:/.ws/
 
   web:
     build:
@@ -192,26 +196,15 @@ services:
     volumes:
       - minio_data:/data
 
-  start_juicefs:
-    image: juicefs/juicefs:latest
-    depends_on:
-      - redis
-      - minio
-    environment:
-      <<: *storage-credentials
-    command: >
-      format --storage s3 --bucket $${AWS_S3_ENDPOINT_URL}
-      --access-key $${AWS_S3_ACCESS_KEY_ID} --secret-key $${AWS_S3_SECRET_ACCESS_KEY}
-      redis://redis:6379/6 $${JUICEFS_BUCKET_NAME}
-    restart: no
 
   createbuckets:
     image: minio/mc
     depends_on:
-      - minio
+      minio:
+        condition: service_started
     environment:
       <<: *storage-credentials
-    command: >
+    entrypoint: >
       /bin/sh -c "
       until (/usr/bin/mc config host add myminio $${MINIO_ENDPOINT} $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD}) do echo '...waiting...' && sleep 1; done;
       /usr/bin/mc mb --ignore-existing myminio/public-assets;
@@ -221,6 +214,37 @@ services:
       exit 0;
       "
     restart: no
+
+  start-juicefs:
+    image: juicedata/mount:ce-v1.1.2
+    depends_on:
+      redis:
+        condition: service_healthy
+      createbuckets:
+        condition: service_completed_successfully
+    environment:
+      <<: *storage-credentials
+    entrypoint: >
+      juicefs format --storage s3 --bucket http://minio:9000/juicefs
+      --access-key minio_admin --secret-key minio_password
+      redis://redis:6379/6 myjfs
+
+  juicefs:
+    image: juicedata/mount:ce-v1.1.2
+    container_name: myjfs
+    cap_add:
+      - SYS_ADMIN
+    devices:
+      - /dev/fuse
+    security_opt: 
+      - apparmor:unconfined
+    command: ["juicefs", "mount", "redis://redis:6379/6", "/mnt"]
+    depends_on:
+      start-juicefs:
+        condition: service_completed_successfully
+    volumes:
+      - ./mnt:/mnt:rw,rshared
+    restart: unless-stopped
 
   hatchet-lite:
     image: ghcr.io/hatchet-dev/hatchet/hatchet-lite:latest
@@ -262,6 +286,8 @@ services:
     depends_on:
       api:
         condition: service_healthy
+    volumes:
+      - .hatchetconfig:/.hatchetconfig
 
   celery_worker:
     <<: *common-backend
@@ -276,6 +302,8 @@ services:
       interval: 10s
       timeout: 10s
       retries: 3
+    volumes:
+      - .hatchetconfig:/.hatchetconfig
 
   flower:
     <<: *common-backend
@@ -287,6 +315,8 @@ services:
         condition: service_healthy
     ports:
       - "5555:5555"
+    volumes:
+      - .hatchetconfig:/.hatchetconfig
 
   ready:
     image: busybox:latest

@@ -14,6 +14,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         call_command("migrate")
         call_command("custom_create_superuser")
+        # call_command("juicefs")
         call_command("collectstatic", interactive=False)
 
         if options["mode"] in ["demo", "dev"]:

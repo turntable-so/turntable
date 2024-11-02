@@ -313,13 +313,13 @@ if os.getenv("LOCAL_REDIS") == "true":
             int(os.getenv("REDIS_PORT", 6379)),
         )
     ]
-    redis_url = f"redis://{redis_hosts[0][0]}:{redis_hosts[0][1]}/"
+    REDIS_URL = f"redis://{redis_hosts[0][0]}:{redis_hosts[0][1]}/"
 else:
-    redis_url = os.getenv("REDIS_URL")
-    if not redis_url and os.getenv("LOCAL_REDIS") != "true":
+    REDIS_URL = os.getenv("REDIS_URL")
+    if not REDIS_URL and os.getenv("LOCAL_REDIS") != "true":
         raise ValueError("REDIS_URL is required if LOCAL_REDIS is not set to true")
-    parsed_url = urlparse(redis_url)
-    redis_hosts = [(redis_url)]
+    parsed_url = urlparse(REDIS_URL)
+    redis_hosts = [(parsed_url.hostname, parsed_url.port)]
 
 IS_TEST_MODE = "test" in sys.argv or "pytest" in sys.modules
 CHANNEL_LAYERS = {
@@ -334,8 +334,12 @@ CHANNEL_LAYERS = {
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
+# juicefs settings
+JUICEFS_MOUNT_POINT = "/.ws/"
+JUICEFS_REDIS_URL = REDIS_URL + os.getenv("JUICEFS_REDIS_CHANNEL", "6")
+
 # Celery settings
-CELERY_BROKER_URL = redis_url + os.getenv("CELERY_BROKER_CHANNEL", "10")
+CELERY_BROKER_URL = REDIS_URL + os.getenv("CELERY_BROKER_CHANNEL", "10")
 CELERY_RESULT_BACKEND = "django-db"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"

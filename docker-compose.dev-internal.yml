@@ -162,6 +162,13 @@ services:
     environment:
       <<: *storage-credentials
 
+  juicefs:
+    extends:
+      file: docker-compose.dev.yml
+      service: juicefs
+    environment:
+      <<: *storage-credentials
+
   hatchet-lite:
     extends:
       file: docker-compose.dev.yml
