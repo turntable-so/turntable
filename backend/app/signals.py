@@ -1,3 +1,4 @@
+import ast
 import json
 import os
 
@@ -27,8 +28,11 @@ def send_status_update(sender, instance, **task_kwargs):
 
     task_kwargs = json.loads(instance.task_kwargs)
     if isinstance(task_kwargs, str):
-        task_kwargs = task_kwargs.replace("'", '"')
-        task_kwargs = json.loads(task_kwargs)
+        try:
+            task_kwargs = ast.literal_eval(task_kwargs)
+        except (ValueError, SyntaxError):
+            task_kwargs = task_kwargs.replace("'", '"')
+            task_kwargs = json.loads(task_kwargs)
 
     if "workspace_id" not in task_kwargs:
         raise ValueError("Workspace ID is required as a kwarg on all tasks")

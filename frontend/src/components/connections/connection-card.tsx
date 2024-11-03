@@ -69,7 +69,7 @@ export default function ConnectionCard({
             <div className="float-right space-y-0">
               <div className="flex justify-end items-center space-x-2">
                 <div>
-                  {realStatus === "RUNNING" && (
+                  {realStatus === "STARTED" && (
                     <Badge
                       variant="secondary"
                       className="flex space-x-2 items-center font-medium text-sm"

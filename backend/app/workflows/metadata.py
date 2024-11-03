@@ -14,13 +14,18 @@ def prepare_dbt_repos(workspace_id: str, resource_id: str):
             dbt_repo.upload_artifacts()
 
 
-@shared_task
+@shared_task(bind=True)
 def ingest_metadata(
-    workspace_id: str, resource_id: str, workunits: int, workflow_run_id: str
+    self,
+    workspace_id: str,
+    resource_id: str,
+    workunits: int,
+    workflow_run_id: str | None = None,
 ):
     resource = Resource.objects.get(id=resource_id)
     resource.details.run_datahub_ingest(
-        workflow_run_id=workflow_run_id, workunits=workunits
+        workflow_run_id=self.request.id if not workflow_run_id else workflow_run_id,
+        workunits=workunits,
     )
 
 
@@ -36,13 +41,13 @@ def process_metadata(workspace_id: str, resource_id: str):
     DataHubDBParser.combine_and_upload([parser], resource)
 
 
-@shared_task
-def sync_metadata(workspace_id: str, resource_id: str):
+@shared_task(bind=True)
+def sync_metadata(self, workspace_id: str, resource_id: str):
     prepare_dbt_repos(workspace_id=workspace_id, resource_id=resource_id)
     ingest_metadata(
         workspace_id=workspace_id,
         resource_id=resource_id,
         workunits=1000,
-        workflow_run_id="0",
+        workflow_run_id=self.request.id,
     )
     process_metadata(workspace_id=workspace_id, resource_id=resource_id)

@@ -9,7 +9,7 @@ from api.asgi import application
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio
-@pytest.mark.usefixtures("bypass_hatchet", "local_postgres")
+@pytest.mark.usefixtures("custom_celery", "local_postgres")
 class TestDBTCommandConsumer:
     url = "/ws/dbt_command/"
 

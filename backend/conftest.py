@@ -11,6 +11,7 @@ from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import AccessToken
 
 from app.utils.test_utils import assert_ingest_output
+from app.workflows.metadata import process_metadata
 from app.workflows.tests.utils import TEST_QUEUE
 from fixtures.local_env import (
     create_local_metabase,
@@ -21,8 +22,6 @@ from fixtures.local_env import (
     create_ssh_key_n,
 )
 from fixtures.staging_env import group_1, group_2, group_3, group_4, group_5, group_6
-from workflows.metadata_sync import MetadataSyncWorkflow
-from workflows.utils.debug import ContextDebugger
 
 MOCK_WORKSPACE_ID = "mock_"
 
@@ -162,11 +161,7 @@ def prepopulated_dev_db(local_metabase, local_postgres):
                 f"{resource.details.subtype}.duckdb", f2, save=True
             )
 
-        input = {
-            "resource_id": resource.id,
-        }
-        context = ContextDebugger({"input": input})
-        MetadataSyncWorkflow().process_metadata(context)
+        process_metadata(resource_id=resource.id, workspace_id=resource.workspace.id)
 
     # ensure output
     assert_ingest_output(resources)
@@ -187,11 +182,6 @@ def use_cache(request):
 @pytest.fixture
 def force_isolate(monkeypatch):
     monkeypatch.setenv("FORCE_ISOLATE", "true")
-
-
-@pytest.fixture
-def bypass_hatchet(monkeypatch):
-    monkeypatch.setenv("BYPASS_HATCHET", "true")
 
 
 @pytest.fixture

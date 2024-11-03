@@ -76,3 +76,25 @@ def run_dbt_commands(
         )
         outs.append(out)
     return returns_helper(outs)
+
+
+@shared_task(bind=True)
+def stream_dbt_command(
+    self,
+    workspace_id: str,
+    branch_id: str,
+    dbt_resource_id: str,
+    command: str,
+):
+    dbt_resource = DBTResource.objects.get(id=dbt_resource_id)
+    with dbt_resource.dbt_transition_context(branch_id=branch_id) as (
+        transition,
+        project_dir,
+        _,
+    ):
+        for output_chunk in transition.after.stream_dbt_command(command):
+            # Update state with each chunk for streaming effect
+            self.update_state(state="PROGRESS", meta={"output_chunk": output_chunk})
+
+        # Final state indicating completion
+        return {"status": "Task complete"}
