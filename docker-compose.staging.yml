@@ -33,7 +33,7 @@ services:
     extends:
       file: docker-compose.dev-internal.yml
       service: api
-    command: ["django-admin", "start", "--mode", "staging"]
+    command: ["django-admin", "start_server", "--mode", "staging"]
     environment:
       <<: [*postgres-credentials, *storage-credentials, *hatchet-credentials]
 
@@ -62,6 +62,7 @@ services:
     extends:
       file: docker-compose.dev-internal.yml
       service: celery_worker
+    command: ["django-admin", "start_worker", "--mode", "staging"]
     environment:
       <<: [*postgres-credentials, *storage-credentials, *hatchet-credentials]
 

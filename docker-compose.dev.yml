@@ -32,7 +32,7 @@ services:
     build:
       args:
         - ENV=dev
-    command: ["django-admin", "start", "--mode", "dev"]
+    command: ["django-admin", "start_server", "--mode", "dev"]
     environment:
       <<: *dev-credentials
     volumes:
@@ -116,6 +116,7 @@ services:
     extends:
       file: docker-compose.demo.yml
       service: celery_worker
+    command: ["django-admin", "start_worker", "--mode", "dev"]
     environment:
       <<: *dev-credentials
     volumes:

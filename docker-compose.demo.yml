@@ -12,7 +12,7 @@ services:
     extends:
       file: docker-compose.yml
       service: api
-    command: ["django-admin", "start", "--mode", "demo"]
+    command: ["django-admin", "start_server", "--mode", "demo"]
     depends_on:
       ensure_populate_test_db:
         condition: service_completed_successfully
@@ -73,6 +73,7 @@ services:
     extends:
       file: docker-compose.yml
       service: celery_worker
+    command: ["django-admin", "start_worker", "--mode", "demo"]
 
   flower:
     extends:

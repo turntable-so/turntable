@@ -114,7 +114,7 @@ services:
     <<: *common-backend
     ports:
       - "8000:8000"
-    command: ["django-admin", "start"]
+    command: ["django-admin", "start_server"]
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/healthcheck/health/"]
       interval: 30s
@@ -250,14 +250,14 @@ services:
 
   celery_worker:
     <<: *common-backend
-    command: ["celery", "-A", "app.celery_app", "worker", "--loglevel=info"]
+    command: ["django-admin", "start_worker"]
     depends_on:
       api:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "celery", "-A", "app.celery_app", "status"]
+      test: ["CMD", "celery", "-A", "api", "status"]
       interval: 10s
       timeout: 10s
       retries: 3

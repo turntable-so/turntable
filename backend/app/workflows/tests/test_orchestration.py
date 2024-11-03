@@ -1,10 +1,11 @@
 import pytest
 
-from tasks.orchestration import run_dbt_commands
+from app.workflows.orchestration import run_dbt_commands
 
 
-@pytest.mark.django_db(transaction=True)
-def test_orchestration(celery_app, celery_worker, local_postgres):
+@pytest.mark.asyncio
+@pytest.mark.django_db
+def test_orchestration(celery_setup, local_postgres):
     resource = local_postgres
     workflow = run_dbt_commands.s(
         resource_id=resource.id,

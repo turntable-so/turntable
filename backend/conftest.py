@@ -1,13 +1,17 @@
+import logging
 import os
 import sys
 
 import django
 import pytest
+from celery import Celery
+from celery.contrib.testing.worker import start_worker
 from django.apps import apps
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import AccessToken
 
 from app.utils.test_utils import assert_ingest_output
+from app.workflows.tests.utils import TEST_QUEUE
 from fixtures.local_env import (
     create_local_metabase,
     create_local_postgres,
@@ -193,3 +197,68 @@ def bypass_hatchet(monkeypatch):
 @pytest.fixture
 def enable_django_allow_async_unsafe(monkeypatch):
     monkeypatch.setenv("DJANGO_ALLOW_ASYNC_UNSAFE", "true")
+
+
+@pytest.fixture
+def bypass_celery_beat(monkeypatch):
+    monkeypatch.setenv("BYPASS_CELERY_BEAT", "true")
+
+
+@pytest.fixture
+def custom_celery_app():
+    app = Celery("api")
+
+    # Load configuration from Django settings
+    app.config_from_object("django.conf:settings", namespace="CELERY")
+
+    app.conf.update(task_default_queue=TEST_QUEUE, task_always_eager=False)
+
+    app.autodiscover_tasks()
+
+    return app
+
+
+@pytest.fixture
+def suppress_celery_errors():
+    """
+    Suppress error logs from celery.worker.control and kombu.pidbox
+    by setting their log levels to CRITICAL.
+    """
+    loggers_to_suppress = [
+        "celery.worker.control",
+        "kombu.pidbox",
+        # You can add more loggers here if needed
+    ]
+
+    # Store original levels and update loggers
+    original_levels = {}
+    for logger_name in loggers_to_suppress:
+        logger = logging.getLogger(logger_name)
+        original_levels[logger_name] = logger.getEffectiveLevel()
+        logger.setLevel(logging.CRITICAL)
+
+    yield
+
+    # Restore original levels
+    for logger_name, original_level in original_levels.items():
+        logging.getLogger(logger_name).setLevel(original_level)
+
+
+@pytest.fixture
+def custom_celery_worker(
+    custom_celery_app,
+):
+    # Start the worker with the "test-queue" only
+    with start_worker(
+        custom_celery_app,
+        loglevel="info",
+        queues=[TEST_QUEUE],
+        perform_ping_check=False,
+        concurrency=1,
+    ) as worker:
+        yield worker
+
+
+@pytest.fixture
+def custom_celery(custom_celery_worker, bypass_celery_beat, suppress_celery_errors):
+    return custom_celery_worker

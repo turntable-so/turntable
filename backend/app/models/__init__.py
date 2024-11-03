@@ -35,4 +35,5 @@ from .user import (
     User,
     UserManager,
 )
+from .workflows import DBTOrchestrator, MetadataSyncWorkflow, ScheduledWorkflow
 from .workspace import Workspace, WorkspaceGroup

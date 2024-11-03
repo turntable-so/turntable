@@ -124,7 +124,9 @@ services:
     extends:
       file: docker-compose.dev.yml
       service: api
-    command: ["django-admin", "start", "--mode", "dev-internal"]
+    command: ["django-admin", "start_server", "--mode", "dev-internal"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     environment:
       <<: [*internal-credentials, *storage-credentials]
 
@@ -183,6 +185,7 @@ services:
     extends:
       file: docker-compose.dev.yml
       service: celery_worker
+    command: ["django-admin", "start_worker", "--mode", "dev-internal"]
     environment:
       <<: [*internal-credentials, *storage-credentials]
 

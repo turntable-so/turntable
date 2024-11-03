@@ -1,9 +1,9 @@
 from adrf.views import APIView
-from asgiref.sync import sync_to_async
 from rest_framework import status, viewsets
 from rest_framework.response import Response
 
 from api.serializers import ResourceSerializer
+from app.models.workflows import MetadataSyncWorkflow
 from app.services.resource_service import ResourceService
 
 
@@ -50,15 +50,17 @@ class ResourceViewSet(viewsets.ModelViewSet):
 
 
 class SyncResourceView(APIView):
-    @sync_to_async
     def get_current_workspace(self, user):
         return user.current_workspace()
 
-    async def post(self, request, resource_id):
-        workspace = await self.get_current_workspace(request.user)
-        resource_service = ResourceService(workspace=workspace)
-        job = await resource_service.sync_resource(resource_id=resource_id)
-        if job:
+    def post(self, request, resource_id):
+        workspace = self.get_current_workspace(request.user)
+
+        workflow = MetadataSyncWorkflow.schedule_now(
+            workspace=workspace, resource_id=resource_id
+        )
+        task_id = workflow.await_next_id(timeout=20)
+        if task_id:
             return Response(
                 {"detail": "Sync task started."}, status=status.HTTP_202_ACCEPTED
             )

@@ -336,8 +336,11 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 # Celery settings
 CELERY_BROKER_URL = redis_url + os.getenv("CELERY_BROKER_CHANNEL", "10")
+# CELERY_CACHE_BACKEND = "django-cache"
 CELERY_RESULT_BACKEND = "django-db"
-CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "UTC"  # Adjust to your timezone
+CELERY_TASK_TRACK_STARTED = True
+CELERY_RESULT_EXTENDED = True
