@@ -5,7 +5,8 @@ import pytest
 from django.conf import settings
 
 from app.models import Workspace
-from app.models.git_connections import Branch, SSHKey
+from app.models.repository import Branch
+from app.models.ssh_key import SSHKey
 from app.models.workspace import generate_short_uuid
 from app.utils.test_utils import require_env_vars
 

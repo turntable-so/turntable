@@ -1,5 +1,18 @@
 from __future__ import annotations
 
+import os
+import tempfile
+from contextlib import contextmanager
+import uuid
+
+import django.utils.timezone
+
+from app.models.user import User
+
+from .ssh_key import SSHKey
+from app.models.workspace import Workspace
+from django.db import models, transaction
+
 import logging
 import os
 import shutil
@@ -7,73 +20,13 @@ import tempfile
 import uuid
 from contextlib import contextmanager
 
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
 from django.conf import settings
-from django.db import models, transaction
+from django.db import models
 from git import Repo as GitRepo
 from git.exc import GitCommandError
-
 from app.models.workspace import Workspace
-from app.utils.fields import encrypt
 
 logger = logging.getLogger(__name__)
-
-
-def generate_rsa_key_pair():
-    # Generate a new RSA key pair
-    key = rsa.generate_private_key(
-        backend=default_backend(), public_exponent=65537, key_size=2048
-    )
-
-    # Serialize the public key
-    public_key = key.public_key().public_bytes(
-        encoding=serialization.Encoding.OpenSSH,
-        format=serialization.PublicFormat.OpenSSH,
-    )
-
-    private_key = key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.TraditionalOpenSSL,
-        encryption_algorithm=serialization.NoEncryption(),
-    )
-
-    return public_key.decode("utf-8"), private_key.decode("utf-8")
-
-
-class SSHKey(models.Model):
-    # pk
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
-    # fields
-    public_key = models.TextField()
-    # TODO: add encryption to this key
-    private_key = encrypt(models.TextField())
-
-    # relationships
-    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
-
-    class Meta:
-        indexes = [
-            models.Index(fields=["workspace_id"]),
-        ]
-
-    @classmethod
-    def generate_deploy_key(cls, workspace: Workspace):
-        ssh_key = cls.objects.filter(workspace=workspace).last()
-        if ssh_key is not None:
-            return ssh_key
-
-        public_key, private_key = generate_rsa_key_pair()
-        ssh_key = SSHKey.objects.create(
-            workspace=workspace,
-            public_key=public_key,
-            private_key=private_key,
-        )
-        logger.debug(f"SSH keys generated successfully for {workspace}")
-
-        return ssh_key
 
 
 class Repository(models.Model):
@@ -89,6 +42,10 @@ class Repository(models.Model):
         indexes = [
             models.Index(fields=["workspace_id"]),
         ]
+
+    def get_remote_branches(self):
+        with self.main_branch.repo_context() as (repo, env):
+            return [ref.remote_head for ref in repo.remote().refs]
 
     @property
     def repo_name(self):
@@ -126,6 +83,24 @@ class Repository(models.Model):
 
     def get_branch(self, branch_id: str) -> Branch:
         return self.branches.get(id=branch_id, workspace=self.workspace)
+
+    @property
+    def remote_branches(self):
+        with self.with_ssh_env() as env:
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                repo = GitRepo.init(tmp_dir)
+                # Get the raw ls-remote output and parse it
+                ls_remote_output = repo.git.ls_remote(
+                    "--heads", self.git_repo_url, env=env
+                )
+                # Convert the output to a list of branch names
+                branches = []
+                for line in ls_remote_output.split("\n"):
+                    if line.strip():
+                        # Each line is in format: "<commit-hash>\trefs/heads/<branch-name>"
+                        branch_name = line.split("refs/heads/")[-1]
+                        branches.append(branch_name)
+                return branches
 
     def test_repo_connection(self):
         with self.main_branch.repo_context() as (repo, env):
@@ -175,7 +150,10 @@ class Repository(models.Model):
 
 class Branch(models.Model):
     id = models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True)
-    branch_name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, null=False)
+    branch_name = models.CharField(max_length=255, null=False)
+    read_only = models.BooleanField(default=False)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
 
     # relationships
     repository = models.ForeignKey(
@@ -189,6 +167,27 @@ class Branch(models.Model):
     @property
     def is_main(self):
         return self.branch_name == self.repository.main_branch_name
+
+    @property
+    def is_cloned(self):
+        with self._code_repo_path() as path:
+            return os.path.exists(path)
+
+    def clone(self):
+        with self._code_repo_path() as path:
+            if os.path.exists(path) and ".git" in os.listdir(path):
+                raise Exception("Repository already cloned")
+
+            with self.repository.with_ssh_env() as env:
+                repo = GitRepo.clone_from(self.repository.git_repo_url, path, env=env)
+
+                # Fetch the latest changes from the remote
+                repo.remotes.origin.fetch(env=env)
+
+                # switch to the branch
+                self.switch_to_git_branch(repo_override=repo, env_override=env)
+
+        return True
 
     @contextmanager
     def _code_repo_path(self, isolate: bool = False):
@@ -248,23 +247,30 @@ class Branch(models.Model):
 
     def create_git_branch(
         self,
+        source_branch: str,
         isolate: bool = False,
         repo_override: GitRepo | None = None,
         env_override: dict[str, str] | None = None,
     ) -> str:
-        with self.repo_context(isolate, repo_override, env_override) as (repo, env):
-            # Fetch the latest changes from the remoteå
-            repo.remotes.origin.fetch(env=env)
-            remote_names = [r.remote_name for r in repo.remotes.origin.refs]
-            if self.branch_name in remote_names:
-                raise ValueError(f"Branch {self.branch_name} already exists")
+        with self.repository.with_ssh_env() as env:
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                print("SSH Environment:", {k: v for k, v in env.items() if "SSH" in k})
 
-            # Create and checkout the new branch
-            new_branch = repo.create_head(self.branch_name)
-            new_branch.checkout()
+                repo = GitRepo.init(tmp_dir)
 
-            # Push the new branch to the remote and set tracking branch
-            repo.git.push("--set-upstream", "origin", self.branch_name, env=env)
+                repo.git.fetch(
+                    self.repository.git_repo_url,
+                    f"{source_branch}:refs/remotes/origin/{source_branch}",
+                    env=env,
+                )
+
+                # Create and checkout new branch
+                repo.create_head(
+                    self.branch_name, f"refs/remotes/origin/{source_branch}"
+                )
+                repo.git.push(
+                    self.repository.git_repo_url, f"{self.branch_name}", env=env
+                )
 
             return self.branch_name
 

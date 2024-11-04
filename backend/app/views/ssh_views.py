@@ -1,6 +1,6 @@
 import logging
 
-from app.models.git_connections import Repository
+from app.models.repository import Repository
 from app.models.workspace import Workspace
 from api.serializers import SSHKeySerializer
 from rest_framework.response import Response

@@ -1,4 +1,5 @@
 from django.contrib.auth.models import Group, User
+from app.models import Branch
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from invitations.utils import get_invitation_model
 from rest_framework import serializers
@@ -428,3 +429,14 @@ class ResourceSerializer(serializers.HyperlinkedModelSerializer):
 
     def get_has_dbt(self, obj):
         return obj.has_dbt
+
+
+class BranchSerializer(serializers.ModelSerializer):
+
+    is_cloned = serializers.SerializerMethodField()
+    class Meta:
+        model = Branch
+        fields = ["id", "name", "branch_name", "read_only", "created_by", "is_cloned"]
+
+    def get_is_cloned(self, obj):
+        return obj.is_cloned

@@ -14,7 +14,7 @@ from django.core.files import File
 from django.db import models
 from polymorphic.models import PolymorphicModel
 
-from app.models.git_connections import Repository
+from app.models.repository import Repository
 from app.models.workspace import Workspace
 from app.utils.fields import encrypt
 from vinyl.lib.connect import (

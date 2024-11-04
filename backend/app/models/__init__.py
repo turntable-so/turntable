@@ -1,5 +1,3 @@
-from .editor import DBTQuery
-from .git_connections import Branch, Repository, SSHKey
 from .metadata import (
     Asset,
     AssetContainer,
@@ -10,6 +8,9 @@ from .metadata import (
     ColumnLink,
     ContainerMembership,
 )
+from .repository import Repository, Branch
+from .ssh_key import SSHKey
+from .query import DBTQuery, Query
 from .notebook import Block, Notebook
 from .resources import (
     BigqueryDetails,

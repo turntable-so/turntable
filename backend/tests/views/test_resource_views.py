@@ -9,14 +9,9 @@ from app.models import Repository, Resource, SSHKey
 @pytest.mark.django_db
 class TestResourceViews:
     @pytest.fixture
-    def dbt_repository_id(self, workspace):
+    def ssh_key(self, workspace):
         ssh_key = SSHKey.generate_deploy_key(workspace)
-        repository = Repository.objects.create(
-            workspace=workspace,
-            ssh_key=ssh_key,
-            git_repo_url="git@github.com:test/test.git",
-        )
-        return repository.id
+        return ssh_key
 
     @pytest.fixture
     def resource_id(self, client):
@@ -225,8 +220,7 @@ class TestResourceViews:
         assert response.status_code == 200
         assert response.data[-1]["has_dbt"] is True
 
-    def test_create_dbt_resource_get_details(self, client, resource_id, workspace):
-        ssh_key = SSHKey.generate_deploy_key(workspace)
+    def test_create_dbt_resource_get_details(self, client, resource_id, ssh_key):
         data = {
             "resource": {
                 "type": "db",
@@ -264,6 +258,66 @@ class TestResourceViews:
         assert (
             "public_key" in response.data["dbt_details"]["repository"]["ssh_key"].keys()
         )
+
+    def test_create_dbt_resource_default_main_branch_created(
+        self, client, resource_id, ssh_key
+    ):
+        data = {
+            "resource": {
+                "type": "db",
+            },
+            "subtype": "dbt",
+            "config": {
+                "resource_id": resource_id,
+                "repository": {
+                    "ssh_key": {
+                        "id": ssh_key.id,
+                        "public_key": ssh_key.public_key,
+                    },
+                    "git_repo_url": "git@github.com:hello/world.git",
+                    "main_branch_name": "main",
+                },
+                "project_path": "/",
+                "threads": 1,
+                "version": "1.6",
+                "database": "test",
+                "schema": "test",
+            },
+        }
+        response = client.post("/resources/", data, format="json")
+        assert response.status_code == 201
+
+        response = client.get(f"/branches/")
+        assert response.status_code == 200
+        assert len(response.data) == 1
+        assert response.data[0]["name"] == "main"
+
+    def test_create_dbt_resource_repo_created(self, client, resource_id, ssh_key):
+        data = {
+            "resource": {
+                "type": "db",
+            },
+            "subtype": "dbt",
+            "config": {
+                "resource_id": resource_id,
+                "repository": {
+                    "ssh_key": {
+                        "id": ssh_key.id,
+                        "public_key": ssh_key.public_key,
+                    },
+                    "git_repo_url": "git@github.com:hello/world.git",
+                    "main_branch_name": "main",
+                },
+                "project_path": "/",
+                "threads": 1,
+                "version": "1.6",
+                "database": "test",
+                "schema": "test",
+            },
+        }
+        response = client.post("/resources/", data, format="json")
+        breakpoint()
+        assert response.status_code == 201
 
     def test_update_dbt(self, client, resource_id, workspace):
         ssh_key = SSHKey.generate_deploy_key(workspace)

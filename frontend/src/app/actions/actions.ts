@@ -478,17 +478,26 @@ export async function getBranches() {
   return response.json();
 }
 
-export async function getFileIndex() {
-  const response = await fetcher(`/project/files/`, {
+export async function createBranch(branchName: string, sourceBranch: string) {
+  const response = await fetcher(`/project/branches/`, {
+    cookies,
+    method: "POST",
+    body: { branch_name: branchName, source_branch: sourceBranch },
+  });
+  return response.json()
+}
+
+export async function getFileIndex(branchId: string) {
+  const response = await fetcher(`/project/${branchId}/files/`, {
     cookies,
     method: "GET",
   });
   return response.json();
 }
 
-export async function fetchFileContents(path: string) {
+export async function fetchFileContents(branchId: string, path: string) {
   const encodedPath = encodeURIComponent(path);
-  const response = await fetcher(`/project/files/?filepath=${encodedPath}`, {
+  const response = await fetcher(`/project/${branchId}/files/?filepath=${encodedPath}`, {
     cookies,
     method: "GET",
   });
@@ -513,8 +522,8 @@ export async function executeQueryPreview(
   return response.json();
 }
 
-export async function persistFile(filePath: string, fileContents: string) {
-  const response = await fetcher(`/project/files/?filepath=${filePath}`, {
+export async function persistFile(branchId: string, filePath: string, fileContents: string) {
+  const response = await fetcher(`/project/${branchId}/files/?filepath=${filePath}`, {
     cookies,
     method: "PUT",
     body: {
@@ -523,8 +532,8 @@ export async function persistFile(filePath: string, fileContents: string) {
   });
 }
 
-export async function createFile(filePath: string, fileContents: string) {
-  const response = await fetcher(`/project/files/?filepath=${filePath}`, {
+export async function createFile(branchId: string, filePath: string, fileContents: string) {
+  const response = await fetcher(`/project/${branchId}/files/?filepath=${filePath}`, {
     cookies,
     method: "POST",
     body: {
@@ -534,8 +543,8 @@ export async function createFile(filePath: string, fileContents: string) {
   return response.ok;
 }
 
-export async function deleteFile(filePath: string) {
-  const response = await fetcher(`/project/files/?filepath=${filePath}`, {
+export async function deleteFile(branchId: string, filePath: string) {
+  const response = await fetcher(`/project/${branchId}/files/?filepath=${filePath}`, {
     cookies,
     method: "DELETE",
   });
@@ -620,6 +629,22 @@ export type ProjectChanges = {
   }>;
 };
 
+export async function getProjects() {
+  const response = await fetcher(`/project/`, {
+    cookies,
+    method: "GET",
+  });
+  return response.json();
+}
+
+export async function getBranch(id: string) {
+  const response = await fetcher(`/project/${id}/`, {
+    cookies,
+    method: "GET",
+  });
+  return response.json();
+}
+
 export async function getProjectChanges(): Promise<ProjectChanges> {
   const response = await fetcher(`/project/changes/`, {
     cookies,
@@ -628,3 +653,11 @@ export async function getProjectChanges(): Promise<ProjectChanges> {
 
   return response.json();
 }
+
+export async function cloneBranchAndMount(branchId: string) {
+  const response = await fetcher(`/project/${branchId}/clone/`, {
+    cookies,
+    method: "POST",
+  });
+  return response.json();
+} 

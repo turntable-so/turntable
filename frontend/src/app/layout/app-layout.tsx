@@ -10,6 +10,7 @@ import { useAppContext } from "@/contexts/AppContext";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { EditorProvider } from "../contexts/EditorContext";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathName = usePathname();
@@ -42,10 +43,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     collapseSidebar(
       pathName.includes("/notebooks/") ||
-        pathName.includes("/lineage") ||
-        pathName.includes("/sources/") ||
-        pathName.includes("/assets") ||
-        pathName.includes("/editor"),
+      pathName.includes("/lineage") ||
+      pathName.includes("/sources/") ||
+      pathName.includes("/assets") ||
+      pathName.includes("/editor"),
     );
   }, [pathName, collapseSidebar]);
 
@@ -72,37 +73,39 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 "h-[48px] px-2 pl-4 py-1 border-b"
             )}
         /> */}
-      <TopBar />
+      <EditorProvider>
+        <TopBar />
 
-      <div className="flex w-full">
-        {!pathName.includes("/editor") && <SideBar />}
-        <main className="flex flex-grow-1 w-full">
-          {sidebarCollapsed ? (
-            sidebarContext === "ACTION" ? (
-              <ResizablePanelGroup direction="horizontal" className="">
-                <ResizablePanel
-                  minSize={15}
-                  defaultSize={25}
-                  className="w-[10px] bg-muted/50"
-                >
-                  <ActionBar
-                    context={actionBarContext}
-                    onSelectChange={onActionBarSelectChange}
-                  />
-                </ResizablePanel>
-                <ResizableHandle />
-                <ResizablePanel defaultSize={75}>{children}</ResizablePanel>
-              </ResizablePanelGroup>
+        <div className="flex w-full">
+          {!pathName.includes("/editor") && <SideBar />}
+          <main className="flex flex-grow-1 w-full">
+            {sidebarCollapsed ? (
+              sidebarContext === "ACTION" ? (
+                <ResizablePanelGroup direction="horizontal" className="">
+                  <ResizablePanel
+                    minSize={15}
+                    defaultSize={25}
+                    className="w-[10px] bg-muted/50"
+                  >
+                    <ActionBar
+                      context={actionBarContext}
+                      onSelectChange={onActionBarSelectChange}
+                    />
+                  </ResizablePanel>
+                  <ResizableHandle />
+                  <ResizablePanel defaultSize={75}>{children}</ResizablePanel>
+                </ResizablePanelGroup>
+              ) : (
+                <div className="w-full h-full overflow-y-auto">{children}</div>
+              )
             ) : (
-              <div className="w-full h-full overflow-y-auto">{children}</div>
-            )
-          ) : (
-            <div className="flex flex-col max-h-screen overflow-x-auto w-full text-muted-foreground bg-background items-center">
-              {children}
-            </div>
-          )}
-        </main>
-      </div>
+              <div className="flex flex-col max-h-screen overflow-x-auto w-full text-muted-foreground bg-background items-center">
+                {children}
+              </div>
+            )}
+          </main>
+        </div>
+      </EditorProvider>
     </div>
   );
 }

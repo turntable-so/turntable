@@ -69,9 +69,10 @@ export default function BranchReviewDialog({
 
   const { changes, fetchChanges } = useFiles();
 
+
   useEffect(() => {
     fetchChanges();
-  }, []);
+  }, [open]);
 
   useEffect(() => {
     if (changes?.length > 0) {
@@ -81,7 +82,7 @@ export default function BranchReviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="w-full max-w-[1500px] min-h-[800px]">
+      <DialogContent className="w-full max-w-[1700px] min-h-[900px]">
         <div className="flex gap-4  h-full">
           <div className="w-1/4  h-full justify-between flex-col flex">
             <div>

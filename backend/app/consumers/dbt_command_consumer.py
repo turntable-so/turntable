@@ -60,7 +60,7 @@ class DBTCommandConsumer(AsyncWebsocketConsumer):
             )
 
     async def run_workflow(self, data):
-        from app.models.git_connections import Branch
+        from backend.app.models.repository.branch import Branch
         from workflows.dbt_runner import DBTStreamerWorkflow
 
         try:

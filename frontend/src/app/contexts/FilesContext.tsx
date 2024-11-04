@@ -10,13 +10,16 @@ import {
 import { useLocalStorage } from "usehooks-ts";
 import {
   type ProjectChanges,
+  cloneBranchAndMount,
   createFile,
   deleteFile,
   fetchFileContents,
+  getBranch,
   getFileIndex,
   getProjectChanges,
   persistFile,
 } from "../actions/actions";
+import { useEditor } from "./EditorContext";
 
 export const MAX_RECENT_COMMANDS = 5;
 
@@ -77,6 +80,13 @@ type FilesContextType = {
   changes: ProjectChanges | null;
   fetchChanges: () => void;
   recentFiles: FileNode[]; // New state added here
+  fetchFiles: () => void;
+  branchId: string;
+  branchName: string;
+  readOnly: boolean | undefined;
+  isCloned: boolean | undefined;
+  fetchBranch: (branchId: string) => Promise<void>;
+  cloneBranch: (branchId: string) => Promise<void>;
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
@@ -91,6 +101,10 @@ type Changes = Array<{
 export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
+  const [branchId, setBranchId] = useState("");
+  const [branchName, setBranchName] = useState("");
+  const [readOnly, setReadOnly] = useState<boolean | undefined>(undefined);
+  const [isCloned, setIsCloned] = useState<boolean | undefined>(undefined);
   const [files, setFiles] = useState<FileNode[]>([]);
   const [openedFiles, setOpenedFiles] = useState<OpenedFile[]>([
     {
@@ -113,6 +127,19 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     LocalStorageKeys.recentFiles,
     [],
   );
+
+  const fetchBranch = async (branchId: string) => {
+    const branch = await getBranch(branchId);
+    setBranchId(branch.id);
+    setBranchName(branch.name);
+    setReadOnly(branch.read_only);
+    setIsCloned(branch.is_cloned);
+  }
+
+  const cloneBranch = async (branchId: string) => {
+    const branch = await cloneBranchAndMount(branchId);
+    setIsCloned(true);
+  }
 
   const fetchChanges = async () => {
     const result = await getProjectChanges();
@@ -137,7 +164,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const fetchFiles = async () => {
-    const { file_index } = await getFileIndex();
+    const { file_index } = await getFileIndex(branchId);
     const fileIndex = file_index.map((file: FileNode) => ({ ...file }));
     setFiles(fileIndex);
     const flattenFileIndex = (files: FileNode[]): FileNode[] => {
@@ -165,7 +192,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
       if (node.type === "file") {
         const existingFile = openedFiles.find((f) => f.node.path === node.path);
         if (!existingFile) {
-          const { contents } = await fetchFileContents(node.path);
+          const { contents } = await fetchFileContents(branchId, node.path);
           const newFile: OpenedFile = {
             node,
             content: contents,
@@ -192,7 +219,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         });
       }
     },
-    [openedFiles],
+    [openedFiles, branchId],
   );
 
   const openUrl = useCallback(
@@ -251,7 +278,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   );
 
   const createFileAndRefresh = async (path: string, fileContents: string) => {
-    await createFile(path, fileContents);
+    await createFile(branchId, path, fileContents);
     await fetchFiles();
   };
 
@@ -300,7 +327,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
 
   const saveFile = async (filepath: string, content: string) => {
     if (activeFile) {
-      await persistFile(filepath, content);
+      await persistFile(branchId, filepath, content);
       setOpenedFiles((prev) =>
         prev.map((f) =>
           f.node.path === filepath ? { ...f, isDirty: false, content } : f,
@@ -310,7 +337,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const deleteFileAndRefresh = async (filepath: string) => {
-    await deleteFile(filepath);
+    await deleteFile(branchId, filepath);
     await fetchFiles();
   };
 
@@ -349,7 +376,14 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         createNewFileTab,
         changes,
         fetchChanges,
+        fetchFiles,
         recentFiles,
+        branchId,
+        branchName,
+        readOnly,
+        isCloned,
+        fetchBranch,
+        cloneBranch,
       }}
     >
       {children}

@@ -9,12 +9,12 @@ import { Check, Loader2, X } from "lucide-react";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import useResizeObserver from "use-resize-observer";
-import { executeQueryPreview, getBranches, infer } from "../actions/actions";
+import { executeQueryPreview, getBranches, infer } from "../../actions/actions";
 import {
   FilesProvider,
   type OpenedFile,
   useFiles,
-} from "../contexts/FilesContext";
+} from "../../contexts/FilesContext";
 import "@/components/ag-grid-custom-theme.css"; // Custom CSS Theme for Data Grid
 import BottomPanel from "@/components/editor/bottom-panel";
 import { CommandPanelProvider } from "@/components/editor/command-panel/command-panel-context";
@@ -22,13 +22,15 @@ import EditorSidebar from "@/components/editor/editor-sidebar";
 import FileTabs from "@/components/editor/file-tabs";
 import { Textarea } from "@/components/ui/textarea";
 import type React from "react";
-import { useLayoutContext } from "../contexts/LayoutContext";
-import { LineageProvider } from "../contexts/LineageContext";
+import { useLayoutContext } from "../../contexts/LayoutContext";
+import { LineageProvider } from "../../contexts/LineageContext";
+import { usePathname } from "next/navigation";
+import { useEditor } from "@/app/contexts/EditorContext";
 
 const PromptBox = ({
   setPromptBoxOpen,
 }: { setPromptBoxOpen: (open: boolean) => void }) => {
-  const { activeFile, setActiveFile, updateFileContent } = useFiles();
+  const { activeFile, setActiveFile, updateFileContent, } = useFiles();
 
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState<"PROMPT" | "CONFIRM">("PROMPT");
@@ -369,6 +371,28 @@ function EditorPageContent() {
   const [filesearchQuery, setFilesearchQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [queryPreviewError, setQueryPreviewError] = useState(null);
+  const pathname = usePathname()
+  const { fetchFiles, fetchBranch, branchName, branchId, isCloned, cloneBranch } = useFiles()
+
+  console.log({ branchName })
+
+  useEffect(() => {
+    if (branchId && isCloned) {
+      fetchFiles()
+    }
+    if (branchId && !isCloned) {
+      cloneBranch(branchId)
+    }
+  }, [branchId, isCloned])
+
+  useEffect(() => {
+    if (pathname && pathname.includes('/editor/')) {
+      const branchId = pathname.split('/').pop()
+      if (branchId) {
+        fetchBranch(branchId)
+      }
+    }
+  }, [pathname])
 
   useEffect(() => {
     if (treeRef.current) {
@@ -607,18 +631,6 @@ function EditorPageContent() {
           </Fragment>
         )}
       </PanelGroup>
-    </div>
-  );
-
-  return (
-    <div>
-      <div
-        className={cn("flex h-[52px] items-center justify-center", "h-[52px]")}
-      >
-        asd
-      </div>
-      <Separator />
-      <div>asd</div>
     </div>
   );
 }
