@@ -61,7 +61,7 @@ jobs:
 
       - name: Run tests
         run: |
-          rye run pytest -x
+          rye run pytest
         working-directory: backend
         env:
           POSTGRES_DB: mydb
