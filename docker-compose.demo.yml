@@ -44,11 +44,17 @@ services:
       file: docker-compose.yml
       service: createbuckets
   
-  celery_worker:
+  worker:
     extends:
       file: docker-compose.yml
-      service: celery_worker
+      service: worker
     command: ["django-admin", "start_worker", "--mode", "demo"]
+
+  scheduler:
+    extends:
+      file: docker-compose.yml
+      service: worker
+    command: ["django-admin", "start_beat", "--mode", "demo"]
 
   flower:
     extends:

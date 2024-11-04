@@ -1,3 +1,5 @@
+
+
 import asyncio
 
 import pytest
@@ -5,12 +7,14 @@ from channels.testing import WebsocketCommunicator
 from rest_framework_simplejwt.exceptions import InvalidToken
 
 from api.asgi import application
+from app.consumers.dbt_command_consumer import (
+    DBT_COMMAND_STREAM_TIMEOUT,
+)
 
 
-@pytest.mark.skip("skipping for now")
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio
-@pytest.mark.usefixtures("custom_celery", "local_postgres")
+@pytest.mark.usefixtures("local_postgres")
 class TestDBTCommandConsumer:
     url = "/ws/dbt_command/"
 
@@ -44,9 +48,9 @@ class TestDBTCommandConsumer:
         out = ""
         try:
             while True:
-                response = await communicator.receive_from()
+                response = await communicator.receive_from(timeout=DBT_COMMAND_STREAM_TIMEOUT)
                 out += response
-        except asyncio.TimeoutError:
+        except (asyncio.TimeoutError, AssertionError):
             pass
 
         assert "PROCESS_STREAM_SUCCESS" in out
@@ -65,8 +69,8 @@ class TestDBTCommandConsumer:
 
         # wait for the command to start
         try:
-            await communicator.receive_from()
-        except asyncio.TimeoutError:
+            await communicator.receive_from(timeout=1)
+        except (asyncio.TimeoutError, AssertionError):
             pass
 
         await communicator.send_json_to({"action": "cancel"})
@@ -74,9 +78,9 @@ class TestDBTCommandConsumer:
         out = ""
         try:
             while True:
-                response = await communicator.receive_from()
+                response = await communicator.receive_from(timeout=10)
                 out += response
-        except asyncio.TimeoutError:
+        except (asyncio.TimeoutError, AssertionError):
             pass
 
         assert "WORKFLOW_CANCELLED" in out

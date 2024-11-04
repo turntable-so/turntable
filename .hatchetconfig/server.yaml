@@ -1,0 +1,102 @@
+additionalLoggers:
+  pgxStats:
+    format: console
+    level: warn
+  queue:
+    format: console
+    level: warn
+alerting:
+  sentry:
+    environment: development
+analytics:
+  posthog: {}
+auth:
+  basicAuthEnabled: true
+  cookie:
+    domain: localhost
+    insecure: true
+    name: hatchet
+    secrets: OD736ETA92gZPubQ bf11fyM48g1tlJ1O
+  github:
+    scopes:
+    - read:user
+    - user:email
+  google:
+    scopes:
+    - openid
+    - profile
+    - email
+  setEmailVerified: true
+email:
+  postmark:
+    fromName: Hatchet Support
+enableDataRetention: true
+encryption:
+  cloudKms: {}
+  jwt:
+    privateJWTKeyset: eyJlbmNyeXB0ZWRLZXlzZXQiOiJBZWxJS2xnSzlzTGUvZ29maDEyaGVaTFdTK0pBSnVhRFBuaXNRenJXMGU2TjVRTDBiNFVqSEVsa05lUDl4cFdReXc4SU4vRlNWVWJiRmpoMGtvelpHNTF5eHFEYnZ6S0NSZGRQZ3VYRE1oOHVOT3RXT2lzUW1HQ0ZnOXdrM0l4dUVqNXhaZkJROGxaTi9oLzhtOEUxNzVPN0sxZFArNG54NXBsKzJib1RyRUU4cXE3L2JIeWFhK2hyMmpmVG9WczJUTFJUSm9PZXowRFpCcGd0bXJML3d0T0c3aWdjeWJ3aDNXTGx4OHZuaG1Ta1VSRE5uenBCN0Y5UlpqV2Yza3dtTE9Td3ZQeHVJQWF1WnJHNXp1WGtxYnFjeTdqM1RTZk5kN1dEY05Ob3B6QT0iLCJrZXlzZXRJbmZvIjp7InByaW1hcnlLZXlJZCI6MTMxMjk2MDg5MSwia2V5SW5mbyI6W3sidHlwZVVybCI6InR5cGUuZ29vZ2xlYXBpcy5jb20vZ29vZ2xlLmNyeXB0by50aW5rLkp3dEVjZHNhUHJpdmF0ZUtleSIsInN0YXR1cyI6IkVOQUJMRUQiLCJrZXlJZCI6MTMxMjk2MDg5MSwib3V0cHV0UHJlZml4VHlwZSI6IlRJTksifV19fQ
+    publicJWTKeyset: eyJlbmNyeXB0ZWRLZXlzZXQiOiJBZWxJS2xpZEpZRHcvaDl1c283UXZRUVdaNkVFS1ZmZThEMVJyTTJLRWRFcitGWXlRK2JQMUR4QXNMWjcrMUtIZVVHRFVmUWREZzFOb2RaeGhKZ3habFBmME4vNDZ1L0FXRUpVOVFUTnlGMUdDWS8rSjVoMVoraU80Z2dNV1N6cEFUejFlVjVVaGtITHdCVEczMUlmN3ZMZC9xQVdoM0Q2NjZndnZndFNsbFh5V3RHaVYzSitJNk1FNzAweHFTamFRRmNRVFkrMXYxY2p0NVVValRRODMvNTkwdzZ5cmxpNlUyb21ZYlp2VFprY3FwY2crZ3M0Zlo1bE9RPT0iLCJrZXlzZXRJbmZvIjp7InByaW1hcnlLZXlJZCI6MTMxMjk2MDg5MSwia2V5SW5mbyI6W3sidHlwZVVybCI6InR5cGUuZ29vZ2xlYXBpcy5jb20vZ29vZ2xlLmNyeXB0by50aW5rLkp3dEVjZHNhUHVibGljS2V5Iiwic3RhdHVzIjoiRU5BQkxFRCIsImtleUlkIjoxMzEyOTYwODkxLCJvdXRwdXRQcmVmaXhUeXBlIjoiVElOSyJ9XX19
+  masterKeyset: eyJwcmltYXJ5S2V5SWQiOjM5MTM4MjA3NjAsImtleSI6W3sia2V5RGF0YSI6eyJ0eXBlVXJsIjoidHlwZS5nb29nbGVhcGlzLmNvbS9nb29nbGUuY3J5cHRvLnRpbmsuQWVzR2NtS2V5IiwidmFsdWUiOiJHaUFkb05vNnY3dTFXaTJYS2dBZDM0SmZkK0p3cGJEbHBhTTM3UldLQ1RiVDZRPT0iLCJrZXlNYXRlcmlhbFR5cGUiOiJTWU1NRVRSSUMifSwic3RhdHVzIjoiRU5BQkxFRCIsImtleUlkIjozOTEzODIwNzYwLCJvdXRwdXRQcmVmaXhUeXBlIjoiVElOSyJ9XX0
+logger:
+  format: console
+  level: error
+msgQueue:
+  enabled: true
+  rabbitmq:
+    qos: 100
+    url: amqp://user:password@localhost:5672/
+otel:
+  serviceName: server
+  traceIdRatio: "1"
+pylon: {}
+runtime:
+  allowChangePassword: true
+  allowCreateTenant: true
+  allowInvites: true
+  allowSignup: true
+  flushItemsThreshold: 100
+  flushPeriodMilliseconds: 10
+  grpcBindAddress: 0.0.0.0
+  grpcBroadcastAddress: hatchet-lite:7077
+  grpcInsecure: true
+  grpcMaxMsgSize: 4194304
+  grpcPort: 7077
+  limits:
+    defaultCronAlarmLimit: 2
+    defaultCronLimit: 5
+    defaultEventAlarmLimit: 750
+    defaultEventLimit: 1000
+    defaultEventWindow: 86400000000000
+    defaultScheduleAlarmLimit: 750
+    defaultScheduleLimit: 1000
+    defaultTenantRetentionPeriod: 720h
+    defaultWorkerAlarmLimit: 2
+    defaultWorkerLimit: 4
+    defaultWorkflowRunAlarmLimit: 750
+    defaultWorkflowRunLimit: 1000
+    defaultWorkflowRunWindow: 86400000000000
+  port: 8080
+  requeueLimit: 100
+  shutdownWait: 20000000000
+  singleQueueLimit: 100
+  updateConcurrentFactor: 10
+  updateHashFactor: 100
+  url: http://hatchet-lite:8888
+securityCheck:
+  enabled: true
+  endpoint: https://security.hatchet.run
+services:
+- health
+- ticker
+- grpc
+- eventscontroller
+- queue
+- webhookscontroller
+- heartbeater
+- retention
+tenantAlerting:
+  slack:
+    scopes:
+    - incoming-webhook
+tls:
+  tlsStrategy: tls

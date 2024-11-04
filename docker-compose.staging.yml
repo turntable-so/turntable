@@ -34,11 +34,19 @@ services:
       file: docker-compose.dev-internal.yml
       service: redis
 
-  celery_worker:
+  worker:
     extends:
       file: docker-compose.dev-internal.yml
-      service: celery_worker
+      service: worker
     command: ["django-admin", "start_worker", "--mode", "staging"]
+    environment:
+      <<: [*postgres-credentials, *storage-credentials]
+
+  scheduler:
+    extends:
+      file: docker-compose.dev-internal.yml
+      service: worker
+    command: ["django-admin", "start_beat", "--mode", "staging"]
     environment:
       <<: [*postgres-credentials, *storage-credentials]
 

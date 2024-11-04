@@ -159,11 +159,19 @@ services:
     environment:
       <<: *storage-credentials
 
-  celery_worker:
+  worker:
     extends:
       file: docker-compose.dev.yml
-      service: celery_worker
+      service: worker
     command: ["django-admin", "start_worker", "--mode", "dev-internal"]
+    environment:
+      <<: [*internal-credentials, *storage-credentials]
+
+  scheduler:
+    extends:
+      file: docker-compose.dev.yml
+      service: worker
+    command: ["django-admin", "start_beat", "--mode", "dev-internal"]
     environment:
       <<: [*internal-credentials, *storage-credentials]
 

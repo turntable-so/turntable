@@ -74,13 +74,13 @@ services:
       file: docker-compose.demo.yml
       service: createbuckets
 
-  celery_worker:
+  worker:
     build:
       args:
         - ENV=dev
     extends:
       file: docker-compose.demo.yml
-      service: celery_worker
+      service: worker
     command: ["django-admin", "start_worker", "--mode", "dev"]
     environment:
       <<: *dev-credentials
@@ -88,6 +88,17 @@ services:
       - ./backend:/code
     stdin_open: true
     tty: true
+
+  scheduler:
+    build:
+      args:
+        - ENV=dev
+    extends:
+      file: docker-compose.demo.yml
+      service: worker
+    command: ["django-admin", "start_beat", "--mode", "dev"]
+    environment:
+      <<: *dev-credentials
 
   flower:
     build:

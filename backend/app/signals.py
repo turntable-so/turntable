@@ -1,6 +1,7 @@
 import ast
 import json
 import os
+import re
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -26,28 +27,24 @@ def send_status_update(sender, instance, **task_kwargs):
     if old_status == new_status:
         return
 
-    task_kwargs = json.loads(instance.task_kwargs)
-    if isinstance(task_kwargs, str):
-        try:
-            task_kwargs = ast.literal_eval(task_kwargs)
-        except (ValueError, SyntaxError):
-            task_kwargs = task_kwargs.replace("'", '"')
-            task_kwargs = json.loads(task_kwargs)
-
-    if "workspace_id" not in task_kwargs:
-        raise ValueError("Workspace ID is required as a kwarg on all tasks")
-
-    workspace_id = task_kwargs["workspace_id"]
+    ids = {}
+    for id in ["workspace_id", "resource_id"]:
+        pattern = r"""['"]""" + id + r"""['"]\s*:\s*(['"])(.*?)\1"""
+        match = re.search(pattern, instance.task_kwargs)
+        if match:
+            ids[id] = match.group(2)
+        else:
+            raise ValueError(f"{id} is required as a kwarg on all tasks")
 
     channel_layer = get_channel_layer()
     try:
         async_to_sync(channel_layer.group_send)(
-            f"workspace_{workspace_id}",
+            f"workspace_{ids['workspace_id']}",
             {
                 "type": "workflow_status_update",
                 "status": instance.status,
                 "workflow_run_id": str(instance.id),
-                **task_kwargs,
+                "resource_id": ids["resource_id"]
             },
         )
     except Exception as e:

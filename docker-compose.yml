@@ -95,7 +95,7 @@ services:
     depends_on:
       api:
         condition: service_healthy
-      celery_worker:
+      worker:
         condition: service_healthy
     environment:
       <<: [*next-credentials, *telemetry-credentials]
@@ -156,7 +156,7 @@ services:
       "
     restart: no
 
-  celery_worker:
+  worker:
     <<: *common-backend
     command: ["django-admin", "start_worker"]
     depends_on:
@@ -170,11 +170,20 @@ services:
       timeout: 10s
       retries: 3
 
+  scheduler:
+    <<: *common-backend
+    command: ["django-admin", "start_beat"]
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   flower:
     <<: *common-backend
     command: ["django-admin", "flower"]
     depends_on:
-      celery_worker:
+      worker:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -190,7 +199,7 @@ services:
         condition: service_healthy
       web:
         condition: service_started
-      celery_worker:
+      worker:
         condition: service_healthy
 
 volumes:
