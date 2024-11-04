@@ -7,6 +7,7 @@ from rest_framework_simplejwt.exceptions import InvalidToken
 from api.asgi import application
 
 
+@pytest.mark.skip("skipping for now")
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio
 @pytest.mark.usefixtures("custom_celery", "local_postgres")

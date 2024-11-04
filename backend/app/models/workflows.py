@@ -10,7 +10,7 @@ from celery.result import AsyncResult
 from croniter import croniter
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
-from django.db import models, transaction
+from django.db import models
 from django.utils import timezone
 from django_celery_beat.models import ClockedSchedule, CrontabSchedule, PeriodicTask
 from polymorphic.models import PolymorphicModel
@@ -222,7 +222,6 @@ class ScheduledWorkflow(PolymorphicModel):
         return result.get(timeout=duration_timeout)
 
     @classmethod
-    @transaction.atomic
     def schedule_now(cls, *args, **kwargs):
         now = timezone.now()
         clocked = ClockedSchedule.objects.create(clocked_time=now)

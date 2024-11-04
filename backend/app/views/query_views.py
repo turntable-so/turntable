@@ -6,8 +6,7 @@ from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.response import Response
 
-from app.models.workspace import Workspace
-from app.workflows.query import execute_dbt_query, execute_query
+from app.workflows.query import execute_query
 
 
 class QueryPreviewView(APIView):
@@ -53,32 +52,25 @@ class QueryPreviewView(APIView):
 
 
 class DbtQueryPreviewView(QueryPreviewView):
-    def get_current_workspace(self, user):
-        return user.current_workspace()
-
-    def get_dbt_details(self, workspace: Workspace):
-        return {
-            "resource": workspace.get_dbt_details().resource,
-            "dbt_resource": workspace.get_dbt_details(),
-        }
-
     def _preprocess(self, request):
-        workspace = self.get_current_workspace(request.user)
+        workspace = request.user.current_workspace()
         query = request.data.get("query")
         if not query:
             return Response(
                 {"error": "query required"}, status=status.HTTP_400_BAD_REQUEST
             )
-        # assumes a single repo in the workspace for now
-        details = self.get_dbt_details(workspace)
+        use_fast_compile = request.data.get("use_fast_compile", True)
+        limit = request.data.get("limit")
+        branch_id = request.data.get("branch_id")
+        dbt_resource = workspace.get_dbt_details()
+        with dbt_resource.dbt_repo_context(branch_id) as (dbtproj, project_path, _):
+            sql = None
+            if use_fast_compile:
+                sql = dbtproj.fast_compile(query)
+            if sql is None:
+                sql = dbtproj.preview(query, limit=limit, data=False)
         return {
-            "resource_id": str(details["resource"].id),
             "workspace_id": str(workspace.id),
-            "dbt_resource_id": str(details["dbt_resource"].id),
-            "dbt_sql": query,
+            "resource_id": str(dbt_resource.resource.id),
+            "sql": sql,
         }
-
-    def post(self, request):
-        input = self._preprocess(request)
-        result = execute_dbt_query.si(**input).apply_async().get()
-        return self._post_process(result)

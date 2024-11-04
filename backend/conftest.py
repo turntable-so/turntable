@@ -189,12 +189,21 @@ def enable_django_allow_async_unsafe(monkeypatch):
     monkeypatch.setenv("DJANGO_ALLOW_ASYNC_UNSAFE", "true")
 
 
-@pytest.fixture
-def bypass_celery_beat(monkeypatch):
-    monkeypatch.setenv("BYPASS_CELERY_BEAT", "true")
+@pytest.fixture(scope="session")
+def session_monkeypatch():
+    from _pytest.monkeypatch import MonkeyPatch
+
+    mp = MonkeyPatch()
+    yield mp
+    mp.undo()
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
+def bypass_celery_beat(session_monkeypatch):
+    session_monkeypatch.setenv("BYPASS_CELERY_BEAT", "true")
+
+
+@pytest.fixture(scope="session")
 def custom_celery_app():
     app = Celery("api")
 
@@ -208,7 +217,7 @@ def custom_celery_app():
     return app
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def suppress_celery_errors():
     """
     Suppress error logs from celery.worker.control and kombu.pidbox
@@ -234,7 +243,7 @@ def suppress_celery_errors():
         logging.getLogger(logger_name).setLevel(original_level)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def custom_celery_worker(
     custom_celery_app,
 ):
@@ -249,6 +258,6 @@ def custom_celery_worker(
         yield worker
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def custom_celery(custom_celery_worker, bypass_celery_beat, suppress_celery_errors):
     return custom_celery_worker

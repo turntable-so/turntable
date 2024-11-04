@@ -1,18 +1,19 @@
 import pytest
 
-from app.workflows.orchestration import run_dbt_commands
+from app.models.workflows import DBTOrchestrator
 
 
-@pytest.mark.asyncio
-@pytest.mark.django_db
-def test_orchestration(celery_setup, local_postgres):
+@pytest.mark.django_db(transaction=True)
+def test_orchestration(custom_celery, local_postgres):
     resource = local_postgres
-    workflow = run_dbt_commands.s(
-        resource_id=resource.id,
-        dbt_resource_id=resource.dbtresource_set.first().id,
+    resource.refresh_from_db()
+    workflow = DBTOrchestrator.schedule_now(
+        workspace=resource.workspace,
+        resource=resource,
+        dbt_resource=resource.dbtresource_set.first(),
         commands=["ls", "run"],
     )
-    result = workflow.apply_async().get()
+    result = workflow.await_next_result()
     assert result["success"]
     assert all(result["stdouts"])
     assert not any(result["stderrs"])

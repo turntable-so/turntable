@@ -4,10 +4,24 @@ import logging
 import shlex
 
 from asgiref.sync import sync_to_async
-from celery import current_app
 from channels.generic.websocket import AsyncWebsocketConsumer
 
+from app.models.resources import DBTResource
+
 logger = logging.getLogger(__name__)
+
+
+def stream_dbt_command(
+    dbt_resource: DBTResource,
+    branch_id: str,
+    command: str,
+):
+    with dbt_resource.dbt_transition_context(branch_id=branch_id) as (
+        transition,
+        project_dir,
+        _,
+    ):
+        yield from transition.after.stream_dbt_command(command)
 
 
 class DBTCommandConsumer(AsyncWebsocketConsumer):
@@ -30,8 +44,6 @@ class DBTCommandConsumer(AsyncWebsocketConsumer):
         logger.info(f"WebSocket disconnected with close code: {close_code}")
         if self.workflow_task and not self.workflow_task.done():
             self.workflow_task.cancel()
-            if self.workflow_run_id:
-                await current_app.control.revoke(self.workflow_run_id, terminate=True)
 
     async def receive(self, text_data):
         data = json.loads(text_data)
@@ -46,13 +58,6 @@ class DBTCommandConsumer(AsyncWebsocketConsumer):
         elif action == "cancel":
             if self.workflow_task and not self.workflow_task.done():
                 self.workflow_task.cancel()
-                if self.workflow_run_id:
-                    try:
-                        await current_app.control.revoke(
-                            self.workflow_run_id, terminate=True
-                        )
-                    except Exception as e:
-                        logger.error(f"Error cancelling Celery Task: {e}")
                 await self.send(text_data="WORKFLOW_CANCELLED")
         else:
             raise ValueError(
@@ -61,7 +66,6 @@ class DBTCommandConsumer(AsyncWebsocketConsumer):
 
     async def run_workflow(self, data):
         from app.models.git_connections import Branch
-        from app.workflows.orchestration import stream_dbt_command
 
         try:
             command = data.get("command")
@@ -85,34 +89,29 @@ class DBTCommandConsumer(AsyncWebsocketConsumer):
             else:
                 branch_id = None
 
-            dbt_resource_id = await sync_to_async(lambda: str(self.dbt_details.id))()
-            resource_id = await sync_to_async(
-                lambda: str(self.dbt_details.resource.id)
-            )()
+            # dbt_resource_id = await sync_to_async(lambda: str(self.dbt_details.id))()
+            # resource_id = await sync_to_async(
+            #     lambda: str(self.dbt_details.resource.id)
+            # )()
 
-            input_data = {
-                "command": command,
-                "branch_id": str(branch_id) if branch_id else None,
-                "resource_id": str(resource_id),
-                "dbt_resource_id": str(dbt_resource_id),
-            }
-            self.task = stream_dbt_command.si(**input_data).apply_async()
+            # input_data = {
+            #     "command": command,
+            #     "branch_id": str(branch_id) if branch_id else None,
+            #     "resource_id": resource_id,
+            #     "dbt_resource_id": dbt_resource_id,
+            # }
 
-            while not self.task.ready():
-                if self.task.state == "PROGRESS" and self.task.info:
-                    await self.send(text_data=self.task.info["output_chunk"])
-                await asyncio.sleep(0.1)
+            stream_generator = await sync_to_async(stream_dbt_command)(
+                self.dbt_details, branch_id, command
+            )
+            for output_chunk in stream_generator:
+                await self.send(text_data=output_chunk)
 
-            if self.task.state == "SUCCESS":
-                await self.send(text_data="PROCESS_STREAM_SUCCESS")
-            else:
-                await self.send(text_data=f"PROCESS_STREAM_ERROR: {self.task.info}")
-
+            # assume success if we've reached the end of the event stream
+            await self.send(text_data="PROCESS_STREAM_SUCCESS")
             await self.close()
         except asyncio.CancelledError:
             logger.info("Workflow run was cancelled.")
-            if self.task:
-                await self.task.revoke()
             await self.send(text_data="WORKFLOW_CANCELLED")
             await self.close()
             raise

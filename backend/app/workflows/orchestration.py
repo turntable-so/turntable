@@ -78,10 +78,10 @@ def run_dbt_commands(
     return returns_helper(outs)
 
 
-@shared_task(bind=True)
 def stream_dbt_command(
     self,
     workspace_id: str,
+    resource_id: str,
     branch_id: str,
     dbt_resource_id: str,
     command: str,
@@ -92,9 +92,13 @@ def stream_dbt_command(
         project_dir,
         _,
     ):
-        for output_chunk in transition.after.stream_dbt_command(command):
-            # Update state with each chunk for streaming effect
-            self.update_state(state="PROGRESS", meta={"output_chunk": output_chunk})
+        yield from transition.after.stream_dbt_command(command)
+    #     for output_chunk in transition.after.stream_dbt_command(command):
+    #         # yield output_chunk
+    #         # print(output_chunk)
+    #         # Update state with each chunk for streaming effect
+    #         # self.update_state(state="PROGRESS", meta={"output_chunk": output_chunk})
+    #         self.update_state(state="STARTED", meta={"output_chunk": output_chunk})
 
-        # Final state indicating completion
-        return {"status": "Task complete"}
+    #     # Final state indicating completion
+    # return {"status": "Task complete"}

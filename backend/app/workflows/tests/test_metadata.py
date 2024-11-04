@@ -27,7 +27,9 @@ def run_test_sync(
             )
             with open(db_read_path_it, "rb") as f:
                 resource.datahub_db.save(db_read_path_it, f, save=True)
-            task = process_metadata.si(resource_id=resource_id_str).apply_async()
+            task = process_metadata.si(
+                workspace_id=str(resource.workspace_id), resource_id=resource_id_str
+            ).apply_async()
             task.get()
             task_id = task.id
             periodic_task_name = None
@@ -37,7 +39,7 @@ def run_test_sync(
                 resource=resource,
                 workspace=resource.workspace,
             )
-            workflow.await_next()
+            workflow.await_next_result()
             periodic_task_name = workflow.replacement_identifier
             task_result = (
                 TaskResult.objects.filter(periodic_task_name=periodic_task_name)
@@ -63,7 +65,7 @@ def run_test_sync(
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.usefixtures("custom_celery")
 class TestMetadataSync:
-    # @pytest.mark.parametrize("use_cache", [True, False])
+    @pytest.mark.parametrize("use_cache", [True, False])
     def test_metadata_sync_postgres(
         self,
         local_metabase,
