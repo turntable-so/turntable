@@ -173,6 +173,28 @@ class Branch(models.Model):
         with self._code_repo_path() as path:
             return os.path.exists(path)
 
+    @property
+    def pull_request_url(self):
+        if not self.repository.git_repo_url:
+            return None
+
+        # Parse git URL into GitHub format
+        url = self.repository.git_repo_url
+        if url.startswith("git@"):
+            # Convert SSH format to HTTPS
+            url = url.replace(":", "/").replace("git@", "https://")
+
+        if url.endswith(".git"):
+            url = url[:-4]
+
+        # Add /compare/ and branch name for PR URL
+        if not self.is_main:
+            url = (
+                f"{url}/compare/{self.repository.main_branch_name}...{self.branch_name}"
+            )
+
+        return url
+
     def clone(self):
         with self._code_repo_path() as path:
             if os.path.exists(path) and ".git" in os.listdir(path):
@@ -186,6 +208,21 @@ class Branch(models.Model):
 
                 # switch to the branch
                 self.switch_to_git_branch(repo_override=repo, env_override=env)
+
+        return True
+
+    def commit(self, commit_message: str, file_paths: list[str]):
+        with self._code_repo_path() as repo_path:
+            with self.repository.with_ssh_env() as env:
+                repo = GitRepo(repo_path)
+                # Add each specified file
+                print(os.listdir(repo_path), flush=True)
+                for file_path in file_paths:
+                    repo.git.add(os.path.join(repo.working_tree_dir, file_path))
+                # Commit the changes
+                repo.git.commit(m=commit_message, env=env)
+                # Push to remote
+                repo.git.push("origin", self.branch_name, env=env)
 
         return True
 

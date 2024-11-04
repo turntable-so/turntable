@@ -91,6 +91,25 @@ class ProjectViewSet(viewsets.ViewSet):
 
         return Response(branch.clone(), status=status.HTTP_204_NO_CONTENT)
 
+    @action(detail=True, methods=["POST"])
+    def commit(self, request, pk=None):
+        branch = Branch.objects.get(id=pk)
+        if not branch.is_cloned:
+            return Response(
+                {"error": "Branch not cloned"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        commit_message = request.data.get("commit_message")
+        file_paths = request.data.get("file_paths")
+        if not commit_message or not file_paths:
+            return Response(
+                {"error": "Commit message and file paths are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        result = branch.commit(commit_message, file_paths)
+        return Response(result, status=status.HTTP_200_OK)
+
     @action(detail=True, methods=["GET", "POST", "PUT", "DELETE"])
     def files(self, request, pk=None):
         workspace = request.user.current_workspace()
@@ -105,10 +124,10 @@ class ProjectViewSet(viewsets.ViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        with dbt_details.dbt_repo_context() as (project, project_path, repo):
+        with branch.repo_context() as (repo, env):
             filepath = request.query_params.get("filepath")
             if filepath and len(filepath) > 0:
-                filepath = os.path.join(project_path, unquote(filepath))
+                filepath = os.path.join(repo.working_tree_dir, unquote(filepath))
                 if request.method == "POST":
                     if os.path.exists(filepath):
                         return Response(
@@ -136,7 +155,9 @@ class ProjectViewSet(viewsets.ViewSet):
 
                 if request.method == "DELETE":
                     if filepath and len(filepath) > 0:
-                        filepath = os.path.join(repo.working_tree_dir, filepath)
+                        filepath = os.path.join(
+                            repo.working_tree_dir, unquote(filepath)
+                        )
                         if os.path.exists(filepath):
                             if os.path.isfile(filepath):
                                 os.remove(filepath)
@@ -154,7 +175,7 @@ class ProjectViewSet(viewsets.ViewSet):
                                 status=status.HTTP_404_NOT_FOUND,
                             )
 
-            root = get_file_tree(user_id, repo.working_tree_dir, project_path)
+            root = get_file_tree(user_id, repo.working_tree_dir, repo.working_tree_dir)
 
         return Response(
             {
@@ -162,17 +183,16 @@ class ProjectViewSet(viewsets.ViewSet):
             }
         )
 
-    @action(detail=False, methods=["GET"])
-    def changes(self, request):
-        workspace = request.user.current_workspace()
-        dbt_details = workspace.get_dbt_details()
-        if not dbt_details:
+    @action(detail=True, methods=["GET"])
+    def changes(self, request, pk=None):
+        branch = Branch.objects.get(id=pk)
+        if not branch.is_cloned:
             return Response(
-                {"error": "No DBT details found for this workspace"},
-                status=status.HTTP_404_NOT_FOUND,
+                {"error": "Branch not cloned"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-        with dbt_details.dbt_repo_context() as (project, _, repo):
+        with branch.repo_context() as (repo, env):
             # Get untracked files
             untracked_files = []
             for filepath in repo.untracked_files:

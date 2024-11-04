@@ -67,18 +67,32 @@ export default function BranchReviewDialog({
     number | undefined
   >(undefined);
 
-  const { changes, fetchChanges } = useFiles();
+  const [selectedFilePaths, setSelectedFilePaths] = useState<string[]>([]);
+  const [commitMessage, setCommitMessage] = useState<string>("");
+
+  console.log({ selectedFilePaths })
+  const { changes, branchId, fetchChanges, commitChanges } = useFiles();
 
 
   useEffect(() => {
-    fetchChanges();
-  }, [open]);
+    if (branchId) {
+      fetchChanges();
+    }
+  }, [open, branchId]);
 
   useEffect(() => {
     if (changes?.length > 0) {
       setSelectedChangeIndex(0);
     }
   }, [changes]);
+
+  const handleCheckboxChange = (checked: boolean, path: string) => {
+    if (checked) {
+      setSelectedFilePaths((prev) => [...prev, path]);
+    } else {
+      setSelectedFilePaths((prev) => prev.filter((p) => p !== path));
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -93,12 +107,14 @@ export default function BranchReviewDialog({
                     className="w-full h-8 rounded-md border border-input bg-background text-sm shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                     disabled
                   >
-                    <option>posthog-events</option>
+                    <option>{'PLACEHOLDER'}</option>
                   </select>
                 </div>
                 <div className="mt-4">
                   <label className="text-sm font-medium">Commit message</label>
                   <textarea
+                    value={commitMessage}
+                    onChange={(e) => setCommitMessage(e.target.value)}
                     className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     placeholder="Latest changes on posthog-events"
                   />
@@ -106,13 +122,21 @@ export default function BranchReviewDialog({
                 <div className="mt-4">
                   <label className="text-sm font-medium">Files changed</label>
                   <div className="gap-1 flex flex-col overflow-y-scroll max-h-[300px]">
+                    {(!changes || changes.length === 0) && (
+                      <div className="text-xs text-muted-foreground">
+                        No changes to commit
+                      </div>
+                    )}
                     {(changes || []).map((change: any, index: number) => (
                       <div
                         className={`truncate text-xs flex justify-between py-0.5 hover:bg-muted rounded-md hover:cursor-pointer ${selectedChangeIndex === index ? "bg-muted" : ""}`}
                         key={index}
                       >
                         <div className="flex items-center gap-2">
-                          <Checkbox />
+                          <Checkbox
+                            checked={selectedFilePaths.includes(change.path)}
+                            onCheckedChange={(checked) => handleCheckboxChange(checked as boolean, change.path)}
+                          />
                           <div onClick={() => setSelectedChangeIndex(index)}>
                             {change.path}
                           </div>
@@ -136,40 +160,15 @@ export default function BranchReviewDialog({
                     ))}
                   </div>
                 </div>
-                <div className="flex flex-col gap-4">
-                  <div className="mt-4 space-y-2">
-                    <label className="text-sm font-medium">Schema</label>
-                    <select
-                      className="w-full h-8 rounded-md border border-input bg-background text-sm shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-                      disabled
-                    >
-                      <option>posthog-events</option>
-                    </select>
-                    <div className="text-xs text-muted-foreground">
-                      This schema is automatically created for you and will be
-                      deleted when you merge this project
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">
-                      Metabase Changes
-                    </label>
-                    <div className="text-xs text-muted-foreground italic">
-                      No changes
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 mt-4">
-                  <Switch />
-                  <label className="text-sm font-medium">
-                    Open pull request
-                  </label>
+                <div className="mt-4">
+                  <label className="text-sm font-medium">Create Pull Request</label>
+                  <div></div>
                 </div>
               </>
             </div>
             <div className="flex flex-col gap-4">
               <div className="text-xs text-muted-foreground">
-                Committing as <b>Turntable</b>.<br />
+                Committing as <b>root</b>.<br />
                 <a
                   href="https://github.com/"
                   target="_blank"
@@ -181,19 +180,23 @@ export default function BranchReviewDialog({
                 to use your account
               </div>
               <div className="flex gap-2 justify-end">
-                <Button variant="outline">Cancel</Button>
-                <Button>Commit</Button>
+                <Button variant="outline" onClick={() => handleOpenChange(false)}>Cancel</Button>
+                <Button onClick={() => commitChanges(commitMessage, selectedFilePaths)}>Commit</Button>
               </div>
             </div>
           </div>
 
           <div className="pl-1 w-3/4">
-            {selectedChangeIndex !== undefined && (
+            {selectedChangeIndex !== undefined && changes?.[selectedChangeIndex] ? (
               <DiffView
                 key={selectedChangeIndex}
                 original={changes?.[selectedChangeIndex].before}
                 modified={changes?.[selectedChangeIndex].after}
               />
+            ) : (
+              <div className="m-2 text-xs text-muted-foreground bg-muted h-full flex-col flex-grow flex items-center justify-center">
+                Select a file to see the diff
+              </div>
             )}
           </div>
         </div>

@@ -645,8 +645,8 @@ export async function getBranch(id: string) {
   return response.json();
 }
 
-export async function getProjectChanges(): Promise<ProjectChanges> {
-  const response = await fetcher(`/project/changes/`, {
+export async function getProjectChanges(branchId: string): Promise<ProjectChanges> {
+  const response = await fetcher(`/project/${branchId}/changes/`, {
     cookies,
     method: "GET",
   });
@@ -659,5 +659,13 @@ export async function cloneBranchAndMount(branchId: string) {
     cookies,
     method: "POST",
   });
-  return response.json();
-} 
+  return response.ok
+}
+
+export async function commit(branchId: string, commitMessage: string, filePaths: string[]) {
+  const response = await fetcher(`/project/${branchId}/commit/`, {
+    cookies,
+    method: "POST",
+    body: { commit_message: commitMessage, file_paths: filePaths },
+  });
+}

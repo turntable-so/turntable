@@ -11,6 +11,7 @@ import { useLocalStorage } from "usehooks-ts";
 import {
   type ProjectChanges,
   cloneBranchAndMount,
+  commit,
   createFile,
   deleteFile,
   fetchFileContents,
@@ -87,6 +88,7 @@ type FilesContextType = {
   isCloned: boolean | undefined;
   fetchBranch: (branchId: string) => Promise<void>;
   cloneBranch: (branchId: string) => Promise<void>;
+  commitChanges: (commitMessage: string, filePaths: string[]) => Promise<void>;
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
@@ -142,7 +144,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   }
 
   const fetchChanges = async () => {
-    const result = await getProjectChanges();
+    const result = await getProjectChanges(branchId);
     const flattenedChanges = result.untracked
       .map((change) => ({
         ...change,
@@ -356,6 +358,12 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     setActiveFile(newTab);
   };
 
+  const commitChanges = async (commitMessage: string, filePaths: string[]) => {
+
+    await commit(branchId, commitMessage, filePaths);
+    fetchChanges();
+  }
+
   return (
     <FilesContext.Provider
       value={{
@@ -384,6 +392,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         isCloned,
         fetchBranch,
         cloneBranch,
+        commitChanges
       }}
     >
       {children}
