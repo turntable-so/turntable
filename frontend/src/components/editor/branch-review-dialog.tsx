@@ -71,7 +71,7 @@ export default function BranchReviewDialog({
   const [commitMessage, setCommitMessage] = useState<string>("");
 
   console.log({ selectedFilePaths })
-  const { changes, branchId, fetchChanges, commitChanges } = useFiles();
+  const { changes, branchId, fetchChanges, commitChanges, pullRequestUrl } = useFiles();
 
 
   useEffect(() => {
@@ -162,7 +162,11 @@ export default function BranchReviewDialog({
                 </div>
                 <div className="mt-4">
                   <label className="text-sm font-medium">Create Pull Request</label>
-                  <div></div>
+                  <div>
+                    <a href={pullRequestUrl} target="_blank" rel="noreferrer">
+                      {pullRequestUrl}
+                    </a>
+                  </div>
                 </div>
               </>
             </div>

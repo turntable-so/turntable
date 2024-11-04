@@ -434,9 +434,22 @@ class ResourceSerializer(serializers.HyperlinkedModelSerializer):
 class BranchSerializer(serializers.ModelSerializer):
 
     is_cloned = serializers.SerializerMethodField()
+    pull_request_url = serializers.SerializerMethodField()
+
     class Meta:
         model = Branch
-        fields = ["id", "name", "branch_name", "read_only", "created_by", "is_cloned"]
+        fields = [
+            "id",
+            "name",
+            "branch_name",
+            "read_only",
+            "created_by",
+            "is_cloned",
+            "pull_request_url",
+        ]
 
     def get_is_cloned(self, obj):
         return obj.is_cloned
+
+    def get_pull_request_url(self, obj):
+        return obj.pull_request_url

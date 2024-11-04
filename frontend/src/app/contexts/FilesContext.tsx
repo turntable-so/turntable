@@ -89,6 +89,7 @@ type FilesContextType = {
   fetchBranch: (branchId: string) => Promise<void>;
   cloneBranch: (branchId: string) => Promise<void>;
   commitChanges: (commitMessage: string, filePaths: string[]) => Promise<void>;
+  pullRequestUrl: string | undefined;
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
@@ -107,6 +108,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   const [branchName, setBranchName] = useState("");
   const [readOnly, setReadOnly] = useState<boolean | undefined>(undefined);
   const [isCloned, setIsCloned] = useState<boolean | undefined>(undefined);
+  const [pullRequestUrl, setPullRequestUrl] = useState<string | undefined>(undefined);
   const [files, setFiles] = useState<FileNode[]>([]);
   const [openedFiles, setOpenedFiles] = useState<OpenedFile[]>([
     {
@@ -136,6 +138,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     setBranchName(branch.name);
     setReadOnly(branch.read_only);
     setIsCloned(branch.is_cloned);
+    setPullRequestUrl(branch.pull_request_url);
   }
 
   const cloneBranch = async (branchId: string) => {
@@ -392,7 +395,8 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         isCloned,
         fetchBranch,
         cloneBranch,
-        commitChanges
+        commitChanges,
+        pullRequestUrl,
       }}
     >
       {children}

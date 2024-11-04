@@ -177,7 +177,6 @@ class Branch(models.Model):
     def pull_request_url(self):
         if not self.repository.git_repo_url:
             return None
-
         # Parse git URL into GitHub format
         url = self.repository.git_repo_url
         if url.startswith("git@"):
@@ -187,13 +186,7 @@ class Branch(models.Model):
         if url.endswith(".git"):
             url = url[:-4]
 
-        # Add /compare/ and branch name for PR URL
-        if not self.is_main:
-            url = (
-                f"{url}/compare/{self.repository.main_branch_name}...{self.branch_name}"
-            )
-
-        return url
+        return f"{url}/compare/{self.repository.main_branch_name}/{self.branch_name}"
 
     def clone(self):
         with self._code_repo_path() as path:
