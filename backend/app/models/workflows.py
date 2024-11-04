@@ -227,7 +227,9 @@ class ScheduledWorkflow(PolymorphicModel):
         raise Exception(f"Workflow did not start in timeout of {timeout} seconds")
 
     def await_next_result(
-        self, start_timeout: int | None = None, duration_timeout: int | None = None
+        self,
+        start_timeout: int = TASK_START_TIMEOUT,
+        duration_timeout: int | None = None,
     ):
         task_id = self.await_next_id(start_timeout)
         result = AsyncResult(task_id)

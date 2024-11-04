@@ -246,16 +246,30 @@ def suppress_celery_errors():
 @pytest.fixture(scope="session")
 def custom_celery_worker(
     custom_celery_app,
+    max_retries: int = 10,
 ):
-    # Start the worker with the "test-queue" only
-    with start_worker(
-        custom_celery_app,
-        loglevel="info",
-        queues=[TEST_QUEUE],
-        perform_ping_check=False,
-        concurrency=1,
-    ) as worker:
-        yield worker
+    retry_count = 0
+
+    while retry_count < max_retries:
+        try:
+            with start_worker(
+                custom_celery_app,
+                loglevel="info",
+                queues=[TEST_QUEUE],
+                perform_ping_check=False,
+                concurrency=1,
+            ) as worker:
+                yield worker
+                break  # If we get here successfully, exit the retry loop
+        except Exception as e:
+            retry_count += 1
+            if retry_count == max_retries:
+                raise Exception(
+                    f"Failed to start Celery worker after {max_retries} attempts: {str(e)}"
+                )
+            logging.warning(
+                f"Celery worker failed, attempt {retry_count} of {max_retries}. Error: {str(e)}"
+            )
 
 
 @pytest.fixture(scope="session")
