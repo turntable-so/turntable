@@ -624,7 +624,7 @@ export default function QueryBlock(props: QueryBlockProps) {
   useEffect(() => {
     const fetchWorkflowState = async (id: string) => {
       const data = await getWorkflow(
-        { workflow_run_id: id },
+        { task_id: id },
         abortControllerRef.current?.signal,
       );
       if (data.execute_query.status === "failed") {
@@ -693,7 +693,7 @@ export default function QueryBlock(props: QueryBlockProps) {
       setError(e?.toString() || "");
     }
     if (data) {
-      setWorkflowId(data.workflow_run);
+      setWorkflowId(data.task);
     }
   }
 

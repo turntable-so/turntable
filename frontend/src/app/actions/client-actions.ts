@@ -32,11 +32,11 @@ export async function executeQuery(
 }
 
 export async function getWorkflow(
-  { workflow_run_id }: { workflow_run_id: string },
+  { task_id }: { task_id: string },
   signal: any = null,
 ) {
   const response = await fetcher(
-    `/workflows/${workflow_run_id}/`,
+    `/workflows/${task_id}/`,
     {
       method: "GET",
     },

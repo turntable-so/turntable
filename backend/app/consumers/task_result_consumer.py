@@ -23,13 +23,13 @@ class TaskResultConsumer(AsyncWebsocketConsumer):
 
     async def workflow_status_update(self, event):
         logger.info(
-            f"Sending status update for workflow: {event['workflow_run_id']} with status: {event['status']}"
+            f"Sending status update for workflow: {event['task_id']} with status: {event['status']}"
         )
         await self.send(
             text_data=json.dumps(
                 {
                     "status": event["status"],
-                    "workflow_run_id": event["workflow_run_id"],
+                    "task_id": event["task_id"],
                     "resource_id": event["resource_id"],
                 }
             )

@@ -1,23 +1,40 @@
-import ast
-import json
 import os
 import re
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.core.cache import cache
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django_celery_results.models import TaskResult
 
 from app.models.workflows import (
-    WORKFLOW_STARTED_QUEUE,
     ScheduledWorkflow,
     WorkflowTaskMap,
+    get_periodic_task_key,
 )
 
 
+def signal_periodic_task_started(instance):
+    if os.getenv("BYPASS_CELERY_BEAT") == "true":
+        workflow_id = WorkflowTaskMap.inverse_map.get(instance.task_id)
+        if not workflow_id:
+            return
+
+        workflow = ScheduledWorkflow.objects.get(id=workflow_id)
+        instance.periodic_task_name = workflow.replacement_identifier
+
+    if instance.periodic_task_name:
+        cache.set(
+            key=get_periodic_task_key(instance.periodic_task_name),
+            value=instance.task_id,
+            timeout=500,
+        )
+
+
 @receiver(pre_save, sender=TaskResult)
-def send_status_update(sender, instance, **task_kwargs):
+def task_result_pre_save(sender, instance, **task_kwargs):
+    signal_periodic_task_started(instance)
     try:
         old_status = TaskResult.objects.get(pk=instance.pk).status
     except TaskResult.DoesNotExist:
@@ -43,29 +60,10 @@ def send_status_update(sender, instance, **task_kwargs):
             {
                 "type": "workflow_status_update",
                 "status": instance.status,
-                "workflow_run_id": str(instance.id),
-                "resource_id": ids["resource_id"]
+                "task_id": str(instance.id),
+                "resource_id": ids["resource_id"],
             },
         )
     except Exception as e:
         print(e)
         print("Error sending status update")
-
-
-@receiver(pre_save, sender=TaskResult)
-def task_result_pre_save(sender, instance, **kwargs):
-    if os.getenv("BYPASS_CELERY_BEAT") == "true":
-        workflow_id = WorkflowTaskMap.inverse_map.get(instance.task_id)
-        if not workflow_id:
-            return
-
-        workflow = ScheduledWorkflow.objects.get(id=workflow_id)
-        instance.periodic_task_name = workflow.replacement_identifier
-
-    if instance.periodic_task_name:
-        WORKFLOW_STARTED_QUEUE.put(
-            {
-                "periodic_task_name": instance.periodic_task_name,
-                "task_id": instance.task_id,
-            }
-        )

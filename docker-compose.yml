@@ -178,6 +178,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      worker:
+        condition: service_healthy
 
   flower:
     <<: *common-backend
@@ -200,6 +202,8 @@ services:
       web:
         condition: service_started
       worker:
+        condition: service_healthy
+      scheduler:
         condition: service_healthy
 
 volumes:

@@ -20,11 +20,11 @@ def ingest_metadata(
     workspace_id: str,
     resource_id: str,
     workunits: int,
-    workflow_run_id: str | None = None,
+    task_id: str | None = None,
 ):
     resource = Resource.objects.get(id=resource_id)
     resource.details.run_datahub_ingest(
-        workflow_run_id=self.request.id if not workflow_run_id else workflow_run_id,
+        task_id=self.request.id if not task_id else task_id,
         workunits=workunits,
     )
 
@@ -48,6 +48,6 @@ def sync_metadata(self, workspace_id: str, resource_id: str):
         workspace_id=workspace_id,
         resource_id=resource_id,
         workunits=1000,
-        workflow_run_id=self.request.id,
+        task_id=self.request.id,
     )
     process_metadata(workspace_id=workspace_id, resource_id=resource_id)
