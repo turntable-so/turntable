@@ -132,7 +132,7 @@ export default function ConnectionLayout({
             </div>
             <div className="flex justify-end items-center space-x-2">
               <div>
-                {realStatus === "RUNNING" && (
+                {realStatus === "STARTED" && (
                   <Badge
                     variant="secondary"
                     className="flex space-x-2 items-center font-medium text-sm"
@@ -165,8 +165,8 @@ export default function ConnectionLayout({
                 )}
               </div>
               <Button
-                disabled={realStatus === "RUNNING"}
-                className={`${realStatus === "RUNNING" ? "opacity-50" : ""}`}
+                disabled={realStatus === "STARTED"}
+                className={`${realStatus === "STARTED" ? "opacity-50" : ""}`}
                 onClick={() => {
                   const syncResourceAndRefresh = async () => {
                     const res = await syncResource(resource.id);

@@ -28,6 +28,7 @@ from app.models.resources import (
     SnowflakeDetails,
     TableauDetails,
 )
+from app.models.workflows import MetadataSyncWorkflow
 
 
 class CreateResourceSerializer(serializers.Serializer):
@@ -301,21 +302,9 @@ class ResourceService:
             "test_datahub": test_datahub,
         }
 
-    async def sync_resource(self, resource_id: int):
-        from workflows.hatchet import hatchet
-
-        resource = await Resource.objects.aget(id=resource_id, workspace=self.workspace)
-        if resource is None:
-            raise ValidationError("Resource not found.")
-
-        workflow_run = hatchet.client.admin.run_workflow(
-            "MetadataSyncWorkflow",
-            {
-                "workspace_id": self.workspace.id,
-                "resource_id": resource_id,
-            },
+    def sync_resource(self, resource_id: int):
+        workspace = Resource.objects.get(id=resource_id, workspace=self.workspace)
+        workflow = MetadataSyncWorkflow.schedule_now(
+            workspace=workspace, resource_id=resource_id
         )
-
-        return {
-            "workflow_run_id": workflow_run.workflow_run_id,
-        }
+        return workflow.await_next_id(timeout=20)

@@ -8,7 +8,6 @@
 .ruff_cache
 .*venv/
 .*env
-.hatchetconfig
 private/
 
 # dependencies

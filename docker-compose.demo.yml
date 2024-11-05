@@ -12,7 +12,7 @@ services:
     extends:
       file: docker-compose.yml
       service: api
-    command: ["django-admin", "start", "--mode", "demo"]
+    command: ["django-admin", "start_server", "--mode", "demo"]
     depends_on:
       ensure_populate_test_db:
         condition: service_completed_successfully
@@ -34,11 +34,6 @@ services:
       file: docker-compose.yml
       service: postgres
 
-  create_hatchet_db:
-    extends:
-      file: docker-compose.yml
-      service: create_hatchet_db
-
   minio:
     extends:
       file: docker-compose.yml
@@ -48,31 +43,18 @@ services:
     extends:
       file: docker-compose.yml
       service: createbuckets
-
-  hatchet-lite:
-    extends:
-      file: docker-compose.yml
-      service: hatchet-lite
-
-  setup-hatchet:
-    extends:
-      file: docker-compose.yml
-      service: setup-hatchet
-
+  
   worker:
     extends:
       file: docker-compose.yml
       service: worker
-    depends_on:
-      ensure_populate_test_db:
-        condition: service_completed_successfully
-      metabase:
-        condition: service_healthy
+    command: ["django-admin", "start_worker", "--mode", "demo"]
 
-  celery_worker:
+  scheduler:
     extends:
       file: docker-compose.yml
-      service: celery_worker
+      service: worker
+    command: ["django-admin", "start_beat", "--mode", "demo"]
 
   flower:
     extends:
@@ -144,9 +126,6 @@ services:
 volumes:
   postgres_data:
   minio_data:
-  hatchet_lite_rabbitmq_data:
-  hatchet_lite_config:
-  hatchet_credentials_handoff:
   postgres_test_db_data:
   frontend_data:
   code_repos:

@@ -350,9 +350,9 @@ class DBTProject(object):
         )
 
         while process.poll() is None:
-            if should_terminate and should_terminate():
+            if should_terminate():
                 process.terminate()
-                break
+                return
             ready, _, _ = select.select([process.stdout, process.stderr], [], [], 0.1)
             for stream in ready:
                 line = stream.readline()

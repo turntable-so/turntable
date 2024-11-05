@@ -1,4 +1,4 @@
-from .workflow_run_consumer import WorkflowRunConsumer
 from .dbt_command_consumer import DBTCommandConsumer
+from .task_result_consumer import TaskResultConsumer
 
-__all__ = ['WorkflowRunConsumer', 'DBTCommandConsumer']
+__all__ = ["TaskResultConsumer", "DBTCommandConsumer"]
