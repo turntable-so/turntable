@@ -75,10 +75,10 @@ export default function BranchReviewDialog({
 
 
   useEffect(() => {
-    if (isCloned) {
+    if (branchId) {
       fetchChanges();
     }
-  }, [open, isCloned]);
+  }, [open, branchId]);
 
   useEffect(() => {
     if (changes?.length > 0) {
