@@ -18,6 +18,7 @@ from .resources import (
     DataFileDetails,
     DBTCloudDetails,
     DBTCoreDetails,
+    DBTResource,
     LookerDetails,
     MetabaseDetails,
     PostgresDetails,

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import builtins  # noqa: F401
+import os
 
 import ibis
 import ibis.expr.datatypes as types  # noqa: F401
@@ -17,6 +18,7 @@ from vinyl.lib.asset import (  # noqa: F401
 
 # from vinyl.lib.definitions import Defs  # noqa: F401
 from vinyl.lib.enums import FillOptions  # noqa: F401,
+from vinyl.lib.env import load_dotenv  # noqa: F401
 from vinyl.lib.field import Field  # noqa: F401
 from vinyl.lib.metric import MetricStore  # noqa: F401
 from vinyl.lib.set import difference, intersect, join, union  # noqa: F401
@@ -25,8 +27,6 @@ from vinyl.lib.table import (
     VinylTable,  # noqa: F401
 )
 from vinyl.lib.utils.graphics import rich_print  # noqa: F401
-
-from vinyl.lib.env import load_dotenv  # noqa: F401
 
 __all__ = [
     "Field",

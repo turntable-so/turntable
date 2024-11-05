@@ -84,6 +84,10 @@ dependencies = [
     "psycopg[binary]>=3.1.19",
     "gitpython>=3.1.43",
     "daphne>=4.1.2",
+    "celery[redis]>=5.4.0",
+    "flower>=2.0.1",
+    "django-celery-results>=2.5.1",
+    "django-celery-beat>=2.7.0",
 ]
 
 [project.scripts]
@@ -119,7 +123,6 @@ dev-dependencies = [
     "google-cloud-storage>=2.17.0",
     "google-cloud-dataproc>=5.9.3",
     "pytest-django>=4.8.0",
-    "harlequin>=1.23.1",
 ]
 
 [tool.vinyl]
@@ -143,6 +146,7 @@ testpaths = [
     "ai/tests",
     "workflows/tests",
     "tests/",
+    "tasks/tests",
 ]
 addopts = "--color=yes -v"
 DJANGO_SETTINGS_MODULE = "api.settings"

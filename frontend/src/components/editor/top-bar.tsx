@@ -14,6 +14,7 @@ import {
   PanelLeftClose,
   PanelRight,
   PanelRightClose,
+  Settings,
   Users,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
@@ -28,6 +29,15 @@ import {
 } from "../ui/tooltip";
 import WorkspaceSwitcher from "../workspace-switcher";
 import BranchReviewDialog from "./branch-review-dialog";
+import { LocalStorageKeys } from "@/app/constants/local-storage-keys";
+
+const clearEditorCache = () => {
+  localStorage.removeItem(LocalStorageKeys.activeFile);
+  localStorage.removeItem(LocalStorageKeys.fileTabs);
+  localStorage.removeItem(LocalStorageKeys.recentFiles);
+  localStorage.removeItem(LocalStorageKeys.commandHistory);
+  localStorage.removeItem(LocalStorageKeys.bottomPanelTab);
+};
 
 const AppContent = () => {
   const { appSidebarCollapsed } = useLayoutContext();
