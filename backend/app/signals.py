@@ -44,13 +44,14 @@ def task_result_pre_save(sender, instance, **task_kwargs):
     if old_status == new_status:
         return
 
+    ids_to_fetch = {"workspace_id": True, "resource_id": False}
     ids = {}
-    for id in ["workspace_id", "resource_id"]:
+    for id, mandatory in ids_to_fetch.items():
         pattern = r"""['"]""" + id + r"""['"]\s*:\s*(['"])(.*?)\1"""
         match = re.search(pattern, instance.task_kwargs)
         if match:
             ids[id] = match.group(2)
-        else:
+        elif mandatory:
             raise ValueError(f"{id} is required as a kwarg on all tasks")
 
     channel_layer = get_channel_layer()
@@ -61,7 +62,7 @@ def task_result_pre_save(sender, instance, **task_kwargs):
                 "type": "workflow_status_update",
                 "status": instance.status,
                 "task_id": str(instance.id),
-                "resource_id": ids["resource_id"],
+                **ids,
             },
         )
     except Exception as e:

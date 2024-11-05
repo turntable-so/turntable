@@ -47,7 +47,6 @@ def run_test_dbt_query(
             dbt_resource_id=str(dbtresource.id),
             dbt_sql=query,
             use_fast_compile=use_fast_compile,
-            # limit=10,
         )
         .apply_async()
         .get()
