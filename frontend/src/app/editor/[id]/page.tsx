@@ -25,6 +25,7 @@ import type React from "react";
 import { useLayoutContext } from "../../contexts/LayoutContext";
 import { LineageProvider } from "../../contexts/LineageContext";
 import { usePathname } from "next/navigation";
+import EditorTopBar from "@/components/editor/editor-top-bar";
 
 const PromptBox = ({
   setPromptBoxOpen,
@@ -524,6 +525,7 @@ function EditorPageContent() {
 
   return (
     <div className="flex flex-col h-screen">
+      <EditorTopBar />
       <PanelGroup direction="horizontal" className="h-fit">
         {sidebarLeftShown && (
           <Panel

@@ -17,6 +17,7 @@ import {
   fetchFileContents,
   getBranch,
   getFileIndex,
+  discardBranchChanges,
   getProjectChanges,
   persistFile,
 } from "../actions/actions";
@@ -78,7 +79,7 @@ type FilesContextType = {
   deleteFileAndRefresh: (path: string) => void;
   createNewFileTab: () => void;
   changes: ProjectChanges | null;
-  fetchChanges: () => void;
+  fetchChanges: (branchId: string) => void;
   recentFiles: FileNode[]; // New state added here
   fetchFiles: () => void;
   branchId: string;
@@ -90,6 +91,7 @@ type FilesContextType = {
   commitChanges: (commitMessage: string, filePaths: string[]) => Promise<void>;
   pullRequestUrl: string | undefined;
   isCloning: boolean;
+  discardChanges: (branchId: string) => Promise<void>;
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
@@ -145,6 +147,16 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     }
   }
 
+  const discardChanges = async (branchId: string) => {
+    await discardBranchChanges(branchId);
+    fetchChanges(branchId);
+    fetchFiles();
+  }
+
+
+
+  console.log({ branchId, isCloned, readOnly, pullRequestUrl })
+
   const cloneBranch = async (branchId: string) => {
     setIsCloning(true)
     const branch = await cloneBranchAndMount(branchId);
@@ -152,7 +164,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     setIsCloned(true);
   }
 
-  const fetchChanges = async () => {
+  const fetchChanges = async (branchId: string) => {
     const result = await getProjectChanges(branchId);
     const flattenedChanges = result.untracked
       .map((change) => ({
@@ -404,6 +416,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         commitChanges,
         pullRequestUrl,
         isCloning,
+        discardChanges,
       }}
     >
       {children}

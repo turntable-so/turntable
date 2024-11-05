@@ -92,6 +92,17 @@ class ProjectViewSet(viewsets.ViewSet):
         return Response(branch.clone(), status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=["POST"])
+    def discard(self, request, pk=None):
+        branch = Branch.objects.get(id=pk)
+        if not branch.is_cloned:
+            return Response(
+                {"error": "Branch not cloned"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        branch.discard_changes()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=["POST"])
     def commit(self, request, pk=None):
         branch = Branch.objects.get(id=pk)
         if not branch.is_cloned:

@@ -31,7 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Router } from "lucide-react";
+import { Loader2, Plus, Router } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -44,6 +44,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const formSchema = z.object({
   projectName: z.string().min(2, {
@@ -53,6 +54,7 @@ const formSchema = z.object({
   branchFrom: z.string().min(2, {
     message: "Branch name must be at least 2 characters.",
   }),
+  readOnly: z.boolean().default(false),
 });
 
 const NewProjectButton = () => {
@@ -62,6 +64,7 @@ const NewProjectButton = () => {
       projectName: "",
       branchName: "",
       branchFrom: "",
+      readOnly: false,
     },
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -69,6 +72,8 @@ const NewProjectButton = () => {
   // Watch projectName to transform it for branchName
   const projectName = form.watch("projectName");
   const [branches, setBranches] = useState<string[]>([]);
+  const { isSubmitting } = form.formState;
+
 
   useEffect(() => {
     const fetchBranches = async () => {
@@ -172,13 +177,41 @@ const NewProjectButton = () => {
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name="readOnly"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-2">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="">
+                      <FormLabel>Read Only</FormLabel>
+                      <FormDescription>
+                        Read only projects are synced with remote branches but are not editable in Turntable
+                      </FormDescription>
+                    </div>
+                  </FormItem>
+                )}
+              />
               <div className="flex justify-end">
-                <Button type="submit">Create</Button>
+                {isSubmitting ? (
+                  <Button disabled className="flex items-center space-x-2">
+                    <Loader2 className="size-4 animate-spin" />
+                    <span>Creating</span>
+                  </Button>
+                ) : (
+                  <Button type="submit">Create</Button>
+                )}
+
               </div>
             </form>
           </Form>
         </DialogContent>
-      </Dialog>
+      </Dialog >
     </>
   );
 };

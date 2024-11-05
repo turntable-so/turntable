@@ -669,3 +669,11 @@ export async function commit(branchId: string, commitMessage: string, filePaths:
     body: { commit_message: commitMessage, file_paths: filePaths },
   });
 }
+
+export async function discardBranchChanges(branchId: string) {
+  const response = await fetcher(`/project/${branchId}/discard/`, {
+    cookies,
+    method: "POST",
+  });
+  return response.ok;
+}

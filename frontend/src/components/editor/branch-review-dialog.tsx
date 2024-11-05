@@ -71,14 +71,15 @@ export default function BranchReviewDialog({
   const [commitMessage, setCommitMessage] = useState<string>("");
 
   console.log({ selectedFilePaths })
-  const { changes, branchId, fetchChanges, commitChanges, pullRequestUrl, branchName, isCloned } = useFiles();
+  const { changes, branchId, fetchChanges, commitChanges, pullRequestUrl, branchName, isCloned, discardChanges } = useFiles();
 
 
   useEffect(() => {
+    console.log({ branchId })
     if (branchId) {
-      fetchChanges();
+      fetchChanges(branchId);
     }
-  }, [open, branchId]);
+  }, [open]);
 
   useEffect(() => {
     if (changes?.length > 0) {
@@ -118,6 +119,9 @@ export default function BranchReviewDialog({
                 </div>
                 <div className="mt-4">
                   <label className="text-sm font-medium">Files changed</label>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => discardChanges(branchId)}>Discard changes</Button>
+                  </div>
                   <div className="gap-1 flex flex-col overflow-y-scroll max-h-[300px]">
                     {(!changes || changes.length === 0) && (
                       <div className="text-xs text-muted-foreground">

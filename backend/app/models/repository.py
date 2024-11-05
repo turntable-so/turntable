@@ -218,6 +218,19 @@ class Branch(models.Model):
 
         return True
 
+    def discard_changes(self):
+        with self.repo_context() as (repo, env):
+            # Reset all staged changes
+            repo.index.reset()
+
+            # Discard all unstaged changes
+            repo.git.checkout("--", ".")
+
+            # Clean untracked files and directories
+            repo.git.clean("-fd")
+
+        return True
+
     @contextmanager
     def _code_repo_path(self, isolate: bool = False):
         path = os.path.join(
