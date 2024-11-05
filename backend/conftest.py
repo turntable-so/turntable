@@ -189,6 +189,11 @@ def enable_django_allow_async_unsafe(monkeypatch):
     monkeypatch.setenv("DJANGO_ALLOW_ASYNC_UNSAFE", "true")
 
 
+@pytest.fixture(autouse=True)
+def vinyl_read_only(monkeypatch):
+    monkeypatch.setenv("VINYL_READ_ONLY", "true")
+
+
 @pytest.fixture(scope="session")
 def session_monkeypatch():
     from _pytest.monkeypatch import MonkeyPatch

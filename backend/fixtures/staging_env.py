@@ -327,8 +327,8 @@ def group_1(user):
     repository1 = create_repository_n(workspace, 1, sshkey1)
     sshkey2 = create_ssh_key_n(workspace, 2)
     repository2 = create_repository_n(workspace, 2, sshkey2)
-    create_dbt_n(bigquery, 1, repository=repository1)
-    create_dbt_n(bigquery, 2, repository=repository2)
+    create_dbt_n(bigquery, 1, force_db=True, repository=repository1)
+    create_dbt_n(bigquery, 2, force_db=True, repository=repository2)
     return [bigquery]
 
 
