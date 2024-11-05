@@ -620,11 +620,13 @@ pytest==8.2.2
     # via pytest-asyncio
     # via pytest-django
     # via pytest-docker-tools
+    # via pytest-timeout
 pytest-asyncio==0.23.8
 pytest-celery==1.1.3
 pytest-django==4.8.0
 pytest-docker-tools==3.1.3
     # via pytest-celery
+pytest-timeout==2.3.1
 python-crontab==3.2.0
     # via django-celery-beat
 python-dateutil==2.9.0.post0

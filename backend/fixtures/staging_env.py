@@ -381,5 +381,5 @@ def group_6(user):
     bigquery = create_bigquery_n(workspace, 3)
     sshkey = create_ssh_key_n(workspace, 3)
     repository = create_repository_n(workspace, 3, sshkey)
-    create_dbt_n(bigquery, 5, repository=repository)
+    create_dbt_n(bigquery, 5, force_db=True, repository=repository)
     return [bigquery]

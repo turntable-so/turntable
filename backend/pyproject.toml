@@ -89,6 +89,7 @@ dependencies = [
     "django-celery-results>=2.5.1",
     "django-celery-beat>=2.7.0",
     "croniter>=5.0.1",
+    "pytest-timeout>=2.3.1",
 ]
 
 [project.scripts]
@@ -152,6 +153,7 @@ testpaths = [
 ]
 addopts = "--color=yes -v"
 DJANGO_SETTINGS_MODULE = "api.settings"
+timeout = 60
 
 [tool.ruff.lint]
 ignore = ["E711"]
