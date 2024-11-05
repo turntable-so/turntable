@@ -313,7 +313,7 @@ if os.getenv("LOCAL_REDIS") == "true":
             int(os.getenv("REDIS_PORT", 6379)),
         )
     ]
-    redis_url = f"redis://{redis_hosts[0][0]}:{redis_hosts[0][1]}/"
+    redis_url = f"redis://{redis_hosts[0][0]}:{redis_hosts[0][1]}"
 else:
     redis_url = os.getenv("REDIS_URL")
     if not redis_url and os.getenv("LOCAL_REDIS") != "true":
@@ -335,7 +335,7 @@ STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 # Celery settings
-CELERY_BROKER_URL = redis_url + os.getenv("CELERY_BROKER_CHANNEL", "10")
+CELERY_BROKER_URL = f"{redis_url}/{os.getenv('CELERY_BROKER_CHANNEL', '0')}"
 # CELERY_CACHE_BACKEND = "django-cache"
 CELERY_RESULT_BACKEND = "django-db"
 CELERY_ACCEPT_CONTENT = ["application/json"]
