@@ -20,7 +20,6 @@ import {
   getProjectChanges,
   persistFile,
 } from "../actions/actions";
-import { useEditor } from "./EditorContext";
 
 export const MAX_RECENT_COMMANDS = 5;
 
@@ -90,6 +89,7 @@ type FilesContextType = {
   cloneBranch: (branchId: string) => Promise<void>;
   commitChanges: (commitMessage: string, filePaths: string[]) => Promise<void>;
   pullRequestUrl: string | undefined;
+  isCloning: boolean;
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
@@ -110,6 +110,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   const [isCloned, setIsCloned] = useState<boolean | undefined>(undefined);
   const [pullRequestUrl, setPullRequestUrl] = useState<string | undefined>(undefined);
   const [files, setFiles] = useState<FileNode[]>([]);
+  const [isCloning, setIsCloning] = useState(false);
   const [openedFiles, setOpenedFiles] = useState<OpenedFile[]>([
     {
       node: {
@@ -132,17 +133,22 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     [],
   );
 
-  const fetchBranch = async (branchId: string) => {
-    const branch = await getBranch(branchId);
-    setBranchId(branch.id);
-    setBranchName(branch.name);
-    setReadOnly(branch.read_only);
-    setIsCloned(branch.is_cloned);
-    setPullRequestUrl(branch.pull_request_url);
+  const fetchBranch = async (id: string) => {
+    console.log('fetchBranch', id)
+    if (id) {
+      const branch = await getBranch(id);
+      setBranchId(branch.id);
+      setBranchName(branch.name);
+      setReadOnly(branch.read_only);
+      setIsCloned(branch.is_cloned);
+      setPullRequestUrl(branch.pull_request_url);
+    }
   }
 
   const cloneBranch = async (branchId: string) => {
+    setIsCloning(true)
     const branch = await cloneBranchAndMount(branchId);
+    setIsCloning(false)
     setIsCloned(true);
   }
 
@@ -397,6 +403,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         cloneBranch,
         commitChanges,
         pullRequestUrl,
+        isCloning,
       }}
     >
       {children}

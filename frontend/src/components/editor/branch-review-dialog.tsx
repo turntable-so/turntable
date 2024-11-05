@@ -71,14 +71,14 @@ export default function BranchReviewDialog({
   const [commitMessage, setCommitMessage] = useState<string>("");
 
   console.log({ selectedFilePaths })
-  const { changes, branchId, fetchChanges, commitChanges, pullRequestUrl } = useFiles();
+  const { changes, branchId, fetchChanges, commitChanges, pullRequestUrl, branchName, isCloned } = useFiles();
 
 
   useEffect(() => {
-    if (branchId) {
+    if (isCloned) {
       fetchChanges();
     }
-  }, [open, branchId]);
+  }, [open, isCloned]);
 
   useEffect(() => {
     if (changes?.length > 0) {
@@ -103,12 +103,9 @@ export default function BranchReviewDialog({
               <>
                 <div className="mt-4">
                   <label className="text-sm font-medium">Branch</label>
-                  <select
-                    className="w-full h-8 rounded-md border border-input bg-background text-sm shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-                    disabled
-                  >
-                    <option>{'PLACEHOLDER'}</option>
-                  </select>
+                  <div className="text-xs text-muted-foreground">
+                    {branchName}
+                  </div>
                 </div>
                 <div className="mt-4">
                   <label className="text-sm font-medium">Commit message</label>
@@ -163,7 +160,7 @@ export default function BranchReviewDialog({
                 <div className="mt-4">
                   <label className="text-sm font-medium">Create Pull Request</label>
                   <div>
-                    <a href={pullRequestUrl} target="_blank" rel="noreferrer">
+                    <a href={pullRequestUrl} target="_blank" rel="noreferrer" className="text-blue-500 text-xs text-medium underline">
                       {pullRequestUrl}
                     </a>
                   </div>

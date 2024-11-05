@@ -289,9 +289,8 @@ class ProjectViewSet(viewsets.ViewSet):
                     source_branch=request.data.get("source_branch"),
                 )
 
-            return Response(
-                {"branch_name": branch.branch_name}, status=status.HTTP_201_CREATED
-            )
+            branch_serializer = BranchSerializer(branch)
+            return Response(branch_serializer.data, status=status.HTTP_201_CREATED)
 
         elif request.method == "PATCH":
             if not request.data.get("branch_name"):

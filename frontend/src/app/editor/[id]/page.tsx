@@ -25,7 +25,6 @@ import type React from "react";
 import { useLayoutContext } from "../../contexts/LayoutContext";
 import { LineageProvider } from "../../contexts/LineageContext";
 import { usePathname } from "next/navigation";
-import { useEditor } from "@/app/contexts/EditorContext";
 
 const PromptBox = ({
   setPromptBoxOpen,
@@ -190,7 +189,7 @@ function EditorContent({
   setPromptBoxOpen,
   containerWidth,
 }: { setPromptBoxOpen: (open: boolean) => void; containerWidth: number }) {
-  const { activeFile, updateFileContent, saveFile, setActiveFile } = useFiles();
+  const { activeFile, updateFileContent, saveFile, setActiveFile, isCloning } = useFiles();
 
   // Define your custom theme
   const customTheme = {
@@ -263,8 +262,15 @@ function EditorContent({
 
   if (activeFile?.view === "new") {
     return (
-      <div className="h-full w-full flex items-center justify-center">
-        new tab experience coming soon
+      <div className="h-full w-full flex items-center justify-center text-muted-foreground">
+        {isCloning ? (
+          <div className="flex items-center space-x-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <div>Setting up environment</div>
+          </div>
+        ) : (
+          "new tab experience coming soon"
+        )}
       </div>
     );
   }
@@ -387,9 +393,10 @@ function EditorPageContent() {
 
   useEffect(() => {
     if (pathname && pathname.includes('/editor/')) {
-      const branchId = pathname.split('/').pop()
-      if (branchId) {
-        fetchBranch(branchId)
+      const id = pathname.split('/').slice(-1)[0]
+      console.log({ id })
+      if (id && id.length > 0) {
+        fetchBranch(id)
       }
     }
   }, [pathname])
@@ -459,14 +466,6 @@ function EditorPageContent() {
     selectedIndex,
   ]);
 
-  useEffect(() => {
-    const fetchBranches = async () => {
-      const { active_branch, branches } = await getBranches();
-      setActiveBranch(active_branch);
-      setBranches(branches);
-    };
-    fetchBranches();
-  }, []);
 
   const runQueryPreview = async () => {
     setIsLoading(true);

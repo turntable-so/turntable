@@ -28,7 +28,6 @@ import {
 } from "../ui/tooltip";
 import WorkspaceSwitcher from "../workspace-switcher";
 import BranchReviewDialog from "./branch-review-dialog";
-import { useEditor } from "@/app/contexts/EditorContext";
 
 const AppContent = () => {
   const { appSidebarCollapsed } = useLayoutContext();
@@ -92,8 +91,6 @@ const EditorContent = () => {
   const { user, logout } = useSession();
   const [branchReviewDialogOpen, setBranchReviewDialogOpen] = useState(false);
 
-  const { branchName } = useEditor();
-
 
   return (
     <div
@@ -147,7 +144,7 @@ const EditorContent = () => {
           className="flex items-center justify-center space-x-2 hover:bg-white"
         >
           <FolderGit2 className="w-4 h-4" />
-          <div className="text-xs font-medium">{branchName.slice(0, 35)}</div>
+          <div className="text-xs font-medium">{'Version Control'}</div>
         </Button>
       </div>
       <SearchBar />

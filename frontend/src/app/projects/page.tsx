@@ -93,7 +93,7 @@ const NewProjectButton = () => {
     if (result.error) {
       toast.error(result.error);
     } else {
-      router.push(`/editor`);
+      router.push(`/editor/${result.id}`);
     }
   };
 

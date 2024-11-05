@@ -185,8 +185,7 @@ class Branch(models.Model):
 
         if url.endswith(".git"):
             url = url[:-4]
-
-        return f"{url}/compare/{self.repository.main_branch_name}/{self.branch_name}"
+        return f"{url}/pull/new/{self.branch_name}"
 
     def clone(self):
         with self._code_repo_path() as path:
@@ -284,8 +283,6 @@ class Branch(models.Model):
     ) -> str:
         with self.repository.with_ssh_env() as env:
             with tempfile.TemporaryDirectory() as tmp_dir:
-                print("SSH Environment:", {k: v for k, v in env.items() if "SSH" in k})
-
                 repo = GitRepo.init(tmp_dir)
 
                 repo.git.fetch(
