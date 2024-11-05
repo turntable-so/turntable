@@ -1,3 +1,5 @@
+import time
+
 import pytest
 from django_celery_results.models import TaskResult
 
@@ -17,6 +19,9 @@ def run_test_sync(
     produce_columns: bool = False,
     produce_column_links: bool = False,
 ):
+    # ensure the resources are ready
+    time.sleep(1)
+
     for resource in resources:
         resource_id_str = str(resource.id)
         if use_cache:

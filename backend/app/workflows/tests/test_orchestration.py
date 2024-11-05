@@ -1,3 +1,5 @@
+import time
+
 import pytest
 
 from app.models.workflows import DBTOrchestrator
@@ -6,6 +8,10 @@ from app.models.workflows import DBTOrchestrator
 @pytest.mark.django_db(transaction=True)
 def test_orchestration(custom_celery, local_postgres):
     resource = local_postgres
+
+    # ensure the resource is ready
+    time.sleep(1)
+
     resource.refresh_from_db()
     workflow = DBTOrchestrator.schedule_now(
         workspace=resource.workspace,
