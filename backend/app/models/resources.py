@@ -601,7 +601,7 @@ class DBTCoreDetails(DBTResource):
             for dbtresource in dbtresource_options:
                 if dbtresource.environment == env:
                     return dbtresource
-        raise None
+        return None
 
     def clean(self, *args, **kwargs):
         if (

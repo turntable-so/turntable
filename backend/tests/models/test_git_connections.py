@@ -30,15 +30,19 @@ class TestGitConnections:
             shutil.rmtree(path_to_delete)
 
     @pytest.fixture
-    def local_postgres_repo(self, local_postgres):
-        repo = local_postgres.dbtresource_set.first().repository
-        return repo
+    def local_postgres_dbtresource(self, local_postgres):
+        return local_postgres.dbtresource_set.first()
 
     @pytest.fixture
-    def local_postgres_test_branch(self, local_postgres_repo):
+    def local_postgres_repo(self, local_postgres_dbtresource):
+        return local_postgres_dbtresource.repository
+
+    @pytest.fixture
+    def local_postgres_test_branch(self, local_postgres_dbtresource):
         return Project.objects.create(
-            workspace=local_postgres_repo.workspace,
-            repository=local_postgres_repo,
+            dbtresource=local_postgres_dbtresource,
+            workspace=local_postgres_dbtresource.workspace,
+            repository=local_postgres_dbtresource.repository,
             branch_name="test-branch",
         )
 
@@ -98,11 +102,12 @@ class TestGitConnections:
             )
 
     @isolate_mark
-    def test_create_branch(self, local_postgres_repo, isolate):
+    def test_create_branch(self, local_postgres_dbtresource, isolate):
         branch_name = "test_branch" + "".join([hex(x)[2:] for x in os.urandom(32)])
         branch = Project.objects.create(
-            workspace=local_postgres_repo.workspace,
-            repository=local_postgres_repo,
+            dbtresource=local_postgres_dbtresource,
+            workspace=local_postgres_dbtresource.workspace,
+            repository=local_postgres_dbtresource.repository,
             branch_name=branch_name,
         )
         try:

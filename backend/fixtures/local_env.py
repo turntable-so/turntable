@@ -96,6 +96,7 @@ def create_local_postgres(workspace, repository: Repository | None = None):
             if resource.dbtresource_set.filter(environment=env_type).count() == 0:
                 DBTCoreDetails(
                     resource=resource,
+                    workspace=workspace,
                     project_path=(
                         "fixtures/test_resources/jaffle_shop"
                         if repository is None
@@ -127,6 +128,7 @@ def create_local_metabase(workspace):
         ):
             MetabaseDetails(
                 resource=resource,
+                workspace=workspace,
                 username="test@example.com",
                 password="mypassword1",
                 connect_uri=os.getenv("TEST_METABASE_URI", "http://metabase:4000"),

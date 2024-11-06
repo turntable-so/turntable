@@ -210,6 +210,7 @@ class ProjectViewSet(viewsets.ViewSet):
                         status=status.HTTP_400_BAD_REQUEST,
                     )
                 project = Project.objects.get(
+                    dbtresource=dbt_details,
                     workspace=workspace,
                     repository=dbt_details.repository,
                     branch_name=request.data.get("branch_name"),

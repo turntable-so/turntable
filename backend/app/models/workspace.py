@@ -74,10 +74,10 @@ class Workspace(models.Model):
 
     def get_dbt_dev_details(self):
         # import here to avoid circular import
-        from app.models.resources import DBTResource
+        from app.models.resources import DBTCoreDetails
 
         # get dev environment options in order of preference
-        return DBTResource.get_development_dbtresource(self.id)
+        return DBTCoreDetails.get_development_dbtresource(self.id)
 
     @property
     def member_count(self):
