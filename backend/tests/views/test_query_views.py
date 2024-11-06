@@ -19,9 +19,8 @@ def _validate_query_test(response):
     assert len(response.json()["data"]) >= 100
 
 
-@pytest.mark.skip(reason="skipping until we fix sql query view")
-@pytest.mark.django_db
-@pytest.mark.usefixtures("force_isolate", "bypass_hatchet")
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.usefixtures("force_isolate", "custom_celery")
 class TestQueryViews:
     def _test(
         self,
@@ -58,9 +57,8 @@ class TestQueryViews:
         self._test(client, user, remote_databricks)
 
 
-@pytest.mark.django_db
-@pytest.mark.skip(reason="skipping until we fix sql query view")
-@pytest.mark.usefixtures("force_isolate", "bypass_hatchet")
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.usefixtures("force_isolate", "custom_celery")
 class TestDBTQueryViews:
     @classmethod
     def _test(

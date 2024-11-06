@@ -16,7 +16,7 @@ def test_table_description(local_postgres):
         x = get_table_completion(
             dbtproj,
             "model.jaffle_shop.customers",
-            ai_model_name="gpt-4o-mini",
+            ai_model_name="openai/gpt-4o-mini",
         )
     assert x != None
     assert x != []
@@ -29,7 +29,7 @@ def test_column_description(local_postgres):
         x = get_column_completion(
             dbtproj,
             {"model.jaffle_shop.customers": ["count_lifetime_orders"]},
-            ai_model_name="gpt-4o-mini",
+            ai_model_name="openai/gpt-4o-mini",
         )
     assert x != None
     assert x != []

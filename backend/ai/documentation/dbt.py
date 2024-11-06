@@ -67,7 +67,7 @@ def get_schema_and_compiled_sql(
 def get_table_completion(
     dbtproj: DBTProject,
     dbt_node_name: str,
-    ai_model_name="gpt-4o",
+    ai_model_name="openai/gpt-4o",
     compile_if_not_found=True,
 ):
     client = instructor.from_litellm(completion, temperature=0)
