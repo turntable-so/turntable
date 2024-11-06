@@ -668,6 +668,7 @@ export async function commit(branchId: string, commitMessage: string, filePaths:
     method: "POST",
     body: { commit_message: commitMessage, file_paths: filePaths },
   });
+  return response.ok
 }
 
 export async function discardBranchChanges(branchId: string) {

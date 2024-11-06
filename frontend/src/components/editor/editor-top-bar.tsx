@@ -18,7 +18,7 @@ import {
     PanelLeftClose,
     PanelRight,
     PanelRightClose,
-    Users,
+    Settings,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
@@ -29,6 +29,17 @@ import {
 } from "../ui/tooltip";
 import BranchReviewDialog from "./branch-review-dialog";
 import { useFiles } from "@/app/contexts/FilesContext";
+import { LocalStorageKeys } from "@/app/constants/local-storage-keys";
+
+
+const clearEditorCache = () => {
+    localStorage.removeItem(LocalStorageKeys.activeFile);
+    localStorage.removeItem(LocalStorageKeys.fileTabs);
+    localStorage.removeItem(LocalStorageKeys.recentFiles);
+    localStorage.removeItem(LocalStorageKeys.commandHistory);
+    localStorage.removeItem(LocalStorageKeys.bottomPanelTab);
+};
+
 
 const EditorTopBar = () => {
     const {
@@ -86,29 +97,29 @@ const EditorTopBar = () => {
                         <p>Home</p>
                     </TooltipContent>
                 </Tooltip>
-                <BranchReviewDialog
-                    open={branchReviewDialogOpen}
-                    onOpenChange={setBranchReviewDialogOpen}
-                />
-                <Button
-                    onClick={() => setBranchReviewDialogOpen(true)}
-                    variant="ghost"
-                    className="flex items-center justify-center space-x-2 hover:bg-white"
-                >
-                    <FolderGit2 className="w-4 h-4" />
-                    <div className="text-xs font-medium">{branchName.slice(0, 25)}</div>
-                </Button>
+                <Tooltip>
+                    <BranchReviewDialog
+                        open={branchReviewDialogOpen}
+                        onOpenChange={setBranchReviewDialogOpen}
+                    />
+                    <TooltipTrigger asChild>
+                        <Button
+                            onClick={() => setBranchReviewDialogOpen(true)}
+                            variant="ghost"
+                            className="flex items-center justify-center space-x-2 hover:bg-white"
+                        >
+                            <FolderGit2 className="w-4 h-4" />
+                            <div className="text-xs font-medium">{branchName.slice(0, 25)}</div>
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Version Control</p>
+                    </TooltipContent>
+                </Tooltip>
+
             </div>
             <SearchBar />
-            <div className=" flex justify-center items-start space-x-2 ">
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-9 bg-white hover:bg-gray-200 flex items-center space-x-1"
-                >
-                    <Users className="w-4 h-4" />
-                    <div className="text-xs">Invite</div>
-                </Button>
+            <div className=" flex justify-center items-start space-x-2">
                 <Tooltip>
                     <TooltipTrigger asChild>
                         <Button
@@ -147,6 +158,29 @@ const EditorTopBar = () => {
                         <p>Toggle AI Chat (⌘^B)</p>
                     </TooltipContent>
                 </Tooltip>
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-9 hover:bg-white flex items-center space-x-1"
+                        >
+                            <Settings className="w-4 h-4" />
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent side="bottom" align="end">
+                        <div className="flex gap-2 items-center">
+                            <div>
+                                <div className='text-sm font-medium py-1'>Clear cache</div>
+                                <div className='text-xs text-muted-foreground'>Clears editor browser cache of saved tabs, files, and recent command runs</div>
+                            </div>
+                            <Button onClick={() => {
+                                clearEditorCache()
+                                window.location.reload();
+                            }} variant="secondary" size="sm">Clear</Button>
+                        </div>
+                    </PopoverContent>
+                </Popover>
                 <Popover>
                     <PopoverTrigger asChild className="w-full">
                         <Button

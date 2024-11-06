@@ -88,7 +88,7 @@ type FilesContextType = {
   isCloned: boolean | undefined;
   fetchBranch: (branchId: string) => Promise<void>;
   cloneBranch: (branchId: string) => Promise<void>;
-  commitChanges: (commitMessage: string, filePaths: string[]) => Promise<void>;
+  commitChanges: (commitMessage: string, filePaths: string[]) => Promise<boolean>;
   pullRequestUrl: string | undefined;
   isCloning: boolean;
   discardChanges: (branchId: string) => Promise<void>;
@@ -139,6 +139,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     LocalStorageKeys.recentFiles,
     [],
   );
+  const [isCloning, setIsCloning] = useState(false);
 
   const fetchBranch = async (id: string) => {
     console.log('fetchBranch', id)
@@ -386,8 +387,9 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
 
   const commitChanges = async (commitMessage: string, filePaths: string[]) => {
 
-    await commit(branchId, commitMessage, filePaths);
-    fetchChanges();
+    const result = await commit(branchId, commitMessage, filePaths);
+    fetchChanges(branchId);
+    return result
   }
 
   return (

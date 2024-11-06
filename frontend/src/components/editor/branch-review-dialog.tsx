@@ -16,6 +16,8 @@ import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
 import { Switch } from "../ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
+import { toast } from "sonner";
+import { Loader2, Undo2 } from "lucide-react";
 interface BranchReviewDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -69,10 +71,9 @@ export default function BranchReviewDialog({
 
   const [selectedFilePaths, setSelectedFilePaths] = useState<string[]>([]);
   const [commitMessage, setCommitMessage] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  console.log({ selectedFilePaths })
   const { changes, branchId, fetchChanges, commitChanges, pullRequestUrl, branchName, isCloned, discardChanges } = useFiles();
-
 
   useEffect(() => {
     console.log({ branchId })
@@ -94,6 +95,21 @@ export default function BranchReviewDialog({
       setSelectedFilePaths((prev) => prev.filter((p) => p !== path));
     }
   };
+
+  const handleSubmit = async () => {
+    if (selectedFilePaths.length === 0 || commitMessage.length === 0) {
+      return;
+    }
+    setIsSubmitting(true);
+    const success = await commitChanges(commitMessage, selectedFilePaths);
+    if (success) {
+      toast.success("Changes committed successfully");
+    } else {
+      toast.error("Failed to commit changes");
+    }
+    setIsSubmitting(false);
+
+  }
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -118,9 +134,22 @@ export default function BranchReviewDialog({
                   />
                 </div>
                 <div className="mt-4">
-                  <label className="text-sm font-medium">Files changed</label>
-                  <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => discardChanges(branchId)}>Discard changes</Button>
+                  <div className="flex items-center justify-between gap-2">
+                    <label className="text-sm font-medium">Files changed</label>
+                    <div className="flex items-center">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          if (window.confirm('Are you sure you want to discard all changes?')) {
+                            discardChanges(branchId);
+                          }
+                        }}
+                      >
+                        <Undo2 className="w-4 h-4 mr-1" />
+                        Discard changes
+                      </Button>
+                    </div>
                   </div>
                   <div className="gap-1 flex flex-col overflow-y-scroll max-h-[300px]">
                     {(!changes || changes.length === 0) && (
@@ -186,7 +215,14 @@ export default function BranchReviewDialog({
               </div>
               <div className="flex gap-2 justify-end">
                 <Button variant="outline" onClick={() => handleOpenChange(false)}>Cancel</Button>
-                <Button onClick={() => commitChanges(commitMessage, selectedFilePaths)}>Commit</Button>
+                {isSubmitting ? (
+                  <Button disabled>
+                    <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                    Committing
+                  </Button>
+                ) : (
+                  <Button disabled={selectedFilePaths.length === 0 || commitMessage.length === 0} onClick={handleSubmit}>Commit</Button>
+                )}
               </div>
             </div>
           </div>
