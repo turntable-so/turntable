@@ -1,67 +1,62 @@
-import asyncio
 import json
 import logging
 import shlex
+import threading
 
-from asgiref.sync import sync_to_async
-from channels.generic.websocket import AsyncWebsocketConsumer
-
-from workflows.hatchet import hatchet
-from workflows.utils.debug import get_async_listener, run_workflow_async
+from channels.generic.websocket import WebsocketConsumer
 
 logger = logging.getLogger(__name__)
 
+DBT_COMMAND_STREAM_TIMEOUT = 120
+DBT_COMMAND_STREAM_POLL_INTERVAL = 0.01
 
-class DBTCommandConsumer(AsyncWebsocketConsumer):
-    async def connect(self):
+
+class DBTCommandConsumer(WebsocketConsumer):
+    def connect(self):
         logger.info(f"WebSocket connected for user: {self.scope['user']}")
-        await self.accept()
+        self.accept()
 
-        self.workspace = await sync_to_async(self.scope["user"].current_workspace)()
+        self.workspace = self.scope["user"].current_workspace()
         if not self.workspace:
             raise ValueError("User does not have a current workspace")
 
-        self.dbt_details = await sync_to_async(self.workspace.get_dbt_details)()
+        self.dbt_details = self.workspace.get_dbt_details()
         if not self.dbt_details:
             raise ValueError("Workspace does not have a dbt resource")
 
-        self.workflow_task = None
-        self.workflow_run_id = None
+        self.started = False
 
-    async def disconnect(self, close_code):
+        self.terminate_event = threading.Event()
+
+    def disconnect(self, close_code):
+        self.terminate_event.set()
         logger.info(f"WebSocket disconnected with close code: {close_code}")
-        if self.workflow_task and not self.workflow_task.done():
-            self.workflow_task.cancel()
-            if self.workflow_run_id:
-                await hatchet.rest.workflow_run_cancel(self.workflow_run_id)
 
-    async def receive(self, text_data):
+    def receive(self, text_data):
         data = json.loads(text_data)
         action = data.get("action")
 
         if action == "start":
-            if self.workflow_task and not self.workflow_task.done():
-                await self.send(text_data="TASK_ALREADY_RUNNING")
+            if self.started:
+                self.send(text_data="TASK_ALREADY_RUNNING")
                 return
+            self.started = True
+            self.send(text_data="WORKFLOW_STARTED")
+            my_thread = threading.Thread(target=lambda: self.run_workflow(data))
+            my_thread.start()
 
-            self.workflow_task = asyncio.create_task(self.run_workflow(data))
         elif action == "cancel":
-            if self.workflow_task and not self.workflow_task.done():
-                self.workflow_task.cancel()
-                if self.workflow_run_id:
-                    try:
-                        await hatchet.rest.workflow_run_cancel(self.workflow_run_id)
-                    except Exception as e:
-                        logger.error(f"Error cancelling Hatchet workflow: {e}")
-                await self.send(text_data="WORKFLOW_CANCELLED")
+            self.send(text_data="WORKFLOW_CANCEL_REQUESTED")
+            if self.started:
+                self.terminate_event.set()
+                self.send(text_data="WORKFLOW_CANCELLED")
         else:
             raise ValueError(
                 f"Invalid action: {action} - only 'start' and 'cancel' are supported"
             )
 
-    async def run_workflow(self, data):
-        from backend.app.models.repository.branch import Branch
-        from workflows.dbt_runner import DBTStreamerWorkflow
+    def run_workflow(self, data):
+        from app.models.repository import Branch
 
         try:
             command = data.get("command")
@@ -74,7 +69,7 @@ class DBTCommandConsumer(AsyncWebsocketConsumer):
 
             if branch_name:
                 try:
-                    branch = await sync_to_async(Branch.objects.get)(
+                    branch = Branch.objects.get(
                         workspace=self.workspace,
                         repository=self.dbt_details.repository,
                         branch_name=branch_name,
@@ -85,41 +80,19 @@ class DBTCommandConsumer(AsyncWebsocketConsumer):
             else:
                 branch_id = None
 
-            dbt_resource_id = await sync_to_async(lambda: str(self.dbt_details.id))()
-            resource_id = await sync_to_async(
-                lambda: str(self.dbt_details.resource.id)
-            )()
-
-            input_data = {
-                "command": command,
-                "branch_id": str(branch_id) if branch_id else None,
-                "resource_id": resource_id,
-                "dbt_resource_id": dbt_resource_id,
-            }
-
-            workflow_run_id, workflow_run = await run_workflow_async(
-                workflow=DBTStreamerWorkflow, input=input_data
-            )
-            self.workflow_run_id = str(workflow_run_id)
-            listener = await get_async_listener(workflow_run_id, workflow_run)
-
-            async for event in listener:
-                if event.payload and event.type == "STEP_RUN_EVENT_TYPE_STREAM":
-                    await self.send(text_data=event.payload)
-                else:
-                    logger.info(f"ws - skipped event: {event}")
+            with self.dbt_details.dbt_transition_context(branch_id=branch_id) as (
+                transition,
+                project_dir,
+                _,
+            ):
+                for output_chunk in transition.after.stream_dbt_command(
+                    command, should_terminate=self.terminate_event.is_set
+                ):
+                    self.send(text_data=output_chunk)
 
             # assume success if we've reached the end of the event stream
-            await self.send(text_data="PROCESS_STREAM_SUCCESS")
-            await self.close()
-        except asyncio.CancelledError:
-            logger.info("Workflow run was cancelled.")
-            if self.workflow_run_id:
-                await hatchet.rest.workflow_run_cancel(self.workflow_run_id)
-            await self.send(text_data="WORKFLOW_CANCELLED")
-            await self.close()
-            raise
+            self.close()
         except Exception as e:
             logger.error(f"Error in workflow: {e}")
-            await self.send(text_data=f"ERROR: {str(e)}")
-            await self.close()
+            self.send(text_data=f"ERROR: {str(e)}")
+            self.close()

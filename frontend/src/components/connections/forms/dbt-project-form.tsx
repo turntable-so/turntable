@@ -158,8 +158,8 @@ export default function DbtProjectForm({
 
   const { user } = useSession();
   const [connectionCheckStatus, setConnectionCheckStatus] = useState<
-    "IDLE" | "RUNNING" | "FAIL" | "SUCCESS"
-  >("IDLE");
+    "PENDING" | "STARTED" | "FAILURE" | "SUCCESS"
+  >("PENDING");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [selectedTab, setSelectedTab] = useState<"remote" | "local">("remote");
 
@@ -264,7 +264,7 @@ export default function DbtProjectForm({
   }, [user, user.current_workspace]);
 
   async function testConnection() {
-    setConnectionCheckStatus("RUNNING");
+    setConnectionCheckStatus("STARTED");
     const data = await testGitConnection(
       remoteForm.getValues().deployKey,
       remoteForm.getValues().dbtGitRepoUrl,
@@ -272,7 +272,7 @@ export default function DbtProjectForm({
     if (data.success === true) {
       setConnectionCheckStatus("SUCCESS");
     } else {
-      setConnectionCheckStatus("FAIL");
+      setConnectionCheckStatus("FAILURE");
     }
   }
 
@@ -453,15 +453,15 @@ export default function DbtProjectForm({
                           Connection successful
                         </div>
                       )}
-                      {connectionCheckStatus === "FAIL" && (
+                      {connectionCheckStatus === "FAILURE" && (
                         <div className="text-red-500  mt-2 mr-2">
                           Connection failed
                         </div>
                       )}
                       <LoaderButton
                         variant="secondary"
-                        isLoading={connectionCheckStatus === "RUNNING"}
-                        isDisabled={connectionCheckStatus === "RUNNING"}
+                        isLoading={connectionCheckStatus === "STARTED"}
+                        isDisabled={connectionCheckStatus === "STARTED"}
                         onClick={(event) => {
                           event.preventDefault();
                           testConnection();

@@ -9,9 +9,10 @@ from typing import Any, Generator
 
 import yaml
 from django.contrib.postgres.fields import ArrayField
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import models
+from django_celery_results.models import TaskResult
 from polymorphic.models import PolymorphicModel
 
 from app.models.repository import Repository
@@ -113,12 +114,13 @@ class Resource(models.Model):
             models.Index(fields=["workspace_id"]),
         ]
 
-    def _get_latest_sync_run(self):
-        try:
-            workflow_run = self.workflow_runs.order_by("-created_at").first()
-            return workflow_run
-        except ObjectDoesNotExist:
-            return None
+    def _get_latest_sync_run(self, successes_only: bool = False):
+        from app.models.workflows import MetadataSyncWorkflow
+
+        most_recent = MetadataSyncWorkflow(
+            resource_id=self.id, workspace_id=self.workspace.id
+        ).most_recent(1, successes_only)
+        return most_recent[0] if most_recent else None
 
     @property
     def status(self):
@@ -127,8 +129,8 @@ class Resource(models.Model):
 
     @property
     def last_synced(self):
-        run = self._get_latest_sync_run()
-        return run.updated_at if run else None
+        run = self._get_latest_sync_run(successes_only=True)
+        return run.date_done if run else None
 
     @property
     def subtype(self):
@@ -157,21 +159,15 @@ class Resource(models.Model):
         return dbt_resource
 
 
-class WorkflowRun(models.Model):
-    id = models.UUIDField(primary_key=True)
-    status = models.TextField(choices=WorkflowStatus.choices, null=False)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True, null=True)
-    resource = models.ForeignKey(
-        "Resource", on_delete=models.CASCADE, null=True, related_name="workflow_runs"
-    )
-
-
 class IngestError(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    workflow_run = models.ForeignKey(
-        "WorkflowRun", on_delete=models.CASCADE, null=True, related_name="ingest_errors"
+    task = models.ForeignKey(
+        TaskResult,
+        to_field="task_id",
+        db_column="task_id",
+        on_delete=models.CASCADE,
+        null=True,
+        related_name="ingest_errors",
     )
     command = models.TextField(null=True)
     error = models.JSONField(null=True)
@@ -289,7 +285,7 @@ class ResourceDetails(PolymorphicModel):
 
     def run_datahub_ingest(
         self,
-        workflow_run_id: str,
+        task_id: str,
         workunits: int | None = None,
         tolerate_errors: bool = True,
     ):
@@ -299,7 +295,7 @@ class ResourceDetails(PolymorphicModel):
         if not result["success"]:
             ingest_errors = [
                 IngestError(
-                    workflow_run_id=workflow_run_id,
+                    task_id=task_id,
                     command=result["command"],
                     error=error,
                 )

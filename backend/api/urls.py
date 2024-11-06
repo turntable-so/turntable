@@ -20,7 +20,7 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.urls import include, path, re_path
 from rest_framework import routers
 
-from app.consumers import DBTCommandConsumer, WorkflowRunConsumer
+from app.consumers import DBTCommandConsumer, TaskResultConsumer
 from app.views import (
     AssetViewSet,
     BlockViewSet,
@@ -84,7 +84,7 @@ urlpatterns = [
         name="test_resource",
     ),
     path(
-        "workflows/<str:workflow_run_id>/",
+        "workflows/<str:task_id>/",
         WorkflowViews.as_view(),
         name="get_workflow_status",
     ),
@@ -108,7 +108,7 @@ urlpatterns = [
         AssetViewSet.as_view({"get": "retrieve"}),
         name="asset-detail",
     ),
-    path("ws/subscribe/<str:workspace_id>/", WorkflowRunConsumer.as_asgi()),
+    path("ws/subscribe/<str:workspace_id>/", TaskResultConsumer.as_asgi()),
     path("ws/dbt_command/<str:workspace_id>/", DBTCommandConsumer.as_asgi()),
     path("settings/", SettingsView.as_view(), name="settings"),
     path("infer/", InferenceView.as_view(), name="inference"),
