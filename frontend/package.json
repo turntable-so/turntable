@@ -61,6 +61,7 @@
     "highlight.js": "^11.9.0",
     "jotai": "^2.8.3",
     "jsonwebtoken": "^9.0.2",
+    "jwt-decode": "^4.0.0",
     "lodash": "^4.17.21",
     "lowlight": "^3.1.0",
     "lucide-react": "^0.363.0",

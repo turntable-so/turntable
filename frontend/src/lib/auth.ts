@@ -1,6 +1,8 @@
 import getUrl from "@/app/url";
 import { deleteCookie, getCookie, setCookie } from "cookies-next";
 import wretch from "wretch";
+import { jwtDecode } from "jwt-decode";
+
 // Base API setup for making HTTP requests
 const baseUrl = getUrl();
 const api = wretch(baseUrl).accept("application/json");
@@ -113,6 +115,21 @@ const resetPasswordConfirm = (
   );
 };
 
+const isTokenExpired = (token: string): boolean => {
+  try {
+    const decoded = jwtDecode(token);
+    const exp = decoded.exp;
+    if (exp) {
+      const expirationTime = exp * 1000;
+      return Date.now() >= expirationTime;
+    }
+    return false;
+  } catch (e) {
+    return true;
+  }
+};
+
+
 /**
  * Exports authentication-related actions.
  * @returns {Object} An object containing all the auth actions.
@@ -129,5 +146,6 @@ export const AuthActions = () => {
     logout,
     removeTokens,
     loginOauth,
+    isTokenExpired,
   };
 };
