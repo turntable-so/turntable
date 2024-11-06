@@ -47,7 +47,6 @@ def run_test_dbt_query(
             dbt_resource_id=str(dbtresource.id),
             dbt_sql=query,
             use_fast_compile=use_fast_compile,
-            # limit=10,
         )
         .apply_async()
         .get()
@@ -61,13 +60,17 @@ def run_test_dbt_query(
 
 
 @pytest.mark.django_db(transaction=True)
+@pytest.mark.usefixtures("custom_celery")
 class TestQuery:
     def test_query_postgres(self, local_postgres):
         run_test_query(local_postgres)
 
     @require_env_vars("BIGQUERY_0_WORKSPACE_ID")
     def test_query_bigquery(self, remote_bigquery):
-        run_test_query(remote_bigquery)
+        adj_query = TEST_QUERY.replace(
+            "mydb", f"`{remote_bigquery.details.service_account['project_id']}`"
+        )
+        run_test_query(remote_bigquery, query=adj_query)
 
 
 @pytest.mark.django_db(transaction=True)

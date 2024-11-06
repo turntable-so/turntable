@@ -3,7 +3,7 @@ from rest_framework import status, viewsets
 from rest_framework.response import Response
 
 from api.serializers import ResourceSerializer
-from app.models.workflows import MetadataSyncWorkflow
+from app.models.workflows import TASK_START_TIMEOUT, MetadataSyncWorkflow
 from app.services.resource_service import ResourceService
 
 
@@ -59,7 +59,9 @@ class SyncResourceView(APIView):
         workflow = MetadataSyncWorkflow.schedule_now(
             workspace=workspace, resource_id=resource_id
         )
-        task_id = workflow.await_next_id(timeout=20)
+
+        # wait up to 5 seconds for the task to start
+        task_id = workflow.await_next_id(timeout=TASK_START_TIMEOUT)
         if task_id:
             return Response(
                 {"detail": "Sync task started."}, status=status.HTTP_202_ACCEPTED

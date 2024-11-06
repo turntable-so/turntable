@@ -7,7 +7,6 @@
 #   all-features: false
 #   with-sources: false
 #   generate-hashes: false
-#   universal: false
 
 acryl-datahub==0.14.1
 adrf==0.1.7
@@ -198,7 +197,7 @@ django-cors-headers==4.4.0
 django-health-check==3.18.3
 django-invitations==2.1.0
 django-pgbulk==3.0.1
-django-polymorphic @ git+https://github.com/jazzband/django-polymorphic.git@1039f882b99f97bf657bd958c949ee6a3b00377a#egg=django-polymorphic
+django-polymorphic @ git+https://github.com/jazzband/django-polymorphic.git@1039f882b99f97bf657bd958c949ee6a3b00377a
 django-storages==1.14.4
 django-templated-mail==1.1.1
     # via djoser
@@ -549,7 +548,9 @@ pyproj==3.6.1
     # via geopandas
 pytest==8.3.3
     # via pytest-asyncio
+    # via pytest-timeout
 pytest-asyncio==0.24.0
+pytest-timeout==2.3.1
 python-crontab==3.2.0
     # via django-celery-beat
 python-dateutil==2.9.0.post0

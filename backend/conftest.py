@@ -189,6 +189,11 @@ def enable_django_allow_async_unsafe(monkeypatch):
     monkeypatch.setenv("DJANGO_ALLOW_ASYNC_UNSAFE", "true")
 
 
+@pytest.fixture(autouse=True)
+def vinyl_read_only(monkeypatch):
+    monkeypatch.setenv("VINYL_READ_ONLY", "true")
+
+
 @pytest.fixture(scope="session")
 def session_monkeypatch():
     from _pytest.monkeypatch import MonkeyPatch
@@ -204,17 +209,56 @@ def bypass_celery_beat(session_monkeypatch):
 
 
 @pytest.fixture(scope="session")
-def custom_celery_app():
+def test_queue_name():
+    """Generate unique queue name for each pytest-xdist worker"""
+    worker_id = os.getenv("PYTEST_XDIST_WORKER")
+    if not worker_id or worker_id == "master":
+        return TEST_QUEUE
+    return f"{TEST_QUEUE}_{worker_id}"
+
+
+@pytest.fixture(scope="session")
+def custom_celery_app(test_queue_name):
     app = Celery("api")
 
     # Load configuration from Django settings
     app.config_from_object("django.conf:settings", namespace="CELERY")
 
-    app.conf.update(task_default_queue=TEST_QUEUE, task_always_eager=False)
+    app.conf.update(task_default_queue=test_queue_name, task_always_eager=False)
 
     app.autodiscover_tasks()
 
     return app
+
+
+@pytest.fixture(scope="session")
+def custom_celery_worker(
+    custom_celery_app,
+    test_queue_name,
+    max_retries: int = 10,
+):
+    retry_count = 0
+
+    while retry_count < max_retries:
+        try:
+            with start_worker(
+                custom_celery_app,
+                loglevel="info",
+                queues=[test_queue_name],
+                perform_ping_check=False,
+                concurrency=1,
+            ) as worker:
+                yield worker
+                break  # If we get here successfully, exit the retry loop
+        except Exception as e:
+            retry_count += 1
+            if retry_count == max_retries:
+                raise Exception(
+                    f"Failed to start Celery worker after {max_retries} attempts: {str(e)}"
+                )
+            logging.warning(
+                f"Celery worker failed, attempt {retry_count} of {max_retries}. Error: {str(e)}"
+            )
 
 
 @pytest.fixture(scope="session")
@@ -241,21 +285,6 @@ def suppress_celery_errors():
     # Restore original levels
     for logger_name, original_level in original_levels.items():
         logging.getLogger(logger_name).setLevel(original_level)
-
-
-@pytest.fixture(scope="session")
-def custom_celery_worker(
-    custom_celery_app,
-):
-    # Start the worker with the "test-queue" only
-    with start_worker(
-        custom_celery_app,
-        loglevel="info",
-        queues=[TEST_QUEUE],
-        perform_ping_check=False,
-        concurrency=1,
-    ) as worker:
-        yield worker
 
 
 @pytest.fixture(scope="session")

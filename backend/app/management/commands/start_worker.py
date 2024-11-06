@@ -3,7 +3,14 @@ import subprocess
 from django.core.management.base import BaseCommand
 
 BASE_CELERY_COMMAND = "celery -A api worker -E --loglevel=info"
-EXCLUDE_PATHS = ["/code/media/ws/"]
+IGNORE_FOLDERS = ["./media/ws"]
+IGNORE_PATTERNS = []
+MAX_DEPTH = 10
+for path in IGNORE_FOLDERS:
+    for depth in range(1, MAX_DEPTH):
+        IGNORE_PATTERNS.append(path + "/*" * depth)
+IGNORE_PATTERNS = ";".join(IGNORE_PATTERNS)
+WATCHMEDO_COMMAND = f'watchmedo auto-restart -v --directory=. --pattern="*.py" --recursive --ignore-patterns="{IGNORE_PATTERNS}" --ignore-directories -- '
 
 
 class Command(BaseCommand):
@@ -15,7 +22,11 @@ class Command(BaseCommand):
         )
         parser.add_argument("--concurrency", type=int, default=1)
 
-
     def handle(self, *args, **options):
-        celery_command = BASE_CELERY_COMMAND+ f" --concurrency={options['concurrency']}"
+        celery_command = (
+            BASE_CELERY_COMMAND + f" --concurrency={options['concurrency']}"
+        )
+        if options["mode"] in ["dev", "dev-internal"]:
+            celery_command = WATCHMEDO_COMMAND + celery_command
+
         subprocess.run(celery_command, shell=True)

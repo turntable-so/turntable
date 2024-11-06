@@ -29,7 +29,6 @@ from .resources import (
     ResourceType,
     SnowflakeDetails,
     TableauDetails,
-    WorkflowRun,
 )
 from .user import (
     User,

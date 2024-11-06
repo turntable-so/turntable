@@ -84,7 +84,7 @@ urlpatterns = [
         name="test_resource",
     ),
     path(
-        "workflows/<str:workflow_run_id>/",
+        "workflows/<str:task_id>/",
         WorkflowViews.as_view(),
         name="get_workflow_status",
     ),

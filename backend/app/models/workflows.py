@@ -2,17 +2,19 @@ import datetime
 import hashlib
 import json
 import os
-import queue
+import time
 import uuid
 
 from celery import current_app
 from celery.result import AsyncResult
 from croniter import croniter
 from django.contrib.postgres.fields import ArrayField
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 from django_celery_beat.models import ClockedSchedule, CrontabSchedule, PeriodicTask
+from django_celery_results.models import TaskResult
 from polymorphic.models import PolymorphicModel
 
 from app.models.git_connections import Branch
@@ -22,7 +24,12 @@ from app.workflows.metadata import sync_metadata
 from app.workflows.orchestration import run_dbt_commands
 from app.workflows.tests.utils import TEST_QUEUE
 
-WORKFLOW_STARTED_QUEUE = queue.Queue()
+TASK_START_TIMEOUT = 10
+TASK_START_POLLING_INTERVAL = 0.1
+
+
+def get_periodic_task_key(periodic_task_name: str) -> str:
+    return f"periodic_task_{periodic_task_name}"
 
 
 class WorkflowType(models.TextChoices):
@@ -100,8 +107,8 @@ class ScheduledWorkflow(PolymorphicModel):
 
     def get_identifiers(self):
         for identifier_dict in [
-            self.get_replacement_identifier_dict(),
             self.get_aggregation_identifier_dict(),
+            self.get_replacement_identifier_dict(),
         ]:
             identifier = hashlib.sha256(
                 json.dumps(identifier_dict).encode()
@@ -203,23 +210,43 @@ class ScheduledWorkflow(PolymorphicModel):
 
         super().delete(*args, **kwargs)
 
-    def await_next_id(self, timeout: int | None = None):
-        while True:
-            try:
-                item = WORKFLOW_STARTED_QUEUE.get(block=True, timeout=timeout)
-            except queue.Empty:
-                raise TimeoutError("Workflow did not start in time")
-            if item["periodic_task_name"] == self.replacement_identifier:
-                task_id = item["task_id"]
-                break
-        return task_id
+    def await_next_id(
+        self,
+        timeout: float = TASK_START_TIMEOUT,
+        polling_interval: float = TASK_START_POLLING_INTERVAL,
+    ):
+        seconds = 0
+        key = get_periodic_task_key(self.replacement_identifier)
+        while seconds < timeout:
+            task_id = cache.get(key, "")
+            if task_id:
+                return task_id
+            time.sleep(polling_interval)
+            seconds += polling_interval
+
+        raise Exception(f"Workflow did not start in timeout of {timeout} seconds")
 
     def await_next_result(
-        self, start_timeout: int | None = None, duration_timeout: int | None = None
+        self,
+        start_timeout: int = TASK_START_TIMEOUT,
+        duration_timeout: int | None = None,
     ):
         task_id = self.await_next_id(start_timeout)
         result = AsyncResult(task_id)
         return result.get(timeout=duration_timeout)
+
+    def most_recent(self, n: int = 1, successes_only: bool = False):
+        if not self.aggregation_identifier:
+            self.aggregation_identifier = next(self.get_identifiers())
+        try:
+            tasks = TaskResult.objects.filter(
+                periodic_task_name=self.aggregation_identifier
+            )
+            if successes_only:
+                tasks = tasks.filter(status=TaskResult.SUCCESS)
+            return tasks.order_by("-date_done")[:n]
+        except TaskResult.DoesNotExist:
+            return []
 
     @classmethod
     def schedule_now(cls, *args, **kwargs):
