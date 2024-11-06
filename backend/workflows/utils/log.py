@@ -1,7 +1,8 @@
 import networkx as nx
 from hatchet_sdk import Context
 
-from app.models import Resource, WorkflowRun
+from app.models import WorkflowRun
+from app.utils.obj import make_values_serializable
 from workflows.utils.debug import WorkflowDebugger
 
 
@@ -23,11 +24,19 @@ def inject_workflow_run_logging(hatchet):
         # on start
         @hatchet.step(timeout="15s")
         def create_workflow_run(self, context: Context):
-            resource = Resource.objects.get(id=context.workflow_input()["resource_id"])
+            resource_id = context.workflow_input()["resource_id"]
             workflow_run_id = context.workflow_run_id()
-            workflow_run = WorkflowRun.objects.create(
-                id=workflow_run_id, resource=resource, status="RUNNING"
-            )
+            try:
+                workflow_run = WorkflowRun.objects.get(
+                    id=workflow_run_id, resource_id=resource_id
+                )
+                workflow_run.status = "RUNNING"
+                workflow_run.data = None
+                workflow_run.save()
+            except WorkflowRun.DoesNotExist:
+                workflow_run = WorkflowRun.objects.create(
+                    id=workflow_run_id, resource_id=resource_id, status="RUNNING"
+                )
             return {"workflow_run_id": str(workflow_run.id)}
 
         setattr(cls, "create_workflow_run", create_workflow_run)
@@ -49,6 +58,7 @@ def inject_workflow_run_logging(hatchet):
             workflow_run_id = context.workflow_run_id()
             workflow_run = WorkflowRun.objects.get(id=workflow_run_id)
             workflow_run.status = "SUCCESS"
+            workflow_run.data = make_values_serializable(context.data)
             workflow_run.save()
 
         setattr(cls, "mark_workflow_run_success", mark_workflow_run_success)
@@ -59,6 +69,7 @@ def inject_workflow_run_logging(hatchet):
             workflow_run_id = context.workflow_run_id()
             workflow_run = WorkflowRun.objects.get(id=workflow_run_id)
             workflow_run.status = "FAILED"
+            workflow_run.data = make_values_serializable(context.data)
             workflow_run.save()
 
         setattr(cls, "on_failure", on_failure)

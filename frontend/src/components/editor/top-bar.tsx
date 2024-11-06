@@ -14,6 +14,7 @@ import {
   PanelLeftClose,
   PanelRight,
   PanelRightClose,
+  Settings,
   Users,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
@@ -28,6 +29,15 @@ import {
 } from "../ui/tooltip";
 import WorkspaceSwitcher from "../workspace-switcher";
 import BranchReviewDialog from "./branch-review-dialog";
+import { LocalStorageKeys } from "@/app/constants/local-storage-keys";
+
+const clearEditorCache = () => {
+  localStorage.removeItem(LocalStorageKeys.activeFile);
+  localStorage.removeItem(LocalStorageKeys.fileTabs);
+  localStorage.removeItem(LocalStorageKeys.recentFiles);
+  localStorage.removeItem(LocalStorageKeys.commandHistory);
+  localStorage.removeItem(LocalStorageKeys.bottomPanelTab);
+};
 
 const AppContent = () => {
   const { appSidebarCollapsed } = useLayoutContext();
@@ -148,14 +158,33 @@ const EditorContent = () => {
       </div>
       <SearchBar />
       <div className=" flex justify-center items-start space-x-2 ">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-9 bg-white hover:bg-gray-200 flex items-center space-x-1"
-        >
-          <Users className="w-4 h-4" />
-          <div className="text-xs">Invite</div>
-        </Button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 bg-white hover:bg-gray-200 flex items-center space-x-1"
+            >
+              <Settings className="w-4 h-4" />
+              <div className="text-xs">Settings</div>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            side="bottom"
+            align="end"
+            className="w-fit text-muted-foreground p-0"
+          >
+            <Button
+              variant="ghost"
+              className="flex items-center"
+              onClick={() => {
+                clearEditorCache();
+              }}
+            >
+              Clear Editor Cache
+            </Button>
+          </PopoverContent>
+        </Popover>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button

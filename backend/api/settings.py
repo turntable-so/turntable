@@ -67,6 +67,8 @@ INSTALLED_APPS = [
     "health_check",
     "health_check.db",
     "health_check.contrib.migrations",
+    "django_celery_results",
+    "django_celery_beat",
     "app",
 ]
 
@@ -311,6 +313,7 @@ if os.getenv("LOCAL_REDIS") == "true":
             int(os.getenv("REDIS_PORT", 6379)),
         )
     ]
+    redis_url = f"redis://{redis_hosts[0][0]}:{redis_hosts[0][1]}/"
 else:
     redis_url = os.getenv("REDIS_URL")
     if not redis_url and os.getenv("LOCAL_REDIS") != "true":
@@ -318,11 +321,23 @@ else:
     parsed_url = urlparse(redis_url)
     redis_hosts = [(redis_url)]
 
-
-IS_TEST_MODE = 'test' in sys.argv or 'pytest' in sys.modules
+IS_TEST_MODE = "test" in sys.argv or "pytest" in sys.modules
 CHANNEL_LAYERS = {
     "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer" if not IS_TEST_MODE else "channels.layers.InMemoryChannelLayer",
+        "BACKEND": "channels_redis.core.RedisChannelLayer"
+        if not IS_TEST_MODE
+        else "channels.layers.InMemoryChannelLayer",
         "CONFIG": {"hosts": redis_hosts} if not IS_TEST_MODE else {},
     }
 }
+# static site settings
+STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
+# Celery settings
+CELERY_BROKER_URL = redis_url + os.getenv("CELERY_BROKER_CHANNEL", "10")
+CELERY_RESULT_BACKEND = "django-db"
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "UTC"  # Adjust to your timezone
