@@ -95,9 +95,8 @@ def client_with_token(user, workspace):
 @pytest.fixture
 def local_postgres(workspace):
     git_repo = None
-    if os.getenv("SSHKEY_0_PUBLIC") and os.getenv("SSHKEY_0_PRIVATE"):
-        ssh_key = create_ssh_key_n(workspace, 0)
-        git_repo = create_repository_n(workspace, 0, ssh_key)
+    ssh_key = create_ssh_key_n(workspace, 0)
+    git_repo = create_repository_n(workspace, 0, ssh_key)
     return create_local_postgres(workspace, git_repo)
 
 

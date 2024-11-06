@@ -21,12 +21,20 @@ class TestProjectViews:
     def encoded_filepath(self):
         return safe_encode("models/marts/customer360/customers.sql")
 
-    def test_file_index(self, client):
+    # @pytest.fixture
+    # def branch(self, local_postgres):
+    # return local_postgres.get_dbt_resource().repository.main_branch
+
+    def test_file_index(self, client, branch):
+        breakpoint()
         response = client.get("/project/files/")
         response_json = response.json()
 
         assert response.status_code == 200
         assert len(response_json["file_index"]) > 0
+
+    def test_clone(self, client, local_postgres):
+        pass
 
     def test_branches(self, client):
         response = client.get("/project/branches/")

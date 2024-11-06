@@ -278,9 +278,6 @@ class Branch(models.Model):
     def create_git_branch(
         self,
         source_branch: str,
-        isolate: bool = False,
-        repo_override: GitRepo | None = None,
-        env_override: dict[str, str] | None = None,
     ) -> str:
         with self.repository.with_ssh_env() as env:
             with tempfile.TemporaryDirectory() as tmp_dir:
@@ -300,18 +297,6 @@ class Branch(models.Model):
                     self.repository.git_repo_url, f"{self.branch_name}", env=env
                 )
 
-            return self.branch_name
-
-    def switch_to_git_branch(
-        self,
-        isolate: bool = False,
-        repo_override: GitRepo | None = None,
-        env_override: dict[str, str] | None = None,
-    ) -> str:
-        with self.repo_context(isolate, repo_override, env_override) as (repo, env):
-            # Fetch the latest changes from the remote
-            repo.remotes.origin.fetch(env=env)
-            repo.git.checkout(self.branch_name, env=env)
             return self.branch_name
 
     def git_pull(
@@ -340,57 +325,3 @@ class Branch(models.Model):
             repo.git.pull("origin", current_branch.name, env=env)
 
             return True
-
-    def git_commit_and_push(
-        self,
-        commit_message: str,
-        isolate: bool = False,
-        repo_override: GitRepo | None = None,
-        env_override: dict[str, str] | None = None,
-    ) -> bool:
-        with self.repo_context(
-            isolate=isolate,
-            repo_override=repo_override,
-            env_override=env_override,
-        ) as (repo, env):
-            # Check if there are any changes to commit
-            if not repo.is_dirty(untracked_files=True):
-                print("No changes to commit.")
-                return False
-
-            # Add all changes
-            repo.git.add(A=True)
-            # Commit changes
-            repo.index.commit(commit_message)
-
-            # Get the current branch name
-            current_branch = repo.active_branch.name
-
-            # Fetch the latest changes from remote
-            repo.remotes.origin.fetch(env=env)
-
-            # Check if local branch is behind remote
-            if repo.is_ancestor(
-                repo.head.commit,
-                repo.remotes.origin.refs[current_branch].commit,
-            ):
-                # If behind, attempt to rebase
-                try:
-                    repo.git.rebase(f"origin/{current_branch}", env=env)
-                except GitCommandError:
-                    # If rebase fails, abort and return False
-                    repo.git.rebase("--abort")
-                    print("Failed to rebase. Please resolve conflicts manually.")
-                    return False
-
-            # Push changes to remote
-            origin = repo.remote(name="origin")
-            origin.push(current_branch, env=env)
-
-            print(f"Changes committed and pushed to branch '{current_branch}'.")
-            return True
-
-    def delete_files(self, isolate: bool = False):
-        with self._code_repo_path(isolate) as path:
-            if os.path.exists(path):
-                shutil.rmtree(path)
