@@ -274,8 +274,6 @@ const LookerLogo = () => (
 export default async function Page() {
   const resources = (await getResources()) || [];
 
-  console.log(resources);
-
   return (
     <FullWidthPageLayout title="Connections" button={<NewConnectionButton />}>
       {resources.length > 0 ? (
