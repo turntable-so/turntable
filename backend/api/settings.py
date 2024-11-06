@@ -330,7 +330,7 @@ CACHES = {
 }
 
 # Celery settings
-CELERY_BROKER_URL = f"{redis_url}/{os.getenv('CELERY_REDIS_CHANNEL', '0')}"
+CELERY_BROKER_URL = f"{redis_url}/{CELERY_REDIS_CHANNEL}"
 # CELERY_CACHE_BACKEND = "django-cache"
 CELERY_RESULT_BACKEND = "django-db"
 CELERY_ACCEPT_CONTENT = ["application/json"]
