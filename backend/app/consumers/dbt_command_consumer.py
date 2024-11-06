@@ -5,10 +5,13 @@ import threading
 
 from channels.generic.websocket import WebsocketConsumer
 
+from app.workflows.orchestration import stream_dbt_command
+
 logger = logging.getLogger(__name__)
 
 DBT_COMMAND_STREAM_TIMEOUT = 120
 DBT_COMMAND_STREAM_POLL_INTERVAL = 0.01
+
 
 class DBTCommandConsumer(WebsocketConsumer):
     def connect(self):
@@ -19,7 +22,7 @@ class DBTCommandConsumer(WebsocketConsumer):
         if not self.workspace:
             raise ValueError("User does not have a current workspace")
 
-        self.dbt_details = self.workspace.get_dbt_details()
+        self.dbt_details = self.workspace.get_dbt_dev_details()
         if not self.dbt_details:
             raise ValueError("Workspace does not have a dbt resource")
 
@@ -43,7 +46,7 @@ class DBTCommandConsumer(WebsocketConsumer):
             self.send(text_data="WORKFLOW_STARTED")
             my_thread = threading.Thread(target=lambda: self.run_workflow(data))
             my_thread.start()
-            
+
         elif action == "cancel":
             self.send(text_data="WORKFLOW_CANCEL_REQUESTED")
             if self.started:
@@ -60,6 +63,7 @@ class DBTCommandConsumer(WebsocketConsumer):
         try:
             command = data.get("command")
             branch_name = data.get("branch_name")
+            defer = data.get("defer", True)
 
             if command is None:
                 raise ValueError("Command is required")
@@ -79,13 +83,16 @@ class DBTCommandConsumer(WebsocketConsumer):
             else:
                 branch_id = None
 
-            with self.dbt_details.dbt_transition_context(branch_id=branch_id) as (
-                transition,
-                project_dir,
-                _,
+            for output_chunk in stream_dbt_command(
+                workspace_id=self.workspace.id,
+                resource_id=self.dbt_details.resource.id,
+                dbt_resource_id=self.dbt_details.id,
+                command=command,
+                branch_id=branch_id,
+                defer=defer,
+                should_terminate=self.terminate_event.is_set,
             ):
-                for output_chunk in transition.after.stream_dbt_command(command, should_terminate=self.terminate_event.is_set):
-                    self.send(text_data=output_chunk)
+                self.send(text_data=output_chunk)
 
             # assume success if we've reached the end of the event stream
             self.close()

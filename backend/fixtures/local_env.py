@@ -12,6 +12,7 @@ from app.models import (
     User,
     Workspace,
 )
+from app.models.resources import EnvironmentType
 from vinyl.lib.dbt_methods import DBTVersion
 
 
@@ -87,19 +88,27 @@ def create_local_postgres(workspace, repository: Repository | None = None):
                 username="myuser",
                 password="mypassword",
             ).save()
-        if resource.dbtresource_set.count() == 0:
-            DBTCoreDetails(
-                resource=resource,
-                project_path=(
-                    "fixtures/test_resources/jaffle_shop" if repository is None else "."
-                ),
-                repository=repository,
-                threads=1,
-                version=DBTVersion.V1_7.value,
-                subtype=ResourceSubtype.DBT,
-                database="mydb",
-                schema="dbt_sl_test",
-            ).save()
+        environment_map = {
+            "dev": EnvironmentType.DEV,
+            "dbt_sl_test": EnvironmentType.PROD,
+        }
+        for schema, env_type in environment_map.items():
+            if resource.dbtresource_set.filter(environment=env_type).count() == 0:
+                DBTCoreDetails(
+                    resource=resource,
+                    project_path=(
+                        "fixtures/test_resources/jaffle_shop"
+                        if repository is None
+                        else "."
+                    ),
+                    repository=repository,
+                    threads=1,
+                    version=DBTVersion.V1_7.value,
+                    subtype=ResourceSubtype.DBT,
+                    database="mydb",
+                    schema=schema,
+                    environment=env_type,
+                ).save()
 
     return resource
 

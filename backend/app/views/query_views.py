@@ -18,7 +18,7 @@ class QueryPreviewView(APIView):
                 {"error": "query required"}, status=status.HTTP_400_BAD_REQUEST
             )
         # assumes a single repo in the workspace for now
-        dbt_resource = workspace.get_dbt_details()
+        dbt_resource = workspace.get_dbt_dev_details()
 
         return {
             "workspace_id": str(workspace.id),
@@ -62,7 +62,7 @@ class DbtQueryPreviewView(QueryPreviewView):
         use_fast_compile = request.data.get("use_fast_compile", True)
         limit = request.data.get("limit")
         branch_id = request.data.get("branch_id")
-        dbt_resource = workspace.get_dbt_details()
+        dbt_resource = workspace.get_dbt_dev_details()
         with dbt_resource.dbt_repo_context(branch_id) as (dbtproj, project_path, _):
             sql = None
             if use_fast_compile:

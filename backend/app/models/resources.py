@@ -570,6 +570,26 @@ class DBTCoreDetails(DBTResource):
         Repository, on_delete=models.CASCADE, null=True, default=None
     )
 
+    def get_prod_environment(self):
+        try:
+            return self.repository.dbtresource_set.filter(
+                environment=EnvironmentType.PROD
+            ).first()
+        except self.DoesNotExist:
+            return None
+
+    def clean(self, *args, **kwargs):
+        if (
+            self.environment == EnvironmentType.PROD
+            and self.repository.dbtresource_set.filter(
+                environment=EnvironmentType.PROD
+            ).exists()
+        ):
+            raise ValidationError(
+                "Cannot have more than one production resource in a repository"
+            )
+        super().clean(*args, **kwargs)
+
     def save(self, *args, **kwargs):
         if isinstance(self.version, DBTVersion):
             self.version = self.version.value
@@ -579,6 +599,10 @@ class DBTCoreDetails(DBTResource):
     def dbt_repo_context(self, isolate: bool = False, branch_id: str | None = None):
         env_vars = self.env_vars or {}
         dialect_str = self.resource.details.subtype
+        if self.enviroment == EnvironmentType.PROD and (
+            branch_id is None or branch_id != self.repository.main_branch.id
+        ):
+            raise Exception("Cannot run dbt on production resources in main branch")
         with repo_path(self, isolate=isolate, branch_id=branch_id) as (
             project_path,
             git_repo,
@@ -609,13 +633,33 @@ class DBTCoreDetails(DBTResource):
 
     @contextmanager
     def dbt_transition_context(
-        self, isolate: bool = False, branch_id: str | None = None
+        self,
+        isolate: bool = False,
+        branch_id: str | None = None,
+        override_manifest: bool = False,
+        override_catalog: bool = False,
     ):
-        with self.dbt_repo_context(isolate=isolate) as (
+        prod_environment = self.get_prod_environment()
+        if prod_environment is None:
+            raise Exception("No production environment found for this repository")
+        with prod_environment.dbt_repo_context(isolate=isolate) as (
             before,
             _,
             _,
         ):
+            to_update = [
+                (
+                    before.manifest_path,
+                    prod_environment.manifest_json,
+                    override_manifest,
+                ),
+                (before.catalog_path, prod_environment.catalog_json, override_catalog),
+            ]
+            for path, json, override in to_update:
+                if prod_environment.manifest_json is not None:
+                    if override or not os.path.exists(before.manifest_path):
+                        with open(before.manifest_path, "w") as f:
+                            save_orjson(json, f)
             with self.dbt_repo_context(isolate=isolate, branch_id=branch_id) as (
                 after,
                 project_path,

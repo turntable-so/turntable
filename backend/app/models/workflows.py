@@ -273,12 +273,12 @@ class MetadataSyncWorkflow(ScheduledWorkflow):
 
 
 class DBTOrchestrator(ScheduledWorkflow):
-    resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
     dbt_resource = models.ForeignKey(
         DBTResource, on_delete=models.CASCADE, related_name="dbt_orchestrator"
     )
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, null=True)
     commands = ArrayField(models.TextField())
+    refresh_artifacts = models.BooleanField(default=True)
 
     @property
     def workflow(self):
@@ -288,8 +288,9 @@ class DBTOrchestrator(ScheduledWorkflow):
     def kwargs(self):
         return {
             "workspace_id": str(self.workspace.id),
-            "resource_id": str(self.resource.id),
+            "resource_id": str(self.dbt_resource.resource.id),
             "dbt_resource_id": str(self.dbt_resource.id),
             "commands": self.commands,
             "branch_id": str(self.branch.id) if self.branch else None,
+            "refresh_artifacts": self.refresh_artifacts,
         }

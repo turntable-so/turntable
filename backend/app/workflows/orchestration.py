@@ -35,6 +35,9 @@ def run_dbt_command(
     branch_id: str | None = None,
 ):
     dbt_resource = DBTResource.objects.get(id=dbt_resource_id)
+    if not dbt_resource.jobs_allowed:
+        raise Exception("Cannot orchestrate dbt commands on development resources")
+
     with dbt_resource.dbt_repo_context(branch_id=branch_id, isolate=True) as (
         dbtproj,
         project_dir,
@@ -64,6 +67,7 @@ def run_dbt_commands(
     dbt_resource_id: str,
     commands: list[str],
     branch_id: str | None = None,
+    refresh_artifacts=True,
 ):
     outs = []
     for i, command in enumerate(commands):
@@ -75,9 +79,13 @@ def run_dbt_commands(
             branch_id=branch_id,
         )
         outs.append(out)
+    if refresh_artifacts:
+        dbtresource = DBTResource.objects.get(id=dbt_resource_id)
+        dbtresource.upload_artifacts(branch_id=branch_id)
     return returns_helper(outs)
 
 
+# can't make this a workflow because celery doesn't support streaming this way, but leaving in while for now.
 def stream_dbt_command(
     self,
     workspace_id: str,
@@ -85,20 +93,28 @@ def stream_dbt_command(
     branch_id: str,
     dbt_resource_id: str,
     command: str,
+    defer: bool = True,
+    should_terminate: bool = None,
 ):
     dbt_resource = DBTResource.objects.get(id=dbt_resource_id)
-    with dbt_resource.dbt_transition_context(branch_id=branch_id) as (
-        transition,
-        project_dir,
-        _,
-    ):
-        yield from transition.after.stream_dbt_command(command)
-    #     for output_chunk in transition.after.stream_dbt_command(command):
-    #         # yield output_chunk
-    #         # print(output_chunk)
-    #         # Update state with each chunk for streaming effect
-    #         # self.update_state(state="PROGRESS", meta={"output_chunk": output_chunk})
-    #         self.update_state(state="STARTED", meta={"output_chunk": output_chunk})
-
-    #     # Final state indicating completion
-    # return {"status": "Task complete"}
+    if not dbt_resource.development_allowed:
+        raise Exception("Cannot stream dbt commands on production resources")
+    prod_environment = dbt_resource.get_prod_environment()
+    if prod_environment is None or not defer:
+        with dbt_resource.dbt_repo_context(branch_id=branch_id) as (
+            dbtproj,
+            project_dir,
+            _,
+        ):
+            yield from dbtproj.stream_dbt_command(command)
+    else:
+        with dbt_resource.dbt_transition_context(branch_id=branch_id) as (
+            transition,
+            project_dir,
+            _,
+        ):
+            transition.before.mount_manifest()
+            transition.before.mount_catalog()
+            yield from transition.after.stream_dbt_command(
+                command, should_terminate=should_terminate
+            )

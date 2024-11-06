@@ -1,9 +1,6 @@
 import os
-import shlex
 import shutil
 from urllib.parse import unquote
-
-from django.http import StreamingHttpResponse
 
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -50,7 +47,7 @@ class ProjectViewSet(viewsets.ViewSet):
         user_id = request.user.id
 
         # assumes a single repo in the workspace for now
-        dbt_details = workspace.get_dbt_details()
+        dbt_details = workspace.get_dbt_dev_details()
         with dbt_details.dbt_repo_context() as (project, project_path, repo):
             filepath = request.query_params.get("filepath")
             if filepath and len(filepath) > 0:
@@ -111,7 +108,7 @@ class ProjectViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["GET"])
     def changes(self, request):
         workspace = request.user.current_workspace()
-        dbt_details = workspace.get_dbt_details()
+        dbt_details = workspace.get_dbt_dev_details()
         if not dbt_details:
             return Response(
                 {"error": "No DBT details found for this workspace"},
@@ -172,7 +169,7 @@ class ProjectViewSet(viewsets.ViewSet):
     def branches(self, request):
         workspace = request.user.current_workspace()
         # assumes a single repo in the workspace for now
-        dbt_details = workspace.get_dbt_details()
+        dbt_details = workspace.get_dbt_dev_details()
         if not dbt_details:
             return Response(
                 {"error": "No DBT details found for this workspace"},
@@ -226,7 +223,7 @@ class ProjectViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["GET"])
     def lineage(self, request):
         workspace = request.user.current_workspace()
-        dbt_details = workspace.get_dbt_details()
+        dbt_details = workspace.get_dbt_dev_details()
         filepath = unquote(request.query_params.get("filepath"))
         predecessor_depth = int(request.query_params.get("predecessor_depth"))
         successor_depth = int(request.query_params.get("successor_depth"))
