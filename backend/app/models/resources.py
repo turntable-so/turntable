@@ -83,7 +83,7 @@ def repo_path(
                 temp_project_path = os.path.join(
                     temp_dir, os.path.basename(project_path)
                 )
-                shutil.copytree(project_path, temp_project_path)
+                shutil.copytree(project_path, temp_project_path, dirs_exist_ok=True)
                 yield temp_project_path, None
                 return
 
