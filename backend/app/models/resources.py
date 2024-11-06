@@ -32,12 +32,6 @@ from vinyl.lib.utils.files import save_orjson
 from vinyl.lib.utils.process import run_and_capture_subprocess
 
 
-class WorkflowStatus(models.TextChoices):
-    RUNNING = "RUNNING", "Running"
-    FAILED = "FAILED", "Failed"
-    SUCCESS = "SUCCESS", "Success"
-
-
 # Helper classes
 class ResourceType(models.TextChoices):
     DB = "db", "Database"

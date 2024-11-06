@@ -1,6 +1,7 @@
 import time
 
 import pytest
+from celery import states
 from django_celery_results.models import TaskResult
 
 from app.models import (
@@ -51,7 +52,7 @@ def run_test_sync(
                 .order_by("-date_done")
                 .first()
             )
-        assert task_result.status == "SUCCESS"
+        assert task_result.status == states.SUCCESS
         assert task_result.periodic_task_name == periodic_task_name
     assert_ingest_output(resources, produce_columns, produce_column_links)
 
@@ -117,30 +118,3 @@ class TestMetadataSync:
             produce_columns=False,
             produce_column_links=False,
         )
-
-
-# if __name__ == "__main__":
-#     import os
-
-#     from fixtures.local_env import (
-#         create_local_postgres,
-#         create_local_user,
-#         create_local_workspace,
-#         create_repository_n,
-#         create_ssh_key_n,
-#     )
-
-#     def user():
-#         return create_local_user()
-
-#     def workspace(user):
-#         return create_local_workspace(user)
-
-#     def local_postgres(workspace):
-#         git_repo = None
-#         if os.getenv("SSHKEY_0_PUBLIC") and os.getenv("SSHKEY_0_PRIVATE"):
-#             ssh_key = create_ssh_key_n(workspace, 0)
-#             git_repo = create_repository_n(workspace, 0, ssh_key)
-#         return create_local_postgres(workspace, git_repo)
-
-#     run_test_sync([local_postgres(workspace(user()))], recache=False)

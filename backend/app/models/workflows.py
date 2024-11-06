@@ -5,7 +5,7 @@ import os
 import time
 import uuid
 
-from celery import current_app
+from celery import current_app, states
 from celery.result import AsyncResult
 from croniter import croniter
 from django.contrib.postgres.fields import ArrayField
@@ -235,16 +235,21 @@ class ScheduledWorkflow(PolymorphicModel):
         result = AsyncResult(task_id)
         return result.get(timeout=duration_timeout)
 
-    def most_recent(self, n: int = 1, successes_only: bool = False):
+    def most_recent(self, n: int | None = 1, successes_only: bool = False):
         if not self.aggregation_identifier:
             self.aggregation_identifier = next(self.get_identifiers())
         try:
             tasks = TaskResult.objects.filter(
-                periodic_task_name=self.aggregation_identifier
+                periodic_task_name__in=type(self)
+                .objects.filter(aggregation_identifier=self.aggregation_identifier)
+                .values_list("replacement_identifier", flat=True)
             )
             if successes_only:
-                tasks = tasks.filter(status=TaskResult.SUCCESS)
-            return tasks.order_by("-date_done")[:n]
+                tasks = tasks.filter(status=states.SUCCESS)
+            tasks = tasks.order_by("-date_done")
+            if n is not None:
+                tasks = tasks[:n]
+            return list(tasks)
         except TaskResult.DoesNotExist:
             return []
 
