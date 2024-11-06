@@ -32,12 +32,6 @@ from vinyl.lib.utils.files import save_orjson
 from vinyl.lib.utils.process import run_and_capture_subprocess
 
 
-class WorkflowStatus(models.TextChoices):
-    RUNNING = "RUNNING", "Running"
-    FAILED = "FAILED", "Failed"
-    SUCCESS = "SUCCESS", "Success"
-
-
 # Helper classes
 class ResourceType(models.TextChoices):
     DB = "db", "Database"
@@ -345,8 +339,18 @@ class ResourceDetails(PolymorphicModel):
             yield [config_path], db_path
 
 
+class EnvironmentType(models.TextChoices):
+    DEV = "dev"
+    STAGING = "staging"
+    PROD = "prod"
+    OTHER = "other"
+
+
 class DBTResource(PolymorphicModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    environment = models.CharField(
+        choices=EnvironmentType.choices, max_length=255, blank=False
+    )
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
     name = models.TextField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -357,6 +361,14 @@ class DBTResource(PolymorphicModel):
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE, null=True)
     manifest_json = models.JSONField(null=True)
     catalog_json = models.JSONField(null=True)
+
+    @property
+    def jobs_allowed(self):
+        return self.environment != EnvironmentType.DEV
+
+    @property
+    def development_allowed(self):
+        return self.environment not in [EnvironmentType.STAGING, EnvironmentType.PROD]
 
     @classmethod
     def get_default_subtype(cls):
