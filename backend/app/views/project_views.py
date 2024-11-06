@@ -129,11 +129,6 @@ class ProjectViewSet(viewsets.ViewSet):
         # assumes a single repo in the workspace for now
         dbt_details = workspace.get_dbt_details()
         branch = Branch.objects.get(id=pk)
-        if not branch.is_cloned:
-            return Response(
-                {"error": "Branch not cloned"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
 
         with branch.repo_context() as (repo, env):
             filepath = request.query_params.get("filepath")
@@ -291,7 +286,6 @@ class ProjectViewSet(viewsets.ViewSet):
             with transaction.atomic():
                 branch = Branch.objects.create(
                     name=request.data.get("branch_name"),
-                    created_by=current_user,
                     workspace=workspace,
                     repository=dbt_details.repository,
                     branch_name=request.data.get("branch_name"),

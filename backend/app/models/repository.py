@@ -175,8 +175,8 @@ class Branch(models.Model):
             url = url[:-4]
         return f"{url}/pull/new/{self.branch_name}"
 
-    def clone(self):
-        with self._code_repo_path() as path:
+    def clone(self, isolate: bool = False):
+        with self._code_repo_path(isolate) as path:
             if os.path.exists(path) and ".git" in os.listdir(path):
                 raise Exception("Repository already cloned")
 
@@ -187,16 +187,29 @@ class Branch(models.Model):
                 repo.remotes.origin.fetch(env=env)
 
                 # switch to the branch
-                self.switch_to_git_branch(repo_override=repo, env_override=env)
+                self.checkout(repo_override=repo, env_override=env)
 
         return True
+
+    def checkout(
+        self,
+        isolate: bool = False,
+        repo_override: GitRepo | None = None,
+        env_override: dict[str, str] | None = None,
+    ) -> str:
+        with self.repository.with_ssh_env(env_override) as env:
+            with self._code_repo_path(isolate) as path:
+                repo = repo_override or GitRepo(path)
+                # Fetch the latest changes from the remote
+                repo.remotes.origin.fetch(env=env)
+                repo.git.checkout(self.branch_name, env=env)
+                return self.branch_name
 
     def commit(self, commit_message: str, file_paths: list[str]):
         with self._code_repo_path() as repo_path:
             with self.repository.with_ssh_env() as env:
                 repo = GitRepo(repo_path)
                 # Add each specified file
-                print(os.listdir(repo_path), flush=True)
                 for file_path in file_paths:
                     repo.git.add(os.path.join(repo.working_tree_dir, file_path))
                 # Commit the changes
@@ -261,17 +274,8 @@ class Branch(models.Model):
                 # Fetch the latest changes from the remote
                 repo.remotes.origin.fetch(env=env)
 
-                # check if branch already exists in git, and create if not
-                remote_branches = [ref.remote_head for ref in repo.remote().refs]
-                if self.branch_name not in remote_branches:
-                    self.create_git_branch(
-                        isolate=isolate, repo_override=repo, env_override=env
-                    )
-
                 # switch to the branch
-                self.switch_to_git_branch(
-                    isolate=isolate, repo_override=repo, env_override=env
-                )
+                self.checkout(isolate=isolate, repo_override=repo, env_override=env)
 
                 yield repo, env_override
 

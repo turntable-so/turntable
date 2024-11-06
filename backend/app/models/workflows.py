@@ -17,7 +17,7 @@ from django_celery_beat.models import ClockedSchedule, CrontabSchedule, Periodic
 from django_celery_results.models import TaskResult
 from polymorphic.models import PolymorphicModel
 
-from app.models.git_connections import Branch
+from app.models.repository import Branch
 from app.models.resources import DBTResource, Resource
 from app.models.workspace import Workspace
 from app.workflows.metadata import sync_metadata

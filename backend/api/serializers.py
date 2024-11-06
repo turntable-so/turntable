@@ -388,7 +388,9 @@ class DBTCoreDetailsSerializer(ResourceDetailsSerializer):
         instance.repository.main_branch_name = repository_data.get("main_branch_name")
         instance.repository.save()
 
-        instance.project_path = validated_data.get("project_path", instance.project_path)
+        instance.project_path = validated_data.get(
+            "project_path", instance.project_path
+        )
         instance.threads = validated_data.get("threads")
         instance.version = validated_data.get("version")
         instance.database = validated_data.get("database")
@@ -443,7 +445,6 @@ class BranchSerializer(serializers.ModelSerializer):
             "name",
             "branch_name",
             "read_only",
-            "created_by",
             "is_cloned",
             "pull_request_url",
         ]
