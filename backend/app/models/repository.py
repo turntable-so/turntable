@@ -102,17 +102,6 @@ class Repository(models.Model):
                         branches.append(branch_name)
                 return branches
 
-    def test_repo_connection(self):
-        with self.main_branch.repo_context() as (repo, env):
-            try:
-                repo.git.ls_remote(self.git_repo_url)
-                return {"success": True, "result": "Repository connection successful"}
-            except GitCommandError:
-                return {
-                    "success": False,
-                    "error": "Failed to connect to the repository. Please check your credentials and try again.",
-                }
-
     # used before project is created
     def test_remote_repo_connection(self):
         with self.with_ssh_env() as env:
