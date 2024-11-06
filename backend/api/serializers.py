@@ -21,6 +21,7 @@ from app.models import (
     Repository,
     Resource,
     ResourceDetails,
+    SSHKey,
     SnowflakeDetails,
     TableauDetails,
     User,
@@ -351,19 +352,48 @@ class DBTVersionField(serializers.ChoiceField):
             self.fail("invalid_choice", input=data)
 
 
+class SSHKeySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SSHKey
+        fields = ["id", "public_key"]
+
+
+class RepositorySerializer(serializers.ModelSerializer):
+    ssh_key = SSHKeySerializer()
+
+    class Meta:
+        model = Repository
+        fields = ["id", "main_branch_name", "git_repo_url", "ssh_key"]
+
+
 class DBTCoreDetailsSerializer(ResourceDetailsSerializer):
     version = DBTVersionField([(v, v.value) for v in DBTVersion])
+    repository = RepositorySerializer()
 
     class Meta:
         model = DBTCoreDetails
         fields = [
-            "repository_id",
+            "repository",
             "project_path",
             "threads",
             "version",
             "database",
             "schema",
         ]
+
+    def update(self, instance, validated_data):
+        repository_data = validated_data.pop("repository")
+        instance.repository.git_repo_url = repository_data.get("git_repo_url")
+        instance.repository.main_branch_name = repository_data.get("main_branch_name")
+        instance.repository.save()
+
+        instance.project_path = validated_data.get("project_path", instance.project_path)
+        instance.threads = validated_data.get("threads")
+        instance.version = validated_data.get("version")
+        instance.database = validated_data.get("database")
+        instance.schema = validated_data.get("schema")
+        instance.save()
+        return instance
 
 
 class BlockSerializer(serializers.ModelSerializer):
@@ -398,9 +428,3 @@ class ResourceSerializer(serializers.HyperlinkedModelSerializer):
 
     def get_has_dbt(self, obj):
         return obj.has_dbt
-
-
-class RepositorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Repository
-        fields = ["id", "main_branch_name", "git_repo_url"]
