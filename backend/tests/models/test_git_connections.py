@@ -5,7 +5,8 @@ import pytest
 from django.conf import settings
 
 from app.models import Workspace
-from app.models.git_connections import Branch, SSHKey
+from app.models.editor import Project
+from app.models.git_connections import SSHKey
 from app.models.workspace import generate_short_uuid
 from app.utils.test_utils import require_env_vars
 
@@ -35,7 +36,7 @@ class TestGitConnections:
 
     @pytest.fixture
     def local_postgres_test_branch(self, local_postgres_repo):
-        return Branch.objects.create(
+        return Project.objects.create(
             workspace=local_postgres_repo.workspace,
             repository=local_postgres_repo,
             branch_name="test-branch",
@@ -99,7 +100,7 @@ class TestGitConnections:
     @isolate_mark
     def test_create_branch(self, local_postgres_repo, isolate):
         branch_name = "test_branch" + "".join([hex(x)[2:] for x in os.urandom(32)])
-        branch = Branch.objects.create(
+        branch = Project.objects.create(
             workspace=local_postgres_repo.workspace,
             repository=local_postgres_repo,
             branch_name=branch_name,

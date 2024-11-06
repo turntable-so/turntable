@@ -14,6 +14,7 @@ from django.conf import settings
 from django.db import models, transaction
 from git import Repo as GitRepo
 from git.exc import GitCommandError
+from polymorphic.models import PolymorphicModel
 
 from app.models.workspace import Workspace
 from app.utils.fields import encrypt
@@ -76,7 +77,7 @@ class SSHKey(models.Model):
         return ssh_key
 
 
-class Repository(models.Model):
+class Repository(PolymorphicModel):
     id = models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True)
     main_branch_name = models.CharField(max_length=255, null=False, default="main")
     git_repo_url = models.URLField(null=False)
@@ -105,13 +106,13 @@ class Repository(models.Model):
         )
 
     # override main branch id. Useful for tests
-    def save_with_main_branch_id(self, main_branch_id: str, *args, **kwargs):
+    def save_with_main_project_id(self, main_project_id: str, *args, **kwargs):
         # save repo
         super().save(*args, **kwargs)
 
         # create main branch
         Branch.objects.get_or_create(
-            id=main_branch_id,
+            id=main_project_id,
             repository=self,
             branch_name=self.main_branch_name,
             workspace=self.workspace,
@@ -124,8 +125,8 @@ class Repository(models.Model):
             workspace=self.workspace,
         )
 
-    def get_branch(self, branch_id: str) -> Branch:
-        return self.branches.get(id=branch_id, workspace=self.workspace)
+    def get_branch(self, project_id: str) -> Branch:
+        return self.branches.get(id=project_id, workspace=self.workspace)
 
     def test_repo_connection(self):
         with self.main_branch.repo_context() as (repo, env):
@@ -174,12 +175,15 @@ class Branch(models.Model):
         return self.branch_name == self.repository.main_branch_name
 
     @contextmanager
-    def _code_repo_path(self, isolate: bool = False):
+    def _code_repo_path(
+        self, isolate: bool = False, separation_id: uuid.UUID | None = None
+    ):
         path = os.path.join(
             "ws",
             str(self.workspace.id),
             str(self.repository.id),
             str(self.id),
+            str(separation_id) if separation_id is not None else str(self.id),
             self.repository.repo_name,
         )
         if isolate or os.getenv("FORCE_ISOLATE") == "true":

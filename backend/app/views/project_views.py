@@ -8,7 +8,7 @@ from rest_framework.response import Response
 
 from api.serializers import AssetSerializer, LineageSerializer
 from app.core.dbt import LiveDBTParser
-from app.models.git_connections import Branch
+from app.models.editor import Project
 
 
 def _build_file_tree(user_id: str, path: str, base_path: str):
@@ -191,15 +191,16 @@ class ProjectViewSet(viewsets.ViewSet):
                         {"error": "Branch name is required"},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
-                branch = Branch.objects.create(
+                project = Project.objects.create(
                     workspace=workspace,
                     repository=dbt_details.repository,
                     branch_name=request.data.get("branch_name"),
+                    dbtresource=dbt_details,
                 )
-                branch.create_git_branch()
+                project.create_git_branch()
 
                 return Response(
-                    {"branch_name": branch.branch_name}, status=status.HTTP_201_CREATED
+                    {"branch_name": project.branch_name}, status=status.HTTP_201_CREATED
                 )
 
             elif request.method == "PATCH":
@@ -208,13 +209,13 @@ class ProjectViewSet(viewsets.ViewSet):
                         {"error": "Branch name is required"},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
-                branch = Branch.objects.get(
+                project = Project.objects.get(
                     workspace=workspace,
                     repository=dbt_details.repository,
                     branch_name=request.data.get("branch_name"),
                 )
-                with branch.repo_context() as (repo, env):
-                    name = branch.switch_to_git_branch(repo, env)
+                with project.repo_context() as (repo, env):
+                    name = project.switch_to_git_branch(repo, env)
 
                 return Response({"branch_name": name})
 
@@ -232,20 +233,21 @@ class ProjectViewSet(viewsets.ViewSet):
         branch_name = request.query_params.get("branch_name")
         if branch_name:
             try:
-                branch_id = Branch.objects.get(
+                project_id = Project.objects.get(
                     workspace=workspace,
                     repository=dbt_details.repository,
+                    dbtresource=dbt_details,
                     branch_name=branch_name,
                 ).id
-            except Branch.DoesNotExist:
+            except Project.DoesNotExist:
                 return Response(
                     {"error": f"Branch {branch_name} not found"},
                     status=status.HTTP_404_NOT_FOUND,
                 )
         else:
-            branch_id = None
+            project_id = None
 
-        with dbt_details.dbt_transition_context(branch_id=branch_id) as (
+        with dbt_details.dbt_transition_context(project_id=project_id) as (
             transition,
             _,
             repo,

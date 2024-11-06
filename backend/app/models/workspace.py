@@ -6,7 +6,6 @@ from django.contrib.auth.models import (
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
-from app.models.resources import EnvironmentType
 from app.models.user import User
 from app.services.storage_backends import PublicMediaStorage
 
@@ -74,14 +73,11 @@ class Workspace(models.Model):
             self._create_default_workspace_group()
 
     def get_dbt_dev_details(self):
-        # Note assumes only one dbt project
-        for resource in self.resources.all():
-            if resource.has_dbt:
-                return resource.dbtresource_set.filter(
-                    environment=EnvironmentType.DEV
-                ).first()
+        # import here to avoid circular import
+        from app.models.resources import DBTResource
 
-        return None
+        # get dev environment options in order of preference
+        return DBTResource.get_development_dbtresource(self.id)
 
     @property
     def member_count(self):

@@ -17,7 +17,7 @@ from django_celery_beat.models import ClockedSchedule, CrontabSchedule, Periodic
 from django_celery_results.models import TaskResult
 from polymorphic.models import PolymorphicModel
 
-from app.models.git_connections import Branch
+from app.models.editor import Project
 from app.models.resources import DBTResource, Resource
 from app.models.workspace import Workspace
 from app.workflows.metadata import sync_metadata
@@ -240,8 +240,11 @@ class ScheduledWorkflow(PolymorphicModel):
             self.aggregation_identifier = next(self.get_identifiers())
         try:
             tasks = TaskResult.objects.filter(
-                periodic_task_name=self.aggregation_identifier
+                periodic_task_name__in=self.objects.filter(
+                    aggregation_identifier=self.aggregation_identifier
+                )
             )
+            print(tasks)
             if successes_only:
                 tasks = tasks.filter(status=TaskResult.SUCCESS)
             return tasks.order_by("-date_done")[:n]
@@ -276,7 +279,7 @@ class DBTOrchestrator(ScheduledWorkflow):
     dbt_resource = models.ForeignKey(
         DBTResource, on_delete=models.CASCADE, related_name="dbt_orchestrator"
     )
-    branch = models.ForeignKey(Branch, on_delete=models.CASCADE, null=True)
+    branch = models.ForeignKey(Project, on_delete=models.CASCADE, null=True)
     commands = ArrayField(models.TextField())
     refresh_artifacts = models.BooleanField(default=True)
 
@@ -291,6 +294,6 @@ class DBTOrchestrator(ScheduledWorkflow):
             "resource_id": str(self.dbt_resource.resource.id),
             "dbt_resource_id": str(self.dbt_resource.id),
             "commands": self.commands,
-            "branch_id": str(self.branch.id) if self.branch else None,
+            "project_id": str(self.project.id) if self.project else None,
             "refresh_artifacts": self.refresh_artifacts,
         }

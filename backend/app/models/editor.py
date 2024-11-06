@@ -18,6 +18,17 @@ def query_to_json(df: pd.DataFrame, columns: dict[str, str]) -> str:
     return f'{{"data": {data}, "column_types": {json.dumps(columns)}}}'
 
 
+class Project(Branch):
+    name = models.CharField(max_length=255)
+    dbtresource = models.ForeignKey(
+        DBTResource,
+        on_delete=models.CASCADE,
+    )
+
+    def _code_repo_path(self, isolate: bool = False):
+        return super()._code_repo_path(isolate, self.dbtresource.id)
+
+
 class Query(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_at = models.DateTimeField(default=timezone.now)
@@ -69,8 +80,12 @@ class DBTQuery(models.Model):
         use_fast_compile: bool = True,
         limit: int | None = _QUERY_LIMIT,
     ):
-        branch_id = self.branch.id if self.branch else None
-        with self.dbtresource.dbt_repo_context(branch_id) as (dbtproj, project_path, _):
+        project_id = self.project.id if self.project else None
+        with self.dbtresource.dbt_repo_context(project_id) as (
+            dbtproj,
+            project_path,
+            _,
+        ):
             connector = self.dbtresource.resource.details.get_connector()
             sql = None
             if use_fast_compile:

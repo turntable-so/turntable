@@ -5,8 +5,6 @@ import threading
 
 from channels.generic.websocket import WebsocketConsumer
 
-from app.workflows.orchestration import stream_dbt_command
-
 logger = logging.getLogger(__name__)
 
 DBT_COMMAND_STREAM_TIMEOUT = 120
@@ -58,7 +56,8 @@ class DBTCommandConsumer(WebsocketConsumer):
             )
 
     def run_workflow(self, data):
-        from app.models.git_connections import Branch
+        from app.models.editor import Project
+        from app.workflows.orchestration import stream_dbt_command
 
         try:
             command = data.get("command")
@@ -72,23 +71,23 @@ class DBTCommandConsumer(WebsocketConsumer):
 
             if branch_name:
                 try:
-                    branch = Branch.objects.get(
+                    branch = Project.objects.get(
                         workspace=self.workspace,
                         repository=self.dbt_details.repository,
                         branch_name=branch_name,
                     )
-                    branch_id = branch.id
-                except Branch.DoesNotExist:
+                    project_id = branch.id
+                except Project.DoesNotExist:
                     raise ValueError(f"Branch {branch_name} not found")
             else:
-                branch_id = None
+                project_id = None
 
             for output_chunk in stream_dbt_command(
                 workspace_id=self.workspace.id,
                 resource_id=self.dbt_details.resource.id,
                 dbt_resource_id=self.dbt_details.id,
                 command=command,
-                branch_id=branch_id,
+                project_id=project_id,
                 defer=defer,
                 should_terminate=self.terminate_event.is_set,
             ):

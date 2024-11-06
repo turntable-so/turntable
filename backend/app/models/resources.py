@@ -67,7 +67,7 @@ def get_sync_config(db_path):
 
 @contextmanager
 def repo_path(
-    obj, isolate: bool = False, branch_id: str | None = None
+    obj, isolate: bool = False, project_id: str | None = None
 ) -> Generator[tuple[str, Repository | None], None, None]:
     repo: Repository | None = getattr(obj, "repository")
     project_path = getattr(obj, "project_path")
@@ -83,7 +83,7 @@ def repo_path(
 
         yield project_path, None
         return
-    branch = repo.main_branch if branch_id is None else repo.get_branch(branch_id)
+    branch = repo.main_branch if project_id is None else repo.get_branch(project_id)
     with branch.repo_context(isolate=isolate) as (git_repo, _):
         project_path = os.path.join(git_repo.working_tree_dir, project_path)
         yield project_path, git_repo
@@ -343,13 +343,26 @@ class EnvironmentType(models.TextChoices):
     DEV = "dev"
     STAGING = "staging"
     PROD = "prod"
-    OTHER = "other"
+    COMBINED = "combined"
+
+    @classmethod
+    def jobs_allowed_environments(cls):
+        # order of preference
+        return [EnvironmentType.PROD, EnvironmentType.COMBINED, EnvironmentType.STAGING]
+
+    @classmethod
+    def development_allowed_environments(cls):
+        # order of preference
+        return [EnvironmentType.DEV, EnvironmentType.COMBINED]
 
 
 class DBTResource(PolymorphicModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     environment = models.CharField(
-        choices=EnvironmentType.choices, max_length=255, blank=False
+        choices=EnvironmentType.choices,
+        default=EnvironmentType.COMBINED,
+        max_length=255,
+        blank=False,
     )
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
     name = models.TextField(null=True)
@@ -361,14 +374,6 @@ class DBTResource(PolymorphicModel):
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE, null=True)
     manifest_json = models.JSONField(null=True)
     catalog_json = models.JSONField(null=True)
-
-    @property
-    def jobs_allowed(self):
-        return self.environment != EnvironmentType.DEV
-
-    @property
-    def development_allowed(self):
-        return self.environment not in [EnvironmentType.STAGING, EnvironmentType.PROD]
 
     @classmethod
     def get_default_subtype(cls):
@@ -570,13 +575,33 @@ class DBTCoreDetails(DBTResource):
         Repository, on_delete=models.CASCADE, null=True, default=None
     )
 
-    def get_prod_environment(self):
-        try:
-            return self.repository.dbtresource_set.filter(
-                environment=EnvironmentType.PROD
-            ).first()
-        except self.DoesNotExist:
-            return None
+    @classmethod
+    def get_job_dbtresource(cls, workspace_id: str):
+        prod_env_options = EnvironmentType.jobs_allowed_environments()
+
+        dbtresource_options = cls.objects.filter(
+            workspace_id=workspace_id,
+            environment__in=prod_env_options,
+        )
+        for env in prod_env_options:
+            for dbtresource in dbtresource_options:
+                if dbtresource.environment == env:
+                    return dbtresource
+        raise None
+
+    @classmethod
+    def get_development_dbtresource(cls, workspace_id: str):
+        dev_env_options = EnvironmentType.development_allowed_environments()
+
+        dbtresource_options = cls.objects.filter(
+            workspace_id=workspace_id,
+            environment__in=dev_env_options,
+        )
+        for env in dev_env_options:
+            for dbtresource in dbtresource_options:
+                if dbtresource.environment == env:
+                    return dbtresource
+        raise None
 
     def clean(self, *args, **kwargs):
         if (
@@ -596,14 +621,16 @@ class DBTCoreDetails(DBTResource):
         super().save(*args, **kwargs)
 
     @contextmanager
-    def dbt_repo_context(self, isolate: bool = False, branch_id: str | None = None):
+    def dbt_repo_context(self, isolate: bool = False, project_id: str | None = None):
         env_vars = self.env_vars or {}
         dialect_str = self.resource.details.subtype
-        if self.enviroment == EnvironmentType.PROD and (
-            branch_id is None or branch_id != self.repository.main_branch.id
+        if (
+            self.environment == EnvironmentType.PROD
+            and project_id is not None
+            or not project_id != self.repository.main_branch.id
         ):
             raise Exception("Cannot run dbt on production resources in main branch")
-        with repo_path(self, isolate=isolate, branch_id=branch_id) as (
+        with repo_path(self, isolate=isolate, project_id=project_id) as (
             project_path,
             git_repo,
         ):
@@ -635,11 +662,12 @@ class DBTCoreDetails(DBTResource):
     def dbt_transition_context(
         self,
         isolate: bool = False,
-        branch_id: str | None = None,
+        project_id: str | None = None,
         override_manifest: bool = False,
         override_catalog: bool = False,
+        override_job_resource: DBTResource | None = None,
     ):
-        prod_environment = self.get_prod_environment()
+        prod_environment = override_job_resource or self.get_job_dbtresource()
         if prod_environment is None:
             raise Exception("No production environment found for this repository")
         with prod_environment.dbt_repo_context(isolate=isolate) as (
@@ -655,12 +683,12 @@ class DBTCoreDetails(DBTResource):
                 ),
                 (before.catalog_path, prod_environment.catalog_json, override_catalog),
             ]
-            for path, json, override in to_update:
-                if prod_environment.manifest_json is not None:
-                    if override or not os.path.exists(before.manifest_path):
-                        with open(before.manifest_path, "w") as f:
-                            save_orjson(json, f)
-            with self.dbt_repo_context(isolate=isolate, branch_id=branch_id) as (
+            for path, artifact_json, override in to_update:
+                if artifact_json is not None:
+                    if override or not os.path.exists(path):
+                        with open(path, "w") as f:
+                            save_orjson(artifact_json, f)
+            with self.dbt_repo_context(isolate=isolate, project_id=project_id) as (
                 after,
                 project_path,
                 git_repo,
@@ -671,8 +699,8 @@ class DBTCoreDetails(DBTResource):
                     git_repo,
                 )
 
-    def upload_artifacts(self, branch_id: str | None = None):
-        with self.dbt_repo_context(isolate=True, branch_id=branch_id) as (
+    def upload_artifacts(self, project_id: str | None = None):
+        with self.dbt_repo_context(isolate=True, project_id=project_id) as (
             dbtproj,
             project_path,
             _,

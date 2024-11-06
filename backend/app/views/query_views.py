@@ -61,9 +61,9 @@ class DbtQueryPreviewView(QueryPreviewView):
             )
         use_fast_compile = request.data.get("use_fast_compile", True)
         limit = request.data.get("limit")
-        branch_id = request.data.get("branch_id")
+        project_id = request.data.get("project_id")
         dbt_resource = workspace.get_dbt_dev_details()
-        with dbt_resource.dbt_repo_context(branch_id) as (dbtproj, project_path, _):
+        with dbt_resource.dbt_repo_context(project_id) as (dbtproj, project_path, _):
             sql = None
             if use_fast_compile:
                 sql = dbtproj.fast_compile(query)

@@ -32,13 +32,13 @@ def run_dbt_command(
     resource_id: str,
     dbt_resource_id: str,
     command: str,
-    branch_id: str | None = None,
+    project_id: str | None = None,
 ):
     dbt_resource = DBTResource.objects.get(id=dbt_resource_id)
     if not dbt_resource.jobs_allowed:
         raise Exception("Cannot orchestrate dbt commands on development resources")
 
-    with dbt_resource.dbt_repo_context(branch_id=branch_id, isolate=True) as (
+    with dbt_resource.dbt_repo_context(project_id=project_id, isolate=True) as (
         dbtproj,
         project_dir,
         _,
@@ -66,7 +66,7 @@ def run_dbt_commands(
     resource_id: str,
     dbt_resource_id: str,
     commands: list[str],
-    branch_id: str | None = None,
+    project_id: str | None = None,
     refresh_artifacts=True,
 ):
     outs = []
@@ -76,12 +76,12 @@ def run_dbt_commands(
             resource_id=resource_id,
             dbt_resource_id=dbt_resource_id,
             command=command,
-            branch_id=branch_id,
+            project_id=project_id,
         )
         outs.append(out)
     if refresh_artifacts:
         dbtresource = DBTResource.objects.get(id=dbt_resource_id)
-        dbtresource.upload_artifacts(branch_id=branch_id)
+        dbtresource.upload_artifacts(project_id=project_id)
     return returns_helper(outs)
 
 
@@ -90,7 +90,7 @@ def stream_dbt_command(
     self,
     workspace_id: str,
     resource_id: str,
-    branch_id: str,
+    project_id: str,
     dbt_resource_id: str,
     command: str,
     defer: bool = True,
@@ -99,20 +99,18 @@ def stream_dbt_command(
     dbt_resource = DBTResource.objects.get(id=dbt_resource_id)
     if not dbt_resource.development_allowed:
         raise Exception("Cannot stream dbt commands on production resources")
-    prod_environment = dbt_resource.get_prod_environment()
-    if prod_environment is None or not defer:
-        with dbt_resource.dbt_repo_context(branch_id=branch_id) as (
+    job_environment = dbt_resource.get_job_dbtresource()
+    if job_environment is None or not defer:
+        with dbt_resource.dbt_repo_context(project_id=project_id) as (
             dbtproj,
             project_dir,
             _,
         ):
             yield from dbtproj.stream_dbt_command(command)
     else:
-        with dbt_resource.dbt_transition_context(branch_id=branch_id) as (
-            transition,
-            project_dir,
-            _,
-        ):
+        with dbt_resource.dbt_transition_context(
+            project_id=project_id, override_job_resource=job_environment
+        ) as (transition, project_dir, _):
             transition.before.mount_manifest()
             transition.before.mount_catalog()
             yield from transition.after.stream_dbt_command(
