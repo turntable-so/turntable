@@ -43,4 +43,3 @@ if __name__ == "__main__":
         stream=False,
         data={"query": "select * from dbt_sl_test.customers"},
     )
-    breakpoint()

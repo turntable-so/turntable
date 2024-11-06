@@ -310,7 +310,7 @@ if os.getenv("LOCAL_REDIS") == "true":
     redis_port = int(os.getenv("REDIS_PORT", 6379))
     redis_url = f"redis://{redis_host}:{redis_port}/"
 else:
-    redis_url = os.getenv("REDIS_URL")
+    redis_url = f"{os.getenv('REDIS_URL')}/" # we add a / cause Render injects the url without a /
     if not redis_url:
         raise ValueError("REDIS_URL is required if LOCAL_REDIS is not set to true")
 

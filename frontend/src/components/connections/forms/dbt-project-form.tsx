@@ -155,6 +155,7 @@ export default function DbtProjectForm({
 }: { resource?: any; details?: any }) {
   const router = useRouter();
   const { resources, fetchResources } = useAppContext();
+
   const { user } = useSession();
   const [connectionCheckStatus, setConnectionCheckStatus] = useState<
     "PENDING" | "STARTED" | "FAILURE" | "SUCCESS"
@@ -183,6 +184,9 @@ export default function DbtProjectForm({
       message: "Schema can't be empty",
     }),
     deployKey: z.string({
+      required_error: "Please enter a Deploy Key",
+    }),
+    sshKeyId: z.string({
       required_error: "Please enter a Deploy Key",
     }),
     dbtGitRepoUrl: z.string().min(5, {
@@ -221,9 +225,10 @@ export default function DbtProjectForm({
     resolver: zodResolver(RemoteFormSchema),
     defaultValues: {
       database_resource_id: resource?.id || "",
-      deployKey: details?.deploy_key || "",
-      dbtGitRepoUrl: details?.git_repo_url || "",
-      mainGitBranch: details?.main_git_branch || "main",
+      deployKey: details?.repository?.ssh_key?.public_key || "",
+      sshKeyId: details?.repository?.ssh_key?.id || "",
+      dbtGitRepoUrl: details?.repository?.git_repo_url || "",
+      mainGitBranch: details?.repository?.main_branch_name || "main",
       subdirectory: details?.project_path || ".",
       threads: details?.threads || 1,
       version: details?.version || "",
@@ -240,7 +245,7 @@ export default function DbtProjectForm({
       threads: details?.threads || 1,
       version: details?.version || "",
       database: details?.database || "",
-      schema: details?.schema || "",
+      schema: details?.schema || "f",
     },
   });
 
@@ -249,6 +254,7 @@ export default function DbtProjectForm({
       const data = await getSshKey(workspace_id);
       if (data) {
         remoteForm.setValue("deployKey", data.public_key);
+        remoteForm.setValue("sshKeyId", data.id);
       }
     };
 
@@ -282,13 +288,16 @@ export default function DbtProjectForm({
       subtype: "dbt",
       config: {
         resource_id: data.database_resource_id,
-        ...(selectedTab === "remote" && {
+        repository: {
           git_repo_url: (data as z.infer<typeof RemoteFormSchema>)
             .dbtGitRepoUrl,
-          main_git_branch: (data as z.infer<typeof RemoteFormSchema>)
+          main_branch_name: (data as z.infer<typeof RemoteFormSchema>)
             .mainGitBranch,
-          deploy_key: (data as z.infer<typeof RemoteFormSchema>).deployKey,
-        }),
+          ssh_key: {
+            id: (data as z.infer<typeof RemoteFormSchema>).sshKeyId,
+            public_key: (data as z.infer<typeof RemoteFormSchema>).deployKey,
+          },
+        },
         project_path: data.subdirectory,
         threads: data.threads,
         version: data.version,
@@ -299,9 +308,10 @@ export default function DbtProjectForm({
     const res = isUpdate
       ? await updateResource(resource.id, payload)
       : await createResource(payload as any);
-    if (res.id) {
+    if (res.name !== undefined) {
       if (isUpdate) {
         toast.success("Connection updated");
+        return
       } else {
         toast.success("Connection created");
       }
@@ -340,7 +350,6 @@ export default function DbtProjectForm({
         >
           <TabsList>
             <TabsTrigger value="remote">Remote Repository</TabsTrigger>
-            <TabsTrigger value="local">Local Directory</TabsTrigger>
           </TabsList>
           <TabsContent value="remote">
             <Form {...remoteForm}>

@@ -80,7 +80,7 @@ class SSHKey(models.Model):
 class Repository(PolymorphicModel):
     id = models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True)
     main_branch_name = models.CharField(max_length=255, null=False, default="main")
-    git_repo_url = models.URLField(null=False)
+    git_repo_url = models.CharField(max_length=255, null=False)
 
     # relationships
     ssh_key = models.ForeignKey(SSHKey, on_delete=models.CASCADE)
@@ -138,6 +138,23 @@ class Repository(PolymorphicModel):
                     "success": False,
                     "error": "Failed to connect to the repository. Please check your credentials and try again.",
                 }
+
+    # used before project is created
+    def test_remote_repo_connection(self):
+        with self.with_ssh_env() as env:
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                try:
+                    repo = GitRepo.init(tmp_dir)
+                    repo.git.ls_remote(self.git_repo_url, env=env)
+                    return {
+                        "success": True,
+                        "result": "Repository connection successful",
+                    }
+                except GitCommandError as e:
+                    return {
+                        "success": False,
+                        "error": f"Failed to connect to the repository. {str(e)}",
+                    }
 
     @contextmanager
     def with_ssh_env(self, env_override: dict[str, str] | None = None):

@@ -26,7 +26,7 @@ export default function PostgresPage() {
         </div>
       </Button>
       <Separator />
-      <div className="flex justify-center">
+      <div className="flex justify-center mb-12">
         <div className="flex justify-center w-full py-8">
           <DbtProjectForm />
         </div>

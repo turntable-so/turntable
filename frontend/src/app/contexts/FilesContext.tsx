@@ -165,9 +165,6 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     setSearchFileIndex(searchableFiles);
   };
 
-  useEffect(() => {
-    fetchFiles();
-  }, []);
 
   const openFile = useCallback(
     async (node: FileNode) => {

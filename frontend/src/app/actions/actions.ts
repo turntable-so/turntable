@@ -347,7 +347,7 @@ export async function createResource(payload: CreateResourcePayload) {
 export async function updateResource(id: string, payload: any) {
   const response = await fetcher(`/resources/${id}/`, {
     cookies,
-    method: "PATCH",
+    method: "PUT",
     next: {
       tags: ["resources"],
     },

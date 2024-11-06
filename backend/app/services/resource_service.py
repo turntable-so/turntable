@@ -1,4 +1,5 @@
 from django.db import transaction
+from app.models.git_connections import Repository
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -99,12 +100,10 @@ class ResourceServiceHelper:
         return response
 
     @classmethod
-    def partial_update_helper(cls, resource: Resource, data: dict) -> Resource:
+    def update_helper(cls, resource: Resource, data: dict) -> Resource:
         if data.get("config") is not None:
             config_data = data.get("config")
-            detail_serializer = cls.serializer(
-                resource.details, data=config_data, partial=True
-            )
+            detail_serializer = cls.serializer(resource.details, data=config_data)
             detail_serializer.is_valid(raise_exception=True)
             detail_serializer.save()
 
@@ -167,9 +166,9 @@ class DBTResourceService(ResourceServiceHelper):
         subtype = cls.subtype
         resource = payload.data.get("resource")
         config = payload.data.get("config")
-
         resource_data = ResourceSerializer(data=resource)
         resource_data.is_valid(raise_exception=True)
+
         resource_id = config.get("resource_id")
         if not resource_id:
             raise ValidationError("Resource ID is required for DBT resources.")
@@ -180,13 +179,24 @@ class DBTResourceService(ResourceServiceHelper):
                 **config,
             }
         )
-
         detail_serializer.is_valid(raise_exception=True)
         with transaction.atomic():
             resource = Resource.objects.get(id=resource_id, workspace=workspace)
+            repository = Repository.objects.create(
+                workspace=workspace,
+                ssh_key_id=config.get("repository").get("ssh_key").get("id"),
+                git_repo_url=detail_serializer.data.get("repository").get(
+                    "git_repo_url"
+                ),
+            )
             detail = DBTCoreDetails(
                 resource=resource,
-                **detail_serializer.data,
+                repository=repository,
+                project_path=detail_serializer.data.get("project_path"),
+                threads=detail_serializer.data.get("threads"),
+                version=detail_serializer.data.get("version"),
+                database=detail_serializer.data.get("database"),
+                schema=detail_serializer.data.get("schema"),
             )
             resource.save()
             detail.save()
@@ -242,7 +252,7 @@ class ResourceService:
         ).data
         return response
 
-    def partial_update(self, resource_id: str, data: dict) -> Resource:
+    def update(self, resource_id: str, data: dict) -> Resource:
         resource = Resource.objects.get(id=resource_id, workspace=self.workspace)
         if resource is None:
             raise ValidationError("Resource not found.")
@@ -250,7 +260,8 @@ class ResourceService:
         with transaction.atomic():
             if data.get("resource") is not None:
                 payload = ResourceSerializer(
-                    resource, data=data.get("resource"), partial=True
+                    resource,
+                    data=data.get("resource"),
                 )
                 payload.is_valid(raise_exception=True)
                 resource = payload.save()  # This calls the update method
@@ -259,10 +270,9 @@ class ResourceService:
                 if resource.dbtresource_set.exists():
                     dbt_resource = resource.dbtresource_set.first()
                     dbt_payload = DBTCoreDetailsSerializer(
-                        dbt_resource, data=data.get("config"), partial=True
+                        dbt_resource,
+                        data=data.get("config"),
                     )
-                    dbt_payload.is_valid()
-                    print(dbt_payload.errors, flush=True)
                     dbt_payload.is_valid(raise_exception=True)
                     dbt_payload.save()
                     return
@@ -277,7 +287,7 @@ class ResourceService:
             if data.get("config") is not None:
                 for cls in ResourceServiceHelper.__subclasses__():
                     if cls.subtype == resource.details.subtype:
-                        cls.partial_update_helper(resource, data)
+                        cls.update_helper(resource, data)
                         return resource
                 raise ValidationError(
                     f"Config update not supported for subtype {resource.details.subtype}"

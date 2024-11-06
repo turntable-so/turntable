@@ -73,7 +73,7 @@ class TestResourceViews:
             },
         }
 
-        response = client.patch(f"/resources/{resource_id}/", data, format="json")
+        response = client.put(f"/resources/{resource_id}/", data, format="json")
 
         assert response.status_code == 200
         resource = Resource.objects.get(id=resource_id)
@@ -85,7 +85,7 @@ class TestResourceViews:
                 "service_account": "{ 'new': 'value' }",
             },
         }
-        response = client.patch(f"/resources/{resource_id}/", data, format="json")
+        response = client.put(f"/resources/{resource_id}/", data, format="json")
 
         assert response.status_code == 200
         resource = Resource.objects.get(id=resource_id)
@@ -165,7 +165,7 @@ class TestResourceViews:
             },
         }
 
-        response = client.patch(f"/resources/{resource_id}/", data, format="json")
+        response = client.put(f"/resources/{resource_id}/", data, format="json")
 
         assert response.status_code == 200
         resource = Resource.objects.get(id=resource_id)
@@ -189,7 +189,8 @@ class TestResourceViews:
         response = client.post("/resources/", data, format="json")
         assert response.status_code == 201
 
-    def test_create_dbt_resource(self, client, resource_id, dbt_repository_id):
+    def test_create_dbt_resource(self, client, resource_id, workspace):
+        ssh_key = SSHKey.generate_deploy_key(workspace)
         response = client.get("/resources/")
         assert response.status_code == 200
         assert not response.data[-1]["has_dbt"]
@@ -201,7 +202,14 @@ class TestResourceViews:
             "subtype": "dbt",
             "config": {
                 "resource_id": resource_id,
-                "repository_id": dbt_repository_id,
+                "repository": {
+                    "ssh_key": {
+                        "id": ssh_key.id,
+                        "public_key": ssh_key.public_key,
+                    },
+                    "git_repo_url": "git@github.com:test/test.git",
+                    "main_branch_name": "main",
+                },
                 "project_path": "/",
                 "threads": 1,
                 "version": "1.6",
@@ -217,9 +225,8 @@ class TestResourceViews:
         assert response.status_code == 200
         assert response.data[-1]["has_dbt"] is True
 
-    def test_create_dbt_resource_get_details(
-        self, client, resource_id, dbt_repository_id
-    ):
+    def test_create_dbt_resource_get_details(self, client, resource_id, workspace):
+        ssh_key = SSHKey.generate_deploy_key(workspace)
         data = {
             "resource": {
                 "type": "db",
@@ -227,7 +234,14 @@ class TestResourceViews:
             "subtype": "dbt",
             "config": {
                 "resource_id": resource_id,
-                "repository_id": dbt_repository_id,
+                "repository": {
+                    "ssh_key": {
+                        "id": ssh_key.id,
+                        "public_key": ssh_key.public_key,
+                    },
+                    "git_repo_url": "git@github.com:hello/world.git",
+                    "main_branch_name": "main",
+                },
                 "project_path": "/",
                 "threads": 1,
                 "version": "1.6",
@@ -242,8 +256,17 @@ class TestResourceViews:
         response = client.get(f"/resources/{resource_id}/")
         assert response.status_code == 200
         assert "dbt_details" in response.data
+        assert (
+            response.data["dbt_details"]["repository"]["git_repo_url"]
+            == "git@github.com:hello/world.git"
+        )
+        assert "main_branch_name" in response.data["dbt_details"]["repository"].keys()
+        assert (
+            "public_key" in response.data["dbt_details"]["repository"]["ssh_key"].keys()
+        )
 
-    def test_update_dbt(self, client, resource_id, dbt_repository_id):
+    def test_update_dbt(self, client, resource_id, workspace):
+        ssh_key = SSHKey.generate_deploy_key(workspace)
         data = {
             "resource": {
                 "type": "db",
@@ -251,7 +274,14 @@ class TestResourceViews:
             "subtype": "dbt",
             "config": {
                 "resource_id": resource_id,
-                "repository_id": dbt_repository_id,
+                "repository": {
+                    "ssh_key": {
+                        "id": ssh_key.id,
+                        "public_key": ssh_key.public_key,
+                    },
+                    "git_repo_url": "git@github.com:hello/world.git",
+                    "main_branch_name": "main",
+                },
                 "project_path": "/",
                 "threads": 1,
                 "version": "1.6",
@@ -263,22 +293,41 @@ class TestResourceViews:
         assert response.status_code == 201
 
         data = {
+            "resource": {
+                "type": "db",
+            },
             "subtype": "dbt",
             "config": {
                 "resource_id": resource_id,
-                "repository_id": dbt_repository_id,
+                "repository": {
+                    "ssh_key": {
+                        "id": ssh_key.id,
+                        "public_key": ssh_key.public_key,
+                    },
+                    "git_repo_url": "git@github.com:hello/world.git",
+                    "main_branch_name": "DIFFERENT",
+                },
                 "project_path": "/",
                 "threads": 1,
-                "version": "1.6",
-                "database": "test",
-                "schema": "test",
+                "version": "1.8",
+                "database": "test_change",
+                "schema": "test_change",
             },
         }
+        response = client.put(f"/resources/{resource_id}/", data, format="json")
 
-        response = client.patch(f"/resources/{resource_id}/", data, format="json")
+        response = client.get(f"/resources/{resource_id}/")
+
         assert response.status_code == 200
-        resource = Resource.objects.get(id=resource_id)
-        assert resource.name == "Test Resource"
+        assert response.data["dbt_details"]["version"] == "1.8"
+        assert (
+            response.data["dbt_details"]["repository"]["git_repo_url"]
+            == "git@github.com:hello/world.git"
+        )
+        assert (
+            response.data["dbt_details"]["repository"]["main_branch_name"]
+            == "DIFFERENT"
+        )
 
     def test_create_metabase_resource(self, client):
         data = {
@@ -346,9 +395,7 @@ class TestResourceViews:
                 "token": "test 2",
             },
         }
-        response = client.patch(
-            f"/resources/{response.data['id']}/", data, format="json"
-        )
+        response = client.put(f"/resources/{response.data['id']}/", data, format="json")
 
         assert response.status_code == 200
         resource = Resource.objects.get(id=response.data["id"])
