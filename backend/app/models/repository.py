@@ -142,7 +142,6 @@ class Branch(models.Model):
     name = models.CharField(max_length=255, null=False)
     branch_name = models.CharField(max_length=255, null=False)
     read_only = models.BooleanField(default=False)
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
 
     # relationships
     repository = models.ForeignKey(

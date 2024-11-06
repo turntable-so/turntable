@@ -37,9 +37,8 @@ def setup_temp_media_root(tmp_path_factory):
         yield temp_media
 
 
-@pytest.fixture(scope="session")
-@pytest.mark.django_db(transaction=True)
-def initialized_repo(local_postgres):
+@pytest.fixture(scope="function")
+def initialized_repo():
     user = create_local_user()
     workspace = create_local_workspace(user)
     ssh_key = create_ssh_key_n(workspace, 0)
@@ -52,8 +51,8 @@ def initialized_repo(local_postgres):
     return postgres.repository
 
 
+@pytest.mark.django_db
 def test_repo_connection(
-    self,
     initialized_repo,
 ):
     breakpoint()
@@ -62,13 +61,13 @@ def test_repo_connection(
 
 
 @isolate_mark
-def test_repo_context(self, initialized_repo, isolate):
+def test_repo_context(initialized_repo, isolate):
     with initialized_repo.main_branch.repo_context(isolate=isolate) as (repo, _):
         assert len(os.listdir(repo.working_tree_dir)) > 3
 
 
 @pytest.mark.django_db
-def test_dbt_repo_context(self, local_postgres, isolate):
+def test_dbt_repo_context(local_postgres, isolate):
     with local_postgres.dbtresource_set.first().dbt_repo_context(isolate=isolate) as (
         project,
         filepath,
