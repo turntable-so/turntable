@@ -94,6 +94,12 @@ export default function ModelPreviewer({
                     </div>
                   )}
                 </div>
+                {asset.ai_description && (
+                  <div>
+                    <div>AI Description</div>
+                    <div className="font-medium">{asset.ai_description}</div>
+                  </div>
+                )}
                 <div>
                   <div className="font-bold">URL</div>
                   {asset.config?.url ? (
@@ -185,7 +191,7 @@ export default function ModelPreviewer({
                                 >
                                   {test}
                                 </Badge>
-                              ),
+                              )
                             )}
                           </div>
                           <div className="pt-1 font-normal">

@@ -189,6 +189,7 @@ class AssetSerializer(serializers.ModelSerializer):
             "name",
             "columns",
             "description",
+            "ai_description",
             "url",
             "type",
             "tags",
