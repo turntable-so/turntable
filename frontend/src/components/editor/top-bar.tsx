@@ -14,11 +14,11 @@ import {
   PanelLeftClose,
   PanelRight,
   PanelRightClose,
+  Search,
   Settings,
-  Users,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "../ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import {
@@ -30,6 +30,8 @@ import {
 import WorkspaceSwitcher from "../workspace-switcher";
 import BranchReviewDialog from "./branch-review-dialog";
 import { LocalStorageKeys } from "@/app/constants/local-storage-keys";
+import { useAssets } from "@/contexts/AssetViewerContext";
+import { Input } from "../ui/input";
 
 const clearEditorCache = () => {
   localStorage.removeItem(LocalStorageKeys.activeFile);
@@ -42,6 +44,23 @@ const clearEditorCache = () => {
 const AppContent = () => {
   const { appSidebarCollapsed } = useLayoutContext();
   const { user, logout } = useSession();
+
+  const { query, setQuery, assets, submitSearch } =
+    useAssets();
+
+  useEffect(() => {
+    submitSearch();
+  }, []);
+
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      submitSearch();
+    }
+  };
+
+
+
   return (
     <div
       className={cn(
@@ -54,7 +73,21 @@ const AppContent = () => {
       >
         <WorkspaceSwitcher isCollapsed={appSidebarCollapsed} />
       </div>
-      <Popover>
+      <div className="flex flex-row justify-between w-full items-center">
+      <div className="flex items-center">
+              <div className="relative w-full">
+                <Search className="size-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Input
+                  autoFocus
+                  placeholder="Search assets"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className="h-10 w-full pl-10"
+                />
+              </div>
+            </div>
+        <Popover>
         <PopoverTrigger asChild className="w-full">
           <Button
             variant="ghost"
@@ -68,7 +101,7 @@ const AppContent = () => {
               </AvatarFallback>
             </Avatar>
             <ChevronDown className="w-3 h-3" />
-          </Button>
+            </Button>
         </PopoverTrigger>
         <PopoverContent
           side="bottom"
@@ -85,6 +118,9 @@ const AppContent = () => {
           </Button>
         </PopoverContent>
       </Popover>
+
+      </div>
+      {/* Add search bar here */}
     </div>
   );
 };

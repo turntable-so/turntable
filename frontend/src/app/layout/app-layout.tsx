@@ -7,6 +7,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { useAppContext } from "@/contexts/AppContext";
+import { AssetViewerProvider } from "@/contexts/AssetViewerContext";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -72,7 +73,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 "h-[48px] px-2 pl-4 py-1 border-b"
             )}
         /> */}
-      <TopBar />
+        <AssetViewerProvider>
+          <TopBar />
+        </AssetViewerProvider>
 
       <div className="flex w-full">
         {!pathName.includes("/editor") && <SideBar />}
