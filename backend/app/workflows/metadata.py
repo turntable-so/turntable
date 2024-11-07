@@ -56,30 +56,34 @@ def create_model_descriptions(workspace_id: str, resource_id: str) -> list[str]:
     )
 
     for model in models:
-        model_name = model.name
-        sql = model.sql
-
         columns = (
             Column.objects.filter(
                 asset_id=model.id
             )
         )
 
-        cols = "\n".join([column.name + " " + column.type for column in columns])
-
-        create_model_description.delay(
-            model_name=model_name,
-            schema=cols,
-            compiled_sql=sql,
+        ## IMPORTANT: Performance note - This will be a big bottleneck.
+        ## If we don't run Celery with high concurrency and these requests take
+        ## multiple seconds each, this fanout will cause the tasks in the broker to pile
+        ## up. Running many threads with `--pool gevent` or `--pool eventlet` can help.
+        create_single_model_description.delay(
+            model_id=model.id,
+            model_name=model.name,
+            schema="\n".join([column.name + " " + column.type for column in columns]),
+            compiled_sql=model.sql,
         )
 
 @shared_task
-def create_single_model_description(model_name: str, schema: str, compiled_sql: str) -> None:
-    create_model_description(
+def create_single_model_description(model_id: int, model_name: str, schema: str, compiled_sql: str) -> None:
+    description = create_model_description(
         model_name=model_name,
         schema=schema,
         compiled_sql=compiled_sql,
     )
+
+    model = Asset.objects.get(id=model_id)
+    model.ai_description = description.description
+    model.save()
 
 @shared_task(bind=True)
 def sync_metadata(self, workspace_id: str, resource_id: str):
