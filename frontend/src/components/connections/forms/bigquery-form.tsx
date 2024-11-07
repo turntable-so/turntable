@@ -24,7 +24,7 @@ import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { Schema, z } from "zod";
+import { z } from "zod";
 
 const serviceAccountPlaceholder = `{
   "type": "service_account",
