@@ -55,6 +55,9 @@ const formSchema = z.object({
     message: "Branch name must be at least 2 characters.",
   }),
   readOnly: z.boolean().default(false),
+  schema: z.string().min(2, {
+    message: "Schema name must be at least 1 character.",
+  }),
 });
 
 const NewProjectButton = () => {
@@ -65,6 +68,7 @@ const NewProjectButton = () => {
       branchName: "",
       branchFrom: "",
       readOnly: false,
+      schema: "",
     },
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -94,7 +98,7 @@ const NewProjectButton = () => {
   }, [projectName, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    const result = await createBranch(values.branchName, values.branchFrom);
+    const result = await createBranch(values.branchName, values.branchFrom, values.schema);
     if (result.error) {
       toast.error(result.error);
     } else {
@@ -179,21 +183,17 @@ const NewProjectButton = () => {
               />
               <FormField
                 control={form.control}
-                name="readOnly"
+                name="schema"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-x-2">
+                  <FormItem>
+                    <FormLabel>Schema</FormLabel>
                     <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
+                      <Input {...field} />
                     </FormControl>
-                    <div className="">
-                      <FormLabel>Read Only</FormLabel>
-                      <FormDescription>
-                        Read only projects are synced with remote branches but are not editable in Turntable
-                      </FormDescription>
-                    </div>
+                    <FormDescription>
+                      The development schema to use for this project
+                    </FormDescription>
+                    <FormMessage />
                   </FormItem>
                 )}
               />

@@ -478,11 +478,11 @@ export async function getBranches() {
   return response.json();
 }
 
-export async function createBranch(branchName: string, sourceBranch: string) {
+export async function createBranch(branchName: string, sourceBranch: string, schema: string) {
   const response = await fetcher(`/project/branches/`, {
     cookies,
     method: "POST",
-    body: { branch_name: branchName, source_branch: sourceBranch },
+    body: { branch_name: branchName, source_branch: sourceBranch, schema: schema },
   });
   return response.json()
 }

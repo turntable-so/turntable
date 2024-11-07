@@ -73,7 +73,7 @@ export default function BranchReviewDialog({
   const [commitMessage, setCommitMessage] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { changes, branchId, fetchChanges, commitChanges, pullRequestUrl, branchName, isCloned, discardChanges } = useFiles();
+  const { changes, schema, branchId, fetchChanges, commitChanges, pullRequestUrl, branchName, isCloned, discardChanges } = useFiles();
 
   useEffect(() => {
     if (branchId) {
@@ -121,6 +121,12 @@ export default function BranchReviewDialog({
                   <label className="text-sm font-medium">Branch</label>
                   <div className="text-xs text-muted-foreground">
                     {branchName}
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <label className="text-sm font-medium">Schema</label>
+                  <div className="text-xs text-muted-foreground">
+                    {schema}
                   </div>
                 </div>
                 <div className="mt-4">

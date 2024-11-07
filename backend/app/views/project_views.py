@@ -282,6 +282,11 @@ class ProjectViewSet(viewsets.ViewSet):
                     {"error": "Source branch is required"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+            if not request.data.get("schema"):
+                return Response(
+                    {"error": "Schema is required"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             with transaction.atomic():
                 branch = Branch.objects.create(
@@ -289,6 +294,7 @@ class ProjectViewSet(viewsets.ViewSet):
                     workspace=workspace,
                     repository=dbt_details.repository,
                     branch_name=request.data.get("branch_name"),
+                    schema=request.data.get("schema"),
                 )
                 branch.create_git_branch(
                     source_branch=request.data.get("source_branch"),

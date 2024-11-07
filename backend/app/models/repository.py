@@ -142,7 +142,7 @@ class Branch(models.Model):
     name = models.CharField(max_length=255, null=False)
     branch_name = models.CharField(max_length=255, null=False)
     read_only = models.BooleanField(default=False)
-
+    schema = models.CharField(max_length=255, null=False)
     # relationships
     repository = models.ForeignKey(
         Repository, on_delete=models.CASCADE, related_name="branches"

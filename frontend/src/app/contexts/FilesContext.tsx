@@ -86,6 +86,7 @@ type FilesContextType = {
   branchName: string;
   readOnly: boolean | undefined;
   isCloned: boolean | undefined;
+  schema: string | undefined;
   fetchBranch: (branchId: string) => Promise<void>;
   cloneBranch: (branchId: string) => Promise<void>;
   commitChanges: (commitMessage: string, filePaths: string[]) => Promise<boolean>;
@@ -112,6 +113,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   const [isCloned, setIsCloned] = useState<boolean | undefined>(undefined);
   const [pullRequestUrl, setPullRequestUrl] = useState<string | undefined>(undefined);
   const [files, setFiles] = useState<FileNode[]>([]);
+  const [schema, setSchema] = useState<string | undefined>(undefined);
   const [openedFiles, setOpenedFiles] = useLocalStorage<OpenedFile[]>(
     LocalStorageKeys.fileTabs,
     [
@@ -149,6 +151,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
       setReadOnly(branch.read_only);
       setIsCloned(branch.is_cloned);
       setPullRequestUrl(branch.pull_request_url);
+      setSchema(branch.schema);
     }
   }
 
@@ -422,6 +425,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         pullRequestUrl,
         isCloning,
         discardChanges,
+        schema,
       }}
     >
       {children}
