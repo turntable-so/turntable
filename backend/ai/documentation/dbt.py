@@ -2,6 +2,7 @@ from typing import Any
 
 import instructor
 import numpy  # noqa
+import os
 import orjson
 from litellm import completion
 from mpire import WorkerPool
@@ -28,9 +29,9 @@ Instructions:
 Rules:
 - Respond in a few paragraphs.
 - Use clear language.
-- Explain the purpose of the model and how it can be used in real-world applications. 
-- Highlight the significant patterns and correlations that can be discovered in the data, as well as any key features.  
-- Avoid first-person language like "we" and "us". 
+- Explain the purpose of the model and how it can be used in real-world applications.
+- Highlight the significant patterns and correlations that can be discovered in the data, as well as any key features.
+- Avoid first-person language like "we" and "us".
 - Where applicable, usse analogies or examples to clarify any technical terms or concepts.
 """
 
@@ -40,8 +41,8 @@ Instructions:
 - Given a dbt model's name, schema, underlying sql, and columns to describe, write a clear and concise description for each column.
 
 Rules:
-- Describe the purpose and meaning of each column, including any unique details or logic that would be useful for review. 
-- Ensure that your descriptions are informative and help stakeholders understand the model's data in an straightforward manner.  
+- Describe the purpose and meaning of each column, including any unique details or logic that would be useful for review.
+- Ensure that your descriptions are informative and help stakeholders understand the model's data in an straightforward manner.
 - Use plain language that is accessible to all stakeholders
 - Avoid complex technical jargon
 - Don't start your description with filler works like "This column is used to..." or "This column represents...". Just describe the column directly.
@@ -90,6 +91,35 @@ def get_table_completion(
     )
     return resp.description
 
+class AIDescribedModel(BaseModel):
+    name: str
+    description: str
+
+def create_model_description(
+    model_name: str,
+    schema: str,
+    compiled_sql: str,
+    ai_model_name="gpt-4o",
+) -> AIDescribedModel:
+    client = instructor.from_litellm(completion, temperature=0, api_key=os.getenv("OPENAI_API_KEY"))
+
+    content = f"""
+        model name: {model_name}
+        schema:\n{schema}
+        compiled_sql:\n{compiled_sql}
+    """
+
+    return client.chat.completions.create(
+        model=ai_model_name,
+        messages=[
+            {
+                "role": "system",
+                "content": MODEL_SYSTEM_PROMPT,
+            },
+            {"role": "user", "content": content},
+        ],
+        response_model=AIDescribedModel,
+    )
 
 def get_column_completion(
     dbtproj: DBTProject,
