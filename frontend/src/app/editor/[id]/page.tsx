@@ -1,36 +1,28 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
 import Editor, { DiffEditor } from "@monaco-editor/react";
 import type { AgGridReact } from "ag-grid-react";
 import { Check, Loader2, X } from "lucide-react";
+import type React from "react";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import useResizeObserver from "use-resize-observer";
-import { executeQueryPreview, getBranches, infer } from "../../actions/actions";
-import {
-  FilesProvider,
-  type OpenedFile,
-  useFiles,
-} from "../../contexts/FilesContext";
+import { executeQueryPreview, infer } from "../../actions/actions";
+import { type OpenedFile, useFiles } from "../../contexts/FilesContext";
 import "@/components/ag-grid-custom-theme.css"; // Custom CSS Theme for Data Grid
 import BottomPanel from "@/components/editor/bottom-panel";
-import { CommandPanelProvider } from "@/components/editor/command-panel/command-panel-context";
 import EditorSidebar from "@/components/editor/editor-sidebar";
 import FileTabs from "@/components/editor/file-tabs";
 import { Textarea } from "@/components/ui/textarea";
-import type React from "react";
 import { useLayoutContext } from "../../contexts/LayoutContext";
-import { LineageProvider } from "../../contexts/LineageContext";
 import { usePathname } from "next/navigation";
 import EditorTopBar from "@/components/editor/editor-top-bar";
 
 const PromptBox = ({
   setPromptBoxOpen,
 }: { setPromptBoxOpen: (open: boolean) => void }) => {
-  const { activeFile, setActiveFile, updateFileContent, } = useFiles();
+  const { activeFile, setActiveFile, updateFileContent } = useFiles();
 
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState<"PROMPT" | "CONFIRM">("PROMPT");
@@ -190,7 +182,8 @@ function EditorContent({
   setPromptBoxOpen,
   containerWidth,
 }: { setPromptBoxOpen: (open: boolean) => void; containerWidth: number }) {
-  const { activeFile, updateFileContent, saveFile, setActiveFile, isCloning } = useFiles();
+  const { activeFile, updateFileContent, saveFile, setActiveFile, isCloning } =
+    useFiles();
 
   // Define your custom theme
   const customTheme = {
@@ -378,29 +371,36 @@ function EditorPageContent() {
   const [filesearchQuery, setFilesearchQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [queryPreviewError, setQueryPreviewError] = useState(null);
-  const pathname = usePathname()
-  const { fetchFiles, fetchBranch, branchName, branchId, isCloned, cloneBranch } = useFiles()
+  const pathname = usePathname();
+  const {
+    fetchFiles,
+    fetchBranch,
+    branchName,
+    branchId,
+    isCloned,
+    cloneBranch,
+  } = useFiles();
 
-  console.log({ branchName })
+  console.log({ branchName });
 
   useEffect(() => {
     if (branchId && isCloned) {
-      fetchFiles()
+      fetchFiles();
     }
     if (branchId && !isCloned) {
-      cloneBranch(branchId)
+      cloneBranch(branchId);
     }
-  }, [branchId, isCloned])
+  }, [branchId, isCloned]);
 
   useEffect(() => {
-    if (pathname && pathname.includes('/editor/')) {
-      const id = pathname.split('/').slice(-1)[0]
-      console.log({ id })
+    if (pathname && pathname.includes("/editor/")) {
+      const id = pathname.split("/").slice(-1)[0];
+      console.log({ id });
       if (id && id.length > 0) {
-        fetchBranch(id)
+        fetchBranch(id);
       }
     }
-  }, [pathname])
+  }, [pathname]);
 
   useEffect(() => {
     if (treeRef.current) {
@@ -467,7 +467,6 @@ function EditorPageContent() {
     selectedIndex,
   ]);
 
-
   const runQueryPreview = async () => {
     setIsLoading(true);
     setQueryPreview(null);
@@ -478,12 +477,15 @@ function EditorPageContent() {
       typeof activeFile.content === "string"
     ) {
       const query = activeFile.content;
-      const preview = await executeQueryPreview(query);
-      console.log({ preview })
-      if (preview.error) {
-        setQueryPreviewError(preview.error);
-      } else {
-        setQueryPreview(preview);
+      try {
+        const preview = await executeQueryPreview(query);
+        if (preview.error) {
+          setQueryPreviewError(preview.error);
+        } else {
+          setQueryPreview(preview);
+        }
+      } catch (e) {
+        setQueryPreviewError("Error running query");
       }
     }
     setIsLoading(false);
