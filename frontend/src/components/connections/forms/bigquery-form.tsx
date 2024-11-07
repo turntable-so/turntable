@@ -2,6 +2,12 @@
 import { createResource, updateResource } from "@/app/actions/actions";
 import { LoaderButton } from "@/components/ui/LoadingSpinner";
 import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+} from "@/components/ui/card";
+import {
   Form,
   FormControl,
   FormDescription,
@@ -17,7 +23,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
+import { Schema, z } from "zod";
 
 const serviceAccountPlaceholder = `{
   "type": "service_account",
@@ -109,6 +115,44 @@ export default function BigqueryForm({
 
   const shouldFilterSchema = form.watch("should_filter_schema");
 
+  type NewConnectionCardProps = {
+    title: string;
+    description?: string;
+    children: React.ReactNode;
+  };
+
+  function NewConnectionCard({ title, children }: NewConnectionCardProps) {
+    return (
+      <Card className="rounded-md">
+        <CardHeader>
+          <FormLabel>{title}</FormLabel>
+        </CardHeader>
+        <CardContent>
+          <FormControl>{children}</FormControl>
+        </CardContent>
+        <FormMessage />
+      </Card>
+    );
+  }
+
+  function SchemaFilterCard({
+    title,
+    description,
+    children,
+  }: NewConnectionCardProps) {
+    return (
+      <Card className="rounded-md">
+        <CardHeader>
+          <FormLabel>{title}</FormLabel>
+        </CardHeader>
+        <CardContent className="gap-y-0.5 flex flex-row justify-between">
+          <FormDescription>{description}</FormDescription>
+          <FormControl>{children}</FormControl>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="w-full max-w-2xl">
       <Form {...form}>
@@ -121,28 +165,25 @@ export default function BigqueryForm({
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Connection name</FormLabel>
-                <FormControl>
+                <NewConnectionCard title="Connection name">
                   <Input placeholder="my awesome connection" {...field} />
-                </FormControl>
-                <FormMessage />
+                </NewConnectionCard>
               </FormItem>
             )}
           />
+
           <FormField
             control={form.control}
             name="service_account"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Service account</FormLabel>
-                <FormControl>
+                <NewConnectionCard title="Service account">
                   <Textarea
                     className="h-[250px]"
                     placeholder={serviceAccountPlaceholder}
                     {...field}
                   />
-                </FormControl>
-                <FormMessage />
+                </NewConnectionCard>
               </FormItem>
             )}
           />
@@ -151,21 +192,20 @@ export default function BigqueryForm({
               control={form.control}
               name="should_filter_schema"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                  <div className="space-y-0.5">
-                    <FormLabel>Filter schemas (advanced)</FormLabel>
-                    <FormDescription>
-                      {shouldFilterSchema
+                <FormItem>
+                  <SchemaFilterCard
+                    title="Filter schemas (advanced)"
+                    description={
+                      shouldFilterSchema
                         ? "Include only the following schemas:"
-                        : "Including all schemas"}
-                    </FormDescription>
-                  </div>
-                  <FormControl>
+                        : "Including all schemas"
+                    }
+                  >
                     <Switch
                       checked={field.value}
                       onCheckedChange={field.onChange}
                     />
-                  </FormControl>
+                  </SchemaFilterCard>
                 </FormItem>
               )}
             />
@@ -174,24 +214,20 @@ export default function BigqueryForm({
                 control={form.control}
                 name="include_schemas"
                 render={({ field }) => (
-                  <FormItem className="bg-muted p-4">
-                    <div className="text-xs text-muted-foreground font-medium">
-                      Add a line for each schema
-                    </div>
-                    <FormControl>
+                  <FormItem>
+                    <NewConnectionCard title="Add a line for each schema">
                       <Textarea
                         className="h-[150px]"
                         placeholder={"Eg.\nschema1\nschema2"}
                         {...field}
                       />
-                    </FormControl>
-                    <FormMessage />
+                    </NewConnectionCard>
                   </FormItem>
                 )}
               />
             )}
           </div>
-          <div className="flex justify-end">
+          <div className="flex justify-end pb-4">
             {tested &&
               (connectionCheck ? (
                 <div className="text-green-500 mt-2 mr-2">
