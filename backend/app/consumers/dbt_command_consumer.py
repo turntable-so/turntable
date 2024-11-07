@@ -37,6 +37,8 @@ class DBTCommandConsumer(WebsocketConsumer):
         action = data.get("action")
 
         if action == "start":
+            if self.started:
+                return
             self.started = True
             my_thread = threading.Thread(target=lambda: self.run_workflow(data))
             my_thread.start()
