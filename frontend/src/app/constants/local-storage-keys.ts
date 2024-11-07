@@ -6,7 +6,7 @@ const truncateBranchId = (branchId: string): string => {
 };
 
 const createLocalStorageKey = (branchId: string, suffix: string): string => {
-  return `${TURNTABLE_LOCAL_STORAGE_PREFIX}-${truncateBranchId(branchId)}-${suffix}`;
+  return `${TURNTABLE_LOCAL_STORAGE_PREFIX}${truncateBranchId(branchId)}-${suffix}`;
 };
 
 export const LocalStorageKeys = {
