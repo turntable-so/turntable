@@ -42,10 +42,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     collapseSidebar(
       pathName.includes("/notebooks/") ||
-        pathName.includes("/lineage") ||
-        pathName.includes("/sources/") ||
-        pathName.includes("/assets") ||
-        pathName.includes("/editor"),
+      pathName.includes("/lineage") ||
+      pathName.includes("/sources/") ||
+      pathName.includes("/assets") ||
+      pathName.includes("/editor"),
     );
   }, [pathName, collapseSidebar]);
 

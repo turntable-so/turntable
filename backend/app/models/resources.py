@@ -15,7 +15,7 @@ from django.db import models
 from django_celery_results.models import TaskResult
 from polymorphic.models import PolymorphicModel
 
-from app.models.git_connections import Repository
+from app.models.repository import Repository
 from app.models.workspace import Workspace
 from app.utils.fields import encrypt
 from vinyl.lib.connect import (

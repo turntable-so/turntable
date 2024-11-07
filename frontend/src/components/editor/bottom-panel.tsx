@@ -27,6 +27,7 @@ import { LineageView } from "../lineage/LineageView";
 import { Button } from "../ui/button";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import CommandPanel from "./command-panel";
+import { useParams } from "next/navigation";
 
 const SkeletonLoadingTable = () => {
   return (
@@ -89,15 +90,15 @@ export default function BottomPanel({
   const [activeTab, setActiveTab] = useBottomPanelTabs();
 
   const { fetchFileBasedLineage, lineageData } = useLineage();
-  const { activeFile } = useFiles();
+  const { activeFile, branchId } = useFiles();
 
   useEffect(() => {
-    if (activeFile && activeFile.node.path.endsWith(".sql")) {
+    if (branchId && activeFile && activeFile.node.path.endsWith(".sql")) {
       if (!lineageData[activeFile.node.path]) {
-        fetchFileBasedLineage(activeFile.node.path);
+        fetchFileBasedLineage(activeFile.node.path, branchId);
       }
     }
-  }, [activeFile, activeTab, fetchFileBasedLineage]);
+  }, [activeFile, activeTab, fetchFileBasedLineage, branchId]);
 
   const { ref: bottomPanelRef, height: bottomPanelHeight } =
     useResizeObserver();

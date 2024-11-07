@@ -1,4 +1,5 @@
 from django.contrib.auth.models import Group, User
+from app.models import Branch
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from invitations.utils import get_invitation_model
 from rest_framework import serializers
@@ -387,7 +388,9 @@ class DBTCoreDetailsSerializer(ResourceDetailsSerializer):
         instance.repository.main_branch_name = repository_data.get("main_branch_name")
         instance.repository.save()
 
-        instance.project_path = validated_data.get("project_path", instance.project_path)
+        instance.project_path = validated_data.get(
+            "project_path", instance.project_path
+        )
         instance.threads = validated_data.get("threads")
         instance.version = validated_data.get("version")
         instance.database = validated_data.get("database")
@@ -428,3 +431,26 @@ class ResourceSerializer(serializers.HyperlinkedModelSerializer):
 
     def get_has_dbt(self, obj):
         return obj.has_dbt
+
+
+class BranchSerializer(serializers.ModelSerializer):
+
+    is_cloned = serializers.SerializerMethodField()
+    pull_request_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Branch
+        fields = [
+            "id",
+            "name",
+            "branch_name",
+            "read_only",
+            "is_cloned",
+            "pull_request_url",
+        ]
+
+    def get_is_cloned(self, obj):
+        return obj.is_cloned
+
+    def get_pull_request_url(self, obj):
+        return obj.pull_request_url

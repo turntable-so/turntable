@@ -120,14 +120,6 @@ export default function ActionBar({
   }, []);
 
   useEffect(() => {
-    const fetchAndSetNotebooks = async () => {
-      const data = await getNotebooks();
-      setNotebooks(data);
-    };
-    fetchAndSetNotebooks();
-  }, []);
-
-  useEffect(() => {
     if (searchRef.current) {
       searchRef.current.focus();
     }
@@ -211,12 +203,12 @@ export default function ActionBar({
         .map((name) =>
           nameGrouped[name].length > 1
             ? createChildNode(
-                resource,
-                assetType,
-                nameGrouped[name],
-                getAssetIcon,
-                name,
-              )
+              resource,
+              assetType,
+              nameGrouped[name],
+              getAssetIcon,
+              name,
+            )
             : createFinalNode(nameGrouped[name][0], getLeafIcon(assetType)),
         ),
     });
@@ -294,9 +286,8 @@ export default function ActionBar({
         </div>
       </div>
       <div
-        className={`flex-grow border-t mt-0 h-500 ${
-          isFilterPopoverOpen ? "z-[-1]" : ""
-        }`}
+        className={`flex-grow border-t mt-0 h-500 ${isFilterPopoverOpen ? "z-[-1]" : ""
+          }`}
       >
         <Tabs defaultValue="assets" className="h-full">
           <TabsList
@@ -304,10 +295,10 @@ export default function ActionBar({
             style={
               !isNotebook
                 ? {
-                    opacity: 0,
-                    pointerEvents: "none",
-                    height: 0,
-                  }
+                  opacity: 0,
+                  pointerEvents: "none",
+                  height: 0,
+                }
                 : {}
             }
           >
@@ -316,9 +307,9 @@ export default function ActionBar({
               style={
                 !isNotebook
                   ? {
-                      opacity: 0,
-                      pointerEvents: "none",
-                    }
+                    opacity: 0,
+                    pointerEvents: "none",
+                  }
                   : {}
               }
             >
@@ -412,24 +403,21 @@ export default function ActionBar({
                   <Button
                     variant={"ghost"}
                     size="icon"
-                    className={`w-full ${
-                      isCurrentNotebook(pathName, notebook.id)
-                        ? "opacity-100"
-                        : "opacity-50"
-                    } ${
-                      isCurrentNotebook(pathName, notebook.id)
+                    className={`w-full ${isCurrentNotebook(pathName, notebook.id)
+                      ? "opacity-100"
+                      : "opacity-50"
+                      } ${isCurrentNotebook(pathName, notebook.id)
                         ? "bg-"
                         : "bg-transparent"
-                    } `}
+                      } `}
                     aria-label={notebook.title}
                   >
                     <Link href={`/notebooks/${notebook.id}`} className="w-full">
                       <div
-                        className={`${
-                          isCurrentNotebook(pathName, notebook.id)
-                            ? "bg-[#ebebeb]"
-                            : "hover:bg-[#ebebeb]"
-                        } px-4 p-2 w-full flex  space-x-2`}
+                        className={`${isCurrentNotebook(pathName, notebook.id)
+                          ? "bg-[#ebebeb]"
+                          : "hover:bg-[#ebebeb]"
+                          } px-4 p-2 w-full flex  space-x-2`}
                       >
                         <p className="font-normal text-[15px]">
                           {notebook.title}

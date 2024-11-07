@@ -1,6 +1,6 @@
 from celery import shared_task
 
-from app.models.editor import DBTQuery, Query
+from app.models.query import DBTQuery, Query
 from vinyl.lib.utils.query import _QUERY_LIMIT
 
 

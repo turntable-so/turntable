@@ -1,13 +1,16 @@
 import os
 import shutil
+import tempfile
+from unittest.mock import patch
 
+from app.utils.test_utils import require_env_vars
 import pytest
 from django.conf import settings
 
 from app.models import Workspace
-from app.models.git_connections import Branch, SSHKey
+from app.models.repository import Branch
+from app.models.ssh_key import SSHKey
 from app.models.workspace import generate_short_uuid
-from app.utils.test_utils import require_env_vars
 
 TEST_WORKSPACE_ID = generate_short_uuid()
 
@@ -19,7 +22,7 @@ isolate_mark = pytest.mark.parametrize(
 
 @pytest.mark.django_db
 @require_env_vars("SSHKEY_0_PUBLIC", "SSHKEY_0_PRIVATE")
-class TestGitConnections:
+class TestRepository:
     @pytest.fixture(scope="session", autouse=True)
     def run_command_after_tests(request):
         yield
@@ -41,12 +44,12 @@ class TestGitConnections:
             branch_name="test-branch",
         )
 
-    def test_repo_connection(
-        self,
-        local_postgres_repo,
-    ):
-        res = local_postgres_repo.test_repo_connection()
+    def test_repo_connection(self, local_postgres_repo):
+        res = local_postgres_repo.test_remote_repo_connection()
         assert res["success"]
+
+    def test_clone(self, local_postgres_repo):
+        assert local_postgres_repo.main_branch.clone()
 
     @isolate_mark
     def test_repo_context(self, local_postgres_repo, isolate):
@@ -66,70 +69,34 @@ class TestGitConnections:
             assert filepath != None
 
     @isolate_mark
-    def test_clone_repo_if_not_exists(self, local_postgres_repo, isolate):
-        with local_postgres_repo.main_branch.repo_context(isolate=isolate) as (repo, _):
-            assert repo.active_branch.name == local_postgres_repo.main_branch_name
-
-    @isolate_mark
-    def test_get_repo_if_already_exists(self, local_postgres_repo, isolate):
-        with local_postgres_repo.main_branch.repo_context(isolate=isolate) as (repo, _):
-            assert repo is not None
-
-            with local_postgres_repo.main_branch.repo_context(
-                isolate=isolate, repo_override=repo
-            ) as (repo2, _):
-                assert repo2 is not None
-
-    @isolate_mark
-    def test_get_working_tree(self, local_postgres_repo, isolate):
-        with local_postgres_repo.main_branch.repo_context(isolate=isolate) as (repo, _):
-            assert repo.working_tree_dir is not None
-
-    @isolate_mark
-    def test_switch_branch(self, local_postgres_test_branch, isolate):
+    def test_checkout(self, local_postgres_test_branch, isolate):
         with local_postgres_test_branch.repo_context(isolate=isolate) as (
             repo,
             env,
         ):
             assert (
-                local_postgres_test_branch.switch_to_git_branch(isolate, repo, env)
+                local_postgres_test_branch.checkout(isolate, repo, env)
                 == local_postgres_test_branch.branch_name
             )
 
-    @isolate_mark
-    def test_create_branch(self, local_postgres_repo, isolate):
+    def test_create_branch(self, local_postgres_repo):
         branch_name = "test_branch" + "".join([hex(x)[2:] for x in os.urandom(32)])
         branch = Branch.objects.create(
             workspace=local_postgres_repo.workspace,
             repository=local_postgres_repo,
             branch_name=branch_name,
         )
-        try:
-            assert branch.create_git_branch(isolate=isolate) == branch_name
-        finally:
-            branch.delete_files()
-
-    @isolate_mark
-    def test_pull(self, local_postgres_test_branch, isolate):
-        assert local_postgres_test_branch.git_pull(isolate=isolate)
-
-    @isolate_mark
-    def test_commit_and_push(self, local_postgres_test_branch, isolate):
-        with local_postgres_test_branch.repo_context(isolate=isolate) as (repo, env):
-            assert (
-                local_postgres_test_branch.switch_to_git_branch(isolate, repo, env)
-                == local_postgres_test_branch.branch_name
+        assert (
+            branch.create_git_branch(
+                source_branch=local_postgres_repo.main_branch.branch_name
             )
-            path = os.path.join(repo.working_tree_dir, "README.md")
-            with open(path, "a") as f:
-                f.write("\n" + "".join([hex(x)[2:] for x in os.urandom(32)]))
-            assert repo.is_dirty(untracked_files=True)
+            == branch_name
+        )
+        branch.clone()
+        assert branch.checkout() == branch_name
 
-            assert local_postgres_test_branch.git_commit_and_push(
-                "Add random hex string to README.md", isolate, repo, env
-            )
-
-            assert not repo.is_dirty(untracked_files=True)
+    def test_pull(self, local_postgres_test_branch):
+        assert local_postgres_test_branch.git_pull()
 
     def test_generate_deploy_key(self):
         workspace = Workspace.objects.create(

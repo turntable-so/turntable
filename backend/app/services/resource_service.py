@@ -1,5 +1,5 @@
 from django.db import transaction
-from app.models.git_connections import Repository
+from app.models.repository import Repository
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 

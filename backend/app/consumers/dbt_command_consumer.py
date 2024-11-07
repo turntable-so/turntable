@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 DBT_COMMAND_STREAM_TIMEOUT = 120
 DBT_COMMAND_STREAM_POLL_INTERVAL = 0.01
 
+
 class DBTCommandConsumer(WebsocketConsumer):
     def connect(self):
         logger.info(f"WebSocket connected for user: {self.scope['user']}")
@@ -43,7 +44,7 @@ class DBTCommandConsumer(WebsocketConsumer):
             self.send(text_data="WORKFLOW_STARTED")
             my_thread = threading.Thread(target=lambda: self.run_workflow(data))
             my_thread.start()
-            
+
         elif action == "cancel":
             self.send(text_data="WORKFLOW_CANCEL_REQUESTED")
             if self.started:
@@ -55,7 +56,7 @@ class DBTCommandConsumer(WebsocketConsumer):
             )
 
     def run_workflow(self, data):
-        from app.models.git_connections import Branch
+        from app.models.repository import Branch
 
         try:
             command = data.get("command")
@@ -84,7 +85,9 @@ class DBTCommandConsumer(WebsocketConsumer):
                 project_dir,
                 _,
             ):
-                for output_chunk in transition.after.stream_dbt_command(command, should_terminate=self.terminate_event.is_set):
+                for output_chunk in transition.after.stream_dbt_command(
+                    command, should_terminate=self.terminate_event.is_set
+                ):
                     self.send(text_data=output_chunk)
 
             # assume success if we've reached the end of the event stream

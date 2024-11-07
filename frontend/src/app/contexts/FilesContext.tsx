@@ -10,10 +10,14 @@ import {
 import { useLocalStorage } from "usehooks-ts";
 import {
   type ProjectChanges,
+  cloneBranchAndMount,
+  commit,
   createFile,
   deleteFile,
   fetchFileContents,
+  getBranch,
   getFileIndex,
+  discardBranchChanges,
   getProjectChanges,
   persistFile,
 } from "../actions/actions";
@@ -75,8 +79,19 @@ type FilesContextType = {
   deleteFileAndRefresh: (path: string) => void;
   createNewFileTab: () => void;
   changes: ProjectChanges | null;
-  fetchChanges: () => void;
+  fetchChanges: (branchId: string) => void;
   recentFiles: FileNode[]; // New state added here
+  fetchFiles: () => void;
+  branchId: string;
+  branchName: string;
+  readOnly: boolean | undefined;
+  isCloned: boolean | undefined;
+  fetchBranch: (branchId: string) => Promise<void>;
+  cloneBranch: (branchId: string) => Promise<void>;
+  commitChanges: (commitMessage: string, filePaths: string[]) => Promise<boolean>;
+  pullRequestUrl: string | undefined;
+  isCloning: boolean;
+  discardChanges: (branchId: string) => Promise<void>;
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
@@ -91,6 +106,11 @@ type Changes = Array<{
 export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
+  const [branchId, setBranchId] = useState("");
+  const [branchName, setBranchName] = useState("");
+  const [readOnly, setReadOnly] = useState<boolean | undefined>(undefined);
+  const [isCloned, setIsCloned] = useState<boolean | undefined>(undefined);
+  const [pullRequestUrl, setPullRequestUrl] = useState<string | undefined>(undefined);
   const [files, setFiles] = useState<FileNode[]>([]);
   const [openedFiles, setOpenedFiles] = useLocalStorage<OpenedFile[]>(
     LocalStorageKeys.fileTabs,
@@ -119,9 +139,37 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     LocalStorageKeys.recentFiles,
     [],
   );
+  const [isCloning, setIsCloning] = useState(false);
 
-  const fetchChanges = async () => {
-    const result = await getProjectChanges();
+  const fetchBranch = async (id: string) => {
+    if (id) {
+      const branch = await getBranch(id);
+      setBranchId(branch.id);
+      setBranchName(branch.name);
+      setReadOnly(branch.read_only);
+      setIsCloned(branch.is_cloned);
+      setPullRequestUrl(branch.pull_request_url);
+    }
+  }
+
+  const discardChanges = async (branchId: string) => {
+    await discardBranchChanges(branchId);
+    fetchChanges(branchId);
+    fetchFiles();
+  }
+
+
+
+
+  const cloneBranch = async (branchId: string) => {
+    setIsCloning(true)
+    const branch = await cloneBranchAndMount(branchId);
+    setIsCloning(false)
+    setIsCloned(true);
+  }
+
+  const fetchChanges = async (branchId: string) => {
+    const result = await getProjectChanges(branchId);
     const flattenedChanges = result.untracked
       .map((change) => ({
         ...change,
@@ -143,7 +191,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const fetchFiles = async () => {
-    const { file_index } = await getFileIndex();
+    const { file_index } = await getFileIndex(branchId);
     const fileIndex = file_index.map((file: FileNode) => ({ ...file }));
     setFiles(fileIndex);
     const flattenFileIndex = (files: FileNode[]): FileNode[] => {
@@ -171,7 +219,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
       if (node.type === "file") {
         const existingFile = openedFiles.find((f) => f.node.path === node.path);
         if (!existingFile) {
-          const { contents } = await fetchFileContents(node.path);
+          const { contents } = await fetchFileContents(branchId, node.path);
           const newFile: OpenedFile = {
             node,
             content: contents,
@@ -198,7 +246,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         });
       }
     },
-    [openedFiles],
+    [openedFiles, branchId],
   );
 
   const openUrl = useCallback(
@@ -257,7 +305,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   );
 
   const createFileAndRefresh = async (path: string, fileContents: string) => {
-    await createFile(path, fileContents);
+    await createFile(branchId, path, fileContents);
     await fetchFiles();
   };
 
@@ -306,7 +354,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
 
   const saveFile = async (filepath: string, content: string) => {
     if (activeFile) {
-      await persistFile(filepath, content);
+      await persistFile(branchId, filepath, content);
       setOpenedFiles((prev) =>
         prev.map((f) =>
           f.node.path === filepath ? { ...f, isDirty: false, content } : f,
@@ -316,7 +364,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const deleteFileAndRefresh = async (filepath: string) => {
-    await deleteFile(filepath);
+    await deleteFile(branchId, filepath);
     await fetchFiles();
   };
 
@@ -334,6 +382,13 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     setOpenedFiles((prev) => [...prev, newTab]);
     setActiveFile(newTab);
   };
+
+  const commitChanges = async (commitMessage: string, filePaths: string[]) => {
+
+    const result = await commit(branchId, commitMessage, filePaths);
+    fetchChanges(branchId);
+    return result
+  }
 
   return (
     <FilesContext.Provider
@@ -355,7 +410,18 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         createNewFileTab,
         changes,
         fetchChanges,
+        fetchFiles,
         recentFiles,
+        branchId,
+        branchName,
+        readOnly,
+        isCloned,
+        fetchBranch,
+        cloneBranch,
+        commitChanges,
+        pullRequestUrl,
+        isCloning,
+        discardChanges,
       }}
     >
       {children}
