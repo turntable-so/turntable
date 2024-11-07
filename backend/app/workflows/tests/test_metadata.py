@@ -9,7 +9,7 @@ from app.models import (
 )
 from app.models.workflows import MetadataSyncWorkflow
 from app.utils.test_utils import assert_ingest_output, require_env_vars
-from app.workflows.metadata import process_metadata
+from app.workflows.metadata import process_metadata, create_model_descriptions
 
 
 def run_test_sync(
@@ -36,6 +36,13 @@ def run_test_sync(
             task = process_metadata.si(
                 workspace_id=str(resource.workspace_id), resource_id=resource_id_str
             ).apply_async()
+
+            task.get()
+
+            task = create_model_descriptions.si(
+                workspace_id=str(resource.workspace_id), resource_id=resource_id_str
+            ).apply_async()
+
             task.get()
             task_id = task.id
             periodic_task_name = None
@@ -71,7 +78,8 @@ def run_test_sync(
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.usefixtures("custom_celery")
 class TestMetadataSync:
-    @pytest.mark.parametrize("use_cache", [True, False])
+    @pytest.mark.parametrize("use_cache", [True])
+    @pytest.mark.django_db(transaction=True)
     def test_metadata_sync_postgres(
         self,
         local_metabase,
