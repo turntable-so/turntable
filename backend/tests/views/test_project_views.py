@@ -44,6 +44,7 @@ class TestProjectViews:
             {
                 "branch_name": "test" + random_hex,
                 "source_branch": "main",
+                "schema": "test",
             },
         )
         assert response.status_code == 201
