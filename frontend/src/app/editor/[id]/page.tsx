@@ -381,8 +381,6 @@ function EditorPageContent() {
     cloneBranch,
   } = useFiles();
 
-  console.log({ branchName });
-
   useEffect(() => {
     if (branchId && isCloned) {
       fetchFiles();
@@ -395,7 +393,6 @@ function EditorPageContent() {
   useEffect(() => {
     if (pathname && pathname.includes("/editor/")) {
       const id = pathname.split("/").slice(-1)[0];
-      console.log({ id });
       if (id && id.length > 0) {
         fetchBranch(id);
       }

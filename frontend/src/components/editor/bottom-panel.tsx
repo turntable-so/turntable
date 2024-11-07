@@ -18,8 +18,7 @@ import {
   Table as TableIcon,
   Terminal as TerminalIcon,
 } from "lucide-react";
-import { useEffect } from "react";
-import { Fragment } from "react";
+import { Fragment, useEffect } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { Panel, PanelResizeHandle } from "react-resizable-panels";
 import useResizeObserver from "use-resize-observer";
@@ -27,7 +26,6 @@ import { LineageView } from "../lineage/LineageView";
 import { Button } from "../ui/button";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import CommandPanel from "./command-panel";
-import { useParams } from "next/navigation";
 
 const SkeletonLoadingTable = () => {
   return (
@@ -99,7 +97,7 @@ export default function BottomPanel({
         fetchFileBasedLineage(activeFile.node.path, branchId);
       }
     }
-  }, [activeFile, activeTab, fetchFileBasedLineage, branchId]);
+  }, [activeFile, branchId]);
 
   const { ref: bottomPanelRef, height: bottomPanelHeight } =
     useResizeObserver();
@@ -154,7 +152,9 @@ export default function BottomPanel({
           {activeTab === "lineage" && (
             <Button
               size="sm"
-              onClick={() => fetchFileBasedLineage(activeFile?.node.path || "")}
+              onClick={() =>
+                fetchFileBasedLineage(activeFile?.node.path || "", branchId)
+              }
               disabled={lineageData[activeFile?.node.path || ""]?.isLoading}
               variant="outline"
             >
