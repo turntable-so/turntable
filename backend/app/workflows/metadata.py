@@ -55,11 +55,7 @@ def create_model_descriptions(workspace_id: str, resource_id: str) -> list[str]:
         )
     )
 
-    import os
-    os.getenv("OPENAI_API_KEY")
-
     for model in models:
-        print()
         model_name = model.name
         sql = model.sql
 
@@ -69,16 +65,21 @@ def create_model_descriptions(workspace_id: str, resource_id: str) -> list[str]:
             )
         )
 
-        cols = [column.name + " " + column.type for column in columns]
+        cols = "\n".join([column.name + " " + column.type for column in columns])
 
-        description = create_model_description(
+        create_model_description.delay(
             model_name=model_name,
             schema=cols,
             compiled_sql=sql,
         )
 
-        print(description)
-
+@shared_task
+def create_single_model_description(model_name: str, schema: str, compiled_sql: str) -> None:
+    create_model_description(
+        model_name=model_name,
+        schema=schema,
+        compiled_sql=compiled_sql,
+    )
 
 @shared_task(bind=True)
 def sync_metadata(self, workspace_id: str, resource_id: str):
