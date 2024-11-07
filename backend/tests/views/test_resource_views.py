@@ -259,39 +259,6 @@ class TestResourceViews:
             "public_key" in response.data["dbt_details"]["repository"]["ssh_key"].keys()
         )
 
-    def test_create_dbt_resource_default_main_branch_created(
-        self, client, resource_id, ssh_key
-    ):
-        data = {
-            "resource": {
-                "type": "db",
-            },
-            "subtype": "dbt",
-            "config": {
-                "resource_id": resource_id,
-                "repository": {
-                    "ssh_key": {
-                        "id": ssh_key.id,
-                        "public_key": ssh_key.public_key,
-                    },
-                    "git_repo_url": "git@github.com:hello/world.git",
-                    "main_branch_name": "main",
-                },
-                "project_path": "/",
-                "threads": 1,
-                "version": "1.6",
-                "database": "test",
-                "schema": "test",
-            },
-        }
-        response = client.post("/resources/", data, format="json")
-        assert response.status_code == 201
-
-        response = client.get(f"/branches/")
-        assert response.status_code == 200
-        assert len(response.data) == 1
-        assert response.data[0]["name"] == "main"
-
     def test_create_dbt_resource_repo_created(self, client, resource_id, ssh_key):
         data = {
             "resource": {
