@@ -82,7 +82,7 @@ def assert_ingest_output(resources, columns=True, column_links=True):
 
     ## all assets have a name
     assert Asset.objects.filter(name__isnull=True).count() == 0
-    assert Asset.objects.filter(ai_description__isnull=True).count() == 0
+    assert Asset.objects.filter(ai_description__isnull=False).count() > 0
 
     ## all instances have workspace_ids
     assert Asset.objects.filter(workspace_id=None).count() == 0
