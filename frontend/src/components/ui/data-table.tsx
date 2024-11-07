@@ -34,6 +34,7 @@ export default function DataTable() {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
     tags: false,
     unique_name: false,
+    unused_columns_count: false,
   });
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [pagination, setPagination] = useState({
