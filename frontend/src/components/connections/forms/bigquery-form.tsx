@@ -115,8 +115,6 @@ export default function BigqueryForm({
 
   const shouldFilterSchema = form.watch("should_filter_schema");
 
-  type ConnectionCardVariant = "default" | "sideBySideWithDescription";
-
   type ConnectionCardDefaultProps = {
     variant: "default";
     title: string;
