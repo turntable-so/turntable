@@ -38,7 +38,6 @@ class DBTCommandConsumer(WebsocketConsumer):
 
         if action == "start":
             if self.started:
-                self.send(text_data="TASK_ALREADY_RUNNING")
                 return
             self.started = True
             self.send(text_data="WORKFLOW_STARTED")
