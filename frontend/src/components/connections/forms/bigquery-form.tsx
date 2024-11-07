@@ -157,8 +157,8 @@ export default function BigqueryForm({
             )}
             <FormControl>{children}</FormControl>
           </CardContent>
-          <FormMessage />
         </Card>
+        <FormMessage />
       </FormItem>
     );
   }
