@@ -1,43 +1,13 @@
-import { useLayoutContext } from "@/app/contexts/LayoutContext";
+import {useLayoutContext} from "@/app/contexts/LayoutContext";
 import useSession from "@/app/hooks/use-session";
-import SearchBar from "@/components/editor/search-bar/search-bar";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
-import {
-  ChevronDown,
-  FolderGit2,
-  HomeIcon,
-  LogOut,
-  PanelBottom,
-  PanelBottomClose,
-  PanelLeft,
-  PanelLeftClose,
-  PanelRight,
-  PanelRightClose,
-  Settings,
-  Users,
-} from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
-import { Button } from "../ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "../ui/tooltip";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
+import {cn} from "@/lib/utils";
+import {ChevronDown, LogOut,} from "lucide-react";
+import {usePathname} from "next/navigation";
+import {Button} from "../ui/button";
+import {Popover, PopoverContent, PopoverTrigger} from "../ui/popover";
+import {TooltipProvider,} from "../ui/tooltip";
 import WorkspaceSwitcher from "../workspace-switcher";
-import BranchReviewDialog from "./branch-review-dialog";
-import { LocalStorageKeys } from "@/app/constants/local-storage-keys";
-
-const clearEditorCache = () => {
-  localStorage.removeItem(LocalStorageKeys.activeFile);
-  localStorage.removeItem(LocalStorageKeys.fileTabs);
-  localStorage.removeItem(LocalStorageKeys.recentFiles);
-  localStorage.removeItem(LocalStorageKeys.commandHistory);
-  localStorage.removeItem(LocalStorageKeys.bottomPanelTab);
-};
 
 const AppContent = () => {
   const { appSidebarCollapsed } = useLayoutContext();

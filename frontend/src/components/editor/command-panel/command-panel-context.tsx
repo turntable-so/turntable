@@ -1,28 +1,22 @@
-import { LocalStorageKeys } from "@/app/constants/local-storage-keys";
-import { useWebSocket } from "@/app/hooks/use-websocket";
+import {LocalStorageKeys} from "@/app/constants/local-storage-keys";
+import {useWebSocket} from "@/app/hooks/use-websocket";
 import getUrl from "@/app/url";
+import {addRecentCommand, getCommandOptions,} from "@/components/editor/command-panel/command-panel-options";
+import {useBottomPanelTabs} from "@/components/editor/use-bottom-panel-tabs";
+import {AuthActions} from "@/lib/auth";
 import {
-  addRecentCommand,
-  getCommandOptions,
-} from "@/components/editor/command-panel/command-panel-options";
-import { useBottomPanelTabs } from "@/components/editor/use-bottom-panel-tabs";
-import { AuthActions } from "@/lib/auth";
-import {
+  createContext,
   type Dispatch,
   type FC,
   type ReactNode,
   type SetStateAction,
-  createContext,
   useContext,
   useRef,
   useState,
 } from "react";
-import { useLocalStorage } from "usehooks-ts";
-import type {
-  Command,
-  CommandPanelState,
-  CommandStatus,
-} from "./command-panel-types";
+import {useLocalStorage} from "usehooks-ts";
+import type {Command, CommandPanelState, CommandStatus,} from "./command-panel-types";
+import {useFiles} from "@/app/contexts/FilesContext";
 
 interface CommandPanelContextType {
   commandPanelState: CommandPanelState;
@@ -81,16 +75,18 @@ interface CommandPanelProviderProps {
 export const CommandPanelProvider: FC<CommandPanelProviderProps> = ({
   children,
 }) => {
+  const { branchId } = useFiles();
+
   const [inputValue, setInputValue] = useState<string>("");
   const [commandOptions, setCommandOptions] = useState<string[]>([]);
   const [commandPanelState, setCommandPanelState] =
     useState<CommandPanelState>("idling");
   const [selectedCommandIndex, setSelectedCommandIndex] = useState<number>(0);
   const [commandHistory, setCommandHistory] = useLocalStorage<Command[]>(
-    LocalStorageKeys.commandHistory,
+    LocalStorageKeys.commandHistory(branchId || ""),
     [],
   );
-  const [_, setActiveTab] = useBottomPanelTabs();
+  const [_, setActiveTab] = useBottomPanelTabs({ branchId: branchId || "" });
   const MAX_COMMAND_HISTORY_SIZE = 20;
 
   const addCommandToHistory = (newCommand: Command) => {

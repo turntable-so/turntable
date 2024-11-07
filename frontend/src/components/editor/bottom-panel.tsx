@@ -87,10 +87,11 @@ export default function BottomPanel({
   isLoading: boolean;
   queryPreviewError: string | null;
 }) {
-  const [activeTab, setActiveTab] = useBottomPanelTabs();
-
   const { fetchFileBasedLineage, lineageData } = useLineage();
   const { activeFile, branchId } = useFiles();
+  const [activeTab, setActiveTab] = useBottomPanelTabs({
+    branchId: branchId || "",
+  });
 
   useEffect(() => {
     if (branchId && activeFile && activeFile.node.path.endsWith(".sql")) {
