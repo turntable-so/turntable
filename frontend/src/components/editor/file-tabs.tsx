@@ -1,8 +1,8 @@
-import { type OpenedFile, useFiles } from "@/app/contexts/FilesContext";
-import { Plus, X } from "lucide-react";
-import type { RefObject } from "react";
-import { Button } from "../ui/button";
-import { ScrollArea, ScrollBar } from "../ui/scroll-area";
+import {type OpenedFile, useFiles} from "@/app/contexts/FilesContext";
+import {Plus, X} from "lucide-react";
+import type {RefObject} from "react";
+import {Button} from "../ui/button";
+import {ScrollArea, ScrollBar} from "../ui/scroll-area";
 
 export default function FileTabs({
   topBarRef,
@@ -27,8 +27,8 @@ export default function FileTabs({
           maxWidth: topBarWidth ? topBarWidth - 50 : "100%",
         }}
       >
-        <ScrollArea className="w-full flex whitespace-nowrap overflow-x-scroll">
-          <div className="w-max flex overflow-x-scroll h-9">
+        <ScrollArea>
+          <div className="flex h-9">
             {openedFiles.map((file: OpenedFile, index: number) => (
               <div
                 key={file.node.path}
@@ -55,7 +55,7 @@ export default function FileTabs({
               </div>
             ))}
           </div>
-          <ScrollBar className="h-2" orientation="horizontal" />
+          <ScrollBar className="h-[0.45rem]" orientation="horizontal" />
         </ScrollArea>
       </div>
       <div>
