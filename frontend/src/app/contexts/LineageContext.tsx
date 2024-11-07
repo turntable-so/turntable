@@ -9,7 +9,7 @@ type LineageContextType = {
       error: string | null;
     };
   };
-  fetchFileBasedLineage: (filePath: string) => Promise<void>;
+  fetchFileBasedLineage: (filePath: string, branchId: string) => Promise<void>;
 };
 
 export const LineageContext = createContext<LineageContextType | undefined>(
@@ -21,7 +21,10 @@ export const LineageProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   const [lineageData, setLineageData] = useState({});
 
-  const fetchFileBasedLineage = async (filePath: string) => {
+  const fetchFileBasedLineage = async (
+    filePath: string,
+    branchId: string,
+  ) => {
     setLineageData({
       ...lineageData,
       [filePath]: {
@@ -34,6 +37,7 @@ export const LineageProvider: React.FC<{ children: ReactNode }> = ({
       filePath,
       successor_depth: 1,
       predecessor_depth: 1,
+      branchId,
     });
     if (result.error) {
       setLineageData({
