@@ -37,16 +37,11 @@ class DBTCommandConsumer(WebsocketConsumer):
         action = data.get("action")
 
         if action == "start":
-            if self.started:
-                self.send(text_data="TASK_ALREADY_RUNNING")
-                return
             self.started = True
-            self.send(text_data="WORKFLOW_STARTED")
             my_thread = threading.Thread(target=lambda: self.run_workflow(data))
             my_thread.start()
 
         elif action == "cancel":
-            self.send(text_data="WORKFLOW_CANCEL_REQUESTED")
             if self.started:
                 self.terminate_event.set()
                 self.send(text_data="WORKFLOW_CANCELLED")
