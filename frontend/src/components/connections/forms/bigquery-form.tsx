@@ -115,41 +115,53 @@ export default function BigqueryForm({
 
   const shouldFilterSchema = form.watch("should_filter_schema");
 
-  type NewConnectionCardProps = {
+  type ConnectionCardVariant = "default" | "sideBySideWithDescription";
+
+  type ConnectionCardDefaultProps = {
+    variant: "default";
     title: string;
-    description?: string;
+    description?: never;
     children: React.ReactNode;
   };
 
-  function NewConnectionCard({ title, children }: NewConnectionCardProps) {
-    return (
-      <Card className="rounded-md">
-        <CardHeader>
-          <FormLabel>{title}</FormLabel>
-        </CardHeader>
-        <CardContent>
-          <FormControl>{children}</FormControl>
-        </CardContent>
-        <FormMessage />
-      </Card>
-    );
-  }
+  type ConnectionCardSideBySideWithDescriptionProps = {
+    variant: "sideBySideWithDescription";
+    title: string;
+    description: string;
+    children: React.ReactNode;
+  };
 
-  function SchemaFilterCard({
-    title,
+  type NewConnectionCardProps =
+    | ConnectionCardDefaultProps
+    | ConnectionCardSideBySideWithDescriptionProps;
+
+  function NewConnectionCard({
+    variant,
     description,
+    title,
     children,
   }: NewConnectionCardProps) {
     return (
-      <Card className="rounded-md">
-        <CardHeader>
-          <FormLabel>{title}</FormLabel>
-        </CardHeader>
-        <CardContent className="gap-y-0.5 flex flex-row justify-between">
-          <FormDescription>{description}</FormDescription>
-          <FormControl>{children}</FormControl>
-        </CardContent>
-      </Card>
+      <FormItem>
+        <Card className="rounded-md">
+          <CardHeader>
+            <FormLabel>{title}</FormLabel>
+          </CardHeader>
+          <CardContent
+            className={
+              variant === "sideBySideWithDescription"
+                ? "gap-y-0.5 flex flex-row justify-between"
+                : ""
+            }
+          >
+            {variant === "sideBySideWithDescription" && (
+              <FormDescription>{description}</FormDescription>
+            )}
+            <FormControl>{children}</FormControl>
+          </CardContent>
+          <FormMessage />
+        </Card>
+      </FormItem>
     );
   }
 
@@ -164,48 +176,42 @@ export default function BigqueryForm({
             control={form.control}
             name="name"
             render={({ field }) => (
-              <FormItem>
-                <NewConnectionCard title="Connection name">
-                  <Input placeholder="my awesome connection" {...field} />
-                </NewConnectionCard>
-              </FormItem>
+              <NewConnectionCard variant="default" title="Connection name">
+                <Input placeholder="my awesome connection" {...field} />
+              </NewConnectionCard>
             )}
           />
-
           <FormField
             control={form.control}
             name="service_account"
             render={({ field }) => (
-              <FormItem>
-                <NewConnectionCard title="Service account">
-                  <Textarea
-                    className="h-[250px]"
-                    placeholder={serviceAccountPlaceholder}
-                    {...field}
-                  />
-                </NewConnectionCard>
-              </FormItem>
+              <NewConnectionCard variant="default" title="Service account">
+                <Textarea
+                  className="h-[250px]"
+                  placeholder={serviceAccountPlaceholder}
+                  {...field}
+                />
+              </NewConnectionCard>
             )}
           />
           <FormField
             control={form.control}
             name="should_filter_schema"
             render={({ field }) => (
-              <FormItem>
-                <SchemaFilterCard
-                  title="Filter schemas (advanced)"
-                  description={
-                    shouldFilterSchema
-                      ? "Include only the following schemas:"
-                      : "Including all schemas"
-                  }
-                >
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </SchemaFilterCard>
-              </FormItem>
+              <NewConnectionCard
+                variant="sideBySideWithDescription"
+                title="Filter schemas (advanced)"
+                description={
+                  shouldFilterSchema
+                    ? "Include only the following schemas:"
+                    : "Including all schemas"
+                }
+              >
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </NewConnectionCard>
             )}
           />
           {shouldFilterSchema && (
@@ -213,15 +219,16 @@ export default function BigqueryForm({
               control={form.control}
               name="include_schemas"
               render={({ field }) => (
-                <FormItem>
-                  <NewConnectionCard title="Add a line for each schema">
-                    <Textarea
-                      className="h-[150px]"
-                      placeholder={"Eg.\nschema1\nschema2"}
-                      {...field}
-                    />
-                  </NewConnectionCard>
-                </FormItem>
+                <NewConnectionCard
+                  variant="default"
+                  title="Add a line for each schema"
+                >
+                  <Textarea
+                    className="h-[150px]"
+                    placeholder={"Eg.\nschema1\nschema2"}
+                    {...field}
+                  />
+                </NewConnectionCard>
               )}
             />
           )}
