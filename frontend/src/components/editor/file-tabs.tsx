@@ -1,8 +1,8 @@
-import {type OpenedFile, useFiles} from "@/app/contexts/FilesContext";
-import {Plus, X} from "lucide-react";
-import type {RefObject} from "react";
-import {Button} from "../ui/button";
-import {ScrollArea, ScrollBar} from "../ui/scroll-area";
+import { type OpenedFile, useFiles } from "@/app/contexts/FilesContext";
+import { Plus, X } from "lucide-react";
+import type { RefObject } from "react";
+import { Button } from "../ui/button";
+import { ScrollArea, ScrollBar } from "../ui/scroll-area";
 
 export default function FileTabs({
   topBarRef,
@@ -39,17 +39,17 @@ export default function FileTabs({
               >
                 <div>{file.node.name}</div>
                 <div className="relative h-3 w-3 hover:bg-gray-200">
-                  {file.isDirty ? (
+                  {file.isDirty && (
                     <div className="h-3 w-3 rounded-full bg-blue-300 group-hover:invisible"></div>
-                  ) : null}
+                  )}
                   <div
                     onClick={(e) => {
                       e.stopPropagation();
                       closeFile(file);
                     }}
-                    className={`rounded-full   text-gray-400 w-3 h-3 flex justify-center items-center font-bold ${file.isDirty ? "opacity-0 group-hover:opacity-100" : "opacity-0 group-hover:opacity-100"} ${activeFile?.node.path === file.node.path ? "opacity-100" : "opacity-0"} transition-opacity absolute top-0 left-0`}
+                    className="rounded-full text-gray-400 w-3 h-3 flex justify-center items-center font-bold opacity-0 group-hover:opacity-100 absolute top-0 left-0"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-5 w-5" />
                   </div>
                 </div>
               </div>
