@@ -3,30 +3,9 @@
 import { Cross2Icon } from "@radix-ui/react-icons";
 import type { Table } from "@tanstack/react-table";
 
-import { Input } from "@/components/ui/input";
-
-import { CheckIcon, PlusCircledIcon } from "@radix-ui/react-icons";
-import { Column } from "@tanstack/react-table";
 import type * as React from "react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
 
 import { DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
 import { MixerHorizontalIcon } from "@radix-ui/react-icons";
@@ -39,8 +18,6 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { useAssets } from "@/contexts/AssetViewerContext";
-import { AsteriskSquare, Box, Columns, Search } from "lucide-react";
-import { useState } from "react";
 import { DataTableFacetedFilter } from "./DataTableFacetedFilter";
 
 interface DataTableViewOptionsProps<TData> {
@@ -91,14 +68,7 @@ interface DataTableToolbarProps<TData> {
 export function DataTableToolbar<TData>({
   table,
 }: DataTableToolbarProps<TData>) {
-  const { query, setQuery, assets, submitSearch, filters, setFilters } =
-    useAssets();
-
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter") {
-      submitSearch();
-    }
-  };
+  const { assets, filters, setFilters } = useAssets();
 
   const isFiltered =
     filters.sources.length > 0 ||
@@ -110,19 +80,6 @@ export function DataTableToolbar<TData>({
       <div className="w-full">
         <div>
           <div className="space-y-4 w-full">
-            <div className="flex items-center">
-              <div className="relative w-full">
-                <Search className="size-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <Input
-                  autoFocus
-                  placeholder="Search assets"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  onKeyDown={handleKeyDown}
-                  className="h-10 w-full pl-10"
-                />
-              </div>
-            </div>
             <div className="flex items-center justify-between">
               <div className="flex space-x-2 items-center">
                 {assets?.count > 0 ? (
