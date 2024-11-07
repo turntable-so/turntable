@@ -35,6 +35,7 @@ def assert_ingest_output(resources, columns=True, column_links=True):
     assert Asset.objects.count() > 0
     assert AssetContainer.objects.count() > 0
     assert AssetLink.objects.count() > 0
+
     if columns:
         assert Column.objects.count() > 0
     if column_links:
@@ -43,6 +44,7 @@ def assert_ingest_output(resources, columns=True, column_links=True):
     ## all assets have types
     for asset in Asset.objects.all():
         assert asset.type is not None, asset.__dict__
+        assert asset.ai_description is not None
 
     ## all resources represented in assets
     for resource in resources:
