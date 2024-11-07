@@ -21,6 +21,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
+import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Schema, z } from "zod";
@@ -50,6 +51,54 @@ const FormSchema = z.object({
   should_filter_schema: z.boolean(),
   include_schemas: z.string().optional(),
 });
+
+type ConnectionCardDefaultProps = {
+  variant: "default";
+  title: string;
+  description?: never;
+  children: React.ReactNode;
+};
+
+type ConnectionCardSideBySideWithDescriptionProps = {
+  variant: "sideBySideWithDescription";
+  title: string;
+  description: string;
+  children: React.ReactNode;
+};
+
+type NewConnectionCardProps =
+  | ConnectionCardDefaultProps
+  | ConnectionCardSideBySideWithDescriptionProps;
+
+function NewConnectionCard({
+  variant,
+  description,
+  title,
+  children,
+}: NewConnectionCardProps) {
+  return (
+    <FormItem>
+      <Card className="rounded-md">
+        <CardHeader>
+          <FormLabel>{title}</FormLabel>
+        </CardHeader>
+        <CardContent
+          className={
+            variant === "sideBySideWithDescription"
+              ? "gap-y-0.5 flex flex-row justify-between"
+              : ""
+          }
+        >
+          {variant === "sideBySideWithDescription" && (
+            <FormDescription>{description}</FormDescription>
+          )}
+          <FormControl>{children}</FormControl>
+        </CardContent>
+      </Card>
+      <FormMessage />
+    </FormItem>
+  );
+}
 
 export default function BigqueryForm({
   resource,
@@ -114,54 +163,6 @@ export default function BigqueryForm({
   }
 
   const shouldFilterSchema = form.watch("should_filter_schema");
-
-  type ConnectionCardDefaultProps = {
-    variant: "default";
-    title: string;
-    description?: never;
-    children: React.ReactNode;
-  };
-
-  type ConnectionCardSideBySideWithDescriptionProps = {
-    variant: "sideBySideWithDescription";
-    title: string;
-    description: string;
-    children: React.ReactNode;
-  };
-
-  type NewConnectionCardProps =
-    | ConnectionCardDefaultProps
-    | ConnectionCardSideBySideWithDescriptionProps;
-
-  function NewConnectionCard({
-    variant,
-    description,
-    title,
-    children,
-  }: NewConnectionCardProps) {
-    return (
-      <FormItem>
-        <Card className="rounded-md">
-          <CardHeader>
-            <FormLabel>{title}</FormLabel>
-          </CardHeader>
-          <CardContent
-            className={
-              variant === "sideBySideWithDescription"
-                ? "gap-y-0.5 flex flex-row justify-between"
-                : ""
-            }
-          >
-            {variant === "sideBySideWithDescription" && (
-              <FormDescription>{description}</FormDescription>
-            )}
-            <FormControl>{children}</FormControl>
-          </CardContent>
-        </Card>
-        <FormMessage />
-      </FormItem>
-    );
-  }
 
   return (
     <div className="w-full max-w-2xl">
