@@ -316,7 +316,6 @@ class TestResourceViews:
             },
         }
         response = client.post("/resources/", data, format="json")
-        breakpoint()
         assert response.status_code == 201
 
     def test_update_dbt(self, client, resource_id, workspace):

@@ -315,32 +315,19 @@ class ProjectViewSet(viewsets.ViewSet):
 
         return Response(status=status.HTTP_501_NOT_IMPLEMENTED)
 
-    @action(detail=False, methods=["GET"])
-    def lineage(self, request):
+    @action(detail=True, methods=["GET"])
+    def lineage(self, request, pk=None):
         workspace = request.user.current_workspace()
+        branch = Branch.objects.get(id=pk)
+
         dbt_details = workspace.get_dbt_details()
         filepath = unquote(request.query_params.get("filepath"))
         predecessor_depth = int(request.query_params.get("predecessor_depth"))
         successor_depth = int(request.query_params.get("successor_depth"))
         lineage_type = request.query_params.get("lineage_type", "all")
         defer = request.query_params.get("defer", True)
-        branch_name = request.query_params.get("branch_name")
-        if branch_name:
-            try:
-                branch_id = Branch.objects.get(
-                    workspace=workspace,
-                    repository=dbt_details.repository,
-                    branch_name=branch_name,
-                ).id
-            except Branch.DoesNotExist:
-                return Response(
-                    {"error": f"Branch {branch_name} not found"},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-        else:
-            branch_id = None
 
-        with dbt_details.dbt_transition_context(branch_id=branch_id) as (
+        with dbt_details.dbt_transition_context(branch_id=branch.id) as (
             transition,
             _,
             repo,

@@ -124,10 +124,7 @@ class TestProjectViews:
             "models/staging/stg_products.sql",
         ],
     )
-    @pytest.mark.parametrize("branch_name", ["apple12345", "main"])
-    def test_get_project_based_lineage_view(
-        self, client, branch, filepath_param, branch_name
-    ):
+    def test_get_project_based_lineage_view(self, client, branch, filepath_param):
         encoded_filepath = safe_encode(filepath_param)
         response = client.get(
             build_url(
@@ -136,16 +133,12 @@ class TestProjectViews:
                     "filepath": encoded_filepath,
                     "predecessor_depth": 1,
                     "successor_depth": 1,
-                    "branch_name": branch_name,
                 },
             )
         )
-        if branch_name != "main":
-            assert response.status_code == 404
-        else:
-            assert response.status_code == 200
-            assert response.json()["lineage"]["asset_links"]
-            assert response.json()["lineage"]["column_links"]
+        assert response.status_code == 200
+        assert len(response.json()["lineage"]["asset_links"]) > 0
+        assert len(response.json()["lineage"]["column_links"]) > 0
 
 
 @pytest.mark.django_db
