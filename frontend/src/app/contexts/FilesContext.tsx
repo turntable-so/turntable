@@ -113,7 +113,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   const [pullRequestUrl, setPullRequestUrl] = useState<string | undefined>(undefined);
   const [files, setFiles] = useState<FileNode[]>([]);
   const [openedFiles, setOpenedFiles] = useLocalStorage<OpenedFile[]>(
-    LocalStorageKeys.fileTabs,
+    LocalStorageKeys.fileTabs(branchId),
     [
       {
         node: {
@@ -128,7 +128,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     ],
   );
   const [activeFile, setActiveFile] = useLocalStorage<OpenedFile | null>(
-    LocalStorageKeys.activeFile,
+    LocalStorageKeys.activeFile(branchId),
     openedFiles[0] || null,
   );
   const [searchFileIndex, setSearchFileIndex] = useState<FileNode[]>(
@@ -136,7 +136,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   );
   const [changes, setChanges] = useState<Changes | null>(null);
   const [recentFiles, setRecentFiles] = useLocalStorage<FileNode[]>(
-    LocalStorageKeys.recentFiles,
+    LocalStorageKeys.recentFiles(branchId),
     [],
   );
   const [isCloning, setIsCloning] = useState(false);
@@ -157,9 +157,6 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     fetchChanges(branchId);
     fetchFiles();
   }
-
-
-
 
   const cloneBranch = async (branchId: string) => {
     setIsCloning(true)
@@ -212,7 +209,6 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     );
     setSearchFileIndex(searchableFiles);
   };
-
 
   const openFile = useCallback(
     async (node: FileNode) => {
