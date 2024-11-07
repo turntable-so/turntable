@@ -187,46 +187,44 @@ export default function BigqueryForm({
               </FormItem>
             )}
           />
-          <div className="space-y-2">
+          <FormField
+            control={form.control}
+            name="should_filter_schema"
+            render={({ field }) => (
+              <FormItem>
+                <SchemaFilterCard
+                  title="Filter schemas (advanced)"
+                  description={
+                    shouldFilterSchema
+                      ? "Include only the following schemas:"
+                      : "Including all schemas"
+                  }
+                >
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </SchemaFilterCard>
+              </FormItem>
+            )}
+          />
+          {shouldFilterSchema && (
             <FormField
               control={form.control}
-              name="should_filter_schema"
+              name="include_schemas"
               render={({ field }) => (
                 <FormItem>
-                  <SchemaFilterCard
-                    title="Filter schemas (advanced)"
-                    description={
-                      shouldFilterSchema
-                        ? "Include only the following schemas:"
-                        : "Including all schemas"
-                    }
-                  >
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
+                  <NewConnectionCard title="Add a line for each schema">
+                    <Textarea
+                      className="h-[150px]"
+                      placeholder={"Eg.\nschema1\nschema2"}
+                      {...field}
                     />
-                  </SchemaFilterCard>
+                  </NewConnectionCard>
                 </FormItem>
               )}
             />
-            {shouldFilterSchema && (
-              <FormField
-                control={form.control}
-                name="include_schemas"
-                render={({ field }) => (
-                  <FormItem>
-                    <NewConnectionCard title="Add a line for each schema">
-                      <Textarea
-                        className="h-[150px]"
-                        placeholder={"Eg.\nschema1\nschema2"}
-                        {...field}
-                      />
-                    </NewConnectionCard>
-                  </FormItem>
-                )}
-              />
-            )}
-          </div>
+          )}
           <div className="flex justify-end pb-4">
             {tested &&
               (connectionCheck ? (
