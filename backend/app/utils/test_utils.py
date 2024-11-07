@@ -44,7 +44,6 @@ def assert_ingest_output(resources, columns=True, column_links=True):
     ## all assets have types
     for asset in Asset.objects.all():
         assert asset.type is not None, asset.__dict__
-        assert asset.ai_description is not None
 
     ## all resources represented in assets
     for resource in resources:
@@ -83,6 +82,7 @@ def assert_ingest_output(resources, columns=True, column_links=True):
 
     ## all assets have a name
     assert Asset.objects.filter(name__isnull=True).count() == 0
+    assert Asset.objects.filter(ai_description__isnull=True).count() == 0
 
     ## all instances have workspace_ids
     assert Asset.objects.filter(workspace_id=None).count() == 0
