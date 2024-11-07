@@ -25,3 +25,6 @@ def test_orchestration(custom_celery, local_postgres):
     assert not any(result["stderrs"])
     assert not result["run_results"][0]
     assert result["run_results"][1]
+
+    # ensure the workflow is marked completed (used by the UI)
+    assert workflow.most_recent(successes_only=True)[0]
