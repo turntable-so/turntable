@@ -1,12 +1,12 @@
 "use client";
 
-import {useLayoutContext} from "@/app/contexts/LayoutContext";
+import { useLayoutContext } from "@/app/contexts/LayoutContext";
 import useSession from "@/app/hooks/use-session";
-import {useRouter} from "next/navigation";
-import {useState} from "react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import SearchBar from "@/components/editor/search-bar/search-bar";
-import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
-import {cn} from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 import {
   ChevronDown,
   FolderGit2,
@@ -20,14 +20,24 @@ import {
   PanelRightClose,
   Settings,
 } from "lucide-react";
-import {Button} from "../ui/button";
-import {Popover, PopoverContent, PopoverTrigger} from "../ui/popover";
-import {Tooltip, TooltipContent, TooltipTrigger} from "../ui/tooltip";
+import { Button } from "../ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import BranchReviewDialog from "./branch-review-dialog";
-import {useFiles} from "@/app/contexts/FilesContext";
+import { useFiles } from "@/app/contexts/FilesContext";
+import { TURNTABLE_LOCAL_STORAGE_PREFIX } from "@/app/constants/local-storage-keys";
 
-const clearEditorCache = () => {
-  localStorage.clear();
+const clearTurntableCache = () => {
+  const keysToRemove = [];
+
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key?.startsWith(TURNTABLE_LOCAL_STORAGE_PREFIX)) {
+      keysToRemove.push(key);
+    }
+  }
+
+  keysToRemove.forEach((key) => localStorage.removeItem(key));
 };
 
 const EditorTopBar = () => {
@@ -169,7 +179,7 @@ const EditorTopBar = () => {
               </div>
               <Button
                 onClick={() => {
-                  clearEditorCache();
+                  clearTurntableCache();
                   window.location.reload();
                 }}
                 variant="secondary"

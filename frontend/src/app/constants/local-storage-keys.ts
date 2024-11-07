@@ -1,16 +1,23 @@
-function truncateBranchId(branchId: string): string {
-  return branchId.substring(0, 8);
-}
+export const TURNTABLE_LOCAL_STORAGE_PREFIX = "turntable-";
+const TRUNCATE_LIMIT = 10;
+
+const truncateBranchId = (branchId: string): string => {
+  return branchId.substring(0, TRUNCATE_LIMIT);
+};
+
+const createLocalStorageKey = (branchId: string, suffix: string): string => {
+  return `${TURNTABLE_LOCAL_STORAGE_PREFIX}-${truncateBranchId(branchId)}-${suffix}`;
+};
 
 export const LocalStorageKeys = {
   bottomPanelTab: (branchId: string): string =>
-    `${truncateBranchId(branchId)}-bottom-panel-tab`,
+    createLocalStorageKey(branchId, "bottom-panel-tab"),
   commandHistory: (branchId: string): string =>
-    `${truncateBranchId(branchId)}-command-history`,
+    createLocalStorageKey(branchId, "command-history"),
   recentFiles: (branchId: string): string =>
-    `${truncateBranchId(branchId)}-recent-files`,
+    createLocalStorageKey(branchId, "recent-files"),
   fileTabs: (branchId: string): string =>
-    `${truncateBranchId(branchId)}-file-tabs`,
+    createLocalStorageKey(branchId, "file-tabs"),
   activeFile: (branchId: string): string =>
-    `${truncateBranchId(branchId)}-active-file-tab-index`,
+    createLocalStorageKey(branchId, "active-file-tab-index"),
 };
