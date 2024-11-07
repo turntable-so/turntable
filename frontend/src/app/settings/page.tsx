@@ -12,6 +12,8 @@ import FullWidthPageLayout from "../../components/layout/FullWidthPageLayout";
 import { getSettings } from "../actions/actions";
 import { AssetExclusionTable } from "./asset-exclusion-table";
 import type { Settings } from "./types";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings>({
@@ -41,6 +43,20 @@ export default function SettingsPage() {
             <AssetExclusionTable
               exclusionFilters={settings.exclusion_filters}
             />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>API Keys</CardTitle>
+            <CardDescription>
+              Provide API keys for OpenAI and Anthropic to enable AI features
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div>
+              <Label htmlFor="openai_key">OpenAI</Label>
+              <Input id="openai_key" placeholder="sk-foobarbaz" />{" "}
+            </div>
           </CardContent>
         </Card>
       </div>
