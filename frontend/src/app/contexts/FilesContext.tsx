@@ -142,7 +142,6 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   const [isCloning, setIsCloning] = useState(false);
 
   const fetchBranch = async (id: string) => {
-    console.log('fetchBranch', id)
     if (id) {
       const branch = await getBranch(id);
       setBranchId(branch.id);
@@ -161,7 +160,6 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
 
 
 
-  console.log({ branchId, isCloned, readOnly, pullRequestUrl })
 
   const cloneBranch = async (branchId: string) => {
     setIsCloning(true)

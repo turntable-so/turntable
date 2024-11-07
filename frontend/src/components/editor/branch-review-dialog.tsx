@@ -76,7 +76,6 @@ export default function BranchReviewDialog({
   const { changes, branchId, fetchChanges, commitChanges, pullRequestUrl, branchName, isCloned, discardChanges } = useFiles();
 
   useEffect(() => {
-    console.log({ branchId })
     if (branchId) {
       fetchChanges(branchId);
     }
