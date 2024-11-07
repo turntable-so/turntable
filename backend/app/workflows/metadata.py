@@ -88,7 +88,6 @@ def create_model_descriptions(workspace_id: str, resource_id: str) -> list[str]:
 
 @shared_task(bind=True)
 def sync_metadata(self, workspace_id: str, resource_id: str):
-    print("\n\nRunning Sync metadata\n\n")
     prepare_dbt_repos(workspace_id=workspace_id, resource_id=resource_id)
     ingest_metadata(
         workspace_id=workspace_id,
