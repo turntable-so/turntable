@@ -75,7 +75,7 @@ interface CommandPanelProviderProps {
 export const CommandPanelProvider: FC<CommandPanelProviderProps> = ({
   children,
 }) => {
-  const { branchId } = useFiles();
+  const { branchId, fetchFiles } = useFiles();
 
   const [inputValue, setInputValue] = useState<string>("");
   const [commandOptions, setCommandOptions] = useState<string[]>([]);
@@ -188,6 +188,7 @@ export const CommandPanelProvider: FC<CommandPanelProviderProps> = ({
     },
     onClose: () => {
       setCommandPanelState("idling");
+      fetchFiles();
     },
   });
 
