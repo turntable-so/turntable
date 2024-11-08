@@ -59,9 +59,12 @@ function ColumnDescription({
     return <div className="pt-1 font-normal">{user}</div>;
   } else if (ai) {
     return (
-      <div className="flex flex-row gap-x-1 items-center">
-        <SparklesIcon className="w-4 h-4 ml-0 fill-none" color={IRIS_PURPLE} />
-        <div className="pt-1 font-normal">{ai}</div>
+      <div className="relative font-normal">
+        <SparklesIcon
+          className="w-4 h-4 mr-1 mb-1 float-left fill-none"
+          color={IRIS_PURPLE}
+        />
+        <div>{ai}</div>
       </div>
     );
   } else {
