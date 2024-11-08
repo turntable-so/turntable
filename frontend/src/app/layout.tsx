@@ -34,11 +34,16 @@ export default function RootLayout({
     <Fragment>
       {/* eventually we want to remove this and do nested layouts */}
       {pathName.includes("/signin") ||
-      pathName.includes("/signup") ||
-      pathName.includes("/workspace") ? (
+        pathName.includes("/signup") ||
+        pathName.includes("/workspace") ? (
         <html lang="en" suppressHydrationWarning>
           <head>
-            <link rel="shortcut icon" href="/images/favicon.ico" />
+            <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+            <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+            <link rel="shortcut icon" href="/favicon.ico" />
+            <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+            <meta name="apple-mobile-web-app-title" content="Turntable" />
+            <link rel="manifest" href="/site.webmanifest" />
           </head>
           <PHProvider>
             <body
@@ -55,8 +60,12 @@ export default function RootLayout({
       ) : (
         <html lang="en" suppressHydrationWarning>
           <head>
-            <link rel="shortcut icon" href="/images/favicon.ico" />
-          </head>
+            <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+            <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+            <link rel="shortcut icon" href="/favicon.ico" />
+            <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+            <meta name="apple-mobile-web-app-title" content="Turntable" />
+            <link rel="manifest" href="/site.webmanifest" />          </head>
           <PHProvider>
             <body
               className={cn(
