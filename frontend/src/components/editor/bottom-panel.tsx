@@ -91,14 +91,6 @@ export default function BottomPanel({
     branchId: branchId || "",
   });
 
-  useEffect(() => {
-    if (branchId && activeFile && activeFile.node.path.endsWith(".sql")) {
-      if (!lineageData[activeFile.node.path]) {
-        fetchFileBasedLineage(activeFile.node.path, branchId);
-      }
-    }
-  }, [activeFile, branchId]);
-
   const { ref: bottomPanelRef, height: bottomPanelHeight } =
     useResizeObserver();
 
@@ -239,6 +231,9 @@ export default function BottomPanel({
                             .root_asset
                         }
                         style={{ height: bottomPanelHeight }}
+                        page="editor"
+                        filePath={activeFile?.node.path || ""}
+                        branchId={branchId}
                       />
                     )}
                   {lineageData &&
