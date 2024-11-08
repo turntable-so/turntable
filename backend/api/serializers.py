@@ -444,6 +444,7 @@ class BranchSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "branch_name",
+            "schema",
             "read_only",
             "is_cloned",
             "pull_request_url",

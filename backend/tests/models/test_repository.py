@@ -1,7 +1,7 @@
 import os
 import shutil
 import tempfile
-from unittest.mock import patch
+from unittest.mock import patch, create_autospec
 
 from app.utils.test_utils import require_env_vars
 import pytest
@@ -42,6 +42,7 @@ class TestRepository:
             workspace=local_postgres_repo.workspace,
             repository=local_postgres_repo,
             branch_name="test-branch",
+            schema="test_schema",
         )
 
     def test_repo_connection(self, local_postgres_repo):
@@ -57,16 +58,26 @@ class TestRepository:
             assert len(os.listdir(repo.working_tree_dir)) > 3
 
     @isolate_mark
-    def test_dbt_repo_context(self, local_postgres, isolate):
+    def test_dbt_repo_context_with_schema(
+        self,
+        local_postgres,
+        local_postgres_test_branch,
+        isolate,
+    ):
+        # Create a spy on the real method
+        spy = create_autospec(
+            local_postgres.details.get_dbt_profile_contents, wraps=True
+        )
+        local_postgres.details.get_dbt_profile_contents = spy
+
         with local_postgres.dbtresource_set.first().dbt_repo_context(
-            isolate=isolate
-        ) as (
-            project,
-            filepath,
-            _,
-        ):
+            isolate=isolate, branch_id=local_postgres_test_branch.id
+        ) as (project, filepath, _):
             assert project != None
             assert filepath != None
+            profiles_yml_path = os.path.join(project.dbt_profiles_dir, "profiles.yml")
+            with open(profiles_yml_path, "r") as f:
+                assert "schema: test_schema" in f.read()
 
     @isolate_mark
     def test_checkout(self, local_postgres_test_branch, isolate):
