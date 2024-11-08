@@ -2,7 +2,6 @@ import tempfile
 from typing import TypeVar, Generator
 
 from celery import shared_task
-from pydantic import BaseModel
 
 from app.core.e2e import DataHubDBParser
 from app.models import Resource, ResourceSubtype, Asset, Column
