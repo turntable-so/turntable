@@ -20,6 +20,9 @@ class ModelDescription(BaseModel):
 class ColumnDescription(BaseModel):
     description: str
 
+class ColumnDescriptionWithId(ColumnDescription):
+    column_id: str
+
 
 MODEL_SYSTEM_PROMPT = """
 Instructions:
@@ -48,6 +51,8 @@ Rules:
 - Don't start your description with filler works like "This column is used to..." or "This column represents...". Just describe the column directly.
 - Use analogies or examples where necessary to clarify technical terms or concepts.
 """
+
+BATCH_COLUMN_SYSTEM_PROMPT = COLUMN_SYSTEM_PROMPT + "\n- You must return your response as a JSON list of objects, where each object has a `description` key and a `column_id` key."
 
 
 def get_schema_and_compiled_sql(
@@ -91,16 +96,12 @@ def get_table_completion(
     )
     return resp.description
 
-class AIDescribedModel(BaseModel):
-    name: str
-    description: str
-
-def create_model_description(
+def generate_model_description(
     model_name: str,
     schema: str,
     compiled_sql: str,
     ai_model_name="gpt-4o",
-) -> AIDescribedModel:
+) -> ModelDescription:
     client = instructor.from_litellm(completion, temperature=0, api_key=os.getenv("OPENAI_API_KEY"))
 
     content = f"""
@@ -118,7 +119,47 @@ def create_model_description(
             },
             {"role": "user", "content": content},
         ],
-        response_model=AIDescribedModel,
+        response_model=ModelDescription,
+    )
+
+
+class ColumnDescriptionGenInputs(BaseModel):
+    column_id: str
+    model_name: str
+    column_name: str
+    column_type: str
+    schema: str
+    compiled_sql: str
+
+def generate_column_descriptions(
+    columns: list[ColumnDescriptionGenInputs],
+    ai_model_name: str = "gpt-4o",
+) -> list[ColumnDescriptionWithId]:
+    if not columns:
+        return []
+
+    client = instructor.from_litellm(completion, temperature=0, api_key=os.getenv("OPENAI_API_KEY"))
+
+    content = "\n".join([
+        f"""
+        model name: {column.model_name}
+        column id: {column.column_id}
+        schema:\n{column.schema}
+        compiled_sql:\n{column.compiled_sql}
+        """
+        for column in columns
+    ])
+
+    return client.chat.completions.create(
+        model=ai_model_name,
+        messages=[
+            {
+                "role": "system",
+                "content": MODEL_SYSTEM_PROMPT,
+            },
+            {"role": "user", "content": content},
+        ],
+        response_model=ColumnDescription,
     )
 
 def get_column_completion(
