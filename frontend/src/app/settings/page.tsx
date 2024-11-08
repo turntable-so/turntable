@@ -117,9 +117,10 @@ export default function SettingsPage() {
               </div>
               <SelectContent>
                 <SelectGroup>
-                  <SelectLabel>Providers</SelectLabel>
                   {AI_PROVIDERS.map((provider) => (
-                    <SelectItem value={provider}>{provider}</SelectItem>
+                    <SelectItem key={provider} value={provider}>
+                      {provider}
+                    </SelectItem>
                   ))}
                 </SelectGroup>
               </SelectContent>
