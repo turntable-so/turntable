@@ -89,45 +89,45 @@ services:
     stdin_open: true
     tty: true
 
-  scheduler:
-    build:
-      args:
-        - ENV=dev
-    extends:
-      file: docker-compose.demo.yml
-      service: worker
-    command: ["django-admin", "start_beat", "--mode", "dev"]
-    environment:
-      <<: *dev-credentials
+  # scheduler:
+  #   build:
+  #     args:
+  #       - ENV=dev
+  #   extends:
+  #     file: docker-compose.demo.yml
+  #     service: worker
+  #   command: ["django-admin", "start_beat", "--mode", "dev"]
+  #   environment:
+  #     <<: *dev-credentials
 
-  flower:
-    build:
-      args:
-        - ENV=dev
-    extends:
-      file: docker-compose.demo.yml
-      service: flower
+  # flower:
+  #   build:
+  #     args:
+  #       - ENV=dev
+  #   extends:
+  #     file: docker-compose.demo.yml
+  #     service: flower
 
   ## Test resources
-  postgres_test_db:
-    extends:
-      file: docker-compose.demo.yml
-      service: postgres_test_db
+  # postgres_test_db:
+  #   extends:
+  #     file: docker-compose.demo.yml
+  #     service: postgres_test_db
 
-  populate_postgres_test_db:
-    extends:
-      file: docker-compose.demo.yml
-      service: populate_postgres_test_db
+  # populate_postgres_test_db:
+  #   extends:
+  #     file: docker-compose.demo.yml
+  #     service: populate_postgres_test_db
 
-  ensure_populate_test_db:
-    extends:
-      file: docker-compose.demo.yml
-      service: ensure_populate_test_db
+  # ensure_populate_test_db:
+  #   extends:
+  #     file: docker-compose.demo.yml
+  #     service: ensure_populate_test_db
 
-  metabase:
-    extends:
-      file: docker-compose.demo.yml
-      service: metabase
+  # metabase:
+  #   extends:
+  #     file: docker-compose.demo.yml
+  #     service: metabase
 
   ready:
     extends:
@@ -137,7 +137,7 @@ services:
 volumes:
   postgres_data:
   minio_data:
-  postgres_test_db_data:
+  # postgres_test_db_data:
   frontend_data:
   code_repos:
 

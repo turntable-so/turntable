@@ -52,7 +52,7 @@ Rules:
 - Use analogies or examples where necessary to clarify technical terms or concepts.
 """
 
-BATCH_COLUMN_SYSTEM_PROMPT = COLUMN_SYSTEM_PROMPT + "\n- You must return your response as a JSON list of objects, where each object has a `description` key and a `column_id` key."
+BATCH_COLUMN_SYSTEM_PROMPT = COLUMN_SYSTEM_PROMPT + "\n- You must return your response as a JSON with a single key `descriptions`, which contains a list of objects, where each object has a `description` key and a `column_id` key."
 
 
 def get_schema_and_compiled_sql(
@@ -131,6 +131,9 @@ class ColumnDescriptionGenInputs(BaseModel):
     schema: str
     compiled_sql: str
 
+class InstructorColumnResponseModel(BaseModel):
+    descriptions: list[ColumnDescriptionWithId]
+
 def generate_column_descriptions(
     columns: list[ColumnDescriptionGenInputs],
     ai_model_name: str = "gpt-4o",
@@ -159,8 +162,8 @@ def generate_column_descriptions(
             },
             {"role": "user", "content": content},
         ],
-        response_model=ColumnDescription,
-    )
+        response_model=InstructorColumnResponseModel,
+    ).descriptions
 
 def get_column_completion(
     dbtproj: DBTProject,

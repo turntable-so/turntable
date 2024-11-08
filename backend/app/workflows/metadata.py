@@ -60,12 +60,17 @@ def create_single_model_description(workspace_id: str, model_id: str, model_name
     model.save()
 
 @shared_task
-def batch_create_column_descriptions(workspace_id: str, columns: list[ColumnDescriptionGenInputs]) -> None:
+def batch_create_column_descriptions(workspace_id: str, columns: list[dict[str, str]]) -> None:
+    parsed_columns = [
+        ColumnDescriptionGenInputs.model_validate(c)
+        for c in columns
+    ]
+
     descriptions = generate_column_descriptions(
-        columns=columns,
+        columns=parsed_columns,
     )
 
-    for column in columns:
+    for column in parsed_columns:
         generated_description = next(filter(lambda x: x.column_id == column.column_id, descriptions), None)
 
         if not generated_description:
@@ -73,7 +78,7 @@ def batch_create_column_descriptions(workspace_id: str, columns: list[ColumnDesc
 
         db_column = Column.objects.get(id=column.column_id)
 
-        db_column.ai_description = generated_description
+        db_column.ai_description = generated_description.description
         db_column.save()
 
 @shared_task
@@ -113,7 +118,7 @@ def create_column_descriptions(workspace_id: str, resource_id: str) -> list[str]
                         column_type=column.type,
                         schema="\n".join([column.name + " " + column.type for column in column_chunk]),
                         compiled_sql=model.sql,
-                    )
+                    ).model_dump()
                     for column in column_chunk
                 ]
             )
