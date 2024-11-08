@@ -8,7 +8,7 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
 import { Separator } from "./ui/separator";
-import { SparkleIcon } from "lucide-react";
+import { SparklesIcon } from "lucide-react";
 
 function ModelDescription({
   user,
@@ -18,13 +18,21 @@ function ModelDescription({
   ai: string | null;
 }) {
   if (user) {
-    return <div className="font-medium">{user}</div>;
+    return (
+      <>
+        <div>Description</div>
+        <div className="font-medium">{user}</div>
+      </>
+    );
   } else if (ai) {
     return (
-      <div className="flex flex-row">
+      <>
+        <div className="flex flex-row items-center">
+          <div>Description</div>
+          <SparklesIcon className="w-4 h-4 ml-2 fill-purple-600" />
+        </div>
         <div className="font-medium">{ai}</div>
-        <SparkleIcon className="w-4 h-4 ml-2" />
-      </div>
+      </>
     );
   } else {
     return (
