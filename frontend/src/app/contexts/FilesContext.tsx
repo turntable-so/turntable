@@ -97,6 +97,18 @@ type FilesContextType = {
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
 
+
+const defaultFileTab = {
+  node: {
+    name: "New tab",
+    path: `Untitled-${crypto.randomUUID()}`,
+    type: "file",
+  },
+  content: "",
+  isDirty: false,
+  view: "new",
+}
+
 type Changes = Array<{
   path: string;
   before: string;
@@ -117,16 +129,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   const [openedFiles, setOpenedFiles] = useLocalStorage<OpenedFile[]>(
     LocalStorageKeys.fileTabs(branchId),
     [
-      {
-        node: {
-          name: "New tab",
-          path: `Untitled-${crypto.randomUUID()}`,
-          type: "file",
-        },
-        content: "",
-        isDirty: false,
-        view: "new",
-      },
+      defaultFileTab as OpenedFile
     ],
   );
   const [activeFile, setActiveFile] = useLocalStorage<OpenedFile | null>(
@@ -292,15 +295,24 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
 
   const closeFile = useCallback(
     (file: OpenedFile) => {
+      const fileIndex = openedFiles.findIndex(f => f.node.path === file.node.path);
       const newOpenedFiles = openedFiles.filter(
         (f) => f.node.path !== file.node.path,
       );
       setOpenedFiles(newOpenedFiles);
-      if (newOpenedFiles.length > 0) {
-        setActiveFile(newOpenedFiles[0]);
+      if (newOpenedFiles.length === 0) {
+        setOpenedFiles([defaultFileTab as OpenedFile]);
+        setActiveFile(defaultFileTab as OpenedFile);
+      }
+      else if (file.node.path === activeFile?.node.path) {
+        if (newOpenedFiles.length > 0) {
+          setActiveFile(newOpenedFiles[0]);
+        } else {
+          setActiveFile(null);
+        }
       }
     },
-    [openedFiles],
+    [openedFiles, activeFile],
   );
 
   const createFileAndRefresh = async (path: string, fileContents: string) => {
