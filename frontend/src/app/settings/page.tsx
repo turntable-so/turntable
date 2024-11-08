@@ -14,6 +14,40 @@ import { AssetExclusionTable } from "./asset-exclusion-table";
 import type { Settings } from "./types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+
+function GenericSecret({
+  name,
+  placeholder,
+}: {
+  name: string;
+  placeholder: string;
+}) {
+  const [value, setValue] = useState("");
+  const slug = name.toLowerCase().replace(" ", "_");
+
+  return (
+    <div className="flex flex-row items-end gap-x-2 w-full">
+      <div className="flex flex-col w-full gap-y-0.5">
+        <Label htmlFor={slug}>{name}</Label>
+        <Input
+          id={slug}
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+        />
+      </div>
+      <Button
+        onClick={() => {
+          // TODO: Save to the db
+          console.log("Saving", name);
+        }}
+      >
+        Save
+      </Button>
+    </div>
+  );
+}
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings>({
@@ -52,11 +86,9 @@ export default function SettingsPage() {
               Provide API keys for OpenAI and Anthropic to enable AI features
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div>
-              <Label htmlFor="openai_key">OpenAI</Label>
-              <Input id="openai_key" placeholder="sk-foobarbaz" />{" "}
-            </div>
+          <CardContent className="flex flex-col gap-y-2">
+            <GenericSecret name="OpenAI" placeholder="sk-foobarbaz" />
+            <GenericSecret name="Anthropic" placeholder="foo-barbazqux" />
           </CardContent>
         </Card>
       </div>
