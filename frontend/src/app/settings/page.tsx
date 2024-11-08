@@ -38,7 +38,7 @@ function GenericSecret({
   return (
     <div className="flex flex-row items-end gap-x-2 w-full">
       <div className="flex flex-col w-full gap-y-0.5">
-        <Label htmlFor={slug}>{name}</Label>
+        <Label htmlFor={slug}>API Key</Label>
         <Input
           id={slug}
           placeholder={placeholder}
@@ -58,12 +58,16 @@ function GenericSecret({
   );
 }
 
-const AI_PROVIDERS = ["OpenAI", "Anthropic"];
+type AIProvider = "OpenAI" | "Anthropic";
+
+const AI_PROVIDERS = ["OpenAI", "Anthropic"] as AIProvider[];
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings>({
     exclusion_filters: [],
   });
+  const [selectedProvider, setSelectedProvider] =
+    useState<AIProvider>("OpenAI");
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -93,37 +97,34 @@ export default function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle>AI Providers</CardTitle>
-            <CardDescription>Select an AI provider</CardDescription>
+            <CardDescription>
+              Select an AI provider and set API keys to enable AI features
+            </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col gap-y-2">
-            <Select>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select an AI provider" />
-              </SelectTrigger>
+          <CardContent className="flex flex-col gap-y-4">
+            <Select
+              value={selectedProvider}
+              onValueChange={(value: AIProvider) => setSelectedProvider(value)}
+            >
+              <div className="flex flex-col gap-y-1">
+                <Label htmlFor={"provider-dropdown"}>Provider</Label>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue
+                    id="provider-dropdown"
+                    placeholder="Select an AI provider"
+                  />
+                </SelectTrigger>
+              </div>
               <SelectContent>
                 <SelectGroup>
                   <SelectLabel>Providers</SelectLabel>
                   {AI_PROVIDERS.map((provider) => (
-                    <SelectItem value={provider.toLowerCase()}>
-                      {provider}
-                    </SelectItem>
+                    <SelectItem value={provider}>{provider}</SelectItem>
                   ))}
                 </SelectGroup>
               </SelectContent>
             </Select>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>API Keys</CardTitle>
-            <CardDescription>
-              Provide API keys for AI providers to enable AI features
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-y-2">
-            {AI_PROVIDERS.map((provider) => (
-              <GenericSecret name={provider} placeholder="sk-foobarbaz" />
-            ))}
+            <GenericSecret name={selectedProvider} placeholder="sk-foobarbaz" />
           </CardContent>
         </Card>
       </div>
