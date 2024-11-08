@@ -15,6 +15,15 @@ import type { Settings } from "./types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 function GenericSecret({
   name,
@@ -49,6 +58,8 @@ function GenericSecret({
   );
 }
 
+const AI_PROVIDERS = ["OpenAI", "Anthropic"];
+
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings>({
     exclusion_filters: [],
@@ -81,14 +92,38 @@ export default function SettingsPage() {
         </Card>
         <Card>
           <CardHeader>
+            <CardTitle>AI Providers</CardTitle>
+            <CardDescription>Select an AI provider</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-y-2">
+            <Select>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select an AI provider" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Providers</SelectLabel>
+                  {AI_PROVIDERS.map((provider) => (
+                    <SelectItem value={provider.toLowerCase()}>
+                      {provider}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
             <CardTitle>API Keys</CardTitle>
             <CardDescription>
-              Provide API keys for OpenAI and Anthropic to enable AI features
+              Provide API keys for AI providers to enable AI features
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-y-2">
-            <GenericSecret name="OpenAI" placeholder="sk-foobarbaz" />
-            <GenericSecret name="Anthropic" placeholder="foo-barbazqux" />
+            {AI_PROVIDERS.map((provider) => (
+              <GenericSecret name={provider} placeholder="sk-foobarbaz" />
+            ))}
           </CardContent>
         </Card>
       </div>
