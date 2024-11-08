@@ -296,6 +296,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
 
   const closeFile = useCallback(
     (file: OpenedFile) => {
+      const fileIndex = openedFiles.findIndex(f => f.node.path === file.node.path);
       const newOpenedFiles = openedFiles.filter(
         (f) => f.node.path !== file.node.path,
       );
@@ -311,7 +312,6 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
           setActiveFile(null);
         }
       }
-
     },
     [openedFiles, activeFile],
   );
