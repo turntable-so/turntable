@@ -9,6 +9,7 @@ import {AlertCircle} from "lucide-react";
 import {getLineage, getProjectBasedLineage} from "../../app/actions/actions";
 import {useAppContext} from "../../contexts/AppContext";
 import {Alert, AlertDescription, AlertTitle} from "../ui/alert";
+import {useLineage} from "@/app/contexts/LineageContext";
 
 export function ErrorFallback() {
   return (
@@ -164,6 +165,7 @@ export function LineageViewProvider(props: LineageViewProviderProps) {
     successor_depth: 1,
     lineageType: "all",
   });
+  const { setFilePathToLoading } = useLineage();
 
   const { setIsLineageLoading } = useAppContext();
 
@@ -324,15 +326,25 @@ export function LineageViewProvider(props: LineageViewProviderProps) {
     } else if (page === "editor") {
       setLineageOptions(options);
       setIsLineageLoading(true);
+      setFilePathToLoading({
+        loading: true,
+        filePath: props.filePath,
+      });
+
       const data = await getProjectBasedLineage({
         branchId: props.branchId,
         filePath: props.filePath,
+        lineage_type: options.lineageType,
         successor_depth: options.successor_depth,
         predecessor_depth: options.predecessor_depth,
       });
-      console.log(data);
+
       setIsLineageLoading(false);
       setLineage(data.lineage);
+      setFilePathToLoading({
+        loading: false,
+        filePath: props.filePath,
+      });
     }
   };
 

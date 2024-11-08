@@ -145,7 +145,13 @@ export default function BottomPanel({
             <Button
               size="sm"
               onClick={() =>
-                fetchFileBasedLineage(activeFile?.node.path || "", branchId)
+                fetchFileBasedLineage({
+                  filePath: activeFile?.node.path || "",
+                  branchId,
+                  // TODO: we need to get the selected type from the LineageView,
+                  // but right now that would take too much effort to refactor that
+                  lineageType: "all",
+                })
               }
               disabled={lineageData[activeFile?.node.path || ""]?.isLoading}
               variant="outline"
