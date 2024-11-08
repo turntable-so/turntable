@@ -55,7 +55,6 @@ function ColumnDescription({
   user: string | null;
   ai: string | null;
 }) {
-  console.log(ai, user);
   if (user) {
     return <div className="pt-1 font-normal">{user}</div>;
   } else if (ai) {
