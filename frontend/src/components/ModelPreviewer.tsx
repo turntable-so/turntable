@@ -48,6 +48,28 @@ function ModelDescription({
   }
 }
 
+function ColumnDescription({
+  user,
+  ai,
+}: {
+  user: string | null;
+  ai: string | null;
+}) {
+  console.log(ai, user);
+  if (user) {
+    return <div className="pt-1 font-normal">{user}</div>;
+  } else if (ai) {
+    return (
+      <div className="flex flex-row gap-x-1 items-center">
+        <SparklesIcon className="w-4 h-4 ml-0 fill-none" color={IRIS_PURPLE} />
+        <div className="pt-1 font-normal">{ai}</div>
+      </div>
+    );
+  } else {
+    return null;
+  }
+}
+
 export default function ModelPreviewer({
   asset,
   context,
@@ -223,9 +245,10 @@ export default function ModelPreviewer({
                               )
                             )}
                           </div>
-                          <div className="pt-1 font-normal">
-                            {column.description}
-                          </div>
+                          <ColumnDescription
+                            user={column.description}
+                            ai={column.ai_description}
+                          />
                         </div>
                       </div>
                       <Separator className="text-black" />
