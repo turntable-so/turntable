@@ -8,6 +8,32 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
 import { Separator } from "./ui/separator";
+import { SparkleIcon } from "lucide-react";
+
+function ModelDescription({
+  user,
+  ai,
+}: {
+  user: string | null;
+  ai: string | null;
+}) {
+  if (user) {
+    return <div className="font-medium">{user}</div>;
+  } else if (ai) {
+    return (
+      <div className="flex flex-row">
+        <div className="font-medium">{ai}</div>
+        <SparkleIcon className="w-4 h-4 ml-2" />
+      </div>
+    );
+  } else {
+    return (
+      <div className="italic text-muted-foreground opacity-60">
+        No description
+      </div>
+    );
+  }
+}
 
 export default function ModelPreviewer({
   asset,
@@ -85,21 +111,11 @@ export default function ModelPreviewer({
                   </div>
                 </div>
                 <div>
-                  <div>Description</div>
-                  {asset.description ? (
-                    <div className="font-medium">{asset.description}</div>
-                  ) : (
-                    <div className="italic text-muted-foreground opacity-60">
-                      No description
-                    </div>
-                  )}
+                  <ModelDescription
+                    user={asset.description}
+                    ai={asset.ai_description}
+                  />
                 </div>
-                {asset.ai_description && (
-                  <div>
-                    <div>AI Description</div>
-                    <div className="font-medium">{asset.ai_description}</div>
-                  </div>
-                )}
                 <div>
                   <div className="font-bold">URL</div>
                   {asset.config?.url ? (
