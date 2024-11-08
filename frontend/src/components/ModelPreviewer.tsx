@@ -10,6 +10,8 @@ import { ScrollArea } from "./ui/scroll-area";
 import { Separator } from "./ui/separator";
 import { SparklesIcon } from "lucide-react";
 
+const IRIS_PURPLE = "#5D3FD3";
+
 function ModelDescription({
   user,
   ai,
@@ -29,7 +31,10 @@ function ModelDescription({
       <>
         <div className="flex flex-row items-center">
           <div>Description</div>
-          <SparklesIcon className="w-4 h-4 ml-2 fill-purple-600" />
+          <SparklesIcon
+            className="w-4 h-4 ml-2 fill-none"
+            color={IRIS_PURPLE}
+          />
         </div>
         <div className="font-medium">{ai}</div>
       </>
