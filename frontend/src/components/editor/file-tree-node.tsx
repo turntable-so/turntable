@@ -62,7 +62,16 @@ export default function Node({
     e.stopPropagation();
     if (confirm(`Are you sure you want to delete ${node.data.name}?`)) {
       await deleteFileAndRefresh(node.data.path);
-      closeFile(node.data.path);
+      closeFile({
+        node: {
+          name: node.data.name,
+          path: node.data.path,
+          type: "file",
+        },
+        content: "",
+        isDirty: false,
+        view: "new",
+      });
     }
   };
 
