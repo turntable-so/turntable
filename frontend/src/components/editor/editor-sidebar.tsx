@@ -124,6 +124,10 @@ export default function EditorSidebar() {
                 data={files}
                 openByDefault={false}
                 indent={12}
+                // opens the root by default
+                initialOpenState={{
+                  '.': true,
+                }}
                 ref={treeRef}
                 // @ts-ignore
                 onCreate={onCreate}
