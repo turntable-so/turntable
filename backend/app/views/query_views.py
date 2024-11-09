@@ -5,6 +5,8 @@ from adrf.views import APIView
 from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.response import Response
+from sqlfmt.api import Mode, format_string
+from sqlfmt.exception import SqlfmtError
 
 from app.workflows.query import execute_query
 
@@ -80,3 +82,21 @@ class DbtQueryPreviewView(QueryPreviewView):
             "resource_id": str(dbt_resource.resource.id),
             "sql": sql,
         }
+
+
+class QueryFormatView(APIView):
+    # Note -- accepts dbt or sql
+    def post(self, request):
+        query = request.data.get("query")
+        if not query:
+            return Response(
+                {"error": "query required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+        mode = Mode()
+
+        try:
+            return JsonResponse(
+                {"success": True, "formatted_query": format_string(query, mode)}
+            )
+        except SqlfmtError:
+            return JsonResponse({"success": False})

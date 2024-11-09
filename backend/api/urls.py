@@ -39,10 +39,7 @@ from app.views import (
 )
 from app.views.inference_views import InferenceView
 from app.views.project_views import ProjectViewSet
-from app.views.query_views import (
-    DbtQueryPreviewView,
-    QueryPreviewView,
-)
+from app.views.query_views import DbtQueryPreviewView, QueryFormatView, QueryPreviewView
 from app.views.settings_view import SettingsView
 
 from .views import CustomUserViewSet, LogoutView, OAuthView
@@ -73,6 +70,7 @@ urlpatterns = [
         QueryPreviewView.as_view(),
         name="query_preview",
     ),
+    path("query/format/", QueryFormatView.as_view(), name="query_format"),
     path(
         "resources/<str:resource_id>/sync/",
         SyncResourceView.as_view(),
