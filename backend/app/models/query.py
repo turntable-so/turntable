@@ -6,9 +6,9 @@ from django.core.files.base import ContentFile
 from django.db import models
 from django.utils import timezone
 
-from app.models.git_connections import Branch
-from app.models.resources import DBTResource, Resource
-from app.models.workspace import Workspace
+from .repository import Branch
+from .resources import DBTResource, Resource
+from .workspace import Workspace
 from app.services.storage_backends import CustomS3Boto3Storage
 from vinyl.lib.utils.query import _QUERY_LIMIT
 

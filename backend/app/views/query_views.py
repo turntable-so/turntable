@@ -47,7 +47,13 @@ class QueryPreviewView(APIView):
 
     def post(self, request):
         input = self._preprocess(request)
-        result = execute_query.si(**input).apply_async().get()
+        try:
+            result = execute_query.si(**input).apply_async().get()
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         return self._post_process(result)
 
 

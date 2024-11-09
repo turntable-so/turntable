@@ -18,8 +18,7 @@ import {
   Table as TableIcon,
   Terminal as TerminalIcon,
 } from "lucide-react";
-import { useEffect } from "react";
-import { Fragment } from "react";
+import { Fragment, useEffect } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { Panel, PanelResizeHandle } from "react-resizable-panels";
 import useResizeObserver from "use-resize-observer";
@@ -86,18 +85,19 @@ export default function BottomPanel({
   isLoading: boolean;
   queryPreviewError: string | null;
 }) {
-  const [activeTab, setActiveTab] = useBottomPanelTabs();
-
   const { fetchFileBasedLineage, lineageData } = useLineage();
-  const { activeFile } = useFiles();
+  const { activeFile, branchId } = useFiles();
+  const [activeTab, setActiveTab] = useBottomPanelTabs({
+    branchId: branchId || "",
+  });
 
   useEffect(() => {
-    if (activeFile && activeFile.node.path.endsWith(".sql")) {
+    if (branchId && activeFile && activeFile.node.path.endsWith(".sql")) {
       if (!lineageData[activeFile.node.path]) {
-        fetchFileBasedLineage(activeFile.node.path);
+        fetchFileBasedLineage(activeFile.node.path, branchId);
       }
     }
-  }, [activeFile, activeTab, fetchFileBasedLineage]);
+  }, [activeFile, branchId]);
 
   const { ref: bottomPanelRef, height: bottomPanelHeight } =
     useResizeObserver();
@@ -152,7 +152,9 @@ export default function BottomPanel({
           {activeTab === "lineage" && (
             <Button
               size="sm"
-              onClick={() => fetchFileBasedLineage(activeFile?.node.path || "")}
+              onClick={() =>
+                fetchFileBasedLineage(activeFile?.node.path || "", branchId)
+              }
               disabled={lineageData[activeFile?.node.path || ""]?.isLoading}
               variant="outline"
             >

@@ -270,16 +270,12 @@ elif "AWS_S3_ENDPOINT_HOST" in os.environ and "AWS_S3_ENDPOINT_PORT" in os.envir
 else:
     AWS_S3_ENDPOINT_URL = None
 
+AWS_S3_PUBLIC_URL = os.getenv("AWS_S3_PUBLIC_URL") or AWS_S3_ENDPOINT_URL
+
 
 AWS_DEFAULT_ACL = None
 AWS_QUERYSTRING_AUTH = True
 AWS_QUERYSTRING_EXPIRE = 60
-
-AWS_S3_PUBLIC_URL = (
-    os.getenv("AWS_S3_PUBLIC_URL")
-    if os.getenv("AWS_S3_PUBLIC_URL")
-    else "http://localhost:9000"
-)
 AWS_S3_SIGNATURE_VERSION = "s3v4"
 
 if region := os.getenv("AWS_S3_REGION_NAME"):
@@ -309,10 +305,10 @@ if os.getenv("LOCAL_REDIS") == "true":
     redis_host = os.getenv("REDIS_HOST", "localhost")
     redis_port = int(os.getenv("REDIS_PORT", 6379))
     redis_url = f"redis://{redis_host}:{redis_port}/"
+elif "REDIS_URL" not in os.environ:
+    raise ValueError("REDIS_URL is required if LOCAL_REDIS is not set to true")
 else:
-    redis_url = f"{os.getenv('REDIS_URL')}/" # we add a / cause Render injects the url without a /
-    if not redis_url:
-        raise ValueError("REDIS_URL is required if LOCAL_REDIS is not set to true")
+    redis_url = f"{os.getenv('REDIS_URL')}/"  # we add a / cause Render injects the url without a /
 
 CHANNEL_LAYERS = {
     "default": {
