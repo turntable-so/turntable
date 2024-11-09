@@ -54,7 +54,6 @@ class Query(models.Model):
         connector = self.resource.details.get_connector()
         validation_output = connector.validate_sql(self.sql)
         status = "error" if validation_output.errors else "success"
-        breakpoint()
         return {
             "status": status,
             **validation_output.to_dict(),
