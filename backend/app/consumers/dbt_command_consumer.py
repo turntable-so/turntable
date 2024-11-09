@@ -59,23 +59,22 @@ class DBTCommandConsumer(WebsocketConsumer):
 
         try:
             command = data.get("command")
-            branch_name = data.get("branch_name")
+            branch_id = data.get("branch_id")
 
             if command is None:
                 raise ValueError("Command is required")
             else:
                 command = shlex.split(command)
 
-            if branch_name:
+            if branch_id:
                 try:
-                    branch = Branch.objects.get(
+                    Branch.objects.get(
                         workspace=self.workspace,
                         repository=self.dbt_details.repository,
-                        branch_name=branch_name,
+                        id=branch_id,
                     )
-                    branch_id = branch.id
                 except Branch.DoesNotExist:
-                    raise ValueError(f"Branch {branch_name} not found")
+                    raise ValueError(f"Branch id {branch_id} not found")
             else:
                 branch_id = None
 

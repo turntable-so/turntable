@@ -75,7 +75,7 @@ interface CommandPanelProviderProps {
 export const CommandPanelProvider: FC<CommandPanelProviderProps> = ({
   children,
 }) => {
-  const { branchId } = useFiles();
+  const { branchId, fetchFiles } = useFiles();
 
   const [inputValue, setInputValue] = useState<string>("");
   const [commandOptions, setCommandOptions] = useState<string[]>([]);
@@ -146,13 +146,12 @@ export const CommandPanelProvider: FC<CommandPanelProviderProps> = ({
   const base = new URL(baseUrl).host;
   const protocol = process.env.NODE_ENV === "development" ? "ws" : "wss";
 
-  // TODO: pass in branch id when we support branches
   const { startWebSocket, sendMessage, stopWebSocket } = useWebSocket<{
     command: string;
   }>(`${protocol}://${base}/ws/dbt_command/?token=${accessToken}`, {
     onOpen: ({ payload }) => {
       sendMessage(
-        JSON.stringify({ action: "start", command: payload.command }),
+        JSON.stringify({ action: "start", command: payload.command, branch_id: branchId }),
       );
       setInputValue("");
     },
@@ -169,6 +168,8 @@ export const CommandPanelProvider: FC<CommandPanelProviderProps> = ({
       } else if (event.data === "PROCESS_STREAM_ERROR") {
         setCommandPanelState("idling");
         updateCommandById(newCommandIdRef.current, { status: "failed" });
+      } else if (event.data === "WORKFLOW_STARTED") {
+        return;
       } else if (event.data === "WORKFLOW_CANCELLED") {
         setCommandPanelState("idling");
         updateCommandById(newCommandIdRef.current, { status: "cancelled" });
@@ -187,6 +188,7 @@ export const CommandPanelProvider: FC<CommandPanelProviderProps> = ({
     },
     onClose: () => {
       setCommandPanelState("idling");
+      fetchFiles();
     },
   });
 

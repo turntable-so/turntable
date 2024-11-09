@@ -1,5 +1,5 @@
 export const TURNTABLE_LOCAL_STORAGE_PREFIX = "turntable-";
-const TRUNCATE_LIMIT = 10;
+const TRUNCATE_LIMIT = 8;
 
 const truncateBranchId = (branchId: string): string => {
   return branchId.substring(0, TRUNCATE_LIMIT);
