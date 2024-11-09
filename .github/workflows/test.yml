@@ -83,4 +83,5 @@ jobs:
           LOCAL_DB: "true"
           LOCAL_HOST: "true"
           LOCAL_REDIS: "true"
+          LOCAL_S3: "true"
           MULTITENANT: "true"
