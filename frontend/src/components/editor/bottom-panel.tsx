@@ -91,14 +91,6 @@ export default function BottomPanel({
     branchId: branchId || "",
   });
 
-  useEffect(() => {
-    if (branchId && activeFile && activeFile.node.path.endsWith(".sql")) {
-      if (!lineageData[activeFile.node.path]) {
-        fetchFileBasedLineage(activeFile.node.path, branchId);
-      }
-    }
-  }, [activeFile, branchId]);
-
   const { ref: bottomPanelRef, height: bottomPanelHeight } =
     useResizeObserver();
 
@@ -153,7 +145,13 @@ export default function BottomPanel({
             <Button
               size="sm"
               onClick={() =>
-                fetchFileBasedLineage(activeFile?.node.path || "", branchId)
+                fetchFileBasedLineage({
+                  filePath: activeFile?.node.path || "",
+                  branchId,
+                  // TODO: we need to get the selected type from the LineageView,
+                  // but right now that would take too much effort to refactor that
+                  lineageType: "all",
+                })
               }
               disabled={lineageData[activeFile?.node.path || ""]?.isLoading}
               variant="outline"
@@ -239,6 +237,9 @@ export default function BottomPanel({
                             .root_asset
                         }
                         style={{ height: bottomPanelHeight }}
+                        page="editor"
+                        filePath={activeFile?.node.path || ""}
+                        branchId={branchId}
                       />
                     )}
                   {lineageData &&

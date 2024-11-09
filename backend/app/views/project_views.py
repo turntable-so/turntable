@@ -332,6 +332,13 @@ class ProjectViewSet(viewsets.ViewSet):
         successor_depth = int(request.query_params.get("successor_depth"))
         lineage_type = request.query_params.get("lineage_type", "all")
         defer = request.query_params.get("defer", True)
+        if lineage_type not in ["all", "direct_only"]:
+            return Response(
+                {
+                    "error": "lineage_type query parameter must be either 'all' or 'direct_only'."
+                },
+                status=400,
+            )
 
         with dbt_details.dbt_transition_context(branch_id=branch.id) as (
             transition,
@@ -359,7 +366,9 @@ class ProjectViewSet(viewsets.ViewSet):
                     successor_depth=successor_depth,
                     defer=defer,
                 )
-                lineage, _ = dbtparser.get_lineage()
+                lineage, _ = dbtparser.get_lineage(
+                    lineage_type=lineage_type
+                )
                 root_asset = None
                 column_lookup = {}
                 for asset in lineage.assets:
