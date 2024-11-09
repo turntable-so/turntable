@@ -41,7 +41,9 @@ from app.views.inference_views import InferenceView
 from app.views.project_views import ProjectViewSet
 from app.views.query_views import (
     DbtQueryPreviewView,
+    DbtQueryValidateView,
     QueryPreviewView,
+    QueryValidateView,
 )
 from app.views.settings_view import SettingsView
 
@@ -69,9 +71,19 @@ urlpatterns = [
         name="dbt_query_preview",
     ),
     path(
+        "validate/dbt/",
+        DbtQueryValidateView.as_view(),
+        name="dbt_query_validate",
+    ),
+    path(
         "query/sql/",
         QueryPreviewView.as_view(),
         name="query_preview",
+    ),
+    path(
+        "validate/sql/",
+        QueryValidateView.as_view(),
+        name="query_validate",
     ),
     path(
         "resources/<str:resource_id>/sync/",

@@ -22,7 +22,6 @@ from app.models.resources import DBTResource, Resource
 from app.models.workspace import Workspace
 from app.workflows.metadata import sync_metadata
 from app.workflows.orchestration import run_dbt_commands
-from app.workflows.tests.utils import TEST_QUEUE
 
 TASK_START_TIMEOUT = 10
 TASK_START_POLLING_INTERVAL = 0.1
@@ -186,9 +185,7 @@ class ScheduledWorkflow(PolymorphicModel):
             next_delays = self.get_upcoming_tasks(10)
             for next_delay in next_delays:
                 task_id = (
-                    self.workflow.si(**self.kwargs)
-                    .apply_async(countdown=next_delay, queue=TEST_QUEUE)
-                    .id
+                    self.workflow.si(**self.kwargs).apply_async(countdown=next_delay).id
                 )
                 WorkflowTaskMap.map.setdefault(self.id, []).append(task_id)
                 WorkflowTaskMap.inverse_map[task_id] = self.id

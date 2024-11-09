@@ -12,6 +12,12 @@ def execute_query(workspace_id, resource_id, sql, limit=None):
 
 
 @shared_task
+def validate_query(workspace_id, resource_id, sql):
+    query = Query(sql=sql, resource_id=resource_id, workspace_id=workspace_id)
+    return query.validate()
+
+
+@shared_task
 def execute_dbt_query(
     workspace_id, dbt_resource_id, dbt_sql, limit=None, use_fast_compile=True
 ):

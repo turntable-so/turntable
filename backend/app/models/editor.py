@@ -36,6 +36,8 @@ class Query(models.Model):
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
 
     def run(self, limit: int | None = _QUERY_LIMIT):
+        if not self.sql:
+            return {"status": "error", "message": "SQL is required"}
         connector = self.resource.details.get_connector()
         df, columns = connector.run_query(self.sql, limit=limit)
         query_results = query_to_json(df, columns)
@@ -45,6 +47,18 @@ class Query(models.Model):
         self.refresh_from_db()
         signed_url = self.results.url
         return {"status": "success", "signed_url": signed_url}
+
+    def validate(self):
+        if not self.sql:
+            return {"status": "error", "message": "SQL is required"}
+        connector = self.resource.details.get_connector()
+        validation_output = connector.validate_sql(self.sql)
+        status = "error" if validation_output.errors else "success"
+        breakpoint()
+        return {
+            "status": status,
+            **validation_output.to_dict(),
+        }
 
 
 class DBTQuery(models.Model):

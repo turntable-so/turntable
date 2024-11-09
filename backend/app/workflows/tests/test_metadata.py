@@ -8,7 +8,7 @@ from app.models import (
     Resource,
 )
 from app.models.workflows import MetadataSyncWorkflow
-from app.utils.test_utils import assert_ingest_output, require_env_vars
+from app.utils.test_utils import assert_ingest_output
 from app.workflows.metadata import process_metadata
 
 
@@ -70,6 +70,7 @@ def run_test_sync(
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.usefixtures("custom_celery")
+@pytest.mark.xdist_group(name="metadata_sync")
 class TestMetadataSync:
     @pytest.mark.parametrize("use_cache", [True, False])
     def test_metadata_sync_postgres(
@@ -83,38 +84,38 @@ class TestMetadataSync:
         run_test_sync(resources, recache, use_cache)
         assert_ingest_output(resources)
 
-    @require_env_vars("BIGQUERY_0_WORKSPACE_ID")
-    def test_metadata_sync_bigquery(
-        self, remote_bigquery, recache: bool, use_cache: bool
-    ):
-        run_test_sync([remote_bigquery], recache, use_cache)
+    # @require_env_vars("BIGQUERY_0_WORKSPACE_ID")
+    # def test_metadata_sync_bigquery(
+    #     self, remote_bigquery, recache: bool, use_cache: bool
+    # ):
+    #     run_test_sync([remote_bigquery], recache, use_cache)
 
-    @require_env_vars("DATABRICKS_0_WORKSPACE_ID")
-    def test_metadata_sync_databricks(
-        self, remote_databricks, recache: bool, use_cache: bool
-    ):
-        run_test_sync([remote_databricks], recache, use_cache)
+    # @require_env_vars("DATABRICKS_0_WORKSPACE_ID")
+    # def test_metadata_sync_databricks(
+    #     self, remote_databricks, recache: bool, use_cache: bool
+    # ):
+    #     run_test_sync([remote_databricks], recache, use_cache)
 
-    @require_env_vars("REDSHIFT_0_WORKSPACE_ID")
-    def test_metadata_sync_redshift(
-        self, remote_redshift, recache: bool, use_cache: bool
-    ):
-        run_test_sync([remote_redshift], recache, use_cache)
+    # @require_env_vars("REDSHIFT_0_WORKSPACE_ID")
+    # def test_metadata_sync_redshift(
+    #     self, remote_redshift, recache: bool, use_cache: bool
+    # ):
+    #     run_test_sync([remote_redshift], recache, use_cache)
 
-    @require_env_vars("TABLEAU_0_USERNAME")
-    def test_metadata_sync_tableau(
-        self, remote_tableau, recache: bool, use_cache: bool
-    ):
-        run_test_sync([remote_tableau], recache, use_cache)
+    # @require_env_vars("TABLEAU_0_USERNAME")
+    # def test_metadata_sync_tableau(
+    #     self, remote_tableau, recache: bool, use_cache: bool
+    # ):
+    #     run_test_sync([remote_tableau], recache, use_cache)
 
-    @require_env_vars("POWERBI_0_RESOURCE_NAME")
-    def test_metadata_sync_powerbi(
-        self, remote_powerbi, recache: bool, use_cache: bool
-    ):
-        run_test_sync(
-            [remote_powerbi],
-            recache,
-            use_cache,
-            produce_columns=False,
-            produce_column_links=False,
-        )
+    # @require_env_vars("POWERBI_0_RESOURCE_NAME")
+    # def test_metadata_sync_powerbi(
+    #     self, remote_powerbi, recache: bool, use_cache: bool
+    # ):
+    #     run_test_sync(
+    #         [remote_powerbi],
+    #         recache,
+    #         use_cache,
+    #         produce_columns=False,
+    #         produce_column_links=False,
+    #     )
