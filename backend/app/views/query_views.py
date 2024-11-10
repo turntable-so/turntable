@@ -6,7 +6,7 @@ from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.response import Response
 
-from app.workflows.query import execute_query
+from app.workflows.query import execute_query, validate_query
 
 
 class QueryPreviewView(APIView):
@@ -57,6 +57,16 @@ class QueryPreviewView(APIView):
         return self._post_process(result)
 
 
+class QueryValidateView(QueryPreviewView):
+    def post(self, request):
+        input = self._preprocess(request)
+        result = validate_query.si(**input).apply_async().get()
+        return self._post_process(result)
+
+    def _post_process(self, result):
+        return JsonResponse(result)
+
+
 class DbtQueryPreviewView(QueryPreviewView):
     def _preprocess(self, request):
         workspace = request.user.current_workspace()
@@ -80,3 +90,14 @@ class DbtQueryPreviewView(QueryPreviewView):
             "resource_id": str(dbt_resource.resource.id),
             "sql": sql,
         }
+
+
+class DbtQueryValidateView(DbtQueryPreviewView, QueryValidateView):
+    def _preprocess(self, request):
+        return DbtQueryPreviewView._preprocess(self, request)
+
+    def post(self, request):
+        return QueryValidateView.post(self, request)
+
+    def _post_process(self, result):
+        return QueryValidateView._post_process(self, result)

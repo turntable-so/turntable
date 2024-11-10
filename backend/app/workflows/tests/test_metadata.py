@@ -70,6 +70,7 @@ def run_test_sync(
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.usefixtures("custom_celery")
+@pytest.mark.xdist_group(name="metadata_sync")
 class TestMetadataSync:
     @pytest.mark.parametrize("use_cache", [True, False])
     def test_metadata_sync_postgres(

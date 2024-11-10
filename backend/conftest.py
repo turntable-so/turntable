@@ -12,7 +12,6 @@ from rest_framework_simplejwt.tokens import AccessToken
 
 from app.utils.test_utils import assert_ingest_output
 from app.workflows.metadata import process_metadata
-from app.workflows.tests.utils import TEST_QUEUE
 from fixtures.local_env import (
     create_local_metabase,
     create_local_postgres,
@@ -24,6 +23,7 @@ from fixtures.local_env import (
 from fixtures.staging_env import group_1, group_2, group_3, group_4, group_5, group_6
 
 MOCK_WORKSPACE_ID = "mock_"
+TEST_QUEUE = "test_queue"
 
 pytest_plugins = ["celery.contrib.pytest"]
 
@@ -245,7 +245,8 @@ def custom_celery_worker(
                 loglevel="info",
                 queues=[test_queue_name],
                 perform_ping_check=False,
-                concurrency=1,
+                pool="threads",
+                concurrency=4,
             ) as worker:
                 yield worker
                 break  # If we get here successfully, exit the retry loop

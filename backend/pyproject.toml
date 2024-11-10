@@ -126,6 +126,8 @@ dev-dependencies = [
     "google-cloud-dataproc>=5.9.3",
     "pytest-django>=4.8.0",
     "pytest-celery>=1.1.3",
+    "pytest-xdist>=3.6.1",
+    "ruff>=0.7.3",
 ]
 
 [tool.vinyl]
