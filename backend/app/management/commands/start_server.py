@@ -26,7 +26,7 @@ class Command(BaseCommand):
             "port": 8000,
         }
 
-        if options["mode"] in ["dev", "dev-internal"]:
+        if options["mode"] in ["dev", "dev-internal", "staging"]:
             uvicorn_args["reload"] = True
             uvicorn_args["reload_excludes"] = ["/code/media/ws/"]
 

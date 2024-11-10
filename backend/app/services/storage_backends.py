@@ -20,6 +20,8 @@ class CustomS3Boto3Storage(S3Boto3Storage):
             "aws_secret_access_key": settings.AWS_S3_SECRET_ACCESS_KEY,
             "endpoint_url": settings.AWS_S3_ENDPOINT_URL,
         }
+        if region := os.getenv("AWS_S3_REGION_NAME"):
+            client_config["region_name"] = region
         if not os.getenv("LOCAL_S3", "false") == "true":
             client_config["config"] = boto3.session.Config(signature_version="s3v4")
         s3_client = boto3.client("s3", **client_config)
