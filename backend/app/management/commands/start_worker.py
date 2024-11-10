@@ -26,7 +26,7 @@ class Command(BaseCommand):
         celery_command = (
             BASE_CELERY_COMMAND + f" --concurrency={options['concurrency']}"
         )
-        if options["mode"] in ["dev", "dev-internal"]:
+        if options["mode"] in ["dev", "dev-internal", "staging"]:
             celery_command = WATCHMEDO_COMMAND + celery_command
 
         subprocess.run(celery_command, shell=True)
