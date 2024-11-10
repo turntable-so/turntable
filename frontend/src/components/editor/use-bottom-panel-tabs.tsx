@@ -6,7 +6,7 @@ type UseBottomPanelTabsProps = {
 };
 
 export const useBottomPanelTabs = ({ branchId }: UseBottomPanelTabsProps) => {
-  return useLocalStorage<"lineage" | "results" | "command">(
+  return useLocalStorage<"lineage" | "results" | "command" | "problems">(
     LocalStorageKeys.bottomPanelTab(branchId),
     "lineage",
   );

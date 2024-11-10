@@ -7,7 +7,7 @@ import {
   useEffect,
   useState,
 } from "react";
-import { useLocalStorage } from "usehooks-ts";
+import { useDebounceValue, useLocalStorage } from "usehooks-ts";
 import {
   type ProjectChanges,
   cloneBranchAndMount,
@@ -93,6 +93,7 @@ type FilesContextType = {
   pullRequestUrl: string | undefined;
   isCloning: boolean;
   discardChanges: (branchId: string) => Promise<void>;
+  debouncedActiveFileContent: string;
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
@@ -136,6 +137,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     LocalStorageKeys.activeFile(branchId),
     openedFiles[0] || null,
   );
+  const [debouncedActiveFileContent, setDebouncedActiveFileContent] = useDebounceValue(activeFile?.content, 350);
   const [searchFileIndex, setSearchFileIndex] = useState<FileNode[]>(
     [],
   );
@@ -395,7 +397,6 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const commitChanges = async (commitMessage: string, filePaths: string[]) => {
-
     const result = await commit(branchId, commitMessage, filePaths);
     fetchChanges(branchId);
     return result
@@ -434,6 +435,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         isCloning,
         discardChanges,
         schema,
+        debouncedActiveFileContent,
       }}
     >
       {children}

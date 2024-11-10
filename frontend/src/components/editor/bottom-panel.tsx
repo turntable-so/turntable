@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { AgGridReact } from "ag-grid-react";
 import {
+  CircleAlertIcon,
   Loader2,
   Network,
   Play,
@@ -26,6 +27,7 @@ import { LineageView } from "../lineage/LineageView";
 import { Button } from "../ui/button";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import CommandPanel from "./command-panel";
+import ProblemsPanel from "./problems-panel/problems-panel";
 
 const SkeletonLoadingTable = () => {
   return (
@@ -122,6 +124,11 @@ export default function BottomPanel({
             <TabsTrigger value="command">
               <TerminalIcon className="h-4 w-4 mr-2" />
               Command
+            </TabsTrigger>
+
+            <TabsTrigger value="problems">
+              <CircleAlertIcon className="h-4 w-4 mr-2" />
+              Problems
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -261,6 +268,7 @@ export default function BottomPanel({
           {activeTab === "command" && (
             <CommandPanel bottomPanelHeight={bottomPanelHeight} />
           )}
+          {activeTab === "problems" && <ProblemsPanel />}
         </div>
       </Panel>
     </Fragment>
