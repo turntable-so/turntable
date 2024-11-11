@@ -28,6 +28,7 @@ import { Button } from "../ui/button";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import CommandPanel from "./command-panel";
 import ProblemsPanel from "./problems-panel/problems-panel";
+import { Badge } from "../ui/badge";
 
 const SkeletonLoadingTable = () => {
   return (
@@ -128,7 +129,12 @@ export default function BottomPanel({
 
             <TabsTrigger value="problems">
               <CircleAlertIcon className="h-4 w-4 mr-2" />
-              Problems {problems.data.length > 0 && `(${problems.data.length})`}
+              Problems
+              {problems.loading ? (
+                <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+              ) : problems.data.length > 0 && (
+                <Badge className="ml-2 font-mono" variant={"outline"}>{problems.data.length}</Badge>
+              )}
             </TabsTrigger>
           </TabsList>
         </Tabs>
