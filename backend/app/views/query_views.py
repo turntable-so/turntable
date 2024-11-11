@@ -77,7 +77,7 @@ class DbtQueryPreviewView(QueryPreviewView):
         use_fast_compile = request.data.get("use_fast_compile", True)
         limit = request.data.get("limit")
         project_id = request.data.get("project_id")
-        dbt_resource = workspace.get_dbt_details()
+        dbt_resource = workspace.get_dbt_dev_details()
 
         try:
             with dbt_resource.dbt_repo_context(
