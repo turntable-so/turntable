@@ -3,6 +3,7 @@ import { Plus, X } from "lucide-react";
 import type { RefObject } from "react";
 import { Button } from "../ui/button";
 import { ScrollArea, ScrollBar } from "../ui/scroll-area";
+import { getIcon } from "./icons";
 
 export default function FileTabs({
   topBarRef,
@@ -35,8 +36,9 @@ export default function FileTabs({
                 onClick={() => {
                   setActiveFile(file);
                 }}
-                className={`px-2 py-1 text-xs font-medium flex items-center space-x-2 group select-none text-muted-foreground ${file.node.path === activeFile?.node.path ? "text-black bg-white border-b-white border border-t-black" : "border border-gray-200"} ${index === 0 ? "border-l-0" : ""}`}
+                className={`px-2 py-1 text-xs font-medium flex items-center space-x-1.5 group select-none text-muted-foreground ${file.node.path === activeFile?.node.path ? "text-black bg-white border-b-white border border-t-black" : "border border-gray-200"} ${index === 0 ? "border-l-0" : ""}`}
               >
+                {getIcon(file.node)}
                 <div>{file.node.name}</div>
                 <div className="relative h-3 w-3 hover:bg-gray-200">
                   {file.isDirty && (

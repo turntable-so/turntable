@@ -72,24 +72,30 @@ class DbtQueryPreviewView(QueryPreviewView):
         workspace = request.user.current_workspace()
         query = request.data.get("query")
         if not query:
-            return Response(
-                {"error": "query required"}, status=status.HTTP_400_BAD_REQUEST
-            )
+            raise ValueError("query required")
+
         use_fast_compile = request.data.get("use_fast_compile", True)
         limit = request.data.get("limit")
         project_id = request.data.get("project_id")
-        dbt_resource = workspace.get_dbt_dev_details()
-        with dbt_resource.dbt_repo_context(project_id) as (dbtproj, project_path, _):
-            sql = None
-            if use_fast_compile:
-                sql = dbtproj.fast_compile(query)
-            if sql is None:
-                sql = dbtproj.preview(query, limit=limit, data=False)
-        return {
-            "workspace_id": str(workspace.id),
-            "resource_id": str(dbt_resource.resource.id),
-            "sql": sql,
-        }
+        dbt_resource = workspace.get_dbt_details()
+
+        try:
+            with dbt_resource.dbt_repo_context(
+                project_id=project_id, isolate=False
+            ) as (dbtproj, project_path, _):
+                sql = None
+                if use_fast_compile:
+                    sql = dbtproj.fast_compile(query)
+                if sql is None:
+                    sql = dbtproj.preview(query, limit=limit, data=False)
+
+            return {
+                "workspace_id": str(workspace.id),
+                "resource_id": str(dbt_resource.resource.id),
+                "sql": sql,
+            }
+        except Exception as e:
+            raise ValueError(e)
 
 
 class DbtQueryValidateView(DbtQueryPreviewView, QueryValidateView):
@@ -97,7 +103,12 @@ class DbtQueryValidateView(DbtQueryPreviewView, QueryValidateView):
         return DbtQueryPreviewView._preprocess(self, request)
 
     def post(self, request):
-        return QueryValidateView.post(self, request)
+        try:
+            input = self._preprocess(request)
+            result = validate_query.si(**input).apply_async().get()
+            return self._post_process(result)
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     def _post_process(self, result):
         return QueryValidateView._post_process(self, result)

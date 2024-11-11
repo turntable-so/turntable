@@ -901,6 +901,8 @@ class DBTProject(object):
         return new_contents
 
     def fast_compile(self, dbt_sql: str):
+        self.mount_manifest()
+
         # fast compile not worth it unless we have a manifest
         if not hasattr(self, "manifest") or self.manifest is None:
             return None
