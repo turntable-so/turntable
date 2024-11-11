@@ -186,9 +186,9 @@ export default function BranchReviewDialog({
                             M
                           </Badge>
                         )}
-                        {change.type === "staged" && (
-                          <Badge variant="outline" className="text-yellow-500">
-                            S
+                        {change.type === "deleted" && (
+                          <Badge variant="outline" className="text-red-500">
+                            D
                           </Badge>
                         )}
                       </div>
