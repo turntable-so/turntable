@@ -248,7 +248,7 @@ class ProjectViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["GET", "POST", "PATCH"])
     def branches(self, request):
         workspace = request.user.current_workspace()
-        current_user = request.user
+
         # assumes a single repo in the workspace for now
         dbt_details = workspace.get_dbt_dev_details()
         if not dbt_details:
