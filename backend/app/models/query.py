@@ -6,9 +6,9 @@ from django.core.files.base import ContentFile
 from django.db import models
 from django.utils import timezone
 
-from app.models.git_connections import Branch
-from app.models.resources import DBTResource, Resource
-from app.models.workspace import Workspace
+from .repository import Branch
+from .resources import DBTResource, Resource
+from .workspace import Workspace
 from app.services.storage_backends import CustomS3Boto3Storage
 from vinyl.lib.utils.query import _QUERY_LIMIT
 
@@ -47,6 +47,8 @@ class Query(models.Model):
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
 
     def run(self, limit: int | None = _QUERY_LIMIT):
+        if not self.sql:
+            return {"status": "error", "message": "SQL is required"}
         connector = self.resource.details.get_connector()
         df, columns = connector.run_query(self.sql, limit=limit)
         query_results = query_to_json(df, columns)
@@ -56,6 +58,17 @@ class Query(models.Model):
         self.refresh_from_db()
         signed_url = self.results.url
         return {"status": "success", "signed_url": signed_url}
+
+    def validate(self):
+        if not self.sql:
+            return {"status": "error", "message": "SQL is required"}
+        connector = self.resource.details.get_connector()
+        validation_output = connector.validate_sql(self.sql)
+        status = "error" if validation_output.errors else "success"
+        return {
+            "status": status,
+            **validation_output.to_dict(),
+        }
 
 
 class DBTQuery(models.Model):

@@ -15,7 +15,7 @@ from django.db import models
 from django_celery_results.models import TaskResult
 from polymorphic.models import PolymorphicModel
 
-from app.models.git_connections import Repository
+from app.models.repository import Branch, Repository
 from app.models.workspace import Workspace
 from app.utils.fields import encrypt
 from vinyl.lib.connect import (
@@ -621,16 +621,15 @@ class DBTCoreDetails(DBTResource):
         super().save(*args, **kwargs)
 
     @contextmanager
-    def dbt_repo_context(self, isolate: bool = False, project_id: str | None = None):
+    def dbt_repo_context(self, isolate: bool = False, branch_id: str | None = None):
         env_vars = self.env_vars or {}
         dialect_str = self.resource.details.subtype
-        if (
-            self.environment == EnvironmentType.PROD
-            and project_id is not None
-            or not project_id != self.repository.main_branch.id
-        ):
-            raise Exception("Cannot run dbt on production resources in main branch")
-        with repo_path(self, isolate=isolate, project_id=project_id) as (
+        if branch_id is not None:
+            branch = Branch.objects.get(id=branch_id)
+            schema = branch.schema
+        else:
+            schema = None
+        with repo_path(self, isolate=isolate, branch_id=branch_id) as (
             project_path,
             git_repo,
         ):
@@ -642,7 +641,8 @@ class DBTCoreDetails(DBTResource):
                 dbt_profiles_path = os.path.join(dbt_profiles_dir, "profiles.yml")
                 with open(dbt_profiles_path, "w") as f:
                     profile_contents = self.resource.details.get_dbt_profile_contents(
-                        self
+                        self,
+                        schema=schema,
                     )
                     adj_profile_contents = {profile_name: profile_contents}
                     yaml.dump(adj_profile_contents, f)
@@ -780,7 +780,9 @@ class DBDetails(ResourceDetails):
     def schema_terminology(self):
         return "schema"
 
-    def get_dbt_profile_contents(self, dbt_core_resource: DBTCoreDetails):
+    def get_dbt_profile_contents(
+        self, dbt_core_resource: DBTCoreDetails, schema: str | None = None
+    ):
         pass
 
     @contextmanager
@@ -901,7 +903,9 @@ class PostgresDetails(DBDetails):
             "sink": get_sync_config(db_path),
         }
 
-    def get_dbt_profile_contents(self, dbt_core_resource: DBTCoreDetails):
+    def get_dbt_profile_contents(
+        self, dbt_core_resource: DBTCoreDetails, schema: str | None = None
+    ):
         if dbt_core_resource.database != self.database:
             raise Exception(
                 f"DBT database {dbt_core_resource.database} does not match Postgres database {self.database}"
@@ -914,7 +918,7 @@ class PostgresDetails(DBDetails):
                     "host": self.host,
                     "port": self.port,
                     "dbname": self.database,
-                    "schema": dbt_core_resource.schema,
+                    "schema": schema or dbt_core_resource.schema,
                     "user": self.username,
                     "password": self.password,
                 }
@@ -970,7 +974,9 @@ class RedshiftDetails(DBDetails):
             "sink": get_sync_config(db_path),
         }
 
-    def get_dbt_profile_contents(self, dbt_core_resource: DBTCoreDetails):
+    def get_dbt_profile_contents(
+        self, dbt_core_resource: DBTCoreDetails, schema: str | None = None
+    ):
         if dbt_core_resource.database != self.database:
             raise Exception(
                 f"DBT database {dbt_core_resource.database} does not match Postgres database {self.database}"
@@ -983,7 +989,7 @@ class RedshiftDetails(DBDetails):
                     "host": self.host,
                     "port": self.port,
                     "dbname": self.database,
-                    "schema": dbt_core_resource.schema,
+                    "schema": schema or dbt_core_resource.schema,
                     "user": self.username,
                     "password": self.password,
                 }
@@ -1041,7 +1047,9 @@ class BigqueryDetails(DBDetails):
             "sink": get_sync_config(db_path),
         }
 
-    def get_dbt_profile_contents(self, dbt_core_resource: DBTCoreDetails):
+    def get_dbt_profile_contents(
+        self, dbt_core_resource: DBTCoreDetails, schema: str | None = None
+    ):
         return {
             "target": "prod",
             "outputs": {
@@ -1049,7 +1057,7 @@ class BigqueryDetails(DBDetails):
                     "type": "bigquery",
                     "method": "service-account-json",
                     "project": dbt_core_resource.database,
-                    "schema": dbt_core_resource.schema,
+                    "schema": schema or dbt_core_resource.schema,
                     "keyfile_json": self.service_account_dict,
                     "threads": dbt_core_resource.threads,
                 }
@@ -1102,7 +1110,9 @@ class SnowflakeDetails(DBDetails):
             config["source"]["config"]["role"] = self.role
         return config
 
-    def get_dbt_profile_contents(self, dbt_core_resource: DBTCoreDetails):
+    def get_dbt_profile_contents(
+        self, dbt_core_resource: DBTCoreDetails, schema: str | None = None
+    ):
         return {
             "target": "prod",
             "outputs": {
@@ -1110,7 +1120,7 @@ class SnowflakeDetails(DBDetails):
                     "type": "snowflake",
                     "account": self.account,
                     "database": dbt_core_resource.database,
-                    "schema": dbt_core_resource.schema,
+                    "schema": schema or dbt_core_resource.schema,
                     "user": self.username,
                     "password": self.password,
                     "threads": dbt_core_resource.threads,
@@ -1160,7 +1170,9 @@ class DatabricksDetails(DBDetails):
             "sink": get_sync_config(db_path),
         }
 
-    def get_dbt_profile_contents(self, dbt_core_resource: DBTCoreDetails):
+    def get_dbt_profile_contents(
+        self, dbt_core_resource: DBTCoreDetails, schema: str | None = None
+    ):
         return {
             "target": "prod",
             "outputs": {
@@ -1170,7 +1182,7 @@ class DatabricksDetails(DBDetails):
                     "host": self.host,
                     "http_path": self.http_path,
                     "catalog": dbt_core_resource.database,
-                    "schema": dbt_core_resource.schema,
+                    "schema": schema or dbt_core_resource.schema,
                 }
             },
         }
@@ -1204,7 +1216,9 @@ class DuckDBDetails(DBDetails):
             "sink": get_sync_config(db_path),
         }
 
-    def get_dbt_profile_contents(self, dbt_core_resource: DBTCoreDetails):
+    def get_dbt_profile_contents(
+        self, dbt_core_resource: DBTCoreDetails, schema: str | None = None
+    ):
         return {
             "target": "dev",
             "outputs": {"dev": {"type": "duckdb", "path": self.path}},

@@ -18,8 +18,7 @@ import {
   Table as TableIcon,
   Terminal as TerminalIcon,
 } from "lucide-react";
-import { useEffect } from "react";
-import { Fragment } from "react";
+import { Fragment, useEffect } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { Panel, PanelResizeHandle } from "react-resizable-panels";
 import useResizeObserver from "use-resize-observer";
@@ -86,18 +85,11 @@ export default function BottomPanel({
   isLoading: boolean;
   queryPreviewError: string | null;
 }) {
-  const [activeTab, setActiveTab] = useBottomPanelTabs();
-
   const { fetchFileBasedLineage, lineageData } = useLineage();
-  const { activeFile } = useFiles();
-
-  useEffect(() => {
-    if (activeFile && activeFile.node.path.endsWith(".sql")) {
-      if (!lineageData[activeFile.node.path]) {
-        fetchFileBasedLineage(activeFile.node.path);
-      }
-    }
-  }, [activeFile, activeTab, fetchFileBasedLineage]);
+  const { activeFile, branchId } = useFiles();
+  const [activeTab, setActiveTab] = useBottomPanelTabs({
+    branchId: branchId || "",
+  });
 
   const { ref: bottomPanelRef, height: bottomPanelHeight } =
     useResizeObserver();
@@ -152,7 +144,15 @@ export default function BottomPanel({
           {activeTab === "lineage" && (
             <Button
               size="sm"
-              onClick={() => fetchFileBasedLineage(activeFile?.node.path || "")}
+              onClick={() =>
+                fetchFileBasedLineage({
+                  filePath: activeFile?.node.path || "",
+                  branchId,
+                  // TODO: we need to get the selected type from the LineageView,
+                  // but right now that would take too much effort to refactor that
+                  lineageType: "all",
+                })
+              }
               disabled={lineageData[activeFile?.node.path || ""]?.isLoading}
               variant="outline"
             >
@@ -237,6 +237,9 @@ export default function BottomPanel({
                             .root_asset
                         }
                         style={{ height: bottomPanelHeight }}
+                        page="editor"
+                        filePath={activeFile?.node.path || ""}
+                        branchId={branchId}
                       />
                     )}
                   {lineageData &&

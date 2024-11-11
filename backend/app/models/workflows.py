@@ -5,7 +5,7 @@ import os
 import time
 import uuid
 
-from celery import current_app
+from celery import current_app, states
 from celery.result import AsyncResult
 from croniter import croniter
 from django.contrib.postgres.fields import ArrayField
@@ -17,12 +17,10 @@ from django_celery_beat.models import ClockedSchedule, CrontabSchedule, Periodic
 from django_celery_results.models import TaskResult
 from polymorphic.models import PolymorphicModel
 
-from app.models.editor import Project
 from app.models.resources import DBTResource, Resource
 from app.models.workspace import Workspace
 from app.workflows.metadata import sync_metadata
 from app.workflows.orchestration import run_dbt_commands
-from app.workflows.tests.utils import TEST_QUEUE
 
 TASK_START_TIMEOUT = 10
 TASK_START_POLLING_INTERVAL = 0.1
@@ -186,9 +184,7 @@ class ScheduledWorkflow(PolymorphicModel):
             next_delays = self.get_upcoming_tasks(10)
             for next_delay in next_delays:
                 task_id = (
-                    self.workflow.si(**self.kwargs)
-                    .apply_async(countdown=next_delay, queue=TEST_QUEUE)
-                    .id
+                    self.workflow.si(**self.kwargs).apply_async(countdown=next_delay).id
                 )
                 WorkflowTaskMap.map.setdefault(self.id, []).append(task_id)
                 WorkflowTaskMap.inverse_map[task_id] = self.id
@@ -235,19 +231,22 @@ class ScheduledWorkflow(PolymorphicModel):
         result = AsyncResult(task_id)
         return result.get(timeout=duration_timeout)
 
-    def most_recent(self, n: int = 1, successes_only: bool = False):
+    def most_recent(self, n: int | None = 1, successes_only: bool = False):
         if not self.aggregation_identifier:
             self.aggregation_identifier = next(self.get_identifiers())
         try:
             tasks = TaskResult.objects.filter(
-                periodic_task_name__in=self.objects.filter(
-                    aggregation_identifier=self.aggregation_identifier
-                )
+                periodic_task_name__in=type(self)
+                .objects.filter(aggregation_identifier=self.aggregation_identifier)
+                .values_list("replacement_identifier", flat=True)
             )
             print(tasks)
             if successes_only:
-                tasks = tasks.filter(status=TaskResult.SUCCESS)
-            return tasks.order_by("-date_done")[:n]
+                tasks = tasks.filter(status=states.SUCCESS)
+            tasks = tasks.order_by("-date_done")
+            if n is not None:
+                tasks = tasks[:n]
+            return list(tasks)
         except TaskResult.DoesNotExist:
             return []
 

@@ -34,3 +34,5 @@ def test_orchestration(custom_celery, local_postgres):
     dbt_resource.refresh_from_db()
     assert dbt_resource.manifest_json
     assert dbt_resource.catalog_json
+    # ensure the workflow is marked completed (used by the UI)
+    assert workflow.most_recent(successes_only=True)[0]

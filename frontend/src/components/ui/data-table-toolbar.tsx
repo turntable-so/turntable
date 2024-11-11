@@ -75,7 +75,8 @@ export function DataTableViewOptions<TData>({
                 checked={column.getIsVisible()}
                 onCheckedChange={(value) => column.toggleVisibility(!!value)}
               >
-                {column.id}
+                {/* TODO: Implement a better way to have "friendly names" for the dropdown options */}
+                {column.id.replaceAll("_", " ")}
               </DropdownMenuCheckboxItem>
             );
           })}

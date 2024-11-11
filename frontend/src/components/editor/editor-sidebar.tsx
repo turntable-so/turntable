@@ -124,6 +124,10 @@ export default function EditorSidebar() {
                 data={files}
                 openByDefault={false}
                 indent={12}
+                // opens the root by default
+                initialOpenState={{
+                  '.': true,
+                }}
                 ref={treeRef}
                 // @ts-ignore
                 onCreate={onCreate}
@@ -139,22 +143,22 @@ export default function EditorSidebar() {
             </div>
           </div>
         </ResizablePanel>
-        <div className="px-2 pb-2">
-          <ResizableHandle className="h-10" withHandle />
-        </div>
-        <ResizablePanel defaultSize={25} minSize={25} maxSize={70}>
-          <div className="h-full w-full">
-            <div className="flex items-center space-x-2 px-2">
-              <div className="px-1 text-black text-sm font-medium">
-                Resources
-              </div>
-            </div>
-            <ActionBar
-              context="EDITOR"
-              onSelectChange={onActionBarSelectChange}
-            />
-          </div>
-        </ResizablePanel>
+        {/*<div className="px-2 pb-2">*/}
+        {/*  <ResizableHandle className="h-10" withHandle />*/}
+        {/*</div>*/}
+        {/*<ResizablePanel defaultSize={25} minSize={25} maxSize={70}>*/}
+        {/*  <div className="h-full w-full">*/}
+        {/*    <div className="flex items-center space-x-2 px-2">*/}
+        {/*      <div className="px-1 text-black text-sm font-medium">*/}
+        {/*        Resources*/}
+        {/*      </div>*/}
+        {/*    </div>*/}
+        {/*    <ActionBar*/}
+        {/*      context="EDITOR"*/}
+        {/*      onSelectChange={onActionBarSelectChange}*/}
+        {/*    />*/}
+        {/*  </div>*/}
+        {/*</ResizablePanel>*/}
       </ResizablePanelGroup>
     </div>
   );

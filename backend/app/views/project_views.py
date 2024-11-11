@@ -2,13 +2,14 @@ import os
 import shutil
 from urllib.parse import unquote
 
+from django.db import transaction
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from api.serializers import AssetSerializer, LineageSerializer
+from api.serializers import AssetSerializer, BranchSerializer, LineageSerializer
 from app.core.dbt import LiveDBTParser
-from app.models.editor import Project
+from app.models.repository import Branch
 
 
 def _build_file_tree(user_id: str, path: str, base_path: str):
@@ -41,17 +42,95 @@ def get_file_tree(user_id: str, path: str, base_path: str):
 
 
 class ProjectViewSet(viewsets.ViewSet):
-    @action(detail=False, methods=["GET", "POST", "PUT", "DELETE"])
-    def files(self, request):
+    def list(self, request):
+        workspace = request.user.current_workspace()
+        dbt_details = workspace.get_dbt_details()
+        if not dbt_details.repository:
+            return Response(
+                {"error": "No repository found for this workspace"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        branches = BranchSerializer(dbt_details.repository.branches, many=True)
+
+        return Response(branches.data, status=status.HTTP_200_OK)
+
+    def retrieve(self, request, pk=None):
+        workspace = request.user.current_workspace()
+        dbt_details = workspace.get_dbt_details()
+        if not dbt_details:
+            return Response(
+                {"error": "No DBT details found for this workspace"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        branch = Branch.objects.get(id=pk)
+        branches = BranchSerializer(branch)
+
+        return Response(branches.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["POST"])
+    def clone(self, request, pk=None):
+        workspace = request.user.current_workspace()
+        dbt_details = workspace.get_dbt_details()
+        if not dbt_details:
+            return Response(
+                {"error": "No DBT details found for this workspace"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        branch = Branch.objects.get(id=pk)
+        if not branch:
+            return Response(
+                {"error": "Branch not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        return Response(branch.clone(), status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=["POST"])
+    def discard(self, request, pk=None):
+        branch = Branch.objects.get(id=pk)
+        if not branch.is_cloned:
+            return Response(
+                {"error": "Branch not cloned"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        branch.discard_changes()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=["POST"])
+    def commit(self, request, pk=None):
+        branch = Branch.objects.get(id=pk)
+        if not branch.is_cloned:
+            return Response(
+                {"error": "Branch not cloned"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        commit_message = request.data.get("commit_message")
+        file_paths = request.data.get("file_paths")
+        if not commit_message or not file_paths:
+            return Response(
+                {"error": "Commit message and file paths are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        result = branch.commit(commit_message, file_paths)
+        return Response(result, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["GET", "POST", "PUT", "DELETE"])
+    def files(self, request, pk=None):
         workspace = request.user.current_workspace()
         user_id = request.user.id
 
         # assumes a single repo in the workspace for now
-        dbt_details = workspace.get_dbt_dev_details()
-        with dbt_details.dbt_repo_context() as (project, project_path, repo):
+        dbt_details = workspace.get_dbt_details()
+        branch = Branch.objects.get(id=pk)
+
+        with branch.repo_context() as (repo, env):
             filepath = request.query_params.get("filepath")
             if filepath and len(filepath) > 0:
-                filepath = os.path.join(project_path, unquote(filepath))
+                filepath = os.path.join(repo.working_tree_dir, unquote(filepath))
                 if request.method == "POST":
                     if os.path.exists(filepath):
                         return Response(
@@ -79,7 +158,9 @@ class ProjectViewSet(viewsets.ViewSet):
 
                 if request.method == "DELETE":
                     if filepath and len(filepath) > 0:
-                        filepath = os.path.join(repo.working_tree_dir, filepath)
+                        filepath = os.path.join(
+                            repo.working_tree_dir, unquote(filepath)
+                        )
                         if os.path.exists(filepath):
                             if os.path.isfile(filepath):
                                 os.remove(filepath)
@@ -97,7 +178,7 @@ class ProjectViewSet(viewsets.ViewSet):
                                 status=status.HTTP_404_NOT_FOUND,
                             )
 
-            root = get_file_tree(user_id, repo.working_tree_dir, project_path)
+            root = get_file_tree(user_id, repo.working_tree_dir, repo.working_tree_dir)
 
         return Response(
             {
@@ -105,17 +186,16 @@ class ProjectViewSet(viewsets.ViewSet):
             }
         )
 
-    @action(detail=False, methods=["GET"])
-    def changes(self, request):
-        workspace = request.user.current_workspace()
-        dbt_details = workspace.get_dbt_dev_details()
-        if not dbt_details:
+    @action(detail=True, methods=["GET"])
+    def changes(self, request, pk=None):
+        branch = Branch.objects.get(id=pk)
+        if not branch.is_cloned:
             return Response(
-                {"error": "No DBT details found for this workspace"},
-                status=status.HTTP_404_NOT_FOUND,
+                {"error": "Branch not cloned"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-        with dbt_details.dbt_repo_context() as (project, _, repo):
+        with branch.repo_context() as (repo, env):
             # Get untracked files
             untracked_files = []
             for filepath in repo.untracked_files:
@@ -168,6 +248,7 @@ class ProjectViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["GET", "POST", "PATCH"])
     def branches(self, request):
         workspace = request.user.current_workspace()
+        current_user = request.user
         # assumes a single repo in the workspace for now
         dbt_details = workspace.get_dbt_dev_details()
         if not dbt_details:
@@ -176,79 +257,87 @@ class ProjectViewSet(viewsets.ViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        with dbt_details.dbt_repo_context() as (project, _, repo):
-            if request.method == "GET":
+        if request.method == "GET":
+            remote_branches = dbt_details.repository.remote_branches
+            main_branch = dbt_details.repository.main_branch.branch_name
+            return Response(
+                {
+                    "main_remote_branch": main_branch,
+                    "remote_branches": remote_branches,
+                }
+            )
+
+        elif request.method == "POST":
+            # Implement POST logic here
+            if not request.data.get("branch_name"):
                 return Response(
-                    {
-                        "active_branch": repo.active_branch.name,
-                        "branches": [branch.name for branch in repo.branches],
-                    }
+                    {"error": "Branch name is required"},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
-            elif request.method == "POST":
-                # Implement POST logic here
-                if not request.data.get("branch_name"):
-                    return Response(
-                        {"error": "Branch name is required"},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-                project = Project.objects.create(
+            if not request.data.get("source_branch"):
+                return Response(
+                    {"error": "Source branch is required"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if not request.data.get("schema"):
+                return Response(
+                    {"error": "Schema is required"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            with transaction.atomic():
+                branch = Branch.objects.create(
+                    name=request.data.get("branch_name"),
                     workspace=workspace,
                     repository=dbt_details.repository,
                     branch_name=request.data.get("branch_name"),
-                    dbtresource=dbt_details,
+                    schema=request.data.get("schema"),
                 )
-                project.create_git_branch()
+                branch.create_git_branch(
+                    source_branch=request.data.get("source_branch"),
+                )
 
+            branch_serializer = BranchSerializer(branch)
+            return Response(branch_serializer.data, status=status.HTTP_201_CREATED)
+
+        elif request.method == "PATCH":
+            if not request.data.get("branch_name"):
                 return Response(
-                    {"branch_name": project.branch_name}, status=status.HTTP_201_CREATED
+                    {"error": "Branch name is required"},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
+            branch = Branch.objects.get(
+                workspace=workspace,
+                repository=dbt_details.repository,
+                branch_name=request.data.get("branch_name"),
+            )
+            with branch.repo_context() as (repo, env):
+                name = branch.switch_to_git_branch(repo, env)
 
-            elif request.method == "PATCH":
-                if not request.data.get("branch_name"):
-                    return Response(
-                        {"error": "Branch name is required"},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-                project = Project.objects.get(
-                    dbtresource=dbt_details,
-                    workspace=workspace,
-                    repository=dbt_details.repository,
-                    branch_name=request.data.get("branch_name"),
-                )
-                with project.repo_context() as (repo, env):
-                    name = project.switch_to_git_branch(repo, env)
-
-                return Response({"branch_name": name})
+            return Response({"branch_name": name})
 
         return Response(status=status.HTTP_501_NOT_IMPLEMENTED)
 
-    @action(detail=False, methods=["GET"])
-    def lineage(self, request):
+    @action(detail=True, methods=["GET"])
+    def lineage(self, request, pk=None):
         workspace = request.user.current_workspace()
-        dbt_details = workspace.get_dbt_dev_details()
+        branch = Branch.objects.get(id=pk)
+
+        dbt_details = workspace.get_dbt_details()
         filepath = unquote(request.query_params.get("filepath"))
         predecessor_depth = int(request.query_params.get("predecessor_depth"))
         successor_depth = int(request.query_params.get("successor_depth"))
         lineage_type = request.query_params.get("lineage_type", "all")
         defer = request.query_params.get("defer", True)
-        branch_name = request.query_params.get("branch_name")
-        if branch_name:
-            try:
-                project_id = Project.objects.get(
-                    workspace=workspace,
-                    repository=dbt_details.repository,
-                    dbtresource=dbt_details,
-                    branch_name=branch_name,
-                ).id
-            except Project.DoesNotExist:
-                return Response(
-                    {"error": f"Branch {branch_name} not found"},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-        else:
-            project_id = None
+        if lineage_type not in ["all", "direct_only"]:
+            return Response(
+                {
+                    "error": "lineage_type query parameter must be either 'all' or 'direct_only'."
+                },
+                status=400,
+            )
 
-        with dbt_details.dbt_transition_context(project_id=project_id) as (
+        with dbt_details.dbt_transition_context(branch_id=branch.id) as (
             transition,
             _,
             repo,
@@ -274,7 +363,7 @@ class ProjectViewSet(viewsets.ViewSet):
                     successor_depth=successor_depth,
                     defer=defer,
                 )
-                lineage, _ = dbtparser.get_lineage()
+                lineage, _ = dbtparser.get_lineage(lineage_type=lineage_type)
                 root_asset = None
                 column_lookup = {}
                 for asset in lineage.assets:

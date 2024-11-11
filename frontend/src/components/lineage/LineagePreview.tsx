@@ -47,6 +47,7 @@ export default function LineagePreview({ nodeId }: { nodeId: string }) {
                 lineage={lineage}
                 rootAsset={rootAsset}
                 style={{ height: "600px" }}
+                page={"lineage"}
               />
             )
           )}

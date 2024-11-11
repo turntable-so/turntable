@@ -6,6 +6,7 @@
 
 # Git worktrees
 media/ws/**
+!media/ws/.gitkeep
 
 # Duckdb files with a few exceptions
 *.duckdb

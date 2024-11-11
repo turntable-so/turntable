@@ -38,7 +38,6 @@ class DBTCommandConsumer(WebsocketConsumer):
 
         if action == "start":
             if self.started:
-                self.send(text_data="TASK_ALREADY_RUNNING")
                 return
             self.started = True
             self.send(text_data="WORKFLOW_STARTED")
@@ -56,29 +55,26 @@ class DBTCommandConsumer(WebsocketConsumer):
             )
 
     def run_workflow(self, data):
-        from app.models.editor import Project
-        from app.workflows.orchestration import stream_dbt_command
+        from app.models.repository import Branch
 
         try:
             command = data.get("command")
-            branch_name = data.get("branch_name")
-            defer = data.get("defer", True)
+            branch_id = data.get("branch_id")
 
             if command is None:
                 raise ValueError("Command is required")
             else:
                 command = shlex.split(command)
 
-            if branch_name:
+            if branch_id:
                 try:
-                    branch = Project.objects.get(
+                    Branch.objects.get(
                         workspace=self.workspace,
                         repository=self.dbt_details.repository,
-                        branch_name=branch_name,
+                        id=branch_id,
                     )
-                    project_id = branch.id
-                except Project.DoesNotExist:
-                    raise ValueError(f"Branch {branch_name} not found")
+                except Branch.DoesNotExist:
+                    raise ValueError(f"Branch id {branch_id} not found")
             else:
                 project_id = None
 

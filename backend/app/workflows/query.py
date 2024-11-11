@@ -1,6 +1,6 @@
 from celery import shared_task
 
-from app.models.editor import DBTQuery, Query
+from app.models.query import DBTQuery, Query
 from vinyl.lib.utils.query import _QUERY_LIMIT
 
 
@@ -9,6 +9,12 @@ def execute_query(workspace_id, resource_id, sql, limit=None):
     limit = _QUERY_LIMIT if limit is None else limit
     query = Query(sql=sql, resource_id=resource_id, workspace_id=workspace_id)
     return query.run(limit=limit)
+
+
+@shared_task
+def validate_query(workspace_id, resource_id, sql):
+    query = Query(sql=sql, resource_id=resource_id, workspace_id=workspace_id)
+    return query.validate()
 
 
 @shared_task

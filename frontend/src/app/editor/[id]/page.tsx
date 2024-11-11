@@ -1,29 +1,23 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
 import Editor, { DiffEditor } from "@monaco-editor/react";
 import type { AgGridReact } from "ag-grid-react";
 import { Check, Loader2, X } from "lucide-react";
+import type React from "react";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import useResizeObserver from "use-resize-observer";
-import { executeQueryPreview, getBranches, infer } from "../actions/actions";
-import {
-  FilesProvider,
-  type OpenedFile,
-  useFiles,
-} from "../contexts/FilesContext";
+import { executeQueryPreview, infer } from "../../actions/actions";
+import { type OpenedFile, useFiles } from "../../contexts/FilesContext";
 import "@/components/ag-grid-custom-theme.css"; // Custom CSS Theme for Data Grid
 import BottomPanel from "@/components/editor/bottom-panel";
-import { CommandPanelProvider } from "@/components/editor/command-panel/command-panel-context";
 import EditorSidebar from "@/components/editor/editor-sidebar";
 import FileTabs from "@/components/editor/file-tabs";
 import { Textarea } from "@/components/ui/textarea";
-import type React from "react";
-import { useLayoutContext } from "../contexts/LayoutContext";
-import { LineageProvider } from "../contexts/LineageContext";
+import { useLayoutContext } from "../../contexts/LayoutContext";
+import { usePathname } from "next/navigation";
+import EditorTopBar from "@/components/editor/editor-top-bar";
 
 const PromptBox = ({
   setPromptBoxOpen,
@@ -188,7 +182,8 @@ function EditorContent({
   setPromptBoxOpen,
   containerWidth,
 }: { setPromptBoxOpen: (open: boolean) => void; containerWidth: number }) {
-  const { activeFile, updateFileContent, saveFile, setActiveFile } = useFiles();
+  const { activeFile, updateFileContent, saveFile, setActiveFile, isCloning } =
+    useFiles();
 
   // Define your custom theme
   const customTheme = {
@@ -261,8 +256,15 @@ function EditorContent({
 
   if (activeFile?.view === "new") {
     return (
-      <div className="h-full w-full flex items-center justify-center">
-        new tab experience coming soon
+      <div className="h-full w-full flex items-center justify-center text-muted-foreground">
+        {isCloning ? (
+          <div className="flex items-center space-x-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <div>Setting up environment</div>
+          </div>
+        ) : (
+          "new tab experience coming soon"
+        )}
       </div>
     );
   }
@@ -369,6 +371,33 @@ function EditorPageContent() {
   const [filesearchQuery, setFilesearchQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [queryPreviewError, setQueryPreviewError] = useState(null);
+  const pathname = usePathname();
+  const {
+    fetchFiles,
+    fetchBranch,
+    branchName,
+    branchId,
+    isCloned,
+    cloneBranch,
+  } = useFiles();
+
+  useEffect(() => {
+    if (branchId && isCloned) {
+      fetchFiles();
+    }
+    if (branchId && !isCloned) {
+      cloneBranch(branchId);
+    }
+  }, [branchId, isCloned]);
+
+  useEffect(() => {
+    if (pathname && pathname.includes("/editor/")) {
+      const id = pathname.split("/").slice(-1)[0];
+      if (id && id.length > 0) {
+        fetchBranch(id);
+      }
+    }
+  }, [pathname]);
 
   useEffect(() => {
     if (treeRef.current) {
@@ -435,15 +464,6 @@ function EditorPageContent() {
     selectedIndex,
   ]);
 
-  useEffect(() => {
-    const fetchBranches = async () => {
-      const { active_branch, branches } = await getBranches();
-      setActiveBranch(active_branch);
-      setBranches(branches);
-    };
-    fetchBranches();
-  }, []);
-
   const runQueryPreview = async () => {
     setIsLoading(true);
     setQueryPreview(null);
@@ -454,12 +474,15 @@ function EditorPageContent() {
       typeof activeFile.content === "string"
     ) {
       const query = activeFile.content;
-      const preview = await executeQueryPreview(query);
-      console.log({ preview })
-      if (preview.error) {
-        setQueryPreviewError(preview.error);
-      } else {
-        setQueryPreview(preview);
+      try {
+        const preview = await executeQueryPreview(query);
+        if (preview.error) {
+          setQueryPreviewError(preview.error);
+        } else {
+          setQueryPreview(preview);
+        }
+      } catch (e) {
+        setQueryPreviewError("Error running query");
       }
     }
     setIsLoading(false);
@@ -501,6 +524,7 @@ function EditorPageContent() {
 
   return (
     <div className="flex flex-col h-screen">
+      <EditorTopBar />
       <PanelGroup direction="horizontal" className="h-fit">
         {sidebarLeftShown && (
           <Panel
@@ -607,18 +631,6 @@ function EditorPageContent() {
           </Fragment>
         )}
       </PanelGroup>
-    </div>
-  );
-
-  return (
-    <div>
-      <div
-        className={cn("flex h-[52px] items-center justify-center", "h-[52px]")}
-      >
-        asd
-      </div>
-      <Separator />
-      <div>asd</div>
     </div>
   );
 }
