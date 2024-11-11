@@ -19,7 +19,7 @@ import {
   Table as TableIcon,
   Terminal as TerminalIcon,
 } from "lucide-react";
-import { Fragment, useEffect } from "react";
+import { Fragment } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { Panel, PanelResizeHandle } from "react-resizable-panels";
 import useResizeObserver from "use-resize-observer";
@@ -36,16 +36,16 @@ const SkeletonLoadingTable = () => {
         <TableHeader>
           <TableRow>
             <TableHead className="w-[100px]">
-              <div className="animate-pulse h-4 bg-gray-200 rounded"></div>
+              <div className="animate-pulse h-4 bg-gray-200 rounded" />
             </TableHead>
             <TableHead>
-              <div className="animate-pulse h-4 bg-gray-200 rounded"></div>
+              <div className="animate-pulse h-4 bg-gray-200 rounded" />
             </TableHead>
             <TableHead>
-              <div className="animate-pulse h-4 bg-gray-200 rounded"></div>
+              <div className="animate-pulse h-4 bg-gray-200 rounded" />
             </TableHead>
             <TableHead className="text-right">
-              <div className="animate-pulse h-4 bg-gray-200 rounded"></div>
+              <div className="animate-pulse h-4 bg-gray-200 rounded" />
             </TableHead>
           </TableRow>
         </TableHeader>
@@ -53,16 +53,16 @@ const SkeletonLoadingTable = () => {
           {Array.from({ length: 20 }).map((_, i) => (
             <TableRow key={i}>
               <TableCell className="">
-                <div className="animate-pulse h-4 bg-gray-200 rounded"></div>
+                <div className="animate-pulse h-4 bg-gray-200 rounded" />
               </TableCell>
               <TableCell className="">
-                <div className="animate-pulse h-4 bg-gray-200 rounded"></div>
+                <div className="animate-pulse h-4 bg-gray-200 rounded" />
               </TableCell>
               <TableCell className="">
-                <div className="animate-pulse h-4 bg-gray-200 rounded"></div>
+                <div className="animate-pulse h-4 bg-gray-200 rounded" />
               </TableCell>
               <TableCell className="">
-                <div className="animate-pulse h-4 bg-gray-200 rounded"></div>
+                <div className="animate-pulse h-4 bg-gray-200 rounded" />
               </TableCell>
             </TableRow>
           ))}
@@ -88,7 +88,7 @@ export default function BottomPanel({
   queryPreviewError: string | null;
 }) {
   const { fetchFileBasedLineage, lineageData } = useLineage();
-  const { activeFile, branchId } = useFiles();
+  const { activeFile, branchId, problems } = useFiles();
   const [activeTab, setActiveTab] = useBottomPanelTabs({
     branchId: branchId || "",
   });
@@ -128,7 +128,7 @@ export default function BottomPanel({
 
             <TabsTrigger value="problems">
               <CircleAlertIcon className="h-4 w-4 mr-2" />
-              Problems
+              Problems {problems.data.length > 0 && `(${problems.data.length})`}
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -268,7 +268,9 @@ export default function BottomPanel({
           {activeTab === "command" && (
             <CommandPanel bottomPanelHeight={bottomPanelHeight} />
           )}
-          {activeTab === "problems" && <ProblemsPanel />}
+          {activeTab === "problems" && (
+            <ProblemsPanel />
+          )}
         </div>
       </Panel>
     </Fragment>

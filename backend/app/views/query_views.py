@@ -79,7 +79,7 @@ class DbtQueryPreviewView(QueryPreviewView):
         limit = request.data.get("limit")
         branch_id = request.data.get("branch_id")
         dbt_resource = workspace.get_dbt_details()
-        with dbt_resource.dbt_repo_context(branch_id) as (dbtproj, project_path, _):
+        with dbt_resource.dbt_repo_context(branch_id=branch_id, isolate=False) as (dbtproj, project_path, _):
             sql = None
             if use_fast_compile:
                 sql = dbtproj.fast_compile(query)
