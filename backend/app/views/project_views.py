@@ -366,9 +366,7 @@ class ProjectViewSet(viewsets.ViewSet):
                     successor_depth=successor_depth,
                     defer=defer,
                 )
-                lineage, _ = dbtparser.get_lineage(
-                    lineage_type=lineage_type
-                )
+                lineage, _ = dbtparser.get_lineage(lineage_type=lineage_type)
                 root_asset = None
                 column_lookup = {}
                 for asset in lineage.assets:
