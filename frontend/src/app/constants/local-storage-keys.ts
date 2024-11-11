@@ -20,4 +20,6 @@ export const LocalStorageKeys = {
     createLocalStorageKey(branchId, "file-tabs"),
   activeFile: (branchId: string): string =>
     createLocalStorageKey(branchId, "active-file-tab-index"),
+  checkForProblemsOnEdit: (branchId: string): string =>
+    createLocalStorageKey(branchId, "check-for-problems-on-edit"),
 };

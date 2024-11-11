@@ -1,13 +1,15 @@
 import { LocalStorageKeys } from "@/app/constants/local-storage-keys";
 import {
+  Dispatch,
   type ReactNode,
+  SetStateAction,
   createContext,
   useCallback,
   useContext,
   useEffect,
   useState,
 } from "react";
-import { useLocalStorage } from "usehooks-ts";
+import { useDebounceValue, useLocalStorage } from "usehooks-ts";
 import {
   type ProjectChanges,
   cloneBranchAndMount,
@@ -20,6 +22,7 @@ import {
   discardBranchChanges,
   getProjectChanges,
   persistFile,
+  validateDbtQuery,
   changeFilePath,
 } from "../actions/actions";
 
@@ -45,6 +48,11 @@ export type OpenedFile = {
     original: string;
     modified: string;
   };
+};
+
+export type ProblemState = {
+  loading: boolean;
+  data: Array<{ message: string }>;
 };
 
 type FilesContextType = {
@@ -90,15 +98,21 @@ type FilesContextType = {
   schema: string | undefined;
   fetchBranch: (branchId: string) => Promise<void>;
   cloneBranch: (branchId: string) => Promise<void>;
-  commitChanges: (commitMessage: string, filePaths: string[]) => Promise<boolean>;
+  commitChanges: (
+    commitMessage: string,
+    filePaths: string[],
+  ) => Promise<boolean>;
   pullRequestUrl: string | undefined;
   isCloning: boolean;
   discardChanges: (branchId: string) => Promise<void>;
+  debouncedActiveFileContent: string;
+  problems: ProblemState;
+  checkForProblemsOnEdit: boolean;
+  setCheckForProblemsOnEdit: Dispatch<SetStateAction<boolean>>;
   renameFile: (filePath: string, newPath: string) => Promise<boolean>;
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
-
 
 const defaultFileTab = {
   node: {
@@ -109,7 +123,7 @@ const defaultFileTab = {
   content: "",
   isDirty: false,
   view: "new",
-}
+};
 
 type Changes = Array<{
   path: string;
@@ -125,28 +139,38 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   const [branchName, setBranchName] = useState("");
   const [readOnly, setReadOnly] = useState<boolean | undefined>(undefined);
   const [isCloned, setIsCloned] = useState<boolean | undefined>(undefined);
-  const [pullRequestUrl, setPullRequestUrl] = useState<string | undefined>(undefined);
+  const [pullRequestUrl, setPullRequestUrl] = useState<string | undefined>(
+    undefined,
+  );
   const [files, setFiles] = useState<FileNode[]>([]);
   const [schema, setSchema] = useState<string | undefined>(undefined);
   const [openedFiles, setOpenedFiles] = useLocalStorage<OpenedFile[]>(
     LocalStorageKeys.fileTabs(branchId),
-    [
-      defaultFileTab as OpenedFile
-    ],
+    [defaultFileTab as OpenedFile],
   );
   const [activeFile, setActiveFile] = useLocalStorage<OpenedFile | null>(
     LocalStorageKeys.activeFile(branchId),
     openedFiles[0] || null,
   );
-  const [searchFileIndex, setSearchFileIndex] = useState<FileNode[]>(
-    [],
+  const [debouncedActiveFileContent] = useDebounceValue<string>(
+    String(activeFile?.content || ""),
+    350,
   );
+  const [problems, setProblems] = useState<ProblemState>({
+    loading: false,
+    data: [],
+  });
+  const [searchFileIndex, setSearchFileIndex] = useState<FileNode[]>([]);
   const [changes, setChanges] = useState<Changes | null>(null);
   const [recentFiles, setRecentFiles] = useLocalStorage<FileNode[]>(
     LocalStorageKeys.recentFiles(branchId),
     [],
   );
   const [isCloning, setIsCloning] = useState(false);
+  const [checkForProblemsOnEdit, setCheckForProblemsOnEdit] = useLocalStorage(
+    LocalStorageKeys.checkForProblemsOnEdit(branchId),
+    false,
+  );
 
   const fetchBranch = async (id: string) => {
     if (id) {
@@ -158,20 +182,20 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
       setPullRequestUrl(branch.pull_request_url);
       setSchema(branch.schema);
     }
-  }
+  };
 
   const discardChanges = async (branchId: string) => {
     await discardBranchChanges(branchId);
     fetchChanges(branchId);
     fetchFiles();
-  }
+  };
 
   const cloneBranch = async (branchId: string) => {
-    setIsCloning(true)
+    setIsCloning(true);
     const branch = await cloneBranchAndMount(branchId);
-    setIsCloning(false)
+    setIsCloning(false);
     setIsCloned(true);
-  }
+  };
 
   const fetchChanges = async (branchId: string) => {
     const result = await getProjectChanges(branchId);
@@ -297,7 +321,9 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
 
   const closeFile = useCallback(
     (file: OpenedFile) => {
-      const fileIndex = openedFiles.findIndex(f => f.node.path === file.node.path);
+      const fileIndex = openedFiles.findIndex(
+        (f) => f.node.path === file.node.path,
+      );
       const newOpenedFiles = openedFiles.filter(
         (f) => f.node.path !== file.node.path,
       );
@@ -305,8 +331,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
       if (newOpenedFiles.length === 0) {
         setOpenedFiles([defaultFileTab as OpenedFile]);
         setActiveFile(defaultFileTab as OpenedFile);
-      }
-      else if (file.node.path === activeFile?.node.path) {
+      } else if (file.node.path === activeFile?.node.path) {
         if (newOpenedFiles.length > 0) {
           setActiveFile(newOpenedFiles[0]);
         } else {
@@ -336,10 +361,10 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         prev.map((f) =>
           f.node.path === path
             ? {
-              ...f,
-              content,
-              node: { ...f.node, type: newNodeType },
-            }
+                ...f,
+                content,
+                node: { ...f.node, type: newNodeType },
+              }
             : f,
         ),
       );
@@ -397,11 +422,51 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const commitChanges = async (commitMessage: string, filePaths: string[]) => {
-
     const result = await commit(branchId, commitMessage, filePaths);
     fetchChanges(branchId);
-    return result
-  }
+    return result;
+  };
+
+  const validateQuery = async (query: string) => {
+    setProblems((prev) => ({ ...prev, loading: true, data: [] }));
+    const data = await validateDbtQuery({
+      query,
+      branch_id: branchId,
+    });
+    if (data.error) {
+      setProblems((prev) => ({
+        ...prev,
+        loading: false,
+        data: [{ message: data.error }],
+      }));
+      return;
+    }
+    
+    const formattedProblems = data.errors.map((error: any) => ({
+      message: error.msg,
+    }));
+    setProblems((prev) => ({
+      ...prev,
+      loading: false,
+      data: formattedProblems,
+    }));
+  };
+
+  useEffect(() => {
+    if (
+      debouncedActiveFileContent &&
+      typeof debouncedActiveFileContent === "string" &&
+      checkForProblemsOnEdit
+    ) {
+      validateQuery(debouncedActiveFileContent);
+    }
+  }, [debouncedActiveFileContent, checkForProblemsOnEdit]);
+
+  useEffect(() => {
+    if (!checkForProblemsOnEdit) {
+      setProblems((prev) => ({ ...prev, data: [] }));
+    }
+  }, [checkForProblemsOnEdit]);
 
   const renameFile = async (filePath: string, newPath: string) => {
     const success = await changeFilePath(branchId, filePath, newPath);
@@ -442,6 +507,10 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         isCloning,
         discardChanges,
         schema,
+        debouncedActiveFileContent,
+        problems,
+        checkForProblemsOnEdit,
+        setCheckForProblemsOnEdit,
         renameFile,
       }}
     >
