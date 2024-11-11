@@ -376,6 +376,7 @@ class DBTCoreDetailsSerializer(ResourceDetailsSerializer):
         fields = [
             "repository",
             "project_path",
+            "target_name",
             "threads",
             "version",
             "database",
@@ -392,6 +393,7 @@ class DBTCoreDetailsSerializer(ResourceDetailsSerializer):
             "project_path", instance.project_path
         )
         instance.threads = validated_data.get("threads")
+        instance.target_name = validated_data.get("target_name")
         instance.version = validated_data.get("version")
         instance.database = validated_data.get("database")
         instance.schema = validated_data.get("schema")

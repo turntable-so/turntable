@@ -118,7 +118,7 @@ class ProjectViewSet(viewsets.ViewSet):
         result = project.commit(commit_message, file_paths)
         return Response(result, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=["GET", "POST", "PUT", "DELETE"])
+    @action(detail=True, methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
     def files(self, request, pk=None):
         workspace = request.user.current_workspace()
         user_id = request.user.id
@@ -154,6 +154,20 @@ class ProjectViewSet(viewsets.ViewSet):
                 if request.method == "PUT":
                     with open(filepath, "w") as file:
                         file.write(request.data.get("contents"))
+                    return Response(status=status.HTTP_204_NO_CONTENT)
+
+                if request.method == "PATCH":
+                    new_path = request.data.get("new_path")
+                    if not new_path:
+                        return Response(
+                            {"error": "New path is required"},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+                    new_path = os.path.join(repo.working_tree_dir, unquote(new_path))
+                    if os.path.isdir(filepath):
+                        shutil.move(filepath, new_path)
+                    else:
+                        os.rename(filepath, new_path)
                     return Response(status=status.HTTP_204_NO_CONTENT)
 
                 if request.method == "DELETE":
@@ -248,7 +262,6 @@ class ProjectViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["GET", "POST", "PATCH"])
     def branches(self, request):
         workspace = request.user.current_workspace()
-
         # assumes a single repo in the workspace for now
         dbt_details = workspace.get_dbt_dev_details()
         if not dbt_details:
@@ -266,7 +279,6 @@ class ProjectViewSet(viewsets.ViewSet):
                     "remote_branches": remote_branches,
                 }
             )
-
         elif request.method == "POST":
             # Implement POST logic here
             if not request.data.get("branch_name"):
