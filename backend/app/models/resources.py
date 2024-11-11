@@ -541,6 +541,7 @@ class DBTCoreDetails(DBTResource):
     database = encrypt(models.CharField(max_length=255, blank=False))
     schema = encrypt(models.CharField(max_length=255, blank=False))
     other_schemas = encrypt(models.JSONField(null=True))
+    target_name = models.CharField(max_length=255, blank=True, null=True)
     threads = models.IntegerField(null=True, default=1)
     version = models.CharField(
         choices=[(v, v.value) for v in DBTVersion], max_length=255, blank=False
@@ -826,10 +827,11 @@ class PostgresDetails(DBDetails):
             raise Exception(
                 f"DBT database {dbt_core_resource.database} does not match Postgres database {self.database}"
             )
+        target_name = dbt_core_resource.target_name or "prod"
         return {
-            "target": "prod",
+            "target": target_name,
             "outputs": {
-                "prod": {
+                target_name: {
                     "type": "postgres",
                     "host": self.host,
                     "port": self.port,
@@ -897,10 +899,11 @@ class RedshiftDetails(DBDetails):
             raise Exception(
                 f"DBT database {dbt_core_resource.database} does not match Postgres database {self.database}"
             )
+        target_name = dbt_core_resource.target_name or "prod"
         return {
-            "target": "prod",
+            "target": target_name,
             "outputs": {
-                "prod": {
+                target_name: {
                     "type": "redshift",
                     "host": self.host,
                     "port": self.port,
@@ -966,10 +969,11 @@ class BigqueryDetails(DBDetails):
     def get_dbt_profile_contents(
         self, dbt_core_resource: DBTCoreDetails, schema: str | None = None
     ):
+        target_name = dbt_core_resource.target_name or "prod"
         return {
-            "target": "prod",
+            "target": target_name,
             "outputs": {
-                "prod": {
+                target_name: {
                     "type": "bigquery",
                     "method": "service-account-json",
                     "project": dbt_core_resource.database,
@@ -1029,10 +1033,11 @@ class SnowflakeDetails(DBDetails):
     def get_dbt_profile_contents(
         self, dbt_core_resource: DBTCoreDetails, schema: str | None = None
     ):
+        target_name = dbt_core_resource.target_name or "prod"
         return {
-            "target": "prod",
+            "target": target_name,
             "outputs": {
-                "prod": {
+                target_name: {
                     "type": "snowflake",
                     "account": self.account,
                     "database": dbt_core_resource.database,
@@ -1089,10 +1094,11 @@ class DatabricksDetails(DBDetails):
     def get_dbt_profile_contents(
         self, dbt_core_resource: DBTCoreDetails, schema: str | None = None
     ):
+        target_name = dbt_core_resource.target_name or "prod"
         return {
-            "target": "prod",
+            "target": target_name,
             "outputs": {
-                "prod": {
+                target_name: {
                     "type": "databricks",
                     "token": self.token,
                     "host": self.host,
@@ -1135,9 +1141,10 @@ class DuckDBDetails(DBDetails):
     def get_dbt_profile_contents(
         self, dbt_core_resource: DBTCoreDetails, schema: str | None = None
     ):
+        target_name = dbt_core_resource.target_name or "prod"
         return {
-            "target": "dev",
-            "outputs": {"dev": {"type": "duckdb", "path": self.path}},
+            "target": target_name,
+            "outputs": {target_name: {"type": "duckdb", "path": self.path}},
         }
 
 
