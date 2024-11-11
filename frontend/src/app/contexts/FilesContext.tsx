@@ -431,7 +431,6 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
       query,
       branch_id: branchId,
     });
-    console.log("data", data);
     if (data.error) {
       setProblems((prev) => ({
         ...prev,
