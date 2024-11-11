@@ -222,7 +222,19 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   const fetchFiles = async () => {
     const { file_index } = await getFileIndex(branchId);
     const fileIndex = file_index.map((file: FileNode) => ({ ...file }));
-    setFiles(fileIndex);
+    const sortFileTree = (files: FileNode[]): FileNode[] => {
+      return files.sort((a, b) => a.name.localeCompare(b.name)).map(file => {
+        if (file.type === "directory" && file.children) {
+          return {
+            ...file,
+            children: sortFileTree(file.children)
+          };
+        }
+        return file;
+      });
+    };
+    const sortedFileIndex = sortFileTree(fileIndex);
+    setFiles(sortedFileIndex);
     const flattenFileIndex = (files: FileNode[]): FileNode[] => {
       return files.reduce((acc: FileNode[], file: FileNode) => {
         if (file.type === "directory" && file.children) {
