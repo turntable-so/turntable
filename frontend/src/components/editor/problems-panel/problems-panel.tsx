@@ -1,20 +1,27 @@
-import { validateDbtQuery } from "@/app/actions/actions";
 import { useFiles } from "@/app/contexts/FilesContext";
 import { Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
 
 export default function ProblemsPanel() {
-  const { problems } = useFiles();
+  const { problems, checkForProblemsOnEdit } = useFiles();
 
-  return problems.loading ? (
+  return checkForProblemsOnEdit ? (
+    problems.loading ? (
+        <div className="flex items-center justify-center h-full">
+          <Loader2 className="animate-spin" />
+        </div>
+      ) : (
+        <div className="p-4">
+          {problems.data.map((problem) => (
+            <div key={problem.message}>{problem.message}</div>
+          ))}
+        </div>
+      )
+  ): (
     <div className="flex items-center justify-center h-full">
-      <Loader2 className="animate-spin" />
-    </div>
-  ) : (
-    <div className="p-4">
-      {problems.data.map((problem) => (
-        <div key={problem.message}>{problem.message}</div>
-      ))}
+      <p>
+        The settings "Check for problems on edit" is disabled. Please enable it
+        to see problems.
+      </p>
     </div>
   );
 }

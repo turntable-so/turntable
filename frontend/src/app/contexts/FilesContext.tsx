@@ -106,6 +106,8 @@ type FilesContextType = {
   discardChanges: (branchId: string) => Promise<void>;
   debouncedActiveFileContent: string;
   problems: ProblemState;
+  checkForProblemsOnEdit: boolean;
+  setCheckForProblemsOnEdit: Dispatch<SetStateAction<boolean>>;
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
@@ -163,6 +165,10 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     [],
   );
   const [isCloning, setIsCloning] = useState(false);
+  const [checkForProblemsOnEdit, setCheckForProblemsOnEdit] = useLocalStorage(
+    LocalStorageKeys.checkForProblemsOnEdit(branchId),
+    false,
+  );
 
   const fetchBranch = async (id: string) => {
     if (id) {
@@ -420,7 +426,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const validateQuery = async (query: string) => {
-    setProblems((prev) => ({ ...prev, loading: true }));
+    setProblems((prev) => ({ ...prev, loading: true, data: [] }));
     const data = await validateDbtQuery({
       query,
       branch_id: branchId,
@@ -428,17 +434,28 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     const formattedProblems = data.errors.map((error: any) => ({
       message: error.msg,
     }));
-    setProblems((prev) => ({ ...prev, loading: false, data: formattedProblems }));
+    setProblems((prev) => ({
+      ...prev,
+      loading: false,
+      data: formattedProblems,
+    }));
   };
 
   useEffect(() => {
     if (
       debouncedActiveFileContent &&
-      typeof debouncedActiveFileContent === "string"
+      typeof debouncedActiveFileContent === "string" &&
+      checkForProblemsOnEdit
     ) {
       validateQuery(debouncedActiveFileContent);
     }
-  }, [debouncedActiveFileContent]);
+  }, [debouncedActiveFileContent, checkForProblemsOnEdit]);
+
+  useEffect(() => {
+    if (!checkForProblemsOnEdit) {
+      setProblems((prev) => ({ ...prev, data: [] }));
+    }
+  }, [checkForProblemsOnEdit]);
 
   return (
     <FilesContext.Provider
@@ -475,6 +492,8 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         schema,
         debouncedActiveFileContent,
         problems,
+        checkForProblemsOnEdit,
+        setCheckForProblemsOnEdit,
       }}
     >
       {children}
