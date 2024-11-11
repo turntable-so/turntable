@@ -3,6 +3,7 @@ from urllib.parse import quote, unquote
 
 import pytest
 
+from app.models.resources import DBTCoreDetails
 from app.utils.test_utils import require_env_vars
 from app.utils.url import build_url
 
@@ -23,15 +24,18 @@ class TestProjectViews:
         return safe_encode("models/marts/customer360/customers.sql")
 
     @pytest.fixture
-    def branch(self, local_postgres):
-        return local_postgres.get_dbt_resource().repository.main_branch
+    def project(self, local_postgres):
+        return DBTCoreDetails.get_development_dbtresource(
+            workspace_id=local_postgres.workspace.id,
+            resource_id=local_postgres.id,
+        ).repository.main_project
 
-    def test_clone(self, client, branch):
-        response = client.post(f"/project/{branch.id}/clone/")
+    def test_clone(self, client, project):
+        response = client.post(f"/project/{project.id}/clone/")
         assert response.status_code == 204
 
-    def test_file_index(self, client, branch):
-        response = client.get(f"/project/{branch.id}/files/")
+    def test_file_index(self, client, project):
+        response = client.get(f"/project/{project.id}/files/")
         response_json = response.json()
 
         assert response.status_code == 200
@@ -64,9 +68,9 @@ class TestProjectViews:
         assert response.status_code == 200
         assert len(projects) > 0
 
-    def test_get_file(self, client, branch, encoded_filepath):
+    def test_get_file(self, client, project, encoded_filepath):
         response = client.get(
-            f"/project/{branch.id}/files/?filepath={encoded_filepath}"
+            f"/project/{project.id}/files/?filepath={encoded_filepath}"
         )
 
         assert response.status_code == 200
@@ -74,46 +78,46 @@ class TestProjectViews:
 
         assert "{{ ref('stg_customers') }}" in data["contents"]
 
-    def test_save_file(self, client, branch, encoded_filepath):
+    def test_save_file(self, client, project, encoded_filepath):
         response = client.put(
-            f"/project/{branch.id}/files/?filepath={encoded_filepath}",
+            f"/project/{project.id}/files/?filepath={encoded_filepath}",
             {"contents": "test"},
         )
 
         assert response.status_code == 204
 
-    def test_create_file(self, client, branch):
+    def test_create_file(self, client, project):
         filepath = "models/marts/customer360/sales.sql"
         encoded_filepath = safe_encode(filepath)
         response = client.post(
-            f"/project/{branch.id}/files/?filepath={encoded_filepath}",
+            f"/project/{project.id}/files/?filepath={encoded_filepath}",
             {"contents": "salesly stuff"},
         )
 
         assert response.status_code == 201
 
-    def test_create_file_with_directory(self, client, branch):
+    def test_create_file_with_directory(self, client, project):
         filepath = "models/marts/sales/funnel.sql"
         encoded_filepath = safe_encode(filepath)
         response = client.post(
-            f"/project/{branch.id}/files/?filepath={encoded_filepath}",
+            f"/project/{project.id}/files/?filepath={encoded_filepath}",
             {"contents": "salesly stuff"},
         )
 
         assert response.status_code == 201
 
-    def test_delete_file(self, client, branch, encoded_filepath):
+    def test_delete_file(self, client, project, encoded_filepath):
         response = client.delete(
-            f"/project/{branch.id}/files/?filepath={encoded_filepath}"
+            f"/project/{project.id}/files/?filepath={encoded_filepath}"
         )
 
         assert response.status_code == 204
 
-    def test_delete_directory(self, client, branch):
+    def test_delete_directory(self, client, project):
         filepath = "models/marts/"
         encoded_filepath = safe_encode(filepath)
         response = client.delete(
-            f"/project/{branch.id}/files/?filepath={encoded_filepath}"
+            f"/project/{project.id}/files/?filepath={encoded_filepath}"
         )
 
         assert response.status_code == 204
@@ -125,11 +129,11 @@ class TestProjectViews:
             "models/staging/stg_products.sql",
         ],
     )
-    def test_get_project_based_lineage_view(self, client, branch, filepath_param):
+    def test_get_project_based_lineage_view(self, client, project, filepath_param):
         encoded_filepath = safe_encode(filepath_param)
         response = client.get(
             build_url(
-                f"/project/{branch.id}/lineage/",
+                f"/project/{project.id}/lineage/",
                 {
                     "filepath": encoded_filepath,
                     "predecessor_depth": 1,
@@ -146,24 +150,26 @@ class TestProjectViews:
 @pytest.mark.usefixtures("local_postgres")
 @require_env_vars("SSHKEY_0_PUBLIC", "SSHKEY_0_PRIVATE")
 class TestFileChanges:
-
     @pytest.fixture
-    def branch(self, local_postgres):
-        return local_postgres.get_dbt_resource().repository.main_branch
+    def project(self, local_postgres):
+        return DBTCoreDetails.get_development_dbtresource(
+            workspace_id=local_postgres.workspace.id,
+            resource_id=local_postgres.id,
+        ).repository.main_project
 
-    def test_file_changes(self, client, branch):
+    def test_file_changes(self, client, project):
         # edit use case
         result = client.put(
-            f"/project/{branch.id}/files/?filepath={safe_encode('models/marts/customer360/customers.sql')}",
+            f"/project/{project.id}/files/?filepath={safe_encode('models/marts/customer360/customers.sql')}",
             {"contents": "modified customers content"},
         )
 
         # new file use case
         client.post(
-            f"/project/{branch.id}/files/?filepath={safe_encode('models/marts/customer360/sales.sql')}",
+            f"/project/{project.id}/files/?filepath={safe_encode('models/marts/customer360/sales.sql')}",
             {"contents": "a bunch of sales sql"},
         )
-        response = client.get(f"/project/{branch.id}/changes/")
+        response = client.get(f"/project/{project.id}/changes/")
         assert response.status_code == 200
         assert len(response.json()["untracked"]) == 1
         assert len(response.json()["modified"]) == 1

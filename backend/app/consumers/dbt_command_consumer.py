@@ -55,26 +55,28 @@ class DBTCommandConsumer(WebsocketConsumer):
             )
 
     def run_workflow(self, data):
-        from app.models.repository import Branch
+        from app.models.project import Project
+        from app.workflows.orchestration import stream_dbt_command
+
+        command = data.get("command")
+        project_id = data.get("project_id")
+        defer = data.get("defer", True)
 
         try:
-            command = data.get("command")
-            branch_id = data.get("branch_id")
-
             if command is None:
                 raise ValueError("Command is required")
             else:
                 command = shlex.split(command)
 
-            if branch_id:
+            if project_id:
                 try:
-                    Branch.objects.get(
+                    Project.objects.get(
                         workspace=self.workspace,
                         repository=self.dbt_details.repository,
-                        id=branch_id,
+                        id=project_id,
                     )
-                except Branch.DoesNotExist:
-                    raise ValueError(f"Branch id {branch_id} not found")
+                except Project.DoesNotExist:
+                    raise ValueError(f"Branch id {project_id} not found")
             else:
                 project_id = None
 

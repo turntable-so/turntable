@@ -87,7 +87,6 @@ def run_dbt_commands(
 
 # can't make this a workflow because celery doesn't support streaming this way, but leaving in while for now.
 def stream_dbt_command(
-    self,
     workspace_id: str,
     resource_id: str,
     project_id: str,
@@ -99,7 +98,9 @@ def stream_dbt_command(
     dbt_resource = DBTResource.objects.get(id=dbt_resource_id)
     if not dbt_resource.development_allowed:
         raise Exception("Cannot stream dbt commands on production resources")
-    job_environment = dbt_resource.get_job_dbtresource()
+    job_environment = dbt_resource.get_job_dbtresource(
+        workspace_id=workspace_id, resource_id=resource_id
+    )
     if job_environment is None or not defer:
         with dbt_resource.dbt_repo_context(project_id=project_id) as (
             dbtproj,

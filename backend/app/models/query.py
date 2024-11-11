@@ -6,27 +6,17 @@ from django.core.files.base import ContentFile
 from django.db import models
 from django.utils import timezone
 
-from .repository import Branch
-from .resources import DBTResource, Resource
-from .workspace import Workspace
 from app.services.storage_backends import CustomS3Boto3Storage
 from vinyl.lib.utils.query import _QUERY_LIMIT
+
+from .project import Project
+from .resources import DBTResource, Resource
+from .workspace import Workspace
 
 
 def query_to_json(df: pd.DataFrame, columns: dict[str, str]) -> str:
     data = df.to_json(orient="records")
     return f'{{"data": {data}, "column_types": {json.dumps(columns)}}}'
-
-
-class Project(Branch):
-    name = models.CharField(max_length=255)
-    dbtresource = models.ForeignKey(
-        DBTResource,
-        on_delete=models.CASCADE,
-    )
-
-    def _code_repo_path(self, isolate: bool = False):
-        return super()._code_repo_path(isolate, self.dbtresource.id)
 
 
 class Query(models.Model):
@@ -43,7 +33,7 @@ class Query(models.Model):
     )
 
     # relationships
-    branch = models.ForeignKey(Branch, on_delete=models.CASCADE, null=True)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, null=True)
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
 
     def run(self, limit: int | None = _QUERY_LIMIT):
@@ -85,7 +75,7 @@ class DBTQuery(models.Model):
     )
 
     # relationships
-    branch = models.ForeignKey(Branch, on_delete=models.CASCADE, null=True)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, null=True)
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
 
     def run(

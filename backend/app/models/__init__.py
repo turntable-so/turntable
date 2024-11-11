@@ -9,8 +9,9 @@ from .metadata import (
     ContainerMembership,
 )
 from .notebook import Block, Notebook
+from .project import Project
 from .query import DBTQuery, Query
-from .repository import Branch, Repository
+from .repository import Repository
 from .resources import (
     BigqueryDetails,
     DatabricksDetails,

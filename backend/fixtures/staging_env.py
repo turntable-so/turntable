@@ -225,7 +225,7 @@ def create_dbt_n(
 
     DBTCoreDetails(
         resource=resource,
-        workspace=workspace,
+        workspace=resource.workspace,
         repository=repository,
         project_path=project_path,
         threads=os.getenv(f"DBT_{n}_THREADS", 6),

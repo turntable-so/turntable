@@ -1,5 +1,4 @@
 from django.contrib.auth.models import Group, User
-from app.models import Branch
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from invitations.utils import get_invitation_model
 from rest_framework import serializers
@@ -22,13 +21,14 @@ from app.models import (
     Repository,
     Resource,
     ResourceDetails,
-    SSHKey,
     SnowflakeDetails,
+    SSHKey,
     TableauDetails,
     User,
     Workspace,
     WorkspaceGroup,
 )
+from app.models.project import Project
 from app.models.resources import MetabaseDetails
 from vinyl.lib.dbt_methods import DBTVersion
 
@@ -433,13 +433,12 @@ class ResourceSerializer(serializers.HyperlinkedModelSerializer):
         return obj.has_dbt
 
 
-class BranchSerializer(serializers.ModelSerializer):
-
+class ProjectSerializer(serializers.ModelSerializer):
     is_cloned = serializers.SerializerMethodField()
     pull_request_url = serializers.SerializerMethodField()
 
     class Meta:
-        model = Branch
+        model = Project
         fields = [
             "id",
             "name",

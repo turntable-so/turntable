@@ -19,7 +19,6 @@ def test_orchestration(custom_celery, local_postgres):
     resource.refresh_from_db()
     workflow = DBTOrchestrator.schedule_now(
         workspace=resource.workspace,
-        resource=resource,
         dbt_resource=dbt_resource,
         commands=["ls", "run"],
         refresh_artifacts=True,
