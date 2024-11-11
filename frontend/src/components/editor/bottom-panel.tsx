@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { AgGridReact } from "ag-grid-react";
 import {
+  CircleAlertIcon,
   Loader2,
   Network,
   Play,
@@ -18,7 +19,7 @@ import {
   Table as TableIcon,
   Terminal as TerminalIcon,
 } from "lucide-react";
-import { Fragment, useEffect } from "react";
+import { Fragment } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { Panel, PanelResizeHandle } from "react-resizable-panels";
 import useResizeObserver from "use-resize-observer";
@@ -26,6 +27,8 @@ import { LineageView } from "../lineage/LineageView";
 import { Button } from "../ui/button";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import CommandPanel from "./command-panel";
+import ProblemsPanel from "./problems-panel/problems-panel";
+import { Badge } from "../ui/badge";
 
 const SkeletonLoadingTable = () => {
   return (
@@ -34,16 +37,16 @@ const SkeletonLoadingTable = () => {
         <TableHeader>
           <TableRow>
             <TableHead className="w-[100px]">
-              <div className="animate-pulse h-4 bg-gray-200 rounded"></div>
+              <div className="animate-pulse h-4 bg-gray-200 rounded" />
             </TableHead>
             <TableHead>
-              <div className="animate-pulse h-4 bg-gray-200 rounded"></div>
+              <div className="animate-pulse h-4 bg-gray-200 rounded" />
             </TableHead>
             <TableHead>
-              <div className="animate-pulse h-4 bg-gray-200 rounded"></div>
+              <div className="animate-pulse h-4 bg-gray-200 rounded" />
             </TableHead>
             <TableHead className="text-right">
-              <div className="animate-pulse h-4 bg-gray-200 rounded"></div>
+              <div className="animate-pulse h-4 bg-gray-200 rounded" />
             </TableHead>
           </TableRow>
         </TableHeader>
@@ -51,16 +54,16 @@ const SkeletonLoadingTable = () => {
           {Array.from({ length: 20 }).map((_, i) => (
             <TableRow key={i}>
               <TableCell className="">
-                <div className="animate-pulse h-4 bg-gray-200 rounded"></div>
+                <div className="animate-pulse h-4 bg-gray-200 rounded" />
               </TableCell>
               <TableCell className="">
-                <div className="animate-pulse h-4 bg-gray-200 rounded"></div>
+                <div className="animate-pulse h-4 bg-gray-200 rounded" />
               </TableCell>
               <TableCell className="">
-                <div className="animate-pulse h-4 bg-gray-200 rounded"></div>
+                <div className="animate-pulse h-4 bg-gray-200 rounded" />
               </TableCell>
               <TableCell className="">
-                <div className="animate-pulse h-4 bg-gray-200 rounded"></div>
+                <div className="animate-pulse h-4 bg-gray-200 rounded" />
               </TableCell>
             </TableRow>
           ))}
@@ -86,18 +89,10 @@ export default function BottomPanel({
   queryPreviewError: string | null;
 }) {
   const { fetchFileBasedLineage, lineageData } = useLineage();
-  const { activeFile, branchId } = useFiles();
+  const { activeFile, branchId, problems } = useFiles();
   const [activeTab, setActiveTab] = useBottomPanelTabs({
     branchId: branchId || "",
   });
-
-  useEffect(() => {
-    if (branchId && activeFile && activeFile.node.path.endsWith(".sql")) {
-      if (!lineageData[activeFile.node.path]) {
-        fetchFileBasedLineage(activeFile.node.path, branchId);
-      }
-    }
-  }, [activeFile, branchId]);
 
   const { ref: bottomPanelRef, height: bottomPanelHeight } =
     useResizeObserver();
@@ -131,6 +126,16 @@ export default function BottomPanel({
               <TerminalIcon className="h-4 w-4 mr-2" />
               Command
             </TabsTrigger>
+
+            <TabsTrigger value="problems">
+              <CircleAlertIcon className="h-4 w-4 mr-2" />
+              Problems
+              {problems.loading ? (
+                <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+              ) : problems.data.length > 0 && (
+                <Badge className="ml-2 font-mono" variant={"outline"}>{problems.data.length}</Badge>
+              )}
+            </TabsTrigger>
           </TabsList>
         </Tabs>
         <div className="mr-2">
@@ -153,7 +158,13 @@ export default function BottomPanel({
             <Button
               size="sm"
               onClick={() =>
-                fetchFileBasedLineage(activeFile?.node.path || "", branchId)
+                fetchFileBasedLineage({
+                  filePath: activeFile?.node.path || "",
+                  branchId,
+                  // TODO: we need to get the selected type from the LineageView,
+                  // but right now that would take too much effort to refactor that
+                  lineageType: "all",
+                })
               }
               disabled={lineageData[activeFile?.node.path || ""]?.isLoading}
               variant="outline"
@@ -239,6 +250,9 @@ export default function BottomPanel({
                             .root_asset
                         }
                         style={{ height: bottomPanelHeight }}
+                        page="editor"
+                        filePath={activeFile?.node.path || ""}
+                        branchId={branchId}
                       />
                     )}
                   {lineageData &&
@@ -259,6 +273,9 @@ export default function BottomPanel({
           )}
           {activeTab === "command" && (
             <CommandPanel bottomPanelHeight={bottomPanelHeight} />
+          )}
+          {activeTab === "problems" && (
+            <ProblemsPanel />
           )}
         </div>
       </Panel>

@@ -25,7 +25,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import BranchReviewDialog from "./branch-review-dialog";
 import { useFiles } from "@/app/contexts/FilesContext";
-import { TURNTABLE_LOCAL_STORAGE_PREFIX } from "@/app/constants/local-storage-keys";
+import { LocalStorageKeys, TURNTABLE_LOCAL_STORAGE_PREFIX } from "@/app/constants/local-storage-keys";
+import { Switch } from "../ui/switch";
+import { useLocalStorage } from "usehooks-ts";
 
 const clearTurntableCache = () => {
   const keysToRemove = [];
@@ -51,9 +53,9 @@ const EditorTopBar = () => {
   } = useLayoutContext();
   const router = useRouter();
   const { user, logout } = useSession();
+  const { branchName, checkForProblemsOnEdit, setCheckForProblemsOnEdit } = useFiles();
   const [branchReviewDialogOpen, setBranchReviewDialogOpen] = useState(false);
 
-  const { branchName } = useFiles();
   return (
     <div
       className={cn(
@@ -169,24 +171,40 @@ const EditorTopBar = () => {
             </Button>
           </PopoverTrigger>
           <PopoverContent side="bottom" align="end">
-            <div className="flex gap-2 items-center">
-              <div>
-                <div className="text-sm font-medium py-1">Clear cache</div>
-                <div className="text-xs text-muted-foreground">
-                  Clears editor browser cache of saved tabs, files, and recent
-                  command runs
+            <div className="flex flex-col gap-4">
+              <div className="flex gap-2 items-center">
+                <div>
+                  <div className="text-sm font-medium py-1">Check for problems on edit</div>
+                  <div className="text-xs text-muted-foreground">
+                    Checks for problems in the query as you type.
+                  </div>
                 </div>
+                <Switch
+                  checked={checkForProblemsOnEdit}
+                  onCheckedChange={(value) =>
+                    setCheckForProblemsOnEdit(value)
+                  }
+                />
               </div>
-              <Button
-                onClick={() => {
-                  clearTurntableCache();
-                  window.location.reload();
-                }}
-                variant="secondary"
-                size="sm"
-              >
-                Clear
-              </Button>
+              <div className="flex gap-2 items-center">
+                <div>
+                  <div className="text-sm font-medium py-1">Clear cache</div>
+                  <div className="text-xs text-muted-foreground">
+                    Clears editor browser cache of saved tabs, files, and recent
+                    command runs
+                  </div>
+                </div>
+                <Button
+                  onClick={() => {
+                    clearTurntableCache();
+                    window.location.reload();
+                  }}
+                  variant="secondary"
+                  size="sm"
+                >
+                  Clear
+                </Button>
+              </div>
             </div>
           </PopoverContent>
         </Popover>

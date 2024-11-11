@@ -5,10 +5,8 @@ from adrf.views import APIView
 from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.response import Response
-from sqlfmt.api import Mode, format_string
-from sqlfmt.exception import SqlfmtError
 
-from app.workflows.query import execute_query
+from app.workflows.query import execute_query, validate_query
 
 
 class QueryPreviewView(APIView):
@@ -59,44 +57,78 @@ class QueryPreviewView(APIView):
         return self._post_process(result)
 
 
+class QueryValidateView(QueryPreviewView):
+    def post(self, request):
+        input = self._preprocess(request)
+        result = validate_query.si(**input).apply_async().get()
+        return self._post_process(result)
+
+    def _post_process(self, result):
+        return JsonResponse(result)
+
+
 class DbtQueryPreviewView(QueryPreviewView):
     def _preprocess(self, request):
         workspace = request.user.current_workspace()
         query = request.data.get("query")
         if not query:
-            return Response(
-                {"error": "query required"}, status=status.HTTP_400_BAD_REQUEST
-            )
+            raise ValueError("query required")
+            
         use_fast_compile = request.data.get("use_fast_compile", True)
         limit = request.data.get("limit")
         branch_id = request.data.get("branch_id")
         dbt_resource = workspace.get_dbt_details()
-        with dbt_resource.dbt_repo_context(branch_id) as (dbtproj, project_path, _):
-            sql = None
-            if use_fast_compile:
-                sql = dbtproj.fast_compile(query)
-            if sql is None:
-                sql = dbtproj.preview(query, limit=limit, data=False)
-        return {
-            "workspace_id": str(workspace.id),
-            "resource_id": str(dbt_resource.resource.id),
-            "sql": sql,
-        }
-
-
-class QueryFormatView(APIView):
-    # Note -- accepts dbt or sql
-    def post(self, request):
-        query = request.data.get("query")
-        if not query:
-            return Response(
-                {"error": "query required"}, status=status.HTTP_400_BAD_REQUEST
-            )
-        mode = Mode()
-
+        
         try:
-            return JsonResponse(
-                {"success": True, "formatted_query": format_string(query, mode)}
+            with dbt_resource.dbt_repo_context(branch_id=branch_id, isolate=False) as (dbtproj, project_path, _):
+                sql = None
+                if use_fast_compile:
+                    sql = dbtproj.fast_compile(query)
+                if sql is None:
+                    sql = dbtproj.preview(query, limit=limit, data=False)
+                
+            return {
+                "workspace_id": str(workspace.id),
+                "resource_id": str(dbt_resource.resource.id),
+                "sql": sql,
+            }
+        except Exception as e:
+            raise ValueError(e)
+
+
+class DbtQueryValidateView(DbtQueryPreviewView, QueryValidateView):
+    def _preprocess(self, request):
+        return DbtQueryPreviewView._preprocess(self, request)
+
+    def post(self, request):
+        try:
+            input = self._preprocess(request)
+            result = validate_query.si(**input).apply_async().get()
+            return self._post_process(result)
+        except ValueError as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
             )
-        except SqlfmtError:
-            return JsonResponse({"success": False})
+
+    def _post_process(self, result):
+        return QueryValidateView._post_process(self, result)
+
+
+class DbtQueryValidateView(DbtQueryPreviewView, QueryValidateView):
+    def _preprocess(self, request):
+        return DbtQueryPreviewView._preprocess(self, request)
+
+    def post(self, request):
+        try:
+            input = self._preprocess(request)
+            result = validate_query.si(**input).apply_async().get()
+            return self._post_process(result)
+        except ValueError as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    def _post_process(self, result):
+        return QueryValidateView._post_process(self, result)

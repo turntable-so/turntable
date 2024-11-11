@@ -121,7 +121,7 @@ class ProjectViewSet(viewsets.ViewSet):
         result = branch.commit(commit_message, file_paths)
         return Response(result, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=["GET", "POST", "PUT", "DELETE"])
+    @action(detail=True, methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
     def files(self, request, pk=None):
         workspace = request.user.current_workspace()
         user_id = request.user.id
@@ -157,6 +157,20 @@ class ProjectViewSet(viewsets.ViewSet):
                 if request.method == "PUT":
                     with open(filepath, "w") as file:
                         file.write(request.data.get("contents"))
+                    return Response(status=status.HTTP_204_NO_CONTENT)
+
+                if request.method == "PATCH":
+                    new_path = request.data.get("new_path")
+                    if not new_path:
+                        return Response(
+                            {"error": "New path is required"},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+                    new_path = os.path.join(repo.working_tree_dir, unquote(new_path))
+                    if os.path.isdir(filepath):
+                        shutil.move(filepath, new_path)
+                    else:
+                        os.rename(filepath, new_path)
                     return Response(status=status.HTTP_204_NO_CONTENT)
 
                 if request.method == "DELETE":
@@ -251,7 +265,6 @@ class ProjectViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["GET", "POST", "PATCH"])
     def branches(self, request):
         workspace = request.user.current_workspace()
-        current_user = request.user
         # assumes a single repo in the workspace for now
         dbt_details = workspace.get_dbt_details()
         if not dbt_details:
@@ -269,7 +282,6 @@ class ProjectViewSet(viewsets.ViewSet):
                     "remote_branches": remote_branches,
                 }
             )
-
         elif request.method == "POST":
             # Implement POST logic here
             if not request.data.get("branch_name"):
@@ -332,6 +344,13 @@ class ProjectViewSet(viewsets.ViewSet):
         successor_depth = int(request.query_params.get("successor_depth"))
         lineage_type = request.query_params.get("lineage_type", "all")
         defer = request.query_params.get("defer", True)
+        if lineage_type not in ["all", "direct_only"]:
+            return Response(
+                {
+                    "error": "lineage_type query parameter must be either 'all' or 'direct_only'."
+                },
+                status=400,
+            )
 
         with dbt_details.dbt_transition_context(branch_id=branch.id) as (
             transition,
@@ -359,7 +378,7 @@ class ProjectViewSet(viewsets.ViewSet):
                     successor_depth=successor_depth,
                     defer=defer,
                 )
-                lineage, _ = dbtparser.get_lineage()
+                lineage, _ = dbtparser.get_lineage(lineage_type=lineage_type)
                 root_asset = None
                 column_lookup = {}
                 for asset in lineage.assets:

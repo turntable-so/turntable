@@ -28,6 +28,7 @@ x-dev-credentials: &dev-credentials
   LOCAL_DB: "true"
   LOCAL_HOST: "true"
   LOCAL_REDIS: "true"
+  LOCAL_S3: "true"
   CLI_MODE: "false"
   ENCRYPTION_KEY: ${ENCRYPTION_KEY}
   SUPERUSER_EMAIL: ${SUPERUSER_EMAIL}

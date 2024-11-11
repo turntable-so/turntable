@@ -1,15 +1,15 @@
 "use client";
-import { usePostHog } from "posthog-js/react";
-import React, { useEffect, useRef, useState } from "react";
-import { ErrorBoundary } from "react-error-boundary";
-import { type Edge, ReactFlowProvider } from "reactflow";
+import React, {useEffect, useRef, useState} from "react";
+import {ErrorBoundary} from "react-error-boundary";
+import {type Edge, ReactFlowProvider} from "reactflow";
 import ColumnLineage from "./ColumnLineage";
 
-import { AlertCircle } from "lucide-react";
+import {AlertCircle} from "lucide-react";
 
-import { getLineage } from "../../app/actions/actions";
-import { useAppContext } from "../../contexts/AppContext";
-import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import {getLineage, getProjectBasedLineage} from "../../app/actions/actions";
+import {useAppContext} from "../../contexts/AppContext";
+import {Alert, AlertDescription, AlertTitle} from "../ui/alert";
+import {useLineage} from "@/app/contexts/LineageContext";
 
 export function ErrorFallback() {
   return (
@@ -132,21 +132,30 @@ export type Asset = {
   name: string;
 };
 
-export function LineageViewProvider({
-  children,
-  startingLineage,
-  rootAsset,
-}: {
+type BaseLineageViewProviderProps = {
   children: React.ReactNode;
   startingLineage: Lineage;
   rootAsset: Asset;
-}) {
+};
+
+type LineagePageProps = BaseLineageViewProviderProps & {
+  page: "lineage";
+};
+
+type EditorPageProps = BaseLineageViewProviderProps & {
+  page: "editor";
+  filePath: string;
+  branchId: string;
+};
+
+type LineageViewProviderProps = LineagePageProps | EditorPageProps;
+
+export function LineageViewProvider(props: LineageViewProviderProps) {
+  const { children, startingLineage, rootAsset, page } = props;
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingColumns, setIsLoadingColumns] = useState(false);
   const [isTableOnly, setIsTableOnly] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [problem, setProblem] = useState(null);
-  const posthog = usePostHog();
   const [lineage, setLineage] = useState<Lineage>(startingLineage);
 
   const [isLineageOptionsPanelOpen, setIsLineageOptionsPanelOpen] =
@@ -156,8 +165,9 @@ export function LineageViewProvider({
     successor_depth: 1,
     lineageType: "all",
   });
+  const { setFilePathToLoading } = useLineage();
 
-  const { isLineageLoading, setIsLineageLoading } = useAppContext();
+  const { setIsLineageLoading } = useAppContext();
 
   const resetSelections = () => {
     setSelectedColumn(null);
@@ -303,14 +313,39 @@ export function LineageViewProvider({
   const setLineageOptionsAndRefetch = async (options: LineageOptions) => {
     setLineageOptions(options);
     setIsLineageLoading(true);
-    const data = await getLineage({
-      nodeId: rootAsset.id,
-      successor_depth: options.successor_depth,
-      predecessor_depth: options.predecessor_depth,
-      lineage_type: options.lineageType,
-    });
-    setIsLineageLoading(false);
-    setLineage(data.lineage);
+
+    if (page === "lineage") {
+      const data = await getLineage({
+        nodeId: rootAsset.id,
+        successor_depth: options.successor_depth,
+        predecessor_depth: options.predecessor_depth,
+        lineage_type: options.lineageType,
+      });
+      setIsLineageLoading(false);
+      setLineage(data.lineage);
+    } else if (page === "editor") {
+      setLineageOptions(options);
+      setIsLineageLoading(true);
+      setFilePathToLoading({
+        loading: true,
+        filePath: props.filePath,
+      });
+
+      const data = await getProjectBasedLineage({
+        branchId: props.branchId,
+        filePath: props.filePath,
+        lineage_type: options.lineageType,
+        successor_depth: options.successor_depth,
+        predecessor_depth: options.predecessor_depth,
+      });
+
+      setIsLineageLoading(false);
+      setLineage(data.lineage);
+      setFilePathToLoading({
+        loading: false,
+        filePath: props.filePath,
+      });
+    }
   };
 
   return (
@@ -368,46 +403,85 @@ type Lineage = {
     target: string;
   };
 };
-export function LineageView({
-  lineage,
-  rootAsset,
-  style,
-}: { lineage: Lineage; rootAsset: Asset; style?: React.CSSProperties }) {
+
+type BaseLineageViewProps = {
+  lineage: Lineage;
+  rootAsset: Asset;
+  style?: React.CSSProperties;
+};
+
+type LineagePageViewProps = BaseLineageViewProps & {
+  page: "lineage";
+};
+
+type EditorLineageViewProps = BaseLineageViewProps & {
+  page: "editor";
+  filePath: string;
+  branchId: string;
+};
+
+type LineageViewProps = LineagePageViewProps | EditorLineageViewProps;
+
+export function LineageView(props: LineageViewProps) {
+  const { lineage, rootAsset, style, page } = props;
   const { setFocusedAsset, setAssetPreview } = useAppContext();
+
+  const LineageContent = () => (
+    <div
+      style={{
+        position: "relative",
+        width: "100%",
+        maxWidth: "100%",
+        height: "100vh",
+        ...style,
+      }}
+    >
+      <ErrorBoundary
+        fallback={
+          <div className="bg-muted flex flex-col h-full text-muted-foreground font-semibold  justify-center  items-center">
+            <div className="max-w-[550px]">
+              <ErrorFallback />
+            </div>
+          </div>
+        }
+      >
+        <ReactFlowProvider>
+          <ColumnLineage />
+        </ReactFlowProvider>
+      </ErrorBoundary>
+    </div>
+  );
 
   useEffect(() => {
     setFocusedAsset(rootAsset);
     setAssetPreview(rootAsset);
   }, [rootAsset, setFocusedAsset, setAssetPreview]);
 
-  return (
-    <LineageViewProvider startingLineage={lineage} rootAsset={rootAsset}>
-      <div
-        style={{
-          position: "relative",
-          width: "100%",
-          maxWidth: "100%",
-          height: "100vh",
-          ...style,
-        }}
+  if (page === "editor") {
+    return (
+      <LineageViewProvider
+        startingLineage={lineage}
+        rootAsset={rootAsset}
+        page="editor"
+        filePath={props.filePath}
+        branchId={props.branchId}
       >
-        {/* {true && (
-                    <div className='rel     ative'>basdsdsg-</div>
-                )} */}
-        <ErrorBoundary
-          fallback={
-            <div className="bg-muted flex flex-col h-full text-muted-foreground font-semibold  justify-center  items-center">
-              <div className="max-w-[550px]">
-                <ErrorFallback />
-              </div>
-            </div>
-          }
-        >
-          <ReactFlowProvider>
-            <ColumnLineage />
-          </ReactFlowProvider>
-        </ErrorBoundary>
-      </div>
-    </LineageViewProvider>
-  );
+        <LineageContent />
+      </LineageViewProvider>
+    );
+  }
+
+  if (page === "lineage") {
+    return (
+      <LineageViewProvider
+        startingLineage={lineage}
+        rootAsset={rootAsset}
+        page="lineage"
+      >
+        <LineageContent />
+      </LineageViewProvider>
+    );
+  }
+
+  throw new Error("Invalid page prop");
 }

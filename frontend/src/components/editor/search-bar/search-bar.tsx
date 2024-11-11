@@ -12,6 +12,7 @@ import type {
 } from "@/components/editor/search-bar/types";
 import { Input } from "@/components/ui/input";
 import { Fragment, useEffect, useRef, useState } from "react";
+import { getIcon } from "../icons";
 
 export default function SearchBar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -79,8 +80,8 @@ export default function SearchBar() {
     .map((section) => {
       const items = searchTerm
         ? section.allItems.filter((item) =>
-            item.display.toLowerCase().includes(searchTerm.toLowerCase()),
-          )
+          item.display.toLowerCase().includes(searchTerm.toLowerCase()),
+        )
         : section.topLevelItems;
 
       return {
@@ -238,11 +239,10 @@ export default function SearchBar() {
                   </div>
                 )}
                 <div
-                  className={`px-4 py-2 cursor-pointer ${
-                    index === selectedIndex
-                      ? "bg-gray-100"
-                      : "hover:bg-gray-100"
-                  }`}
+                  className={`px-4 py-2 cursor-pointer ${index === selectedIndex
+                    ? "bg-gray-100"
+                    : "hover:bg-gray-100"
+                    }`}
                   onMouseDown={() => {
                     setSearchTerm(flatItem.item.display);
                     setIsOpen(false);
@@ -254,13 +254,11 @@ export default function SearchBar() {
                     }
                   }}
                 >
-                  <span className={"text-sm font-medium"}>
+                  <span className={"text-sm font-medium flex gap-2 items-center"}>
                     {flatItem.type === "command" ? "dbt " : null}
+                    {flatItem.type === "file" && getIcon(flatItem.item.value)}
                     {flatItem.item.display}
-                  </span>{" "}
-                  {flatItem.type === "command" ? (
-                    <span className={"text-xs ml-1"}>Click to run</span>
-                  ) : null}
+                  </span>
                 </div>
               </Fragment>
             );

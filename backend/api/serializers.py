@@ -1,5 +1,4 @@
 from django.contrib.auth.models import Group, User
-from app.models import Branch
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from invitations.utils import get_invitation_model
 from rest_framework import serializers
@@ -10,6 +9,7 @@ from app.models import (
     AssetLink,
     BigqueryDetails,
     Block,
+    Branch,
     Column,
     ColumnLink,
     DatabricksDetails,
@@ -22,8 +22,8 @@ from app.models import (
     Repository,
     Resource,
     ResourceDetails,
-    SSHKey,
     SnowflakeDetails,
+    SSHKey,
     TableauDetails,
     User,
     Workspace,
@@ -376,6 +376,7 @@ class DBTCoreDetailsSerializer(ResourceDetailsSerializer):
         fields = [
             "repository",
             "project_path",
+            "target_name",
             "threads",
             "version",
             "database",
@@ -392,6 +393,7 @@ class DBTCoreDetailsSerializer(ResourceDetailsSerializer):
             "project_path", instance.project_path
         )
         instance.threads = validated_data.get("threads")
+        instance.target_name = validated_data.get("target_name")
         instance.version = validated_data.get("version")
         instance.database = validated_data.get("database")
         instance.schema = validated_data.get("schema")
@@ -434,7 +436,6 @@ class ResourceSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class BranchSerializer(serializers.ModelSerializer):
-
     is_cloned = serializers.SerializerMethodField()
     pull_request_url = serializers.SerializerMethodField()
 

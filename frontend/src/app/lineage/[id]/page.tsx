@@ -1,5 +1,5 @@
-import { LineageView } from "../../../components/lineage/LineageView";
-import { getLineage } from "../../actions/actions";
+import {LineageView} from "../../../components/lineage/LineageView";
+import {getLineage} from "../../actions/actions";
 
 export default async function LineagePage({
   params,
@@ -13,11 +13,11 @@ export default async function LineagePage({
   return (
     <div className="w-full h-screen overflow-y-scroll">
       <div>
-        {/* <ErrorBoundary
-                FallbackComponent={() => <div>Something went wrong</div>}
-                onError={e => console.error(e)}> */}
-        <LineageView lineage={lineage} rootAsset={root_asset} />
-        {/* </ErrorBoundary> */}
+        <LineageView
+          lineage={lineage}
+          rootAsset={root_asset}
+          page={"lineage"}
+        />
       </div>
     </div>
   );

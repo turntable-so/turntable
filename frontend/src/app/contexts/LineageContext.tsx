@@ -9,7 +9,16 @@ type LineageContextType = {
       error: string | null;
     };
   };
-  fetchFileBasedLineage: (filePath: string, branchId: string) => Promise<void>;
+  fetchFileBasedLineage: ({
+    filePath,
+    branchId,
+    lineageType,
+  }: {
+    filePath: string;
+    branchId: string;
+    lineageType: "all" | "direct_only";
+  }) => Promise<void>;
+  setFilePathToLoading: ({ loading: boolean, filePath: string }) => void;
 };
 
 export const LineageContext = createContext<LineageContextType | undefined>(
@@ -21,48 +30,69 @@ export const LineageProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   const [lineageData, setLineageData] = useState({});
 
-  const fetchFileBasedLineage = async (
-    filePath: string,
-    branchId: string,
-  ) => {
-    setLineageData({
-      ...lineageData,
+  const fetchFileBasedLineage = async ({
+    filePath,
+    branchId,
+    lineageType,
+  }: {
+    filePath: string;
+    branchId: string;
+    lineageType: "all" | "direct_only";
+  }) => {
+    setLineageData((prev) => ({
+      ...prev,
       [filePath]: {
-        data: null,
+        ...prev[filePath],
         isLoading: true,
         error: null,
       },
-    });
+    }));
     const result = await getProjectBasedLineage({
       filePath,
+      branchId,
+      lineage_type: lineageType,
       successor_depth: 1,
       predecessor_depth: 1,
-      branchId,
     });
     if (result.error) {
-      setLineageData({
-        ...lineageData,
+      setLineageData((prev) => ({
+        ...prev,
         [filePath]: {
           data: null,
           isLoading: false,
           error: result.error,
         },
-      });
+      }));
     } else {
       const { lineage, root_asset } = result;
-      setLineageData({
-        ...lineageData,
+      setLineageData((prev) => ({
+        ...prev,
         [filePath]: {
           data: { lineage, root_asset },
           isLoading: false,
           error: null,
         },
-      });
+      }));
     }
   };
 
+  const setFilePathToLoading = ({
+    loading,
+    filePath,
+  }: { loading: boolean; filePath: string }) => {
+    setLineageData((prev) => ({
+      ...prev,
+      [filePath]: {
+        ...prev[filePath],
+        isLoading: loading,
+      },
+    }));
+  };
+
   return (
-    <LineageContext.Provider value={{ lineageData, fetchFileBasedLineage }}>
+    <LineageContext.Provider
+      value={{ lineageData, fetchFileBasedLineage, setFilePathToLoading }}
+    >
       {children}
     </LineageContext.Provider>
   );

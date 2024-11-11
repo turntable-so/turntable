@@ -532,6 +532,17 @@ export async function persistFile(branchId: string, filePath: string, fileConten
   });
 }
 
+export async function changeFilePath(branchId: string, filePath: string, newPath: string) {
+  const response = await fetcher(`/project/${branchId}/files/?filepath=${filePath}`, {
+    cookies,
+    method: "PATCH",
+    body: {
+      new_path: newPath,
+    },
+  });
+  return response.ok;
+}
+
 export async function createFile(branchId: string, filePath: string, fileContents: string) {
   const response = await fetcher(`/project/${branchId}/files/?filepath=${filePath}`, {
     cookies,
@@ -575,17 +586,19 @@ export async function infer({
 export async function getProjectBasedLineage({
   branchId,
   filePath,
+  lineage_type,
   successor_depth,
   predecessor_depth,
 }: {
   branchId: string;
   filePath: string;
+  lineage_type: "all" | "direct_only";
   successor_depth: number;
   predecessor_depth: number;
 }) {
   const encodedPath = encodeURIComponent(filePath);
   const response = await fetcher(
-    `/project/${branchId}/lineage/?filepath=${encodedPath}&predecessor_depth=${predecessor_depth}&successor_depth=${successor_depth}`,
+    `/project/${branchId}/lineage/?filepath=${encodedPath}&predecessor_depth=${predecessor_depth}&successor_depth=${successor_depth}&lineage_type=${lineage_type}`,
     {
       cookies,
       method: "GET",
@@ -679,4 +692,20 @@ export async function discardBranchChanges(branchId: string) {
     method: "POST",
   });
   return response.ok;
+}
+
+type DbtQueryValidateInput = {
+  query: string;
+  branch_id: string;
+  use_fast_compile?: boolean;
+  limit?: number;
+}
+
+export async function validateDbtQuery(input: DbtQueryValidateInput) {
+  const response = await fetcher('/validate/dbt/', {
+    cookies,
+    method: 'POST',
+    body: input,
+  });
+  return response.json();
 }
