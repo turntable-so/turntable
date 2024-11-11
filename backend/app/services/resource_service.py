@@ -1,5 +1,4 @@
 from django.db import transaction
-from app.models.repository import Repository
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -16,6 +15,7 @@ from api.serializers import (
     TableauDetailsSerializer,
 )
 from app.models import DBTCoreDetails, Resource, Workspace
+from app.models.repository import Repository
 from app.models.resources import (
     BigqueryDetails,
     DatabricksDetails,
@@ -194,6 +194,7 @@ class DBTResourceService(ResourceServiceHelper):
                 repository=repository,
                 project_path=detail_serializer.data.get("project_path"),
                 threads=detail_serializer.data.get("threads"),
+                target_name=detail_serializer.data.get("target_name"),
                 version=detail_serializer.data.get("version"),
                 database=detail_serializer.data.get("database"),
                 schema=detail_serializer.data.get("schema"),

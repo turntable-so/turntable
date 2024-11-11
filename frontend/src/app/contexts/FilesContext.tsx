@@ -23,6 +23,7 @@ import {
   getProjectChanges,
   persistFile,
   validateDbtQuery,
+  changeFilePath,
 } from "../actions/actions";
 
 export const MAX_RECENT_COMMANDS = 5;
@@ -108,6 +109,7 @@ type FilesContextType = {
   problems: ProblemState;
   checkForProblemsOnEdit: boolean;
   setCheckForProblemsOnEdit: Dispatch<SetStateAction<boolean>>;
+  renameFile: (filePath: string, newPath: string) => Promise<boolean>;
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
@@ -466,6 +468,12 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     }
   }, [checkForProblemsOnEdit]);
 
+  const renameFile = async (filePath: string, newPath: string) => {
+    const success = await changeFilePath(branchId, filePath, newPath);
+    fetchFiles();
+    return success
+  }
+
   return (
     <FilesContext.Provider
       value={{
@@ -503,6 +511,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         problems,
         checkForProblemsOnEdit,
         setCheckForProblemsOnEdit,
+        renameFile,
       }}
     >
       {children}

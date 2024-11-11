@@ -532,6 +532,17 @@ export async function persistFile(branchId: string, filePath: string, fileConten
   });
 }
 
+export async function changeFilePath(branchId: string, filePath: string, newPath: string) {
+  const response = await fetcher(`/project/${branchId}/files/?filepath=${filePath}`, {
+    cookies,
+    method: "PATCH",
+    body: {
+      new_path: newPath,
+    },
+  });
+  return response.ok;
+}
+
 export async function createFile(branchId: string, filePath: string, fileContents: string) {
   const response = await fetcher(`/project/${branchId}/files/?filepath=${filePath}`, {
     cookies,

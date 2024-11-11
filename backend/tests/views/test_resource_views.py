@@ -3,7 +3,7 @@ import pytest
 from api.serializers import (
     ResourceSerializer,
 )
-from app.models import Repository, Resource, SSHKey
+from app.models import Resource, SSHKey
 
 
 @pytest.mark.django_db
@@ -184,7 +184,8 @@ class TestResourceViews:
         response = client.post("/resources/", data, format="json")
         assert response.status_code == 201
 
-    def test_create_dbt_resource(self, client, resource_id, workspace):
+    @pytest.mark.parametrize("target_name", ["prod", "dev", None])
+    def test_create_dbt_resource(self, client, resource_id, workspace, target_name):
         ssh_key = SSHKey.generate_deploy_key(workspace)
         response = client.get("/resources/")
         assert response.status_code == 200
@@ -207,6 +208,7 @@ class TestResourceViews:
                 },
                 "project_path": "/",
                 "threads": 1,
+                "target_name": target_name,
                 "version": "1.6",
                 "database": "test",
                 "schema": "test",

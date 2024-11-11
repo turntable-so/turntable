@@ -92,6 +92,19 @@ const DbtCoreConfig = ({
       />
       <FormField
         control={form.control}
+        name="targetName"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Target Name</FormLabel>
+            <FormControl>
+              <Input {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
         name="version"
         render={({ field }) => (
           <FormItem>
@@ -183,6 +196,7 @@ export default function DbtProjectForm({
     schema: z.string().min(1, {
       message: "Schema can't be empty",
     }),
+    targetName: z.string().optional(),
     deployKey: z.string({
       required_error: "Please enter a Deploy Key",
     }),
@@ -234,6 +248,7 @@ export default function DbtProjectForm({
       version: details?.version || "",
       database: details?.database || "",
       schema: details?.schema || "",
+      targetName: details?.target_name || "",
     },
   });
 
@@ -300,6 +315,7 @@ export default function DbtProjectForm({
         },
         project_path: data.subdirectory,
         threads: data.threads,
+        target_name: (data as z.infer<typeof RemoteFormSchema>).targetName,
         version: data.version,
         database: data.database,
         schema: data.schema,
