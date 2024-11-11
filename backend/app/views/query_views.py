@@ -1,10 +1,9 @@
-# File: api/views/execute_query.py
-
-
 from adrf.views import APIView
 from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.response import Response
+from sqlfmt.api import Mode, format_string
+from sqlfmt.exception import SqlfmtError
 
 from app.workflows.query import execute_query, validate_query
 
@@ -115,20 +114,19 @@ class DbtQueryValidateView(DbtQueryPreviewView, QueryValidateView):
         return QueryValidateView._post_process(self, result)
 
 
-class DbtQueryValidateView(DbtQueryPreviewView, QueryValidateView):
-    def _preprocess(self, request):
-        return DbtQueryPreviewView._preprocess(self, request)
-
+class QueryFormatView(APIView):
+    # Note -- accepts dbt or sql
     def post(self, request):
-        try:
-            input = self._preprocess(request)
-            result = validate_query.si(**input).apply_async().get()
-            return self._post_process(result)
-        except ValueError as e:
+        query = request.data.get("query")
+        if not query:
             return Response(
-                {"error": str(e)},
-                status=status.HTTP_400_BAD_REQUEST
+                {"error": "query required"}, status=status.HTTP_400_BAD_REQUEST
             )
+        mode = Mode()
 
-    def _post_process(self, result):
-        return QueryValidateView._post_process(self, result)
+        try:
+            return JsonResponse(
+                {"success": True, "formatted_query": format_string(query, mode)}
+            )
+        except SqlfmtError:
+            return JsonResponse({"success": False})
