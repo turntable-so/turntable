@@ -92,6 +92,20 @@ class TestProjectViews:
 
         assert response.status_code == 201
 
+    def test_change_file_path(self, client, branch):
+        filepath = "models/marts/customer360/orders.sql"
+        encoded_filepath = safe_encode(filepath)
+        response = client.get(
+            f"/project/{branch.id}/files/?filepath={encoded_filepath}"
+        )
+        assert response.status_code == 200
+
+        response = client.patch(
+            f"/project/{branch.id}/files/?filepath={encoded_filepath}",
+            {"new_path": "models/marts/customer360/new_orders.sql"},
+        )
+        assert response.status_code == 204
+
     def test_create_file_with_directory(self, client, branch):
         filepath = "models/marts/sales/funnel.sql"
         encoded_filepath = safe_encode(filepath)
