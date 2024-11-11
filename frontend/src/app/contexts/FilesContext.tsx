@@ -20,6 +20,7 @@ import {
   discardBranchChanges,
   getProjectChanges,
   persistFile,
+  changeFilePath,
 } from "../actions/actions";
 
 export const MAX_RECENT_COMMANDS = 5;
@@ -93,6 +94,7 @@ type FilesContextType = {
   pullRequestUrl: string | undefined;
   isCloning: boolean;
   discardChanges: (branchId: string) => Promise<void>;
+  renameFile: (filePath: string, newPath: string) => Promise<boolean>;
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
@@ -401,6 +403,12 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     return result
   }
 
+  const renameFile = async (filePath: string, newPath: string) => {
+    const success = await changeFilePath(branchId, filePath, newPath);
+    fetchFiles();
+    return success
+  }
+
   return (
     <FilesContext.Provider
       value={{
@@ -434,6 +442,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         isCloning,
         discardChanges,
         schema,
+        renameFile,
       }}
     >
       {children}
