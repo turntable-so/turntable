@@ -542,7 +542,7 @@ class DBTCoreDetails(DBTResource):
     schema = encrypt(models.CharField(max_length=255, blank=False))
     other_schemas = encrypt(models.JSONField(null=True))
     target_name = models.CharField(max_length=255, blank=True, null=True)
-    threads = models.IntegerField(null=True, default=1)
+    threads = models.IntegerField(null=False,default=1)
     version = models.CharField(
         choices=[(v, v.value) for v in DBTVersion], max_length=255, blank=False
     )
@@ -839,6 +839,7 @@ class PostgresDetails(DBDetails):
                     "schema": schema or dbt_core_resource.schema,
                     "user": self.username,
                     "password": self.password,
+                    "threads": dbt_core_resource.threads,
                 }
             },
         }
@@ -911,6 +912,7 @@ class RedshiftDetails(DBDetails):
                     "schema": schema or dbt_core_resource.schema,
                     "user": self.username,
                     "password": self.password,
+                    "threads": dbt_core_resource.threads,
                 }
             },
         }
@@ -918,6 +920,7 @@ class RedshiftDetails(DBDetails):
 
 class BigqueryDetails(DBDetails):
     subtype = models.CharField(max_length=255, default=ResourceSubtype.BIGQUERY)
+    region = models.CharField(max_length=255, null=True)l
     service_account = encrypt(models.JSONField())
 
     @property
@@ -1105,6 +1108,7 @@ class DatabricksDetails(DBDetails):
                     "http_path": self.http_path,
                     "catalog": dbt_core_resource.database,
                     "schema": schema or dbt_core_resource.schema,
+                    "threads": dbt_core_resource.threads,
                 }
             },
         }
