@@ -45,6 +45,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 
 const formSchema = z.object({
   projectName: z.string().min(2, {
@@ -98,7 +99,12 @@ const NewProjectButton = () => {
   }, [projectName, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    const result = await createBranch(values.branchName, values.branchFrom, values.schema);
+    const result = await createBranch({
+      branchName: values.branchName,
+      sourceBranch: values.branchFrom,
+      schema: values.schema,
+      readOnly: values.readOnly,
+    });
     if (result.error) {
       toast.error(result.error);
     } else {
@@ -139,26 +145,50 @@ const NewProjectButton = () => {
               />
               <FormField
                 control={form.control}
-                name="branchName"
+                name="readOnly"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Branch Name</FormLabel>
+                  <FormItem className="">
+                    <div>
+                      <FormLabel>Read Only</FormLabel>
+                    </div>
                     <FormControl>
-                      <Input {...field} disabled className="bg-muted" />
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
                     </FormControl>
-                    <FormDescription>
-                      Created git branch name
-                    </FormDescription>
-                    <FormMessage />
+                    <div className="">
+                      <FormDescription>
+                        If selected, this project wont be editable
+                      </FormDescription>
+                    </div>
                   </FormItem>
                 )}
               />
+              {!form.watch("readOnly") && (
+                <FormField
+                  control={form.control}
+                  name="branchName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Branch Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} disabled className="bg-muted" />
+                      </FormControl>
+                      <FormDescription>
+                        Created git branch name
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
               <FormField
                 control={form.control}
                 name="branchFrom"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Base Git Branch</FormLabel>
+                    <FormLabel>{form.watch("readOnly") ? "Git Branch" : "Base Git Branch"}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -174,8 +204,10 @@ const NewProjectButton = () => {
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      This is the base git branch that the new branch will be
-                      created from
+                      {form.watch("readOnly")
+                        ? "This project will keep in sync with this remote branch"
+                        : "This is the base git branch that the new branch will be created from"
+                      }
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

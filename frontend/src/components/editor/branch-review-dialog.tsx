@@ -17,7 +17,7 @@ import { Checkbox } from "../ui/checkbox";
 import { Switch } from "../ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import { toast } from "sonner";
-import { Loader2, Undo2 } from "lucide-react";
+import { ExternalLink, Loader2, Undo2 } from "lucide-react";
 interface BranchReviewDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -73,7 +73,7 @@ export default function BranchReviewDialog({
   const [commitMessage, setCommitMessage] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { changes, schema, branchId, fetchChanges, commitChanges, pullRequestUrl, branchName, isCloned, discardChanges } = useFiles();
+  const { changes, schema, branchId, fetchChanges, commitChanges, pullRequestUrl, branchName, isCloned, discardChanges, readOnly } = useFiles();
 
   useEffect(() => {
     if (branchId) {
@@ -120,6 +120,7 @@ export default function BranchReviewDialog({
                 <div className="mt-4">
                   <label className="text-sm font-medium">Branch</label>
                   <div className="text-xs text-muted-foreground">
+                    {readOnly && "(Read Only) "}
                     {branchName}
                   </div>
                 </div>
@@ -132,6 +133,7 @@ export default function BranchReviewDialog({
                 <div className="mt-4">
                   <label className="text-sm font-medium">Commit message</label>
                   <textarea
+                    disabled={readOnly}
                     value={commitMessage}
                     onChange={(e) => setCommitMessage(e.target.value)}
                     className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -194,13 +196,18 @@ export default function BranchReviewDialog({
                       </div>
                     ))}
                   </div>
-                </div>
-                <div className="mt-4">
-                  <label className="text-sm font-medium">Create Pull Request</label>
-                  <div>
-                    <a href={pullRequestUrl} target="_blank" rel="noreferrer" className="text-blue-500 text-xs text-medium underline">
-                      {pullRequestUrl}
-                    </a>
+                  <div className="mt-4">
+                    <label className="text-sm font-medium">Create Pull Request</label>
+                    <div>
+                      <Button variant="link" asChild className="text-xs p-0 space-x-1">
+                        <a href={pullRequestUrl} target="_blank" rel="noreferrer">
+                          <div>
+                            Open in Github
+                          </div>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </>
@@ -226,7 +233,7 @@ export default function BranchReviewDialog({
                     Committing
                   </Button>
                 ) : (
-                  <Button disabled={selectedFilePaths.length === 0 || commitMessage.length === 0} onClick={handleSubmit}>Commit</Button>
+                  <Button disabled={readOnly || selectedFilePaths.length === 0 || commitMessage.length === 0} onClick={handleSubmit}>Commit</Button>
                 )}
               </div>
             </div>
@@ -247,6 +254,6 @@ export default function BranchReviewDialog({
           </div>
         </div>
       </DialogContent>
-    </Dialog>
+    </Dialog >
   );
 }
