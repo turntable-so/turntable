@@ -6,9 +6,9 @@ from app.models import Resource
 from app.utils.test_utils import require_env_vars
 from app.workflows.query import execute_dbt_query, execute_query
 
-TEST_QUERY = "select * from mydb.dev.products"
+TEST_QUERY = "select * from mydb.dev.orders"
 
-TEST_DBT_QUERY = "select * from {{ ref('products') }}"
+TEST_DBT_QUERY = "select * from {{ ref('orders') }}"
 
 
 def run_test_query(
