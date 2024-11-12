@@ -30,6 +30,7 @@ def make_signed_url_response(result):
 
 class QueryPreviewInputSerializer(serializers.Serializer):
     query = serializers.CharField(required=True)
+    limit = serializers.IntegerField(required=False, default=1000)
 
 
 class QueryPreviewView(APIView):
@@ -45,6 +46,7 @@ class QueryPreviewView(APIView):
                 workspace_id=str(workspace.id),
                 resource_id=str(dbt_resource.resource.id),
                 sql=serializer.validated_data.get("query"),
+                limit=serializer.validated_data.get("limit"),
             )
             .apply_async()
             .get()
@@ -103,7 +105,6 @@ class DbtQueryPreviewView(APIView):
             if sql is None:
                 sql = dbtproj.preview(
                     serializer.validated_data.get("query"),
-                    limit=serializer.validated_data.get("limit"),
                     data=False,
                 )
             result = (
@@ -111,6 +112,7 @@ class DbtQueryPreviewView(APIView):
                     workspace_id=str(workspace.id),
                     resource_id=str(dbt_resource.resource.id),
                     sql=sql,
+                    limit=serializer.validated_data.get("limit"),
                 )
                 .apply_async()
                 .get()
