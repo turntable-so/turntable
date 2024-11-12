@@ -489,9 +489,9 @@ function EditorPageContent() {
       activeFile.content &&
       typeof activeFile.content === "string"
     ) {
-      const query = activeFile.content;
+      const dbtSql = activeFile.content;
       try {
-        const preview = await executeQueryPreview(query);
+        const preview = await executeQueryPreview({ dbtSql, branchId });
         if (preview.error) {
           setQueryPreviewError(preview.error);
         } else {
