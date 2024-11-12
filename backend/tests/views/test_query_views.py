@@ -3,10 +3,9 @@ import requests
 from django.conf import settings
 
 from app.utils.test_utils import require_env_vars
-from app.utils.url import build_url
 
 
-def _validate_query_test(response):
+def _validate_query_test(response, limit):
     assert response.status_code == 201
     data = response.json()
     url = data["signed_url"]
@@ -16,7 +15,10 @@ def _validate_query_test(response):
     url = url.replace(settings.AWS_S3_PUBLIC_URL, settings.AWS_S3_ENDPOINT_URL)
     response = requests.get(url)
     assert response.status_code == 200
-    assert len(response.json()["data"]) >= 100
+    data = response.json()["data"]
+    assert len(data) >= 100
+    if limit is not None:
+        assert len(data) <= limit
 
 
 @pytest.mark.django_db(transaction=True)
@@ -29,14 +31,19 @@ class TestQueryViews:
         resource,
         endpoint="/query/sql/",
         query="select * from mydb.dbt_sl_test.customers",
+        limit=None,
     ):
         user.active_workspace_id = resource.workspace.id
         user.save()
-        response = client.post(endpoint, {"query": query})
-        _validate_query_test(response)
+        data = {"query": query}
+        if limit is not None:
+            data["limit"] = limit
+        response = client.post(endpoint, data)
+        _validate_query_test(response, limit)
 
-    def test_sql_query_postgres(self, client, user, local_postgres):
-        self._test(client, user, local_postgres)
+    @pytest.mark.parametrize("limit", [None, 100])
+    def test_sql_query_postgres(self, client, user, local_postgres, limit):
+        self._test(client, user, local_postgres, limit=limit)
 
     @require_env_vars("REDSHIFT_0_WORKSPACE_ID")
     def test_sql_query_redshift(self, client, user, remote_redshift):
@@ -68,18 +75,24 @@ class TestDBTQueryViews:
         resource,
         endpoint="/query/dbt/",
         query="select * from {{ ref('customers') }}",
+        limit=None,
     ):
         user.active_workspace_id = resource.workspace.id
         user.save()
         branch_id = resource.dbtresource_set.first().repository.main_branch.id
+        data = {
+            "query": query,
+            "branch_id": branch_id,
+            "use_fast_compile": True,
+        }
+        if limit is not None:
+            data["limit"] = limit
+        response = client.post(endpoint, data)
+        _validate_query_test(response, limit)
 
-        response = client.post(
-            endpoint, {"query": query, "branch_id": branch_id, "use_fast_compile": True}
-        )
-        _validate_query_test(response)
-
-    def test_dbt_query_postgres(self, client, user, local_postgres):
-        self._test(client, user, local_postgres)
+    @pytest.mark.parametrize("limit", [None, 100])
+    def test_dbt_query_postgres(self, client, user, local_postgres, limit):
+        self._test(client, user, local_postgres, limit=limit)
 
     @require_env_vars("REDSHIFT_0_WORKSPACE_ID")
     def test_dbt_query_redshift(self, client, user, remote_redshift):

@@ -1,7 +1,6 @@
 from adrf.views import APIView
 from django.http import JsonResponse
-from rest_framework import serializers
-from rest_framework import status
+from rest_framework import serializers, status
 from rest_framework.response import Response
 from sqlfmt.api import Mode, format_string
 from sqlfmt.exception import SqlfmtError
@@ -31,10 +30,10 @@ def make_signed_url_response(result):
 
 class QueryPreviewInputSerializer(serializers.Serializer):
     query = serializers.CharField(required=True)
+    limit = serializers.IntegerField(required=False, default=1000)
 
 
 class QueryPreviewView(APIView):
-
     def post(self, request):
         workspace = request.user.current_workspace()
         dbt_resource = workspace.get_dbt_details()
@@ -47,6 +46,7 @@ class QueryPreviewView(APIView):
                 workspace_id=str(workspace.id),
                 resource_id=str(dbt_resource.resource.id),
                 sql=serializer.validated_data.get("query"),
+                limit=serializer.validated_data.get("limit"),
             )
             .apply_async()
             .get()
@@ -105,7 +105,6 @@ class DbtQueryPreviewView(APIView):
             if sql is None:
                 sql = dbtproj.preview(
                     serializer.validated_data.get("query"),
-                    limit=serializer.validated_data.get("limit"),
                     data=False,
                 )
             result = (
@@ -113,6 +112,7 @@ class DbtQueryPreviewView(APIView):
                     workspace_id=str(workspace.id),
                     resource_id=str(dbt_resource.resource.id),
                     sql=sql,
+                    limit=serializer.validated_data.get("limit"),
                 )
                 .apply_async()
                 .get()
@@ -128,7 +128,6 @@ class DbtQueryValidateInputSerializer(serializers.Serializer):
 
 
 class DbtQueryValidateView(APIView):
-
     def post(self, request):
         workspace = request.user.current_workspace()
         dbt_resource = workspace.get_dbt_details()
