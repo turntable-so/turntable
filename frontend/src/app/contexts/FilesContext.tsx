@@ -134,7 +134,7 @@ type Changes = Array<{
   path: string;
   before: string;
   after: string;
-  type: "untracked" | "modified" | "staged";
+  type: "untracked" | "modified" | "deleted";
 }>;
 
 export const FilesProvider: React.FC<{ children: ReactNode }> = ({
@@ -224,9 +224,9 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         })),
       )
       .concat(
-        result.staged.map((change) => ({
+        result.deleted.map((change) => ({
           ...change,
-          type: "staged",
+          type: "deleted",
         })),
       );
     setChanges(flattenedChanges as Changes);
@@ -388,10 +388,10 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         prev.map((f) =>
           f.node.path === path
             ? {
-                ...f,
-                content,
-                node: { ...f.node, type: newNodeType },
-              }
+              ...f,
+              content,
+              node: { ...f.node, type: newNodeType },
+            }
             : f,
         ),
       );

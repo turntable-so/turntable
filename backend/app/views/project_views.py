@@ -233,37 +233,30 @@ class ProjectViewSet(viewsets.ViewSet):
 
             # Get tracked modified files
             changed_files = []
+            deleted_files = []
             for item in repo.index.diff(None):
-                with open(os.path.join(repo.working_dir, item.a_path), "r") as file:
-                    after_content = file.read()
-                before_content = repo.git.show(f"HEAD:{item.a_path}")
-                changed_files.append(
-                    {
-                        "path": item.a_path,
-                        "before": before_content,
-                        "after": after_content,
-                    }
-                )
-
-            # Get staged files
-            staged_files = []
-            for item in repo.index.diff("HEAD"):
-                with open(os.path.join(repo.working_dir, item.a_path), "r") as file:
-                    after_content = file.read()
-                before_content = repo.git.show(f"HEAD:{item.a_path}")
-                staged_files.append(
-                    {
-                        "path": item.a_path,
-                        "before": before_content,
-                        "after": after_content,
-                    }
-                )
+                file_data = {
+                    "path": item.a_path,
+                    "before": "",
+                    "after": "",
+                }
+                # Handle deleted files
+                if item.deleted_file:
+                    file_data["before"] = repo.git.show(f"HEAD:{item.a_path}")
+                    file_data["after"] = ""
+                    deleted_files.append(file_data)
+                # Handle renamed files
+                else:
+                    file_data["before"] = repo.git.show(f"HEAD:{item.a_path}")
+                    with open(os.path.join(repo.working_dir, item.a_path), "r") as file:
+                        file_data["after"] = file.read()
+                        changed_files.append(file_data)
 
             return Response(
                 {
                     "untracked": untracked_files,
                     "modified": changed_files,
-                    "staged": staged_files,
+                    "deleted": deleted_files,
                 }
             )
 

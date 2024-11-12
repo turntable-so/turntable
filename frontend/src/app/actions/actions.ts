@@ -681,7 +681,7 @@ export type ProjectChanges = {
     before: string;
     after: string;
   }>;
-  staged: Array<{
+  deleted: Array<{
     path: string;
     before: string;
     after: string;
