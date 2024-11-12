@@ -24,6 +24,12 @@
       "suspicious": {
         "noConfusingVoidType": "off"
       },
+      "a11y": {
+        "useKeyWithClickEvents": "off"
+      },
+      "complexity": {
+        "noForEach": "off"
+      },
       "correctness": {
         "useExhaustiveDependencies": {
           "level": "off",

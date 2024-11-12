@@ -269,6 +269,22 @@ function EditorContent({
     );
   }
 
+  const getLanguage = (activeFile: OpenedFile) => {
+    if (activeFile.node?.path.endsWith(".sql")) {
+      return "sql";
+    }
+    if (activeFile.node?.path.endsWith(".yml") || activeFile.node?.path.endsWith(".yaml")) {
+      return "yaml";
+    }
+    if (activeFile.node?.path.endsWith(".md")) {
+      return "markdown";
+    }
+    if (activeFile.node?.path.endsWith(".json")) {
+      return "javascript";
+    }
+    return "sql";
+  };
+
   return (
     <Editor
       key={activeFile?.node.path}
@@ -282,7 +298,7 @@ function EditorContent({
           });
         }
       }}
-      language="sql"
+      language={activeFile ? getLanguage(activeFile) : "sql"}
       options={{
         minimap: { enabled: false },
         scrollbar: {

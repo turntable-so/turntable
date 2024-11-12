@@ -14,6 +14,8 @@ export const LocalStorageKeys = {
     createLocalStorageKey(branchId, "bottom-panel-tab"),
   commandHistory: (branchId: string): string =>
     createLocalStorageKey(branchId, "command-history"),
+  recentCommands: (branchId: string): string =>
+    createLocalStorageKey(branchId, "recent-commands"),
   recentFiles: (branchId: string): string =>
     createLocalStorageKey(branchId, "recent-files"),
   fileTabs: (branchId: string): string =>
@@ -22,4 +24,6 @@ export const LocalStorageKeys = {
     createLocalStorageKey(branchId, "active-file-tab-index"),
   checkForProblemsOnEdit: (branchId: string): string =>
     createLocalStorageKey(branchId, "check-for-problems-on-edit"),
+  formatOnSave: (branchId: string): string =>
+    createLocalStorageKey(branchId, "format-on-save"),
 };

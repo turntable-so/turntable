@@ -3,6 +3,7 @@ import shutil
 from urllib.parse import unquote
 
 from django.db import transaction
+from django.http import JsonResponse
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -10,10 +11,12 @@ from rest_framework.response import Response
 from api.serializers import AssetSerializer, LineageSerializer, ProjectSerializer
 from app.core.dbt import LiveDBTParser
 from app.models.project import Project
+from app.views.query_views import format_query
 
 
 def _build_file_tree(user_id: str, path: str, base_path: str):
     tree = []
+
     for entry in os.scandir(path):
         if not entry.name.startswith("."):  # Exclude hidden files and directories
             relative_path = os.path.relpath(entry.path, base_path)
@@ -152,9 +155,14 @@ class ProjectViewSet(viewsets.ViewSet):
                     return Response({"contents": file_content})
 
                 if request.method == "PUT":
+                    format = request.data.get("format")
+                    contents = request.data.get("contents")
+                    if format and filepath.endswith(".sql"):
+                        contents = format_query(contents)
+
                     with open(filepath, "w") as file:
-                        file.write(request.data.get("contents"))
-                    return Response(status=status.HTTP_204_NO_CONTENT)
+                        file.write(contents)
+                    return JsonResponse({"content": contents})
 
                 if request.method == "PATCH":
                     new_path = request.data.get("new_path")
@@ -205,7 +213,7 @@ class ProjectViewSet(viewsets.ViewSet):
         project = Project.objects.get(id=pk)
         if not project.is_cloned:
             return Response(
-                {"error": "Branch not cloned"},
+                {"error": "Project not cloned"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -225,37 +233,30 @@ class ProjectViewSet(viewsets.ViewSet):
 
             # Get tracked modified files
             changed_files = []
+            deleted_files = []
             for item in repo.index.diff(None):
-                with open(os.path.join(repo.working_dir, item.a_path), "r") as file:
-                    after_content = file.read()
-                before_content = repo.git.show(f"HEAD:{item.a_path}")
-                changed_files.append(
-                    {
-                        "path": item.a_path,
-                        "before": before_content,
-                        "after": after_content,
-                    }
-                )
-
-            # Get staged files
-            staged_files = []
-            for item in repo.index.diff("HEAD"):
-                with open(os.path.join(repo.working_dir, item.a_path), "r") as file:
-                    after_content = file.read()
-                before_content = repo.git.show(f"HEAD:{item.a_path}")
-                staged_files.append(
-                    {
-                        "path": item.a_path,
-                        "before": before_content,
-                        "after": after_content,
-                    }
-                )
+                file_data = {
+                    "path": item.a_path,
+                    "before": "",
+                    "after": "",
+                }
+                # Handle deleted files
+                if item.deleted_file:
+                    file_data["before"] = repo.git.show(f"HEAD:{item.a_path}")
+                    file_data["after"] = ""
+                    deleted_files.append(file_data)
+                # Handle renamed files
+                else:
+                    file_data["before"] = repo.git.show(f"HEAD:{item.a_path}")
+                    with open(os.path.join(repo.working_dir, item.a_path), "r") as file:
+                        file_data["after"] = file.read()
+                        changed_files.append(file_data)
 
             return Response(
                 {
                     "untracked": untracked_files,
                     "modified": changed_files,
-                    "staged": staged_files,
+                    "deleted": deleted_files,
                 }
             )
 

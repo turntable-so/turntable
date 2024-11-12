@@ -39,6 +39,7 @@ const FormSchema = z.object({
   name: z.string().min(2, {
     message: "Name can't be empty",
   }),
+  location: z.string().optional(),
   service_account: z.string().min(1, {
     message: "Service account can't be empty",
   }),
@@ -114,6 +115,7 @@ export default function BigqueryForm({
     defaultValues: {
       name: resource?.name || "",
       service_account: details?.service_account || "",
+      location: details?.location || "",
       should_filter_schema: details?.schema_include?.length > 0 || false,
       include_schemas: details?.schema_include?.join("\n") || "",
     },
@@ -139,6 +141,7 @@ export default function BigqueryForm({
       config: {
         service_account: data.service_account,
         ...(schemas ? { schema_include: schemas } : {}),
+        ...(data.location ? { location: data.location } : {}),
       },
     };
     const res = isUpdate
@@ -171,6 +174,15 @@ export default function BigqueryForm({
             render={({ field }) => (
               <NewConnectionCard variant="default" title="Connection name">
                 <Input placeholder="my awesome connection" {...field} />
+              </NewConnectionCard>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="location"
+            render={({ field }) => (
+              <NewConnectionCard variant="default" title="Location">
+                <Input placeholder="US" {...field} />
               </NewConnectionCard>
             )}
           />

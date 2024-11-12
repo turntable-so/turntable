@@ -84,7 +84,7 @@ class TestProjectViews:
             {"contents": "test"},
         )
 
-        assert response.status_code == 204
+        assert response.status_code == 200
 
     def test_create_file(self, client, project):
         filepath = "models/marts/customer360/sales.sql"
