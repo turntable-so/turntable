@@ -519,14 +519,20 @@ type DbtQueryPreview = {
   error?: string;
 };
 
-export async function executeQueryPreview(
-  dbtSql: string,
-): Promise<DbtQueryPreview> {
+export async function executeQueryPreview({
+  dbtSql,
+  branchId,
+}: {
+  dbtSql: string;
+  branchId: string;
+}): Promise<DbtQueryPreview> {
   const response = await fetcher(`/query/dbt/`, {
     cookies,
     method: "POST",
     body: {
       query: dbtSql,
+      project_id: branchId,
+      use_fast_compile: true,
     },
   });
   return response.json();
@@ -746,7 +752,7 @@ export async function discardBranchChanges(branchId: string) {
 
 type DbtQueryValidateInput = {
   query: string;
-  branch_id: string;
+  project_id: string;
   use_fast_compile?: boolean;
   limit?: number;
 };
