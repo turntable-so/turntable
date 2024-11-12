@@ -35,7 +35,7 @@ class QueryPreviewInputSerializer(serializers.Serializer):
 class QueryPreviewView(APIView):
     def post(self, request):
         workspace = request.user.current_workspace()
-        dbt_resource = workspace.get_dbt_details()
+        dbt_resource = workspace.get_dbt_dev_details()
 
         serializer = QueryPreviewInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -59,7 +59,7 @@ class QueryValidateInputSerializer(serializers.Serializer):
 class QueryValidateView(APIView):
     def post(self, request):
         workspace = request.user.current_workspace()
-        dbt_resource = workspace.get_dbt_details()
+        dbt_resource = workspace.get_dbt_dev_details()
 
         serializer = QueryValidateInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -128,7 +128,7 @@ class DbtQueryValidateInputSerializer(serializers.Serializer):
 class DbtQueryValidateView(APIView):
     def post(self, request):
         workspace = request.user.current_workspace()
-        dbt_resource = workspace.get_dbt_details()
+        dbt_resource = workspace.get_dbt_dev_details()
         serializer = DbtQueryValidateInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 

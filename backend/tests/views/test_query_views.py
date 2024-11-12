@@ -70,7 +70,7 @@ class TestDBTQueryViews:
     ):
         user.active_workspace_id = resource.workspace.id
         user.save()
-        project_id = resource.dbtresource_set.first().repository.main_branch.id
+        project_id = resource.dbtresource_set.first().repository.main_project.id
 
         response = client.post(
             endpoint,
