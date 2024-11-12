@@ -107,8 +107,11 @@ class DbtQueryValidateView(DbtQueryPreviewView, QueryValidateView):
             input = self._preprocess(request)
             result = validate_query.si(**input).apply_async().get()
             return self._post_process(result)
-        except ValueError as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except ValueError:
+            error_message = "Invalid query: An error occurred during validation"
+            return Response(
+                {"error": error_message}, status=status.HTTP_400_BAD_REQUEST
+            )
 
     def _post_process(self, result):
         return QueryValidateView._post_process(self, result)
