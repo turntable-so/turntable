@@ -11,3 +11,4 @@ jaffle_shop:
       dbname: mydb
       schema: dbt_sl_test
       sslmode: disable
+      threads: 6
