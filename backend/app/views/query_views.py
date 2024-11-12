@@ -1,5 +1,6 @@
 from adrf.views import APIView
 from django.http import JsonResponse
+from rest_framework import serializers
 from rest_framework import status
 from rest_framework.response import Response
 from sqlfmt.api import Mode, format_string
@@ -8,111 +9,159 @@ from sqlfmt.exception import SqlfmtError
 from app.workflows.query import execute_query, validate_query
 
 
-class QueryPreviewView(APIView):
-    def _preprocess(self, request):
-        workspace = request.user.current_workspace()
-        query = request.data.get("query")
-        if not query:
-            return Response(
-                {"error": "query required"}, status=status.HTTP_400_BAD_REQUEST
-            )
-        # assumes a single repo in the workspace for now
-        dbt_resource = workspace.get_dbt_details()
+def make_signed_url_response(result):
+    signed_url = result.get("signed_url", "")
 
-        return {
-            "workspace_id": str(workspace.id),
-            "resource_id": str(dbt_resource.resource.id),
-            "sql": query,
-        }
-
-    def _post_process(self, result):
-        signed_url = result.get("signed_url", "")
-
-        if not signed_url:
-            return Response(
-                {"error": "signed_url not found"}, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        if result.get("error"):
-            return Response(
-                {"error": result.get("error")},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        return JsonResponse(
-            {"signed_url": signed_url},
-            status=status.HTTP_201_CREATED,
+    if not signed_url:
+        return Response(
+            {"error": "signed_url not found"}, status=status.HTTP_400_BAD_REQUEST
         )
 
+    if result.get("error"):
+        return Response(
+            {"error": result.get("error")},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    return JsonResponse(
+        {"signed_url": signed_url},
+        status=status.HTTP_201_CREATED,
+    )
+
+
+class QueryPreviewInputSerializer(serializers.Serializer):
+    query = serializers.CharField(required=True)
+
+
+class QueryPreviewView(APIView):
+
     def post(self, request):
-        input = self._preprocess(request)
-        try:
-            result = execute_query.si(**input).apply_async().get()
-        except Exception as e:
-            return Response(
-                {"error": str(e)},
-                status=status.HTTP_400_BAD_REQUEST,
+        workspace = request.user.current_workspace()
+        dbt_resource = workspace.get_dbt_details()
+
+        serializer = QueryPreviewInputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        result = (
+            execute_query.si(
+                workspace_id=str(workspace.id),
+                resource_id=str(dbt_resource.resource.id),
+                sql=serializer.validated_data.get("query"),
             )
-        return self._post_process(result)
+            .apply_async()
+            .get()
+        )
+        return make_signed_url_response(result)
 
 
-class QueryValidateView(QueryPreviewView):
+class QueryValidateInputSerializer(serializers.Serializer):
+    query = serializers.CharField(required=True)
+
+
+class QueryValidateView(APIView):
     def post(self, request):
-        input = self._preprocess(request)
-        result = validate_query.si(**input).apply_async().get()
-        return self._post_process(result)
+        workspace = request.user.current_workspace()
+        dbt_resource = workspace.get_dbt_details()
 
-    def _post_process(self, result):
+        serializer = QueryValidateInputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        result = (
+            validate_query.si(
+                workspace_id=str(workspace.id),
+                resource_id=str(dbt_resource.resource.id),
+                sql=serializer.validated_data.get("query"),
+            )
+            .apply_async()
+            .get()
+        )
         return JsonResponse(result)
 
 
-class DbtQueryPreviewView(QueryPreviewView):
-    def _preprocess(self, request):
+class DbtQueryPreviewInputSerializer(serializers.Serializer):
+    query = serializers.CharField(required=True)
+    use_fast_compile = serializers.BooleanField(required=False, default=True)
+    branch_id = serializers.CharField(required=True)
+    limit = serializers.IntegerField(required=False, default=1000)
+
+
+class DbtQueryPreviewView(APIView):
+    def post(self, request):
         workspace = request.user.current_workspace()
-        query = request.data.get("query")
-        if not query:
-            raise ValueError("query required")
-
-        use_fast_compile = request.data.get("use_fast_compile", True)
-        limit = request.data.get("limit")
-        branch_id = request.data.get("branch_id")
         dbt_resource = workspace.get_dbt_details()
+        serializer = DbtQueryPreviewInputSerializer(data=request.data)
+        serializer.is_valid()
 
-        try:
-            with dbt_resource.dbt_repo_context(branch_id=branch_id, isolate=False) as (
-                dbtproj,
-                project_path,
-                _,
-            ):
-                sql = None
-                if use_fast_compile:
-                    sql = dbtproj.fast_compile(query)
-                if sql is None:
-                    sql = dbtproj.preview(query, limit=limit, data=False)
+        with dbt_resource.dbt_repo_context(
+            branch_id=serializer.validated_data.get("branch_id"), isolate=False
+        ) as (
+            dbtproj,
+            project_path,
+            _,
+        ):
+            sql = None
+            if serializer.validated_data.get("use_fast_compile"):
+                sql = dbtproj.fast_compile(serializer.validated_data.get("query"))
+            if sql is None:
+                sql = dbtproj.preview(
+                    serializer.validated_data.get("query"),
+                    limit=serializer.validated_data.get("limit"),
+                    data=False,
+                )
+            result = (
+                execute_query.si(
+                    workspace_id=str(workspace.id),
+                    resource_id=str(dbt_resource.resource.id),
+                    sql=sql,
+                )
+                .apply_async()
+                .get()
+            )
+        return make_signed_url_response(result)
 
-            return {
-                "workspace_id": str(workspace.id),
-                "resource_id": str(dbt_resource.resource.id),
-                "sql": sql,
-            }
-        except Exception as e:
-            raise ValueError(e)
+
+class DbtQueryValidateInputSerializer(serializers.Serializer):
+    query = serializers.CharField(required=True)
+    branch_id = serializers.CharField(required=True)
+    use_fast_compile = serializers.BooleanField(required=False, default=True)
+    limit = serializers.IntegerField(required=False, default=1000)
 
 
-class DbtQueryValidateView(DbtQueryPreviewView, QueryValidateView):
-    def _preprocess(self, request):
-        return DbtQueryPreviewView._preprocess(self, request)
+class DbtQueryValidateView(APIView):
 
     def post(self, request):
-        try:
-            input = self._preprocess(request)
-            result = validate_query.si(**input).apply_async().get()
-            return self._post_process(result)
-        except ValueError as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        workspace = request.user.current_workspace()
+        dbt_resource = workspace.get_dbt_details()
+        serializer = DbtQueryValidateInputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-    def _post_process(self, result):
-        return QueryValidateView._post_process(self, result)
+        with dbt_resource.dbt_repo_context(
+            branch_id=serializer.validated_data.get("branch_id"), isolate=False
+        ) as (
+            dbtproj,
+            project_path,
+            _,
+        ):
+            sql = None
+            if serializer.validated_data.get("use_fast_compile"):
+                sql = dbtproj.fast_compile(serializer.validated_data.get("query"))
+            if sql is None:
+                sql = dbtproj.preview(
+                    serializer.validated_data.get("query"),
+                    limit=serializer.validated_data.get("limit"),
+                    data=False,
+                )
+
+        result = (
+            validate_query.si(
+                workspace_id=str(workspace.id),
+                resource_id=str(dbt_resource.resource.id),
+                sql=sql,
+            )
+            .apply_async()
+            .get()
+        )
+        return JsonResponse(result)
 
 
 def format_query(query):
@@ -120,17 +169,24 @@ def format_query(query):
     return format_string(query, mode)
 
 
+class QueryFormatInputSerializer(serializers.Serializer):
+    query = serializers.CharField(required=True)
+
+
 class QueryFormatView(APIView):
     # Note -- accepts dbt or sql
     def post(self, request):
-        query = request.data.get("query")
-        if not query:
-            return Response(
-                {"error": "query required"}, status=status.HTTP_400_BAD_REQUEST
-            )
+        serializer = QueryFormatInputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
         try:
             return JsonResponse(
-                {"success": True, "formatted_query": format_query(query)}
+                {
+                    "success": True,
+                    "formatted_query": format_query(
+                        serializer.validated_data.get("query")
+                    ),
+                }
             )
         except SqlfmtError:
             return JsonResponse({"success": False})

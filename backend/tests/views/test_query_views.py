@@ -71,10 +71,11 @@ class TestDBTQueryViews:
     ):
         user.active_workspace_id = resource.workspace.id
         user.save()
+        branch_id = resource.dbtresource_set.first().repository.main_branch.id
 
-        endpoint = build_url(endpoint, {"use_fast_compile": True})
-
-        response = client.post(endpoint, {"query": query})
+        response = client.post(
+            endpoint, {"query": query, "branch_id": branch_id, "use_fast_compile": True}
+        )
         _validate_query_test(response)
 
     def test_dbt_query_postgres(self, client, user, local_postgres):
