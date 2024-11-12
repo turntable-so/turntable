@@ -48,7 +48,7 @@ export default function Node({
   style,
   dragHandle,
 }: { node: any; style: any; dragHandle: any }) {
-  const { openFile, createFileAndRefresh, deleteFileAndRefresh, closeFile, renameFile } =
+  const { openFile, createFileAndRefresh, deleteFileAndRefresh, closeFile, renameFile, readOnly } =
     useFiles();
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const contextMenuRef = useRef<ContextMenuPrimitive.ContextMenuTriggerElement>(null);
@@ -172,29 +172,31 @@ export default function Node({
           ) : (
             <div className="w-full flex items-center justify-between group">
               <div className="truncate">{node.data.name}</div>
-              <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <Ellipsis
-                  className="mr-1 size-4"
-                  onClick={openContextMenu}
-                />
-                {!node.isLeaf && (
-                  <>
-                    <div
-                      className="text-muted-foreground text-xs hover:cursor-pointer hover:text-foreground relative"
-                      onClick={handleCreateFile}
-                    >
-                      <Plus className="mr-1 size-4" />
-                    </div>
-                    {/* <div
+              {!readOnly && (
+                <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Ellipsis
+                    className="mr-1 size-4"
+                    onClick={openContextMenu}
+                  />
+                  {!node.isLeaf && (
+                    <>
+                      <div
+                        className="text-muted-foreground text-xs hover:cursor-pointer hover:text-foreground relative"
+                        onClick={handleCreateFile}
+                      >
+                        <Plus className="mr-1 size-4" />
+                      </div>
+                      {/* <div
                                     className='text-muted-foreground text-xs hover:cursor-pointer hover:text-foreground relative'
                                     onClick={handleCreateFolder}
                                 >
                                     <Folder className='mr-1 size-4' />
                                     <span>New Folder</span>
                                 </div> */}
-                  </>
-                )}
-              </div>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -53,7 +53,7 @@ const EditorTopBar = () => {
   } = useLayoutContext();
   const router = useRouter();
   const { user, logout } = useSession();
-  const { branchName, checkForProblemsOnEdit, setCheckForProblemsOnEdit } = useFiles();
+  const { branchName, checkForProblemsOnEdit, setCheckForProblemsOnEdit, readOnly } = useFiles();
   const [branchReviewDialogOpen, setBranchReviewDialogOpen] = useState(false);
 
   return (
@@ -110,8 +110,11 @@ const EditorTopBar = () => {
               className="flex items-center justify-center space-x-2 hover:bg-white"
             >
               <FolderGit2 className="w-4 h-4" />
-              <div className="text-xs font-medium">
-                {branchName.slice(0, 25)}
+              <div className="text-xs font-medium space-x-1 flex items-center">
+                {readOnly && <div >(Read Only)</div>}
+                <div>
+                  {branchName.slice(0, 25)}
+                </div>
               </div>
             </Button>
           </TooltipTrigger>

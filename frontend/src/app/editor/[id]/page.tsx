@@ -182,7 +182,7 @@ function EditorContent({
   setPromptBoxOpen,
   containerWidth,
 }: { setPromptBoxOpen: (open: boolean) => void; containerWidth: number }) {
-  const { activeFile, updateFileContent, saveFile, setActiveFile, isCloning } =
+  const { activeFile, updateFileContent, saveFile, setActiveFile, isCloning, readOnly } =
     useFiles();
 
   // Define your custom theme
@@ -293,6 +293,7 @@ function EditorContent({
           verticalSliderSize: 8,
           horizontalSliderSize: 8,
         },
+        readOnly: readOnly,
         lineNumbers: "on",
         wordWrap: "on",
         fontSize: 14,
