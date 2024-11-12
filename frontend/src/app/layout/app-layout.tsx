@@ -42,10 +42,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     collapseSidebar(
       pathName.includes("/notebooks/") ||
-      pathName.includes("/lineage") ||
-      pathName.includes("/sources/") ||
-      pathName.includes("/assets") ||
-      pathName.includes("/editor"),
+        pathName.includes("/lineage") ||
+        pathName.includes("/sources/") ||
+        pathName.includes("/assets") ||
+        pathName.includes("/editor"),
     );
   }, [pathName, collapseSidebar]);
 
@@ -66,12 +66,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="h-screen">
-      {/* <div
-            className={cn(
-                "w-full flex  bg-muted h-[52px] items-center justify-between",
-                "h-[48px] px-2 pl-4 py-1 border-b"
-            )}
-        /> */}
       <TopBar />
 
       <div className="flex w-full">
@@ -97,7 +91,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <div className="w-full h-full overflow-y-auto">{children}</div>
             )
           ) : (
-            <div className="flex flex-col max-h-screen overflow-x-auto w-full text-muted-foreground bg-background items-center">
+            <div className="flex flex-col max-h-screen overflow-x-auto w-full text-muted-foreground bg-muted items-center">
               {children}
             </div>
           )}
