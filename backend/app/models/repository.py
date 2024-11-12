@@ -235,6 +235,7 @@ class Branch(models.Model):
                     # Revert the configs
                     git_config.set_value("user", "name", "")
                     git_config.set_value("user", "email", "")
+        return True
 
     def discard_changes(self):
         with self.repo_context() as (repo, env):
