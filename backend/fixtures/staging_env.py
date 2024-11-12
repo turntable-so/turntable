@@ -90,6 +90,7 @@ def create_bigquery_n(workspace, n):
     ):
         BigqueryDetails(
             name=resource_name,
+            workspace=workspace,
             resource=resource,
             lookback_days=1,
             schema_include=schema_include,
@@ -122,6 +123,7 @@ def create_snowflake_n(workspace, n):
     ):
         SnowflakeDetails(
             resource=resource,
+            workspace=workspace,
             username=username,
             password=password,
             account=account,
@@ -151,6 +153,7 @@ def create_databricks_n(workspace, n):
     ):
         DatabricksDetails(
             resource=resource,
+            workspace=workspace,
             host=host,
             token=token,
             http_path=http_path,
@@ -185,6 +188,7 @@ def create_redshift_n(workspace: Workspace, n):
     ):
         RedshiftDetails(
             resource=resource,
+            workspace=workspace,
             host=host,
             port=port,
             database=database,
@@ -221,6 +225,7 @@ def create_dbt_n(
 
     DBTCoreDetails(
         resource=resource,
+        workspace=resource.workspace,
         repository=repository,
         project_path=project_path,
         threads=os.getenv(f"DBT_{n}_THREADS", 6),
@@ -250,6 +255,7 @@ def create_looker_n(workspace, n, git_repo: Repository | None = None):
     if not hasattr(looker, "details") or not isinstance(looker.details, LookerDetails):
         LookerDetails(
             resource=looker,
+            workspace=workspace,
             base_url=looker_url,
             client_id=looker_secret_json["client_id"],
             client_secret=looker_secret_json["client_secret"],
@@ -280,6 +286,7 @@ def create_tableau_n(workspace, n):
     ):
         TableauDetails(
             resource=resource,
+            workspace=workspace,
             connect_uri=connect_uri,
             site=os.getenv(f"TABLEAU_{n}_SITE", ""),
             username=username,
@@ -310,6 +317,7 @@ def create_powerbi_n(workspace, n):
     ):
         PowerBIDetails(
             resource=resource,
+            workspace=workspace,
             client_id=client_id,
             client_secret=client_secret,
             powerbi_tenant_id=tenant_id,

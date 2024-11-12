@@ -8,10 +8,10 @@ from .metadata import (
     ColumnLink,
     ContainerMembership,
 )
-from .repository import Repository, Branch
-from .ssh_key import SSHKey
-from .query import DBTQuery, Query
 from .notebook import Block, Notebook
+from .project import Project
+from .query import DBTQuery, Query
+from .repository import Repository
 from .resources import (
     BigqueryDetails,
     DatabricksDetails,
@@ -31,6 +31,7 @@ from .resources import (
     SnowflakeDetails,
     TableauDetails,
 )
+from .ssh_key import SSHKey
 from .user import (
     User,
     UserManager,
