@@ -94,7 +94,7 @@ export default function DataTable() {
   return (
     <div className="space-y-4">
       <DataTableToolbar table={table} />
-      <div className="rounded-md border bg-white">
+      <div className="rounded-md border dark:border-gray-700 bg-white dark:bg-black">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (

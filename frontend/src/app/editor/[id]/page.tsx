@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useLayoutContext } from "../../contexts/LayoutContext";
 import { usePathname } from "next/navigation";
 import EditorTopBar from "@/components/editor/editor-top-bar";
+import { useTheme } from "next-themes";
 
 const PromptBox = ({
   setPromptBoxOpen,
@@ -184,16 +185,13 @@ function EditorContent({
 }: { setPromptBoxOpen: (open: boolean) => void; containerWidth: number }) {
   const { activeFile, updateFileContent, saveFile, setActiveFile, isCloning } =
     useFiles();
+  const { theme } = useTheme();
 
   // Define your custom theme
   const customTheme = {
-    base: "vs",
+    base: theme === "dark" ? "vs-dark" : "vs",
     inherit: true,
     rules: [],
-    colors: {
-      "editor.foreground": "#000000",
-      "editorLineNumber.foreground": "#A1A1AA",
-    },
   };
 
   if (activeFile?.node?.type === "error") {
@@ -256,7 +254,7 @@ function EditorContent({
 
   if (activeFile?.view === "new") {
     return (
-      <div className="h-full w-full flex items-center justify-center text-muted-foreground">
+      <div className="h-full w-full flex items-center justify-center text-muted-foreground dark:bg-black">
         {isCloning ? (
           <div className="flex items-center space-x-2">
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -273,7 +271,10 @@ function EditorContent({
     if (activeFile.node?.path.endsWith(".sql")) {
       return "sql";
     }
-    if (activeFile.node?.path.endsWith(".yml") || activeFile.node?.path.endsWith(".yaml")) {
+    if (
+      activeFile.node?.path.endsWith(".yml") ||
+      activeFile.node?.path.endsWith(".yaml")
+    ) {
       return "yaml";
     }
     if (activeFile.node?.path.endsWith(".md")) {
@@ -548,7 +549,7 @@ function EditorPageContent() {
             minSize={15}
             maxSize={30}
             onResize={setLeftWidth}
-            className="border-r  text-gray-600"
+            className="border-r text-gray-600 dark:border-zinc-700"
           >
             <EditorSidebar />
           </Panel>
@@ -601,12 +602,12 @@ function EditorPageContent() {
                 </Panel> */}
         <PanelResizeHandle className="bg-transparent   transition-colors" />
         <Panel>
-          <div className="h-full bg-white" ref={topBarRef}>
+          <div className="h-full" ref={topBarRef}>
             <FileTabs
               topBarRef={topBarRef as any}
               topBarWidth={topBarWidth as number}
             />
-            <div className="py-2 w-full h-full">
+            <div className="w-full h-full">
               <PanelGroup direction="vertical" className="h-fit">
                 {promptBoxOpen && (
                   <PromptBox setPromptBoxOpen={setPromptBoxOpen} />

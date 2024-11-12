@@ -21,7 +21,7 @@ export default function FileTabs({
   } = useFiles();
 
   return (
-    <div className="hover:cursor-pointer flex items-center space-x-0 py-0 bg-white">
+    <div className="hover:cursor-pointer flex items-center space-x-0 py-0 bg-white dark:bg-black">
       <div
         className=""
         style={{
@@ -36,13 +36,13 @@ export default function FileTabs({
                 onClick={() => {
                   setActiveFile(file);
                 }}
-                className={`px-2 py-1 text-xs font-medium flex items-center space-x-1.5 group select-none text-muted-foreground ${file.node.path === activeFile?.node.path ? "text-black bg-white border-b-white border border-t-black" : "border border-gray-200"} ${index === 0 ? "border-l-0" : ""}`}
+                className={`px-2 py-1 text-xs font-medium flex items-center space-x-1.5 group select-none text-muted-foreground dark:bg-zinc-800 ${file.node.path === activeFile?.node.path ? "text-black bg-white dark:bg-zinc-700 dark:text-zinc-100 border-b-white border border-t-black" : "border border-gray-200 dark:border-zinc-800"} ${index === 0 ? "border-l-0" : ""}`}
               >
                 {getIcon(file.node)}
                 <div>{file.node.name}</div>
                 <div className="relative h-3 w-3 hover:bg-gray-200">
                   {file.isDirty && (
-                    <div className="h-3 w-3 rounded-full bg-blue-300 group-hover:invisible"></div>
+                    <div className="h-3 w-3 rounded-full bg-blue-300 group-hover:invisible" />
                   )}
                   <div
                     onClick={(e) => {

@@ -124,7 +124,7 @@ export default function CommandPanelInput() {
       {isDropdownOpen && (
         <div
           ref={dropdownRef}
-          className="absolute top-full left-0 w-1/3 bg-white border border-gray-300 rounded-md mt-1 z-10"
+          className="absolute top-full left-0 w-1/3 bg-white dark:bg-zinc-950 border border-gray-300 dark:border-zinc-700 rounded-md mt-1 z-10"
         >
           {filteredOptions.map((option, index) => (
             <div

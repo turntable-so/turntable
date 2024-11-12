@@ -34,8 +34,11 @@ export default function ColumnsTable({
         {columns
           .sort((a, b) => a.name.localeCompare(b.name))
           .map((column) => (
-            <TableRow key={column.name} className="text-gray-500">
-              <TableCell className="text-black font-medium pl-4">
+            <TableRow
+              key={column.name}
+              className="text-gray-500 dark:text-gray-300"
+            >
+              <TableCell className="text-black dark:text-white font-medium pl-4">
                 {column.name}
               </TableCell>
               <TableCell>{column.type}</TableCell>

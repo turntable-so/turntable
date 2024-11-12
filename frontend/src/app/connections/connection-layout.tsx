@@ -98,7 +98,7 @@ export default function ConnectionLayout({
     <div className="max-w-7xl w-full px-16 py-4">
       <Button
         variant="ghost"
-        className="my-4 text-lg  flex items-center space-x-4"
+        className="my-4 text-lg flex items-center space-x-4"
         onClick={() => {
           router.push("/connections");
         }}
@@ -232,7 +232,7 @@ export default function ConnectionLayout({
             <DbtProjectForm resource={resource} details={dbtDetails} />
           )}
           <div className="h-4" />
-          <Card className="flex justify-between px-3 py-6 border-red-300">
+          <Card className="flex justify-between px-3 py-6 border-red-300 dark:border-red-700">
             <div>
               <CardTitle>Delete Connection</CardTitle>
               <CardDescription className="py-1">

@@ -31,39 +31,43 @@ import ProblemsPanel from "./problems-panel/problems-panel";
 import { Badge } from "../ui/badge";
 
 const SkeletonLoadingTable = () => {
+  const Loader = () => (
+    <div className="animate-pulse h-4 bg-gray-200 dark:bg-zinc-800 rounded" />
+  );
+
   return (
     <div className="w-full flex items-center justify-center">
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead className="w-[100px]">
-              <div className="animate-pulse h-4 bg-gray-200 rounded" />
+              <Loader />
             </TableHead>
             <TableHead>
-              <div className="animate-pulse h-4 bg-gray-200 rounded" />
+              <Loader />
             </TableHead>
             <TableHead>
-              <div className="animate-pulse h-4 bg-gray-200 rounded" />
+              <Loader />
             </TableHead>
             <TableHead className="text-right">
-              <div className="animate-pulse h-4 bg-gray-200 rounded" />
+              <Loader />
             </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {Array.from({ length: 20 }).map((_, i) => (
             <TableRow key={i}>
-              <TableCell className="">
-                <div className="animate-pulse h-4 bg-gray-200 rounded" />
+              <TableCell>
+                <Loader />
               </TableCell>
-              <TableCell className="">
-                <div className="animate-pulse h-4 bg-gray-200 rounded" />
+              <TableCell>
+                <Loader />
               </TableCell>
-              <TableCell className="">
-                <div className="animate-pulse h-4 bg-gray-200 rounded" />
+              <TableCell>
+                <Loader />
               </TableCell>
-              <TableCell className="">
-                <div className="animate-pulse h-4 bg-gray-200 rounded" />
+              <TableCell>
+                <Loader />
               </TableCell>
             </TableRow>
           ))}
@@ -99,8 +103,8 @@ export default function BottomPanel({
 
   return (
     <Fragment>
-      <PanelResizeHandle className="h-1 bg-gray hover:bg-gray-300 hover:cursor-col-resize  transition-colors" />
-      <div className="h-10 bg-muted/50 border-t-2 flex justify-between items-center">
+      <PanelResizeHandle className="h-1 hover:bg-gray-300 dark:hover:bg-zinc-700 hover:cursor-col-resize transition-colors" />
+      <div className="h-10 bg-muted/50 dark:bg-zinc-800 border-t-2 flex justify-between items-center">
         <Tabs
           value={activeTab}
           onValueChange={(value) =>
@@ -132,8 +136,12 @@ export default function BottomPanel({
               Problems
               {problems.loading ? (
                 <Loader2 className="h-4 w-4 ml-2 animate-spin" />
-              ) : problems.data.length > 0 && (
-                <Badge className="ml-2 font-mono" variant={"outline"}>{problems.data.length}</Badge>
+              ) : (
+                problems.data.length > 0 && (
+                  <Badge className="ml-2 font-mono" variant={"outline"}>
+                    {problems.data.length}
+                  </Badge>
+                )
               )}
             </TabsTrigger>
           </TabsList>
@@ -181,7 +189,7 @@ export default function BottomPanel({
       </div>
       <Panel
         defaultSize={40}
-        className="border-t flex items-center justify-center"
+        className="border-t flex items-center justify-center dark:bg-zinc-950"
       >
         <div
           className="flex flex-col w-full h-full flex-grow-1"
@@ -274,9 +282,7 @@ export default function BottomPanel({
           {activeTab === "command" && (
             <CommandPanel bottomPanelHeight={bottomPanelHeight} />
           )}
-          {activeTab === "problems" && (
-            <ProblemsPanel />
-          )}
+          {activeTab === "problems" && <ProblemsPanel />}
         </div>
       </Panel>
     </Fragment>

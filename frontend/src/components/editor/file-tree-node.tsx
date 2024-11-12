@@ -10,7 +10,7 @@ import {
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
-} from "@/components/ui/context-menu"
+} from "@/components/ui/context-menu";
 import {
   ChevronDown,
   ChevronRight,
@@ -48,10 +48,16 @@ export default function Node({
   style,
   dragHandle,
 }: { node: any; style: any; dragHandle: any }) {
-  const { openFile, createFileAndRefresh, deleteFileAndRefresh, closeFile, renameFile } =
-    useFiles();
+  const {
+    openFile,
+    createFileAndRefresh,
+    deleteFileAndRefresh,
+    closeFile,
+    renameFile,
+  } = useFiles();
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
-  const contextMenuRef = useRef<ContextMenuPrimitive.ContextMenuTriggerElement>(null);
+  const contextMenuRef =
+    useRef<ContextMenuPrimitive.ContextMenuTriggerElement>(null);
 
   const handleCreateFile = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -90,7 +96,8 @@ export default function Node({
     if (newName && newName !== node.data.name) {
       const success = await renameFile(
         node.data.path,
-        node.data.path.substring(0, node.data.path.lastIndexOf('/') + 1) + newName
+        node.data.path.substring(0, node.data.path.lastIndexOf("/") + 1) +
+          newName,
       );
       if (success) {
         closeFile({
@@ -102,7 +109,9 @@ export default function Node({
         } as OpenedFile);
         openFile({
           name: newName,
-          path: node.data.path.substring(0, node.data.path.lastIndexOf('/') + 1) + newName,
+          path:
+            node.data.path.substring(0, node.data.path.lastIndexOf("/") + 1) +
+            newName,
           type: "file",
         });
       }
@@ -114,7 +123,7 @@ export default function Node({
     // Simulate a right click at the element's position
     const rect = contextMenuRef.current?.getBoundingClientRect();
     if (rect) {
-      const event = new MouseEvent('contextmenu', {
+      const event = new MouseEvent("contextmenu", {
         bubbles: true,
         clientX: rect.right,
         clientY: rect.top,
@@ -136,13 +145,13 @@ export default function Node({
             }
           }}
           ref={dragHandle}
-          className={`${node.isSelected ? "rounded font-medium bg-accent text-accent-foreground" : ""} hover:bg-white hover:cursor-pointer ${contextMenuOpen ? "bg-white" : ""} flex items-center rounded`}
+          className={`${node.isSelected ? "rounded font-medium bg-accent text-accent-foreground dark:bg-zinc-700 dark:text-zinc-100" : ""} hover:bg-white dark:hover:bg-zinc-700 hover:cursor-pointer ${contextMenuOpen ? "bg-white" : ""} flex items-center rounded`}
         >
           {!node.isLeaf &&
             (node.isOpen ? (
-              <FolderOpen className="mr-1 size-4" />
+              <FolderOpen className="mr-1 size-4 dark:text-zinc-100" />
             ) : (
-              <Folder className="mr-1 size-4" />
+              <Folder className="mr-1 size-4 dark:text-zinc-100" />
             ))}
           {node.isLeaf && node.data.name.endsWith(".sql") && (
             <div
@@ -152,11 +161,13 @@ export default function Node({
             </div>
           )}
           {node.isLeaf && node.data.name.endsWith(".yml") && (
-            <FileText className="mr-1 h-4 w-4 flex-shrink-0" />
+            <FileText className="mr-1 h-4 w-4 flex-shrink-0 dark:text-zinc-100" />
           )}
           {node.isLeaf &&
             !node.data.name.endsWith(".sql") &&
-            !node.data.name.endsWith(".yml") && <File className="mr-1 size-4" />}
+            !node.data.name.endsWith(".yml") && (
+              <File className="mr-1 size-4 dark:text-zinc-100" />
+            )}
           {node.isEditing ? (
             <input
               type="text"
@@ -171,10 +182,12 @@ export default function Node({
             />
           ) : (
             <div className="w-full flex items-center justify-between group">
-              <div className="truncate">{node.data.name}</div>
+              <div className="truncate dark:text-zinc-100">
+                {node.data.name}
+              </div>
               <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <Ellipsis
-                  className="mr-1 size-4"
+                  className="mr-1 size-4 dark:text-zinc-100"
                   onClick={openContextMenu}
                 />
                 {!node.isLeaf && (
@@ -183,7 +196,7 @@ export default function Node({
                       className="text-muted-foreground text-xs hover:cursor-pointer hover:text-foreground relative"
                       onClick={handleCreateFile}
                     >
-                      <Plus className="mr-1 size-4" />
+                      <Plus className="mr-1 size-4 dark:text-zinc-100" />
                     </div>
                     {/* <div
                                     className='text-muted-foreground text-xs hover:cursor-pointer hover:text-foreground relative'
@@ -199,10 +212,7 @@ export default function Node({
           )}
         </div>
       </ContextMenuTrigger>
-      <ContextMenuContent
-        align="end"
-        alignOffset={-5}
-      >
+      <ContextMenuContent align="end" alignOffset={-5}>
         <ContextMenuItem onClick={handleRename}>
           <div className="flex items-center text-xs">
             <Pencil className="mr-2 h-3 w-3" />

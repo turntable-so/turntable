@@ -207,7 +207,7 @@ export default function SearchBar() {
         ref={inputRef}
         type="text"
         placeholder="Search & Commands (⌘P)"
-        className="w-full bg-white"
+        className="w-full bg-white dark:bg-zinc-900"
         value={searchTerm}
         onChange={(e) => {
           setSearchTerm(e.target.value);
@@ -222,7 +222,7 @@ export default function SearchBar() {
       {showDropDown && (
         <div
           ref={dropdownRef}
-          className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg overflow-hidden"
+          className="absolute z-10 w-full mt-1 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-lg overflow-hidden"
         >
           {flatItems.map((flatItem, index) => {
             const isFirstInSection =
@@ -241,8 +241,8 @@ export default function SearchBar() {
                 <div
                   className={`px-4 py-2 cursor-pointer ${
                     index === selectedIndex
-                      ? "bg-gray-100"
-                      : "hover:bg-gray-100"
+                      ? "bg-gray-100 dark:bg-zinc-800"
+                      : "hover:bg-gray-100 dark:hover:bg-zinc-800"
                   }`}
                   onMouseDown={() => {
                     setSearchTerm(flatItem.item.display);

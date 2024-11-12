@@ -1,17 +1,9 @@
-import {
-  getMetabaseEmbedUrlForAsset,
-  makeMetabaseAssetEmbeddable,
-} from "@/app/actions/actions";
+import { getMetabaseEmbedUrlForAsset } from "@/app/actions/actions";
 import { useFiles } from "@/app/contexts/FilesContext";
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/components/ui/resizable";
-import { useEffect, useRef, useState } from "react";
+import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import { useRef } from "react";
 import { Tree } from "react-arborist";
 import useResizeObserver from "use-resize-observer";
-import ActionBar from "../ActionBar";
 import EmbedAsset from "./embed-asset";
 import Node from "./file-tree-node";
 
@@ -28,7 +20,7 @@ export default function EditorSidebar() {
     parentId,
     index,
     type,
-  }: { parentId: string; index: number; type: string }) => { };
+  }: { parentId: string; index: number; type: string }) => {};
   const onRename = ({ id, name }: { id: string; name: string }) => {
     console.log("renaming!", { id, name });
   };
@@ -114,7 +106,9 @@ export default function EditorSidebar() {
         <ResizablePanel defaultSize={75} minSize={30} maxSize={75}>
           <div className="h-full w-full px-2">
             <div className="flex items-center space-x-2">
-              <div className="px-1 text-black text-sm font-medium">Files </div>
+              <div className="px-1 text-black dark:text-white text-sm font-medium">
+                Files
+              </div>
             </div>
             <div className="pt-2 h-full px-1" ref={treeContainerRef}>
               <Tree
@@ -126,7 +120,7 @@ export default function EditorSidebar() {
                 indent={12}
                 // opens the root by default
                 initialOpenState={{
-                  '.': true,
+                  ".": true,
                 }}
                 ref={treeRef}
                 // @ts-ignore

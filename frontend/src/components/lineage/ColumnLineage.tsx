@@ -30,7 +30,7 @@ import buildLineageReactFlow from "./renderLineage";
 import "reactflow/dist/style.css";
 import { FilterPanel } from "./FilterPanel";
 import "./lineage.css";
-import { ArrowLeftFromLine, Loader2, Minus, Plus } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useAppContext } from "../../contexts/AppContext";
 import { LineageControls } from "./LineageControls";
 import LineageOptionsPanel from "./LineageOptionsPanel";

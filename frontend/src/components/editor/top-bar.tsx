@@ -26,7 +26,6 @@ const AppContent = () => {
         <WorkspaceSwitcher isCollapsed={appSidebarCollapsed} />
       </div>
       <div className="flex items-center space-x-1">
-        <ModeToggle />
         <Popover>
           <PopoverTrigger asChild className="w-full">
             <Button
@@ -48,6 +47,7 @@ const AppContent = () => {
             align="end"
             className="w-fit text-muted-foreground p-0"
           >
+            <ModeToggle />
             <Button
               onClick={logout}
               variant="ghost"

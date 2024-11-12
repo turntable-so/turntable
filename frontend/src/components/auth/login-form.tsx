@@ -121,7 +121,7 @@ const LoginForm = ({ invitationCode = "" }: any) => {
           <div className="flex flex-col items-center mt-4">
             <Button
               variant="ghost"
-              className="border-black border w-full"
+              className="border-black dark:border-white border w-full"
               onClick={() => {
                 setCookie("invitationCode", invitationCode);
                 signIn("google");

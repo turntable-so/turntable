@@ -81,7 +81,7 @@ function Header({
   columnCount,
 }: any) {
   return (
-    <div className="flex justify-between gap-1 text-black ">
+    <div className="flex justify-between gap-1 text-black dark:text-white">
       <Handle
         isConnectable={false}
         id={`${tableId}-target`}
@@ -120,7 +120,7 @@ function Header({
             </TooltipTrigger>
             <TooltipContent>{tableName}</TooltipContent>
           </Tooltip>
-          <div className="text-gray-500">{type}</div>
+          <div className="text-gray-500 dark:text-gray-300">{type}</div>
         </div>
       </div>
 
@@ -262,7 +262,7 @@ function LineageNode({ id, data, yPos }: any) {
   return (
     <div className="group">
       <div
-        className={`cursor-pointer border-2 font-mono shadow-lg text-[12px] text-black rounded-md
+        className={`cursor-pointer border-2 font-mono shadow-lg text-[12px] text-black dark:text-white rounded-md
         border-solid ${isActiveResource ? "border-blue-400" : "border-gray-300"}
         bg-muted w-72 max-h-72 overflow-y-scroll overflow-x-hidden relative
         ${columnsToDisplay.length > 10 ? "nowheel" : ""}

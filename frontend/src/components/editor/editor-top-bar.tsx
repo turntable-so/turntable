@@ -31,6 +31,7 @@ import {
 } from "@/app/constants/local-storage-keys";
 import { Switch } from "../ui/switch";
 import { useLocalStorage } from "usehooks-ts";
+import { ModeToggle } from "../theme-mode-toggle";
 
 const clearTurntableCache = () => {
   const keysToRemove = [];
@@ -69,7 +70,7 @@ const EditorTopBar = () => {
     <div
       className={cn(
         "w-full flex  bg-muted h-[52px] items-center justify-between",
-        "h-[48px] px-2 pl-4 py-1 border-b border-gray-300",
+        "h-[48px] px-2 pl-4 py-1 border-b border-gray-300 dark:border-zinc-700",
       )}
     >
       <div className="flex justify-center">
@@ -250,10 +251,11 @@ const EditorTopBar = () => {
             align="end"
             className="w-fit text-muted-foreground p-0"
           >
+            <ModeToggle />
             <Button
               onClick={logout}
               variant="ghost"
-              className="flex items-center"
+              className="flex items-center w-full"
             >
               <LogOut className="h-4 w-4 mr-2" />
               Sign out
