@@ -1,10 +1,9 @@
-# File: api/views/execute_query.py
-
-
 from adrf.views import APIView
 from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.response import Response
+from sqlfmt.api import Mode, format_string
+from sqlfmt.exception import SqlfmtError
 
 from app.workflows.query import execute_query, validate_query
 
@@ -73,20 +72,24 @@ class DbtQueryPreviewView(QueryPreviewView):
         query = request.data.get("query")
         if not query:
             raise ValueError("query required")
-            
+
         use_fast_compile = request.data.get("use_fast_compile", True)
         limit = request.data.get("limit")
         branch_id = request.data.get("branch_id")
         dbt_resource = workspace.get_dbt_details()
-        
+
         try:
-            with dbt_resource.dbt_repo_context(branch_id=branch_id, isolate=False) as (dbtproj, project_path, _):
+            with dbt_resource.dbt_repo_context(branch_id=branch_id, isolate=False) as (
+                dbtproj,
+                project_path,
+                _,
+            ):
                 sql = None
                 if use_fast_compile:
                     sql = dbtproj.fast_compile(query)
                 if sql is None:
                     sql = dbtproj.preview(query, limit=limit, data=False)
-                
+
             return {
                 "workspace_id": str(workspace.id),
                 "resource_id": str(dbt_resource.resource.id),
@@ -106,10 +109,28 @@ class DbtQueryValidateView(DbtQueryPreviewView, QueryValidateView):
             result = validate_query.si(**input).apply_async().get()
             return self._post_process(result)
         except ValueError as e:
-            return Response(
-                {"error": str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     def _post_process(self, result):
         return QueryValidateView._post_process(self, result)
+
+
+def format_query(query):
+    mode = Mode()
+    return format_string(query, mode)
+
+
+class QueryFormatView(APIView):
+    # Note -- accepts dbt or sql
+    def post(self, request):
+        query = request.data.get("query")
+        if not query:
+            return Response(
+                {"error": "query required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            return JsonResponse(
+                {"success": True, "formatted_query": format_query(query)}
+            )
+        except SqlfmtError:
+            return JsonResponse({"success": False})

@@ -1,11 +1,9 @@
 import os
-import shlex
 import shutil
 from urllib.parse import unquote
 
-from django.http import StreamingHttpResponse
 from django.db import transaction
-
+from django.http import JsonResponse
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -13,10 +11,12 @@ from rest_framework.response import Response
 from api.serializers import AssetSerializer, BranchSerializer, LineageSerializer
 from app.core.dbt import LiveDBTParser
 from app.models.repository import Branch
+from app.views.query_views import format_query
 
 
 def _build_file_tree(user_id: str, path: str, base_path: str):
     tree = []
+
     for entry in os.scandir(path):
         if not entry.name.startswith("."):  # Exclude hidden files and directories
             relative_path = os.path.relpath(entry.path, base_path)
@@ -155,9 +155,14 @@ class ProjectViewSet(viewsets.ViewSet):
                     return Response({"contents": file_content})
 
                 if request.method == "PUT":
+                    format = request.data.get("format")
+                    contents = request.data.get("contents")
+                    if format and filepath.endswith(".sql"):
+                        contents = format_query(contents)
+
                     with open(filepath, "w") as file:
-                        file.write(request.data.get("contents"))
-                    return Response(status=status.HTTP_204_NO_CONTENT)
+                        file.write(contents)
+                    return JsonResponse({"content": contents})
 
                 if request.method == "PATCH":
                     new_path = request.data.get("new_path")

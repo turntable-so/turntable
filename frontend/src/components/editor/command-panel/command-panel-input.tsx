@@ -3,8 +3,10 @@ import React, { useEffect, useRef, useState } from "react";
 import CommandInput from "./command-input";
 import CommandPanelActionBtn from "./command-panel-action-btn";
 import { getCommandOptions } from "./command-panel-options";
+import { useFiles } from "@/app/contexts/FilesContext";
 
 export default function CommandPanelInput() {
+  const { branchId } = useFiles();
   const { inputValue, setInputValue, commandOptions, setCommandOptions } =
     useCommandPanelContext();
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
@@ -78,7 +80,7 @@ export default function CommandPanelInput() {
   useEffect(resetHighlightedIndexOnInputChange, [inputValue]);
 
   useEffect(() => {
-    setCommandOptions(getCommandOptions());
+    setCommandOptions(getCommandOptions(branchId));
   }, []);
 
   return (

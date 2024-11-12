@@ -1,3 +1,5 @@
+import { LocalStorageKeys } from "@/app/constants/local-storage-keys";
+
 export const DEFAULT_COMMAND_OPTIONS = [
   "compile",
   "run",
@@ -8,23 +10,26 @@ export const DEFAULT_COMMAND_OPTIONS = [
 
 const MAX_RECENT_COMMANDS = 10;
 
-export function getCommandOptions(): string[] {
+export function getCommandOptions(branchId: string): string[] {
   let recentCommands = JSON.parse(
-    localStorage.getItem("recentCommands") || "[]",
+    localStorage.getItem(LocalStorageKeys.recentCommands(branchId)) || "[]",
   ) as string[];
 
   if (recentCommands.length === 0) {
     // If there are no recent commands, initialize with default commands
     recentCommands = [...DEFAULT_COMMAND_OPTIONS];
-    localStorage.setItem("recentCommands", JSON.stringify(recentCommands));
+    localStorage.setItem(
+      LocalStorageKeys.recentCommands(branchId),
+      JSON.stringify(recentCommands),
+    );
   }
 
   return recentCommands;
 }
 
-export function addRecentCommand(command: string): void {
+export function addRecentCommand(command: string, branchId: string): void {
   let recentCommands = JSON.parse(
-    localStorage.getItem("recentCommands") || "[]",
+    localStorage.getItem(LocalStorageKeys.recentCommands(branchId)) || "[]",
   ) as string[];
 
   // Remove the command if it already exists to prevent duplicates
@@ -37,5 +42,8 @@ export function addRecentCommand(command: string): void {
   recentCommands = recentCommands.slice(0, MAX_RECENT_COMMANDS);
 
   // Update localStorage
-  localStorage.setItem("recentCommands", JSON.stringify(recentCommands));
+  localStorage.setItem(
+    LocalStorageKeys.recentCommands(branchId),
+    JSON.stringify(recentCommands),
+  );
 }
