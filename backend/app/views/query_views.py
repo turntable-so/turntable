@@ -36,7 +36,7 @@ class QueryPreviewInputSerializer(serializers.Serializer):
 class QueryPreviewView(APIView):
     def post(self, request):
         workspace = request.user.current_workspace()
-        dbt_resource = workspace.get_dbt_details()
+        dbt_resource = workspace.get_dbt_dev_details()
 
         serializer = QueryPreviewInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -61,7 +61,7 @@ class QueryValidateInputSerializer(serializers.Serializer):
 class QueryValidateView(APIView):
     def post(self, request):
         workspace = request.user.current_workspace()
-        dbt_resource = workspace.get_dbt_details()
+        dbt_resource = workspace.get_dbt_dev_details()
 
         serializer = QueryValidateInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -81,19 +81,19 @@ class QueryValidateView(APIView):
 class DbtQueryPreviewInputSerializer(serializers.Serializer):
     query = serializers.CharField(required=True)
     use_fast_compile = serializers.BooleanField(required=False, default=True)
-    branch_id = serializers.CharField(required=True)
+    project_id = serializers.CharField(required=True)
     limit = serializers.IntegerField(required=False, default=1000)
 
 
 class DbtQueryPreviewView(APIView):
     def post(self, request):
         workspace = request.user.current_workspace()
-        dbt_resource = workspace.get_dbt_details()
+        dbt_resource = workspace.get_dbt_dev_details()
         serializer = DbtQueryPreviewInputSerializer(data=request.data)
         serializer.is_valid()
 
         with dbt_resource.dbt_repo_context(
-            branch_id=serializer.validated_data.get("branch_id"), isolate=False
+            project_id=serializer.validated_data.get("project_id"), isolate=False
         ) as (
             dbtproj,
             project_path,
@@ -122,7 +122,7 @@ class DbtQueryPreviewView(APIView):
 
 class DbtQueryValidateInputSerializer(serializers.Serializer):
     query = serializers.CharField(required=True)
-    branch_id = serializers.CharField(required=True)
+    project_id = serializers.CharField(required=True)
     use_fast_compile = serializers.BooleanField(required=False, default=True)
     limit = serializers.IntegerField(required=False, default=1000)
 
@@ -130,12 +130,12 @@ class DbtQueryValidateInputSerializer(serializers.Serializer):
 class DbtQueryValidateView(APIView):
     def post(self, request):
         workspace = request.user.current_workspace()
-        dbt_resource = workspace.get_dbt_details()
+        dbt_resource = workspace.get_dbt_dev_details()
         serializer = DbtQueryValidateInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         with dbt_resource.dbt_repo_context(
-            branch_id=serializer.validated_data.get("branch_id"), isolate=False
+            project_id=serializer.validated_data.get("project_id"), isolate=False
         ) as (
             dbtproj,
             project_path,

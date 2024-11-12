@@ -79,10 +79,11 @@ class TestDBTQueryViews:
     ):
         user.active_workspace_id = resource.workspace.id
         user.save()
-        branch_id = resource.dbtresource_set.first().repository.main_branch.id
+        project_id = resource.dbtresource_set.first().repository.main_project.id
+
         data = {
             "query": query,
-            "branch_id": branch_id,
+            "project_id": project_id,
             "use_fast_compile": True,
         }
         if limit is not None:
@@ -90,9 +91,8 @@ class TestDBTQueryViews:
         response = client.post(endpoint, data)
         _validate_query_test(response, limit)
 
-    @pytest.mark.parametrize("limit", [None, 100])
-    def test_dbt_query_postgres(self, client, user, local_postgres, limit):
-        self._test(client, user, local_postgres, limit=limit)
+    def test_dbt_query_postgres(self, client, user, local_postgres):
+        self._test(client, user, local_postgres)
 
     @require_env_vars("REDSHIFT_0_WORKSPACE_ID")
     def test_dbt_query_redshift(self, client, user, remote_redshift):

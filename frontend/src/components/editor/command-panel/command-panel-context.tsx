@@ -163,7 +163,7 @@ export const CommandPanelProvider: FC<CommandPanelProviderProps> = ({
         JSON.stringify({
           action: "start",
           command: payload.command,
-          branch_id: branchId,
+          project_id: branchId,
         }),
       );
       setInputValue("");

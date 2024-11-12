@@ -531,7 +531,7 @@ export async function executeQueryPreview({
     method: "POST",
     body: {
       query: dbtSql,
-      branch_id: branchId,
+      project_id: branchId,
       use_fast_compile: true,
     },
   });
@@ -752,7 +752,7 @@ export async function discardBranchChanges(branchId: string) {
 
 type DbtQueryValidateInput = {
   query: string;
-  branch_id: string;
+  project_id: string;
   use_fast_compile?: boolean;
   limit?: number;
 };

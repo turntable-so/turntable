@@ -1,16 +1,15 @@
 import os
 import shutil
-import tempfile
-from unittest.mock import patch, create_autospec
+from unittest.mock import create_autospec
 
-from app.utils.test_utils import require_env_vars
 import pytest
 from django.conf import settings
 
 from app.models import Workspace
-from app.models.repository import Branch
+from app.models.project import Project
 from app.models.ssh_key import SSHKey
 from app.models.workspace import generate_short_uuid
+from app.utils.test_utils import require_env_vars
 
 TEST_WORKSPACE_ID = generate_short_uuid()
 
@@ -37,8 +36,8 @@ class TestRepository:
         return repo
 
     @pytest.fixture
-    def local_postgres_test_branch(self, local_postgres_repo):
-        return Branch.objects.create(
+    def local_postgres_test_project(self, local_postgres_repo):
+        return Project.objects.create(
             workspace=local_postgres_repo.workspace,
             repository=local_postgres_repo,
             branch_name="test-branch",
@@ -50,18 +49,21 @@ class TestRepository:
         assert res["success"]
 
     def test_clone(self, local_postgres_repo):
-        assert local_postgres_repo.main_branch.clone()
+        assert local_postgres_repo.main_project.clone()
 
     @isolate_mark
     def test_repo_context(self, local_postgres_repo, isolate):
-        with local_postgres_repo.main_branch.repo_context(isolate=isolate) as (repo, _):
+        with local_postgres_repo.main_project.repo_context(isolate=isolate) as (
+            repo,
+            _,
+        ):
             assert len(os.listdir(repo.working_tree_dir)) > 3
 
     @isolate_mark
     def test_dbt_repo_context_with_schema(
         self,
         local_postgres,
-        local_postgres_test_branch,
+        local_postgres_test_project,
         isolate,
     ):
         # Create a spy on the real method
@@ -71,7 +73,7 @@ class TestRepository:
         local_postgres.details.get_dbt_profile_contents = spy
 
         with local_postgres.dbtresource_set.first().dbt_repo_context(
-            isolate=isolate, branch_id=local_postgres_test_branch.id
+            isolate=isolate, project_id=local_postgres_test_project.id
         ) as (project, filepath, _):
             assert project != None
             assert filepath != None
@@ -80,34 +82,34 @@ class TestRepository:
                 assert "schema: test_schema" in f.read()
 
     @isolate_mark
-    def test_checkout(self, local_postgres_test_branch, isolate):
-        with local_postgres_test_branch.repo_context(isolate=isolate) as (
+    def test_checkout(self, local_postgres_test_project, isolate):
+        with local_postgres_test_project.repo_context(isolate=isolate) as (
             repo,
             env,
         ):
             assert (
-                local_postgres_test_branch.checkout(isolate, repo, env)
-                == local_postgres_test_branch.branch_name
+                local_postgres_test_project.checkout(isolate, repo, env)
+                == local_postgres_test_project.branch_name
             )
 
     def test_create_branch(self, local_postgres_repo):
         branch_name = "test_branch" + "".join([hex(x)[2:] for x in os.urandom(32)])
-        branch = Branch.objects.create(
+        project = Project.objects.create(
             workspace=local_postgres_repo.workspace,
             repository=local_postgres_repo,
             branch_name=branch_name,
         )
         assert (
-            branch.create_git_branch(
-                source_branch=local_postgres_repo.main_branch.branch_name
+            project.create_git_branch(
+                source_branch=local_postgres_repo.main_project.branch_name
             )
             == branch_name
         )
-        branch.clone()
-        assert branch.checkout() == branch_name
+        project.clone()
+        assert project.checkout() == branch_name
 
-    def test_pull(self, local_postgres_test_branch):
-        assert local_postgres_test_branch.git_pull()
+    def test_pull(self, local_postgres_test_project):
+        assert local_postgres_test_project.git_pull()
 
     def test_generate_deploy_key(self):
         workspace = Workspace.objects.create(
