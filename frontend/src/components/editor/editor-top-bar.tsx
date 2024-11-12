@@ -25,7 +25,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import BranchReviewDialog from "./branch-review-dialog";
 import { useFiles } from "@/app/contexts/FilesContext";
-import { LocalStorageKeys, TURNTABLE_LOCAL_STORAGE_PREFIX } from "@/app/constants/local-storage-keys";
+import {
+  LocalStorageKeys,
+  TURNTABLE_LOCAL_STORAGE_PREFIX,
+} from "@/app/constants/local-storage-keys";
 import { Switch } from "../ui/switch";
 import { useLocalStorage } from "usehooks-ts";
 
@@ -53,7 +56,13 @@ const EditorTopBar = () => {
   } = useLayoutContext();
   const router = useRouter();
   const { user, logout } = useSession();
-  const { branchName, checkForProblemsOnEdit, setCheckForProblemsOnEdit } = useFiles();
+  const {
+    branchName,
+    checkForProblemsOnEdit,
+    setCheckForProblemsOnEdit,
+    formatOnSave,
+    setFormatOnSave,
+  } = useFiles();
   const [branchReviewDialogOpen, setBranchReviewDialogOpen] = useState(false);
 
   return (
@@ -174,16 +183,28 @@ const EditorTopBar = () => {
             <div className="flex flex-col gap-4">
               <div className="flex gap-2 items-center">
                 <div>
-                  <div className="text-sm font-medium py-1">Check for problems on edit</div>
+                  <div className="text-sm font-medium py-1">Format on save</div>
+                  <div className="text-xs text-muted-foreground">
+                    Formats the file on save.
+                  </div>
+                </div>
+                <Switch
+                  checked={formatOnSave}
+                  onCheckedChange={(value) => setFormatOnSave(value)}
+                />
+              </div>
+              <div className="flex gap-2 items-center">
+                <div>
+                  <div className="text-sm font-medium py-1">
+                    Check for problems on edit
+                  </div>
                   <div className="text-xs text-muted-foreground">
                     Checks for problems in the query as you type.
                   </div>
                 </div>
                 <Switch
                   checked={checkForProblemsOnEdit}
-                  onCheckedChange={(value) =>
-                    setCheckForProblemsOnEdit(value)
-                  }
+                  onCheckedChange={(value) => setCheckForProblemsOnEdit(value)}
                 />
               </div>
               <div className="flex gap-2 items-center">

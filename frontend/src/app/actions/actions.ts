@@ -4,7 +4,6 @@ import { fetcher } from "@/app/fetcher";
 import getUrl from "@/app/url";
 import { revalidateTag } from "next/cache";
 import { cookies } from "next/headers";
-import { ProjectChanges } from "../contexts/FilesContext";
 import type { Settings } from "../settings/types";
 
 export async function createWorkspace(body: FormData) {
@@ -478,13 +477,21 @@ export async function getBranches() {
   return response.json();
 }
 
-export async function createBranch(branchName: string, sourceBranch: string, schema: string) {
+export async function createBranch(
+  branchName: string,
+  sourceBranch: string,
+  schema: string,
+) {
   const response = await fetcher(`/project/branches/`, {
     cookies,
     method: "POST",
-    body: { branch_name: branchName, source_branch: sourceBranch, schema: schema },
+    body: {
+      branch_name: branchName,
+      source_branch: sourceBranch,
+      schema: schema,
+    },
   });
-  return response.json()
+  return response.json();
 }
 
 export async function getFileIndex(branchId: string) {
@@ -497,17 +504,20 @@ export async function getFileIndex(branchId: string) {
 
 export async function fetchFileContents(branchId: string, path: string) {
   const encodedPath = encodeURIComponent(path);
-  const response = await fetcher(`/project/${branchId}/files/?filepath=${encodedPath}`, {
-    cookies,
-    method: "GET",
-  });
+  const response = await fetcher(
+    `/project/${branchId}/files/?filepath=${encodedPath}`,
+    {
+      cookies,
+      method: "GET",
+    },
+  );
   return response.json();
 }
 
 type DbtQueryPreview = {
   signed_url: string;
   error?: string;
-}
+};
 
 export async function executeQueryPreview(
   dbtSql: string,
@@ -522,43 +532,77 @@ export async function executeQueryPreview(
   return response.json();
 }
 
-export async function persistFile(branchId: string, filePath: string, fileContents: string) {
-  const response = await fetcher(`/project/${branchId}/files/?filepath=${filePath}`, {
-    cookies,
-    method: "PUT",
-    body: {
-      contents: fileContents,
+type PersistFileArgs = {
+  branchId: string;
+  filePath: string;
+  fileContents: string;
+  format?: boolean;
+};
+
+export async function persistFile({
+  branchId,
+  filePath,
+  fileContents,
+  format,
+}: PersistFileArgs) {
+  const response = await fetcher(
+    `/project/${branchId}/files/?filepath=${filePath}`,
+    {
+      cookies,
+      method: "PUT",
+      body: {
+        contents: fileContents,
+        ...(format !== undefined && { format }),
+      },
     },
-  });
+  );
+  return response.json();
 }
 
-export async function changeFilePath(branchId: string, filePath: string, newPath: string) {
-  const response = await fetcher(`/project/${branchId}/files/?filepath=${filePath}`, {
-    cookies,
-    method: "PATCH",
-    body: {
-      new_path: newPath,
+export async function changeFilePath(
+  branchId: string,
+  filePath: string,
+  newPath: string,
+) {
+  const response = await fetcher(
+    `/project/${branchId}/files/?filepath=${filePath}`,
+    {
+      cookies,
+      method: "PATCH",
+      body: {
+        new_path: newPath,
+      },
     },
-  });
+  );
   return response.ok;
 }
 
-export async function createFile(branchId: string, filePath: string, fileContents: string) {
-  const response = await fetcher(`/project/${branchId}/files/?filepath=${filePath}`, {
-    cookies,
-    method: "POST",
-    body: {
-      contents: fileContents,
+export async function createFile(
+  branchId: string,
+  filePath: string,
+  fileContents: string,
+) {
+  const response = await fetcher(
+    `/project/${branchId}/files/?filepath=${filePath}`,
+    {
+      cookies,
+      method: "POST",
+      body: {
+        contents: fileContents,
+      },
     },
-  });
+  );
   return response.ok;
 }
 
 export async function deleteFile(branchId: string, filePath: string) {
-  const response = await fetcher(`/project/${branchId}/files/?filepath=${filePath}`, {
-    cookies,
-    method: "DELETE",
-  });
+  const response = await fetcher(
+    `/project/${branchId}/files/?filepath=${filePath}`,
+    {
+      cookies,
+      method: "DELETE",
+    },
+  );
   return response.ok;
 }
 
@@ -660,7 +704,9 @@ export async function getBranch(id: string) {
   return response.json();
 }
 
-export async function getProjectChanges(branchId: string): Promise<ProjectChanges> {
+export async function getProjectChanges(
+  branchId: string,
+): Promise<ProjectChanges> {
   const response = await fetcher(`/project/${branchId}/changes/`, {
     cookies,
     method: "GET",
@@ -674,16 +720,20 @@ export async function cloneBranchAndMount(branchId: string) {
     cookies,
     method: "POST",
   });
-  return response.ok
+  return response.ok;
 }
 
-export async function commit(branchId: string, commitMessage: string, filePaths: string[]) {
+export async function commit(
+  branchId: string,
+  commitMessage: string,
+  filePaths: string[],
+) {
   const response = await fetcher(`/project/${branchId}/commit/`, {
     cookies,
     method: "POST",
     body: { commit_message: commitMessage, file_paths: filePaths },
   });
-  return response.ok
+  return response.ok;
 }
 
 export async function discardBranchChanges(branchId: string) {
@@ -699,13 +749,22 @@ type DbtQueryValidateInput = {
   branch_id: string;
   use_fast_compile?: boolean;
   limit?: number;
-}
+};
 
 export async function validateDbtQuery(input: DbtQueryValidateInput) {
-  const response = await fetcher('/validate/dbt/', {
+  const response = await fetcher("/validate/dbt/", {
     cookies,
-    method: 'POST',
+    method: "POST",
     body: input,
+  });
+  return response.json();
+}
+
+export async function formatDbtQuery(payload: { query: string }) {
+  const response = await fetcher("/query/format/", {
+    cookies,
+    method: "POST",
+    body: payload,
   });
   return response.json();
 }

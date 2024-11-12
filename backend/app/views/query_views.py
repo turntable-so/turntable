@@ -72,20 +72,24 @@ class DbtQueryPreviewView(QueryPreviewView):
         query = request.data.get("query")
         if not query:
             raise ValueError("query required")
-            
+
         use_fast_compile = request.data.get("use_fast_compile", True)
         limit = request.data.get("limit")
         branch_id = request.data.get("branch_id")
         dbt_resource = workspace.get_dbt_details()
-        
+
         try:
-            with dbt_resource.dbt_repo_context(branch_id=branch_id, isolate=False) as (dbtproj, project_path, _):
+            with dbt_resource.dbt_repo_context(branch_id=branch_id, isolate=False) as (
+                dbtproj,
+                project_path,
+                _,
+            ):
                 sql = None
                 if use_fast_compile:
                     sql = dbtproj.fast_compile(query)
                 if sql is None:
                     sql = dbtproj.preview(query, limit=limit, data=False)
-                
+
             return {
                 "workspace_id": str(workspace.id),
                 "resource_id": str(dbt_resource.resource.id),
@@ -105,13 +109,15 @@ class DbtQueryValidateView(DbtQueryPreviewView, QueryValidateView):
             result = validate_query.si(**input).apply_async().get()
             return self._post_process(result)
         except ValueError as e:
-            return Response(
-                {"error": str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     def _post_process(self, result):
         return QueryValidateView._post_process(self, result)
+
+
+def format_query(query):
+    mode = Mode()
+    return format_string(query, mode)
 
 
 class QueryFormatView(APIView):
@@ -122,11 +128,9 @@ class QueryFormatView(APIView):
             return Response(
                 {"error": "query required"}, status=status.HTTP_400_BAD_REQUEST
             )
-        mode = Mode()
-
         try:
             return JsonResponse(
-                {"success": True, "formatted_query": format_string(query, mode)}
+                {"success": True, "formatted_query": format_query(query)}
             )
         except SqlfmtError:
             return JsonResponse({"success": False})

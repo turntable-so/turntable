@@ -7,6 +7,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import { useDebounceValue, useLocalStorage } from "usehooks-ts";
@@ -24,6 +25,7 @@ import {
   persistFile,
   validateDbtQuery,
   changeFilePath,
+  formatDbtQuery,
 } from "../actions/actions";
 
 export const MAX_RECENT_COMMANDS = 5;
@@ -110,6 +112,9 @@ type FilesContextType = {
   checkForProblemsOnEdit: boolean;
   setCheckForProblemsOnEdit: Dispatch<SetStateAction<boolean>>;
   renameFile: (filePath: string, newPath: string) => Promise<boolean>;
+  formatActiveFile: () => Promise<void>;
+  formatOnSave: boolean;
+  setFormatOnSave: Dispatch<SetStateAction<boolean>>;
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
@@ -171,6 +176,14 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     LocalStorageKeys.checkForProblemsOnEdit(branchId),
     false,
   );
+  const [formatOnSave, setFormatOnSave] = useLocalStorage(
+    LocalStorageKeys.formatOnSave(branchId),
+    false,
+  );
+  const formatOnSaveRef = useRef(formatOnSave);
+  useEffect(() => {
+    formatOnSaveRef.current = formatOnSave;
+  }, [formatOnSave]);
 
   const fetchBranch = async (id: string) => {
     if (id) {
@@ -223,15 +236,17 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     const { file_index } = await getFileIndex(branchId);
     const fileIndex = file_index.map((file: FileNode) => ({ ...file }));
     const sortFileTree = (files: FileNode[]): FileNode[] => {
-      return files.sort((a, b) => a.name.localeCompare(b.name)).map(file => {
-        if (file.type === "directory" && file.children) {
-          return {
-            ...file,
-            children: sortFileTree(file.children)
-          };
-        }
-        return file;
-      });
+      return files
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((file) => {
+          if (file.type === "directory" && file.children) {
+            return {
+              ...file,
+              children: sortFileTree(file.children),
+            };
+          }
+          return file;
+        });
     };
     const sortedFileIndex = sortFileTree(fileIndex);
     setFiles(sortedFileIndex);
@@ -404,11 +419,23 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
 
   const saveFile = async (filepath: string, content: string) => {
     if (activeFile) {
-      await persistFile(branchId, filepath, content);
+      console.log("formatOnSaveRef.current", formatOnSaveRef.current);
+      const result = await persistFile({
+        branchId,
+        filePath: filepath,
+        fileContents: content,
+        format: formatOnSaveRef.current,
+      });
+      const newContent = result.content;
       setOpenedFiles((prev) =>
         prev.map((f) =>
-          f.node.path === filepath ? { ...f, isDirty: false, content } : f,
+          f.node.path === filepath
+            ? { ...f, isDirty: false, content: newContent }
+            : f,
         ),
+      );
+      setActiveFile((prev) =>
+        prev?.node.path === filepath ? { ...prev, content: newContent } : prev,
       );
     }
   };
@@ -445,6 +472,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
       query,
       branch_id: branchId,
     });
+
     if (data.error) {
       setProblems((prev) => ({
         ...prev,
@@ -453,7 +481,16 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
       }));
       return;
     }
-    
+
+    if (!data.errors) {
+      setProblems((prev) => ({
+        ...prev,
+        loading: false,
+        data: [],
+      }));
+      return;
+    }
+
     const formattedProblems = data.errors.map((error: any) => ({
       message: error.msg,
     }));
@@ -483,8 +520,22 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   const renameFile = async (filePath: string, newPath: string) => {
     const success = await changeFilePath(branchId, filePath, newPath);
     fetchFiles();
-    return success
-  }
+    return success;
+  };
+
+  const formatActiveFile = async () => {
+    if (
+      !activeFile ||
+      !activeFile.content ||
+      typeof activeFile.content !== "string"
+    ) {
+      return;
+    }
+    const formattedQuery = await formatDbtQuery({
+      query: activeFile.content,
+    });
+    updateFileContent(activeFile.node.path, formattedQuery);
+  };
 
   return (
     <FilesContext.Provider
@@ -524,6 +575,9 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         checkForProblemsOnEdit,
         setCheckForProblemsOnEdit,
         renameFile,
+        formatActiveFile,
+        formatOnSave,
+        setFormatOnSave,
       }}
     >
       {children}
