@@ -130,7 +130,9 @@ export default function CommandPanelInput() {
             <div
               key={option}
               className={`py-2 px-4 cursor-pointer text-sm ${
-                index === highlightedIndex ? "bg-gray-100" : "hover:bg-gray-100"
+                index === highlightedIndex
+                  ? "bg-gray-100 dark:bg-zinc-700"
+                  : "hover:bg-gray-100 dark:hover:bg-zinc-700"
               }`}
               onMouseDown={(e) => {
                 e.preventDefault();

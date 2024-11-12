@@ -192,7 +192,7 @@ export default function BottomPanel({
         className="border-t flex items-center justify-center dark:bg-zinc-950"
       >
         <div
-          className="flex flex-col w-full h-full flex-grow-1"
+          className="flex flex-col w-full h-full flex-grow-1 dark:bg-black"
           ref={bottomPanelRef}
         >
           {activeTab === "results" &&
@@ -239,7 +239,7 @@ export default function BottomPanel({
                     lineageData[activeFile?.node.path || ""] &&
                     lineageData[activeFile?.node.path || ""].isLoading && (
                       <div
-                        className="w-full bg-gray-200 flex items-center justify-center"
+                        className="w-full bg-gray-200 dark:bg-black flex items-center justify-center"
                         style={{ height: bottomPanelHeight }}
                       >
                         <Loader2 className="h-6 w-6 animate-spin opacity-50" />

@@ -101,78 +101,76 @@ const PromptBox = ({
           disabled={isLoading}
         />
         <div className="flex space-x-2 justify-end w-full">
-          <>
-            {model === "PROMPT" ? (
-              <>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="rounded-sm"
-                  onClick={() => setPromptBoxOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  size="sm"
-                  disabled={!prompt || isLoading}
-                  variant="default"
-                  className="rounded-sm"
-                  onClick={() => {
-                    callInference();
-                  }}
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    "Generate"
-                  )}
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  className="rounded-sm"
-                  onClick={() => {
-                    if (activeFile) {
-                      setActiveFile({
-                        ...activeFile,
-                        view: "edit",
-                      });
-                    }
-                    setPromptBoxOpen(false);
-                  }}
-                >
-                  <X className="mr-2 size-4" />
-                  Reject
-                </Button>
-                <Button
-                  size="sm"
-                  disabled={!prompt || isLoading}
-                  variant="default"
-                  className="rounded-sm"
-                  onClick={() => {
-                    updateFileContent(
-                      activeFile?.node.path || "",
-                      activeFile?.diff?.modified || "",
-                    );
+          {model === "PROMPT" ? (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                className="rounded-sm"
+                onClick={() => setPromptBoxOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                disabled={!prompt || isLoading}
+                variant="default"
+                className="rounded-sm"
+                onClick={() => {
+                  callInference();
+                }}
+              >
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  "Generate"
+                )}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                size="sm"
+                variant="destructive"
+                className="rounded-sm"
+                onClick={() => {
+                  if (activeFile) {
                     setActiveFile({
                       ...activeFile,
-                      isDirty: true,
-                      content: activeFile?.diff?.modified || "",
                       view: "edit",
-                      diff: undefined,
-                    } as OpenedFile);
-                    setPromptBoxOpen(false);
-                  }}
-                >
-                  <Check className="mr-2 size-4" />
-                  Accept
-                </Button>
-              </>
-            )}
-          </>
+                    });
+                  }
+                  setPromptBoxOpen(false);
+                }}
+              >
+                <X className="mr-2 size-4" />
+                Reject
+              </Button>
+              <Button
+                size="sm"
+                disabled={!prompt || isLoading}
+                variant="default"
+                className="rounded-sm"
+                onClick={() => {
+                  updateFileContent(
+                    activeFile?.node.path || "",
+                    activeFile?.diff?.modified || "",
+                  );
+                  setActiveFile({
+                    ...activeFile,
+                    isDirty: true,
+                    content: activeFile?.diff?.modified || "",
+                    view: "edit",
+                    diff: undefined,
+                  } as OpenedFile);
+                  setPromptBoxOpen(false);
+                }}
+              >
+                <Check className="mr-2 size-4" />
+                Accept
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -408,7 +406,7 @@ function EditorPageContent() {
   }, [branchId, isCloned]);
 
   useEffect(() => {
-    if (pathname && pathname.includes("/editor/")) {
+    if (pathname?.includes("/editor/")) {
       const id = pathname.split("/").slice(-1)[0];
       if (id && id.length > 0) {
         fetchBranch(id);
@@ -485,11 +483,7 @@ function EditorPageContent() {
     setIsLoading(true);
     setQueryPreview(null);
     setQueryPreviewError(null);
-    if (
-      activeFile &&
-      activeFile.content &&
-      typeof activeFile.content === "string"
-    ) {
+    if (activeFile?.content && typeof activeFile.content === "string") {
       const query = activeFile.content;
       try {
         const preview = await executeQueryPreview(query);
