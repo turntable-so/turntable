@@ -49,6 +49,7 @@ class TestResourceViews:
             "subtype": "bigquery",
             "config": {
                 "service_account": "{ 'key': 'value' }",
+                "location": "US",
                 "schema_include": ["analytics"],
             },
         }

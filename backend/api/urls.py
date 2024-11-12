@@ -42,6 +42,7 @@ from app.views.project_views import ProjectViewSet
 from app.views.query_views import (
     DbtQueryPreviewView,
     DbtQueryValidateView,
+    QueryFormatView,
     QueryPreviewView,
     QueryValidateView,
 )
@@ -80,6 +81,7 @@ urlpatterns = [
         QueryPreviewView.as_view(),
         name="query_preview",
     ),
+    path("query/format/", QueryFormatView.as_view(), name="query_format"),
     path(
         "validate/sql/",
         QueryValidateView.as_view(),
