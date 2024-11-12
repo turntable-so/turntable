@@ -1,5 +1,5 @@
 jaffle_shop:
-  target: dev
+  target: dbt_sl_test
   outputs:
     dev:
       type: postgres
@@ -8,4 +8,14 @@ jaffle_shop:
       password: mypassword
       port: "{{ env_var('POSTGRES_TEST_DB_PORT', 5432) | as_number }}"
       dbname: mydb # or database instead of dbname
+      schema: dev
+      threads: 6
+    dbt_sl_test:
+      type: postgres
+      host: "{{ env_var('POSTGRES_TEST_DB_HOST', 'postgres_test_db') }}"
+      user: myuser
+      password: mypassword
+      port: "{{ env_var('POSTGRES_TEST_DB_PORT', 5432) | as_number }}"
+      dbname: mydb # or database instead of dbname
       schema: dbt_sl_test
+      threads: 6
