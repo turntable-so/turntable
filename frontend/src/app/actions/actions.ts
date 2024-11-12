@@ -519,14 +519,20 @@ type DbtQueryPreview = {
   error?: string;
 };
 
-export async function executeQueryPreview(
-  dbtSql: string,
-): Promise<DbtQueryPreview> {
+export async function executeQueryPreview({
+  dbtSql,
+  branchId,
+}: {
+  dbtSql: string;
+  branchId: string;
+}): Promise<DbtQueryPreview> {
   const response = await fetcher(`/query/dbt/`, {
     cookies,
     method: "POST",
     body: {
       query: dbtSql,
+      branch_id: branchId,
+      use_fast_compile: true,
     },
   });
   return response.json();
