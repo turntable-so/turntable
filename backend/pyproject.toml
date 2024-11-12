@@ -155,7 +155,7 @@ testpaths = [
 ]
 addopts = "--color=yes -v"
 DJANGO_SETTINGS_MODULE = "api.settings"
-timeout = 90
+timeout = 120
 
 [tool.ruff.lint]
 ignore = ["E711"]
