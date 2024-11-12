@@ -12,6 +12,7 @@ from api.serializers import AssetSerializer, BranchSerializer, LineageSerializer
 from app.core.dbt import LiveDBTParser
 from app.models.repository import Branch
 from app.views.query_views import format_query
+from vinyl.lib.dbt import DBTProject, DBTTransition
 
 
 def _build_file_tree(user_id: str, path: str, base_path: str):
@@ -42,6 +43,66 @@ def get_file_tree(user_id: str, path: str, base_path: str):
         "id": relative_path,
         "children": file_tree,
     }
+
+
+def get_lineage_helper(
+    proj: DBTProject,
+    before_proj: DBTProject | None,
+    resource_id: str,
+    filepath: str,
+    predecessor_depth: int,
+    successor_depth: int,
+    lineage_type: str,
+    defer: bool,
+):
+    if defer:
+        transition = DBTTransition(before_project=before_proj, after_project=proj)
+        transition.mount_manifest(defer=defer)
+        transition.mount_catalog(defer=defer)
+    else:
+        proj.mount_manifest()
+        proj.mount_catalog()
+
+    node_id = LiveDBTParser.get_node_id_from_filepath(proj, filepath, defer)
+    if not node_id:
+        raise ValueError(f"Node at filepath{filepath} not found in manifest")
+
+    dbtparser = LiveDBTParser.parse_project(
+        proj=proj,
+        before_proj=before_proj,
+        node_id=node_id,
+        resource=resource_id,
+        predecessor_depth=predecessor_depth,
+        successor_depth=successor_depth,
+        defer=defer,
+    )
+    lineage, _ = dbtparser.get_lineage(lineage_type=lineage_type)
+    root_asset = None
+    column_lookup = {}
+    for asset in lineage.assets:
+        column_lookup[asset.id] = []
+    for column in lineage.columns:
+        column_lookup[column.asset_id].append(column)
+
+    for asset in lineage.assets:
+        if asset.id == lineage.asset_id:
+            root_asset = asset
+
+        asset.temp_columns = column_lookup[asset.id]
+
+    if not root_asset:
+        raise ValueError(f"Root asset not found for {lineage.asset_id}")
+
+    return root_asset, lineage
+
+    asset_serializer = AssetSerializer(root_asset, context={"request": request})
+    lineage_serializer = LineageSerializer(lineage, context={"request": request})
+    return Response(
+        {
+            "root_asset": asset_serializer.data,
+            "lineage": lineage_serializer.data,
+        }
+    )
 
 
 class ProjectViewSet(viewsets.ViewSet):
@@ -350,60 +411,45 @@ class ProjectViewSet(viewsets.ViewSet):
                 status=400,
             )
 
-        with dbt_details.dbt_transition_context(branch_id=branch.id) as (
-            transition,
-            _,
-            repo,
-        ):
-            try:
-                transition.mount_manifest(defer=defer)
-                transition.mount_catalog(defer=defer)
-
-                node_id = LiveDBTParser.get_node_id_from_filepath(
-                    transition.after, filepath, defer
-                )
-                if not node_id:
-                    raise ValueError(
-                        f"Node at filepath{filepath} not found in manifest"
-                    )
-
-                dbtparser = LiveDBTParser.parse_project(
+        if defer:
+            with dbt_details.dbt_transition_context(
+                project_id=project.id, isolate=False
+            ) as (
+                transition,
+                _,
+                repo,
+            ):
+                root_asset, lineage = get_lineage_helper(
                     proj=transition.after,
                     before_proj=transition.before,
-                    node_id=node_id,
-                    resource=dbt_details.resource,
+                    resource_id=dbt_details.resource.id,
+                    filepath=filepath,
                     predecessor_depth=predecessor_depth,
                     successor_depth=successor_depth,
+                    lineage_type=lineage_type,
                     defer=defer,
                 )
-                lineage, _ = dbtparser.get_lineage(lineage_type=lineage_type)
-                root_asset = None
-                column_lookup = {}
-                for asset in lineage.assets:
-                    column_lookup[asset.id] = []
-                for column in lineage.columns:
-                    column_lookup[column.asset_id].append(column)
-
-                for asset in lineage.assets:
-                    if asset.id == lineage.asset_id:
-                        root_asset = asset
-
-                    asset.temp_columns = column_lookup[asset.id]
-
-                if not root_asset:
-                    raise ValueError(f"Root asset not found for {lineage.asset_id}")
-
-                asset_serializer = AssetSerializer(
-                    root_asset, context={"request": request}
+        else:
+            with dbt_details.dbt_repo_context(project_id=project.id, isolate=False) as (
+                proj,
+                _,
+                _,
+            ):
+                root_asset, lineage = get_lineage_helper(
+                    proj=proj,
+                    resource_id=dbt_details.resource.id,
+                    filepath=filepath,
+                    predecessor_depth=predecessor_depth,
+                    successor_depth=successor_depth,
+                    lineage_type=lineage_type,
+                    defer=defer,
                 )
-                lineage_serializer = LineageSerializer(
-                    lineage, context={"request": request}
-                )
-                return Response(
-                    {
-                        "root_asset": asset_serializer.data,
-                        "lineage": lineage_serializer.data,
-                    }
-                )
-            except Exception as e:
-                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        asset_serializer = AssetSerializer(root_asset, context={"request": request})
+        lineage_serializer = LineageSerializer(lineage, context={"request": request})
+        return Response(
+            {
+                "root_asset": asset_serializer.data,
+                "lineage": lineage_serializer.data,
+            }
+        )
