@@ -9,6 +9,7 @@
 .*venv/
 .*env
 private/
+postgres_test_db_data/
 
 # dependencies
 /node_modules
