@@ -94,7 +94,7 @@ export default function DataTable() {
   return (
     <div className="space-y-4">
       <DataTableToolbar table={table} />
-      <div className="rounded-md border dark:border-gray-700 bg-white dark:bg-black">
+      <div className="rounded-md border dark:border-zinc-700 bg-white dark:bg-black">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -118,7 +118,7 @@ export default function DataTable() {
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
-                  className={`cursor-pointer ${isLoading ? "bg-gray-50 animate-pulse" : ""}`}
+                  className={`cursor-pointer ${isLoading ? "bg-zinc-50 dark:bg-zinc-900 animate-pulse" : ""}`}
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
                   onClick={() => {
@@ -145,7 +145,7 @@ export default function DataTable() {
                       {Array.from({ length: columns.length }).map(
                         (_, index) => (
                           <TableCell key={index} className="animate-pulse">
-                            <div className="h-4 bg-gray-200 rounded"></div>
+                            <div className="h-4 bg-zinc-200 dark:bg-zinc-800 rounded" />
                           </TableCell>
                         ),
                       )}
