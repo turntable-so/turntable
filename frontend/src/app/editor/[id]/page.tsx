@@ -10,7 +10,6 @@ import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import useResizeObserver from "use-resize-observer";
 import { executeQueryPreview, infer } from "../../actions/actions";
 import { type OpenedFile, useFiles } from "../../contexts/FilesContext";
-import "@/components/ag-grid-custom-theme.css"; // Custom CSS Theme for Data Grid
 import BottomPanel from "@/components/editor/bottom-panel";
 import EditorSidebar from "@/components/editor/editor-sidebar";
 import FileTabs from "@/components/editor/file-tabs";

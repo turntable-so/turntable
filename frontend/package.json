@@ -50,7 +50,6 @@
     "@uiw/react-codemirror": "^4.22.2",
     "ag-grid-community": "^32.2.0",
     "ag-grid-react": "^31.2.0",
-    "ag-theme-balham.css": "link:ag-grid-community/styles/ag-theme-balham.css",
     "ai": "^3.1.14",
     "ansi-to-html": "^0.7.2",
     "class-variance-authority": "^0.7.0",

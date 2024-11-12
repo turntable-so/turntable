@@ -1,3 +1,6 @@
+import "ag-grid-community/styles/ag-grid.css";
+import "ag-grid-community/styles/ag-theme-material.css";
+
 import { useFiles } from "@/app/contexts/FilesContext";
 import { useLineage } from "@/app/contexts/LineageContext";
 import { useBottomPanelTabs } from "@/components/editor/use-bottom-panel-tabs";
@@ -29,6 +32,7 @@ import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import CommandPanel from "./command-panel";
 import ProblemsPanel from "./problems-panel/problems-panel";
 import { Badge } from "../ui/badge";
+import { useTheme } from "next-themes";
 
 const SkeletonLoadingTable = () => {
   const Loader = () => (
@@ -100,6 +104,7 @@ export default function BottomPanel({
 
   const { ref: bottomPanelRef, height: bottomPanelHeight } =
     useResizeObserver();
+  const { theme } = useTheme();
 
   return (
     <Fragment>
@@ -217,7 +222,11 @@ export default function BottomPanel({
                 default:
                   return (
                     <AgGridReact
-                      className="ag-theme-custom"
+                      className={
+                        theme === "dark"
+                          ? "ag-theme-material-dark"
+                          : "ag-theme-material"
+                      }
                       ref={gridRef}
                       suppressRowHoverHighlight={true}
                       columnHoverHighlight={true}
@@ -235,8 +244,7 @@ export default function BottomPanel({
                 FallbackComponent={() => <div>Something went wrong</div>}
               >
                 <>
-                  {lineageData &&
-                    lineageData[activeFile?.node.path || ""] &&
+                  {lineageData?.[activeFile?.node.path || ""] &&
                     lineageData[activeFile?.node.path || ""].isLoading && (
                       <div
                         className="w-full bg-gray-200 dark:bg-black flex items-center justify-center"
@@ -245,8 +253,7 @@ export default function BottomPanel({
                         <Loader2 className="h-6 w-6 animate-spin opacity-50" />
                       </div>
                     )}
-                  {lineageData &&
-                    lineageData[activeFile?.node.path || ""] &&
+                  {lineageData?.[activeFile?.node.path || ""] &&
                     lineageData[activeFile?.node.path || ""].data && (
                       <LineageView
                         key={activeFile?.node.path}
@@ -263,8 +270,7 @@ export default function BottomPanel({
                         branchId={branchId}
                       />
                     )}
-                  {lineageData &&
-                    lineageData[activeFile?.node.path || ""] &&
+                  {lineageData?.[activeFile?.node.path || ""] &&
                     lineageData[activeFile?.node.path || ""].error && (
                       <div
                         className="w-full bg-gray-200 flex items-center justify-center"
