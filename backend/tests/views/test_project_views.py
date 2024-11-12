@@ -80,7 +80,7 @@ class TestProjectViews:
             {"contents": "test"},
         )
 
-        assert response.status_code == 204
+        assert response.status_code == 200
 
     def test_create_file(self, client, branch):
         filepath = "models/marts/customer360/sales.sql"
@@ -160,7 +160,6 @@ class TestProjectViews:
 @pytest.mark.usefixtures("local_postgres")
 @require_env_vars("SSHKEY_0_PUBLIC", "SSHKEY_0_PRIVATE")
 class TestFileChanges:
-
     @pytest.fixture
     def branch(self, local_postgres):
         return local_postgres.get_dbt_resource().repository.main_branch

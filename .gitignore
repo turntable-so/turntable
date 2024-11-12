@@ -55,3 +55,4 @@ backend/.env
 .env.staging
 **/.idea/**
 **/.pnpm-store/
+**/.vscode/
