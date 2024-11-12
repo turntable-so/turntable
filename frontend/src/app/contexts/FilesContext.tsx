@@ -470,7 +470,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     setProblems((prev) => ({ ...prev, loading: true, data: [] }));
     const data = await validateDbtQuery({
       query,
-      branch_id: branchId,
+      project_id: branchId,
     });
 
     if (data.error) {

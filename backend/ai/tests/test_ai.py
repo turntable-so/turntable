@@ -11,7 +11,7 @@ def test_embed():
 
 @pytest.mark.django_db
 def test_table_description(local_postgres):
-    dbt_core_resource = DBTCoreDetails.objects.get(resource=local_postgres)
+    dbt_core_resource = DBTCoreDetails.objects.filter(resource=local_postgres).first()
     with dbt_core_resource.dbt_repo_context() as (dbtproj, dbt_path, _):
         x = get_table_completion(
             dbtproj,
@@ -24,7 +24,7 @@ def test_table_description(local_postgres):
 
 @pytest.mark.django_db
 def test_column_description(local_postgres):
-    dbt_core_resource = DBTCoreDetails.objects.get(resource=local_postgres)
+    dbt_core_resource = DBTCoreDetails.objects.filter(resource=local_postgres).first()
     with dbt_core_resource.dbt_repo_context() as (dbtproj, dbt_path, _):
         x = get_column_completion(
             dbtproj,

@@ -10,7 +10,7 @@ for path in IGNORE_FOLDERS:
     for depth in range(1, MAX_DEPTH):
         IGNORE_PATTERNS.append(path + "/*" * depth)
 IGNORE_PATTERNS = ";".join(IGNORE_PATTERNS)
-WATCHMEDO_COMMAND = f'watchmedo auto-restart -v --directory=. --pattern="*.py" --recursive --ignore-patterns="{IGNORE_PATTERNS}" --ignore-directories -- '
+WATCHMEDO_COMMAND = f'watchmedo auto-restart --directory=. --pattern="*.py" --recursive --ignore-patterns="{IGNORE_PATTERNS}" --ignore-directories -- '
 
 
 class Command(BaseCommand):

@@ -72,13 +72,12 @@ class Workspace(models.Model):
         if is_new:
             self._create_default_workspace_group()
 
-    def get_dbt_details(self):
-        # Note assumes only one dbt project
-        for resource in self.resources.all():
-            if resource.has_dbt:
-                return resource.dbtresource_set.first()
+    def get_dbt_dev_details(self, resource_id: str = None):
+        # import here to avoid circular import
+        from app.models.resources import DBTCoreDetails
 
-        return None
+        # get dev environment options in order of preference
+        return DBTCoreDetails.get_development_dbtresource(self.id, resource_id)
 
     @property
     def member_count(self):

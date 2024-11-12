@@ -15,7 +15,8 @@ from django.db import models
 from django_celery_results.models import TaskResult
 from polymorphic.models import PolymorphicModel
 
-from app.models.repository import Branch, Repository
+from app.models.project import Project
+from app.models.repository import Repository
 from app.models.workspace import Workspace
 from app.utils.fields import encrypt
 from vinyl.lib.connect import (
@@ -67,7 +68,7 @@ def get_sync_config(db_path):
 
 @contextmanager
 def repo_path(
-    obj, isolate: bool = False, branch_id: str | None = None
+    obj, isolate: bool = False, project_id: str | None = None
 ) -> Generator[tuple[str, Repository | None], None, None]:
     repo: Repository | None = getattr(obj, "repository")
     project_path = getattr(obj, "project_path")
@@ -83,8 +84,8 @@ def repo_path(
 
         yield project_path, None
         return
-    branch = repo.main_branch if branch_id is None else repo.get_branch(branch_id)
-    with branch.repo_context(isolate=isolate) as (git_repo, _):
+    project = repo.main_project if project_id is None else repo.get_project(project_id)
+    with project.repo_context(isolate=isolate) as (git_repo, _):
         project_path = os.path.join(git_repo.working_tree_dir, project_path)
         yield project_path, git_repo
 
@@ -133,24 +134,6 @@ class Resource(models.Model):
     @property
     def has_dbt(self):
         return self.dbtresource_set.exists()
-
-    def get_dbt_resource(self, dbt_resource_id=None):
-        if dbt_resource_id is None:
-            dbt_resource_count = self.dbtresource_set.count()
-            assert (
-                dbt_resource_count == 1
-            ), f"Expected 1 dbt resource, found {dbt_resource_count}"
-            dbt_resource = self.dbtresource_set.first()
-        else:
-            dbt_resource = self.dbtresource_set.get(id=dbt_resource_id)
-            assert (
-                dbt_resource.resource.id == self.id
-            ), f"Specified DBT resource does not belong to the resource {self.id}"
-        assert (
-            dbt_resource.subtype == ResourceSubtype.DBT
-        ), "Expected DBT core resource. Currently, running dbt cloud resources is not supported."
-
-        return dbt_resource
 
 
 class IngestError(models.Model):
@@ -339,8 +322,35 @@ class ResourceDetails(PolymorphicModel):
             yield [config_path], db_path
 
 
+class EnvironmentType(models.TextChoices):
+    DEV = "dev"
+    STAGING = "staging"
+    PROD = "prod"
+    COMBINED = "combined"
+
+    @classmethod
+    def jobs_allowed_environments(cls):
+        # order of preference
+        return [EnvironmentType.PROD, EnvironmentType.COMBINED, EnvironmentType.STAGING]
+
+    @classmethod
+    def metadata_sync_allowed_environments(cls):
+        return [EnvironmentType.PROD, EnvironmentType.COMBINED]
+
+    @classmethod
+    def development_allowed_environments(cls):
+        # order of preference
+        return [EnvironmentType.DEV, EnvironmentType.COMBINED]
+
+
 class DBTResource(PolymorphicModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    environment = models.CharField(
+        choices=EnvironmentType.choices,
+        default=EnvironmentType.COMBINED,
+        max_length=255,
+        blank=False,
+    )
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
     name = models.TextField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -553,21 +563,77 @@ class DBTCoreDetails(DBTResource):
         Repository, on_delete=models.CASCADE, null=True, default=None
     )
 
+    @property
+    def development_allowed(self):
+        return self.environment in EnvironmentType.development_allowed_environments()
+
+    @property
+    def jobs_allowed(self):
+        return self.environment in EnvironmentType.jobs_allowed_environments()
+
+    @property
+    def metadata_sync_allowed(self):
+        return self.environment in EnvironmentType.metadata_sync_allowed_environments()
+
+    @classmethod
+    def get_job_dbtresource(cls, workspace_id: str, resource_id: str = None):
+        prod_env_options = EnvironmentType.jobs_allowed_environments()
+
+        dbtresource_options = cls.objects.filter(
+            workspace_id=workspace_id,
+            environment__in=prod_env_options,
+        )
+        if resource_id is not None:
+            dbtresource_options = dbtresource_options.filter(resource_id=resource_id)
+        for env in prod_env_options:
+            for dbtresource in dbtresource_options:
+                if dbtresource.environment == env:
+                    return dbtresource
+        raise None
+
+    @classmethod
+    def get_development_dbtresource(cls, workspace_id: str, resource_id: str = None):
+        dev_env_options = EnvironmentType.development_allowed_environments()
+
+        dbtresource_options = cls.objects.filter(
+            workspace_id=workspace_id,
+            environment__in=dev_env_options,
+        )
+        if resource_id is not None:
+            dbtresource_options = dbtresource_options.filter(resource_id=resource_id)
+        for env in dev_env_options:
+            for dbtresource in dbtresource_options:
+                if dbtresource.environment == env:
+                    return dbtresource
+        return None
+
+    def clean(self, *args, **kwargs):
+        if (
+            self.environment == EnvironmentType.PROD
+            and self.repository.dbtresource_set.filter(
+                environment=EnvironmentType.PROD
+            ).exists()
+        ):
+            raise ValidationError(
+                "Cannot have more than one production resource in a repository"
+            )
+        super().clean(*args, **kwargs)
+
     def save(self, *args, **kwargs):
         if isinstance(self.version, DBTVersion):
             self.version = self.version.value
         super().save(*args, **kwargs)
 
     @contextmanager
-    def dbt_repo_context(self, isolate: bool = False, branch_id: str | None = None):
+    def dbt_repo_context(self, isolate: bool = False, project_id: str | None = None):
         env_vars = self.env_vars or {}
         dialect_str = self.resource.details.subtype
-        if branch_id is not None:
-            branch = Branch.objects.get(id=branch_id)
-            schema = branch.schema
+        if project_id is not None:
+            project = Project.objects.get(id=project_id)
+            schema = project.schema
         else:
             schema = None
-        with repo_path(self, isolate=isolate, branch_id=branch_id) as (
+        with repo_path(self, isolate=isolate, project_id=project_id) as (
             project_path,
             git_repo,
         ):
@@ -598,14 +664,37 @@ class DBTCoreDetails(DBTResource):
 
     @contextmanager
     def dbt_transition_context(
-        self, isolate: bool = False, branch_id: str | None = None
+        self,
+        isolate: bool = False,
+        project_id: str | None = None,
+        override_manifest: bool = False,
+        override_catalog: bool = False,
+        override_job_resource: DBTResource | None = None,
     ):
-        with self.dbt_repo_context(isolate=isolate) as (
+        prod_environment = override_job_resource or self.get_job_dbtresource(
+            self.workspace.id, self.resource.id
+        )
+        if prod_environment is None:
+            raise Exception("No production environment found for this repository")
+        with prod_environment.dbt_repo_context(isolate=isolate) as (
             before,
             _,
             _,
         ):
-            with self.dbt_repo_context(isolate=isolate, branch_id=branch_id) as (
+            to_update = [
+                (
+                    before.manifest_path,
+                    prod_environment.manifest_json,
+                    override_manifest,
+                ),
+                (before.catalog_path, prod_environment.catalog_json, override_catalog),
+            ]
+            for path, artifact_json, override in to_update:
+                if artifact_json is not None:
+                    if override or not os.path.exists(path):
+                        with open(path, "w") as f:
+                            save_orjson(artifact_json, f)
+            with self.dbt_repo_context(isolate=isolate, project_id=project_id) as (
                 after,
                 project_path,
                 git_repo,
@@ -616,8 +705,8 @@ class DBTCoreDetails(DBTResource):
                     git_repo,
                 )
 
-    def upload_artifacts(self, branch_id: str | None = None):
-        with self.dbt_repo_context(isolate=True, branch_id=branch_id) as (
+    def upload_artifacts(self, project_id: str | None = None):
+        with self.dbt_repo_context(isolate=True, project_id=project_id) as (
             dbtproj,
             project_path,
             _,
@@ -748,8 +837,11 @@ class DBDetails(ResourceDetails):
         with tempfile.TemporaryDirectory() as temp_dir:
             db_path, config_path = self.db_config_paths(temp_dir)
             # add in dbt configs to same ingest, only supports dbt core for now
+            # don't pull in development environments
             dbt_resources: list[DBTCoreDetails] = list(
-                self.resource.dbtresource_set.all()
+                self.resource.dbtresource_set.filter(
+                    environment__in=EnvironmentType.metadata_sync_allowed_environments()
+                )
             )
             with self.dbt_datahub_yml_paths(dbt_resources, db_path) as dbt_yaml_paths:
                 config = self.get_datahub_config(db_path)

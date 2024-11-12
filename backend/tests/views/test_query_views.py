@@ -3,7 +3,6 @@ import requests
 from django.conf import settings
 
 from app.utils.test_utils import require_env_vars
-from app.utils.url import build_url
 
 
 def _validate_query_test(response):
@@ -71,10 +70,11 @@ class TestDBTQueryViews:
     ):
         user.active_workspace_id = resource.workspace.id
         user.save()
-        branch_id = resource.dbtresource_set.first().repository.main_branch.id
+        project_id = resource.dbtresource_set.first().repository.main_project.id
 
         response = client.post(
-            endpoint, {"query": query, "branch_id": branch_id, "use_fast_compile": True}
+            endpoint,
+            {"query": query, "project_id": project_id, "use_fast_compile": True},
         )
         _validate_query_test(response)
 

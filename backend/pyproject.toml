@@ -146,7 +146,7 @@ packages = ["."]
 testpaths = [
     "app/services/tests",
     "app/core/tests",
-    "app/management/commands/tests",
+    "app/management/commands/tests ",
     "vinyl/tests",
     "ai/tests",
     "workflows/tests",
