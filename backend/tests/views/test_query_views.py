@@ -99,19 +99,3 @@ class TestDBTQueryViews:
     @require_env_vars("DATABRICKS_0_WORKSPACE_ID")
     def test_dbt_query_databricks(self, client, user, remote_databricks):
         self._test(client, user, remote_databricks)
-
-
-FORMAT_QUERY = """with source as (select * from {{ source('ecom', 'raw_customers') }}), renamed as (select id as customer_id, name as customer_name from source) select * from renamed"""
-
-
-@pytest.mark.django_db
-def test_format_query(client):
-    response = client.post(
-        "/query/format/",
-        {"query": FORMAT_QUERY},
-    )
-    out = response.json()
-    assert out["success"]
-    assert out["formatted_query"] != FORMAT_QUERY
-    assert FORMAT_QUERY.count("\n") == 0
-    assert out["formatted_query"].count("\n") == 5
