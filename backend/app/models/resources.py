@@ -1017,13 +1017,19 @@ class BigqueryDetails(DBDetails):
     service_account = encrypt(models.JSONField())
 
     def clean(self):
-        if self.bq_project_id is not None:
+        if self.bq_project_id:
             return
-        if self.service_account_dict.get("project_id") is None:
+
+        project_id = self.service_account_dict.get("project_id")
+        if project_id is None:
             raise ValidationError(
                 "project_id is required in service_account if bq_project_id is not set"
             )
-        self.bq_project_id = self.service_account_dict.get("project_id")
+        self.bq_project_id = project_id
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
 
     @property
     def service_account_dict(self):

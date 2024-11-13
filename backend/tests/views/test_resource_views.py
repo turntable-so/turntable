@@ -22,7 +22,7 @@ class TestResourceViews:
             },
             "subtype": "bigquery",
             "config": {
-                "service_account": "{ 'key': 'value' }",
+                "service_account": '{ "project_id": "value" }',
                 "schema_include": ["analytics"],
             },
         }
@@ -49,13 +49,14 @@ class TestResourceViews:
             },
             "subtype": "bigquery",
             "config": {
-                "service_account": "{ 'key': 'value' }",
+                "service_account": '{ "project_id": "value" }',
                 "location": "US",
                 "schema_include": ["analytics"],
                 "bq_project_id": bq_project_id,
             },
         }
         response = client.post("/resources/", data, format="json")
+        print(response.json())
         assert response.status_code == 201
 
     def test_get_bigquery_resource(self, client, resource_id):
