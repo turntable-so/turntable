@@ -1,8 +1,8 @@
 import { LocalStorageKeys } from "@/app/constants/local-storage-keys";
 import {
-  Dispatch,
+  type Dispatch,
   type ReactNode,
-  SetStateAction,
+  type SetStateAction,
   createContext,
   useCallback,
   useContext,
@@ -23,10 +23,10 @@ import {
   discardBranchChanges,
   getProjectChanges,
   persistFile,
-  validateDbtQuery,
   changeFilePath,
   formatDbtQuery,
 } from "../actions/actions";
+import { validateDbtQuery } from "../actions/client-actions";
 
 export const MAX_RECENT_COMMANDS = 5;
 
@@ -86,7 +86,11 @@ type FilesContextType = {
   }) => void;
   saveFile: (path: string, content: string) => void;
   searchFileIndex: FileNode[];
-  createFileAndRefresh: (path: string, fileContents: string, isDirectory: boolean) => void;
+  createFileAndRefresh: (
+    path: string,
+    fileContents: string,
+    isDirectory: boolean,
+  ) => void;
   deleteFileAndRefresh: (path: string) => void;
   createNewFileTab: () => void;
   changes: ProjectChanges | null;
@@ -374,7 +378,11 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     [openedFiles, activeFile],
   );
 
-  const createFileAndRefresh = async (path: string, fileContents: string, isDirectory: boolean) => {
+  const createFileAndRefresh = async (
+    path: string,
+    fileContents: string,
+    isDirectory: boolean,
+  ) => {
     await createFile(branchId, path, isDirectory, fileContents);
     await fetchFiles();
   };
@@ -393,10 +401,10 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         prev.map((f) =>
           f.node.path === path
             ? {
-              ...f,
-              content,
-              node: { ...f.node, type: newNodeType },
-            }
+                ...f,
+                content,
+                node: { ...f.node, type: newNodeType },
+              }
             : f,
         ),
       );
@@ -471,39 +479,57 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     return result;
   };
 
-  const validateQuery = async (query: string) => {
-    setProblems((prev) => ({ ...prev, loading: true, data: [] }));
-    const data = await validateDbtQuery({
-      query,
-      project_id: branchId,
-    });
+  const validateQuery = async (query: string, signal?: AbortSignal) => {
+    try {
+      setProblems((prev) => ({ ...prev, loading: true, data: [] }));
+      const data = await validateDbtQuery(
+        {
+          query,
+          project_id: branchId,
+        },
+        signal,
+      );
 
-    if (data.error) {
+      if (data.error) {
+        setProblems((prev) => ({
+          ...prev,
+          loading: false,
+          data: [{ message: data.error }],
+        }));
+        return;
+      }
+
+      if (!data.errors) {
+        setProblems((prev) => ({
+          ...prev,
+          loading: false,
+          data: [{ message: "No errors found" }],
+        }));
+        return;
+      }
+
+      const formattedProblems = data.errors.map((error: any) => ({
+        message: error.msg,
+      }));
       setProblems((prev) => ({
         ...prev,
         loading: false,
-        data: [{ message: data.error }],
+        data: formattedProblems,
       }));
-      return;
-    }
-
-    if (!data.errors) {
+    } catch (e: any) {
+      if (!e) {
+        return;
+      }
+      if (e instanceof Error && e.name === "AbortError") {
+        // Fetch was aborted, no need to update state
+        return;
+      }
       setProblems((prev) => ({
         ...prev,
         loading: false,
-        data: [],
+        data: [{ message: "An error occurred while validating the query" }],
       }));
-      return;
     }
-
-    const formattedProblems = data.errors.map((error: any) => ({
-      message: error.msg,
-    }));
-    setProblems((prev) => ({
-      ...prev,
-      loading: false,
-      data: formattedProblems,
-    }));
   };
 
   useEffect(() => {
@@ -512,7 +538,14 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
       typeof debouncedActiveFileContent === "string" &&
       checkForProblemsOnEdit
     ) {
-      validateQuery(debouncedActiveFileContent);
+      const abortController = new AbortController();
+      const signal = abortController.signal;
+
+      validateQuery(debouncedActiveFileContent, signal);
+
+      return () => {
+        abortController.abort();
+      };
     }
   }, [debouncedActiveFileContent, checkForProblemsOnEdit]);
 
