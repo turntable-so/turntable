@@ -1,7 +1,6 @@
 import { useCommandPanelContext } from "@/components/editor/command-panel/command-panel-context";
 import React, { useEffect, useRef, useState } from "react";
 import CommandInput from "./command-input";
-import CommandPanelActionBtn from "./command-panel-action-btn";
 import { getCommandOptions } from "./command-panel-options";
 import { useFiles } from "@/app/contexts/FilesContext";
 
@@ -143,7 +142,6 @@ export default function CommandPanelInput() {
           ))}
         </div>
       )}
-      <CommandPanelActionBtn />
     </div>
   );
 }

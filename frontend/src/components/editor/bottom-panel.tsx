@@ -29,6 +29,7 @@ import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import CommandPanel from "./command-panel";
 import ProblemsPanel from "./problems-panel/problems-panel";
 import { Badge } from "../ui/badge";
+import CommandPanelActionBtn from "./command-panel/command-panel-action-btn";
 
 const SkeletonLoadingTable = () => {
   return (
@@ -132,8 +133,12 @@ export default function BottomPanel({
               Problems
               {problems.loading ? (
                 <Loader2 className="h-4 w-4 ml-2 animate-spin" />
-              ) : problems.data.length > 0 && (
-                <Badge className="ml-2 font-mono" variant={"outline"}>{problems.data.length}</Badge>
+              ) : (
+                problems.data.length > 0 && (
+                  <Badge className="ml-2 font-mono" variant={"outline"}>
+                    {problems.data.length}
+                  </Badge>
+                )
               )}
             </TabsTrigger>
           </TabsList>
@@ -177,6 +182,7 @@ export default function BottomPanel({
               Refresh
             </Button>
           )}
+          {activeTab === "command" && <CommandPanelActionBtn />}
         </div>
       </div>
       <Panel
@@ -274,9 +280,7 @@ export default function BottomPanel({
           {activeTab === "command" && (
             <CommandPanel bottomPanelHeight={bottomPanelHeight} />
           )}
-          {activeTab === "problems" && (
-            <ProblemsPanel />
-          )}
+          {activeTab === "problems" && <ProblemsPanel />}
         </div>
       </Panel>
     </Fragment>

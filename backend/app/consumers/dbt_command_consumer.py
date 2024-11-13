@@ -60,7 +60,7 @@ class DBTCommandConsumer(WebsocketConsumer):
 
         command = data.get("command")
         project_id = data.get("project_id")
-        defer = data.get("defer", True)
+        defer = data.get("defer", False)
 
         try:
             if command is None:
@@ -94,6 +94,9 @@ class DBTCommandConsumer(WebsocketConsumer):
             # assume success if we've reached the end of the event stream
             self.close()
         except Exception as e:
+            import traceback
+
             logger.error(f"Error in workflow: {e}")
+            logger.error(traceback.format_exc())
             self.send(text_data=f"ERROR: {str(e)}")
             self.close()

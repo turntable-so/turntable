@@ -337,6 +337,7 @@ class DBTProject(object):
         self, command: list[str], should_terminate: Callable[[], bool] = None
     ) -> Generator[str, None, tuple[str, str, bool]]:
         env, cwd = self._dbt_cli_env()
+        env["FORCE_COLOR"] = "1"
 
         stdouts = []
         stderrs = []
