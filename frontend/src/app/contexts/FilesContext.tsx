@@ -517,11 +517,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         data: formattedProblems,
       }));
     } catch (e: any) {
-      if (!e) {
-        return;
-      }
       if (e instanceof Error && e.name === "AbortError") {
-        // Fetch was aborted, no need to update state
         return;
       }
       setProblems((prev) => ({
