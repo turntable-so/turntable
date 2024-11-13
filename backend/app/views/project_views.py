@@ -144,8 +144,12 @@ class ProjectViewSet(viewsets.ViewSet):
                             {"error": "file already exists"},
                             status=status.HTTP_400_BAD_REQUEST,
                         )
-                    # Create directory if it doesn't exist
+
                     os.makedirs(os.path.dirname(filepath), exist_ok=True)
+                    if request.data.get("is_directory"):
+                        os.makedirs(filepath, exist_ok=True)
+                        return Response(status=status.HTTP_201_CREATED)
+
                     with open(filepath, "w") as file:
                         file.write(request.data.get("contents"))
                     return Response(status=status.HTTP_201_CREATED)

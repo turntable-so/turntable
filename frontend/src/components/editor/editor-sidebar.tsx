@@ -14,6 +14,22 @@ import useResizeObserver from "use-resize-observer";
 import ActionBar from "../ActionBar";
 import EmbedAsset from "./embed-asset";
 import Node from "./file-tree-node";
+import { Separator } from "../ui/separator";
+import { ScrollArea } from "../ui/scroll-area";
+import { FolderOpen } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+
+const SkeletonFileTree = () => {
+  return (
+    <div className="h-full flex flex-col animate-pulse">
+      <div className="flex items-center space-x-2">
+        <FolderOpen className="h-4 w-4" />
+        <div className={cn("h-4 w-72 bg-gray-200 dark:bg-gray-800 rounded-sm")} />
+      </div>
+    </div>
+  )
+}
 
 export default function EditorSidebar() {
   const {
@@ -21,7 +37,7 @@ export default function EditorSidebar() {
     width: treeWidth,
     height: treeHeight,
   } = useResizeObserver();
-  const { files, activeFile, updateLoaderContent, openLoader } = useFiles();
+  const { files, activeFile, updateLoaderContent, openLoader, filesLoading } = useFiles();
   const treeRef = useRef<any>(null);
 
   const onCreate = async ({
@@ -114,32 +130,35 @@ export default function EditorSidebar() {
         <ResizablePanel defaultSize={75} minSize={30} maxSize={75}>
           <div className="h-full w-full px-2">
             <div className="flex items-center space-x-2">
-              <div className="px-1 text-black text-sm font-medium">Files </div>
+              <div className="px-1 text-black text-sm font-medium">Files</div>
             </div>
             <div className="pt-2 h-full px-1" ref={treeContainerRef}>
-              <Tree
-                selection={activeFile?.node.path}
-                height={treeHeight}
-                width={treeWidth}
-                data={files}
-                openByDefault={false}
-                indent={12}
-                // opens the root by default
-                initialOpenState={{
-                  '.': true,
-                }}
-                ref={treeRef}
-                // @ts-ignore
-                onCreate={onCreate}
-                // @ts-ignore
-                onRename={onRename}
-                // @ts-ignore
-                onMove={onMove}
-                // @ts-ignore
-                onDelete={onDelete}
-              >
-                {Node as any}
-              </Tree>
+              {filesLoading ? <SkeletonFileTree /> : (
+                <Tree
+                  scrollTo={activeFile?.node.path}
+                  selection={activeFile?.node.path}
+                  height={treeHeight}
+                  width={treeWidth}
+                  data={files}
+                  openByDefault={false}
+                  indent={12}
+                  // opens the root by default
+                  initialOpenState={{
+                    '.': true,
+                  }}
+                  ref={treeRef}
+                  // @ts-ignore
+                  onCreate={onCreate}
+                  // @ts-ignore
+                  onRename={onRename}
+                  // @ts-ignore
+                  onMove={onMove}
+                  // @ts-ignore
+                  onDelete={onDelete}
+                >
+                  {Node as any}
+                </Tree>
+              )}
             </div>
           </div>
         </ResizablePanel>
@@ -160,6 +179,6 @@ export default function EditorSidebar() {
         {/*  </div>*/}
         {/*</ResizablePanel>*/}
       </ResizablePanelGroup>
-    </div>
+    </div >
   );
 }
