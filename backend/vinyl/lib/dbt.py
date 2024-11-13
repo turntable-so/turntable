@@ -646,7 +646,6 @@ class DBTProject(object):
                 update_manifest=False,
                 defer=defer,
             )
-
             if os.path.exists(compiled_sql_abs_location):
                 with open(compiled_sql_abs_location, "r") as f:
                     out = f.read()

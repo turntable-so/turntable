@@ -286,9 +286,11 @@ class LookerDetailsSerializer(ResourceDetailsSerializer):
 
 
 class BigQueryDetailsSerializer(ResourceDetailsSerializer):
+    bq_project_id = serializers.CharField(allow_null=True, required=False)
+
     class Meta:
         model = BigqueryDetails
-        fields = ["service_account", "schema_include", "location"]
+        fields = ["service_account", "schema_include", "location", "bq_project_id"]
 
 
 class SnowflakeDetailsSerializer(ResourceDetailsSerializer):

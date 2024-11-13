@@ -218,13 +218,16 @@ const NewProjectButton = () => {
 
 export default function Projects() {
   const [projects, setProjects] = useState<[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
 
   useEffect(() => {
     const fetchProjects = async () => {
+      setIsLoading(true);
       const projects = await getProjects();
       setProjects(projects);
+      setIsLoading(false);
     };
     fetchProjects();
   }, []);
@@ -235,24 +238,41 @@ export default function Projects() {
         <TableHeader>
           <TableRow>
             <TableHead className="p-4">Name</TableHead>
-            <TableHead className="p-4">Created by</TableHead>
-            <TableHead className="p-4">Created at</TableHead>
-            <TableHead className="p-4">Branch</TableHead>
+            <TableHead className="p-4">Git Branch</TableHead>
+            <TableHead className="p-4">Schema</TableHead>
             <TableHead className="p-4">Your access</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {projects.map((project, i) => (
-            <TableRow key={i}>
-              <TableCell className="font-semibold hover:underline hover:cursor-pointer p-4" onClick={() => router.push(`/editor/${project.id}`)}>
-                {project.name}
-              </TableCell>
-              <TableCell className="p-4">{project.created_by}</TableCell>
-              <TableCell className="p-4">{project.created_at}</TableCell>
-              <TableCell className="p-4">{project.branch_name}</TableCell>
-              <TableCell className="p-4">{project.read_only ? "Read-only" : "Read/Write"}</TableCell>
-            </TableRow>
-          ))}
+          {isLoading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <TableRow key={i}>
+                <TableCell className="font-semibold hover:underline hover:cursor-pointer p-4" >
+                  <div className="h-4 w-full bg-muted rounded animate-pulse" />
+                </TableCell>
+                <TableCell className="p-4">
+                  <div className="h-4 w-full bg-muted rounded animate-pulse" />
+                </TableCell>
+                <TableCell className="p-4">
+                  <div className="h-4 w-full bg-muted rounded animate-pulse" />
+                </TableCell>
+                <TableCell className="p-4">
+                  <div className="h-4 w-full bg-muted rounded animate-pulse" />
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            projects.map((project: any, i: number) => (
+              <TableRow key={i}>
+                <TableCell className="font-semibold hover:underline hover:cursor-pointer p-4" onClick={() => router.push(`/editor/${project.id}`)}>
+                  {project.name}
+                </TableCell>
+                <TableCell className="p-4">{project.branch_name}</TableCell>
+                <TableCell className="p-4">{project.schema}</TableCell>
+                <TableCell className="p-4">{project.read_only ? "Read Only" : "Read/Write"}</TableCell>
+              </TableRow>
+            ))
+          )}
         </TableBody>
       </Table>
     </FullWidthPageLayout>

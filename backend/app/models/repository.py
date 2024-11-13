@@ -48,7 +48,7 @@ class Repository(models.Model):
 
         # create main branch
         Project.objects.get_or_create(
-            name=self.main_branch_name + " -- readonly",
+            name=self.main_branch_name + " (read only)",
             read_only=True,
             repository=self,
             branch_name=self.main_branch_name,

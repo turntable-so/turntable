@@ -13,7 +13,6 @@ from app.core.dbt import LiveDBTParser
 from app.models.project import Project
 from app.models.resources import Resource
 from app.views.query_views import format_query
-from scripts.debug.pyinstrument import pyprofile
 from vinyl.lib.dbt import DBTProject, DBTTransition
 
 
@@ -47,7 +46,6 @@ def get_file_tree(user_id: str, path: str, base_path: str):
     }
 
 
-@pyprofile()
 def get_lineage_helper(
     proj: DBTProject,
     before_proj: DBTProject | None,
@@ -204,8 +202,12 @@ class ProjectViewSet(viewsets.ViewSet):
                             {"error": "file already exists"},
                             status=status.HTTP_400_BAD_REQUEST,
                         )
-                    # Create directory if it doesn't exist
+
                     os.makedirs(os.path.dirname(filepath), exist_ok=True)
+                    if request.data.get("is_directory"):
+                        os.makedirs(filepath, exist_ok=True)
+                        return Response(status=status.HTTP_201_CREATED)
+
                     with open(filepath, "w") as file:
                         file.write(request.data.get("contents"))
                     return Response(status=status.HTTP_201_CREATED)
