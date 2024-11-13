@@ -60,7 +60,7 @@ class DBTCommandConsumer(WebsocketConsumer):
 
         command = data.get("command")
         project_id = data.get("project_id")
-        defer = data.get("defer", True)
+        defer = data.get("defer", False)
 
         try:
             if command is None:

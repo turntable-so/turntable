@@ -79,7 +79,9 @@ class Repository(models.Model):
             workspace=self.workspace,
         )
 
-    def get_project(self, project_id: str):
+    def get_project(self, project_id: str | None):
+        if project_id is None:
+            return self.main_project
         return self.projects.get(id=project_id, workspace=self.workspace)
 
     @property
