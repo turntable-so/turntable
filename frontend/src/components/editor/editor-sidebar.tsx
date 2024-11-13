@@ -139,7 +139,7 @@ export default function EditorSidebar() {
               <div className="px-1 text-black text-sm font-medium">Files</div>
             </div>
             <div className="pt-2 h-full px-1" ref={treeContainerRef}>
-              {filesLoading ? <SkeletonFileTree /> : (
+              {filesLoading && !files.length ? <SkeletonFileTree /> : (
                 <Tree
                   scrollTo={activeFile?.node.path}
                   selection={activeFile?.node.path}
