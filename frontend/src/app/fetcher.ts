@@ -60,7 +60,7 @@ export const fetcher = (
     cookies?: any;
     headers?: any;
   } = {},
-  signal: any = null,
+  signal: AbortSignal | null = null,
 ): Promise<any> => {
   const { method = "GET", body, next, cookies } = options;
   const fullUrl = `${baseUrl}${url}`;
@@ -73,15 +73,13 @@ export const fetcher = (
     signal,
   };
   if (!(body instanceof FormData)) {
-    fetchOptions["headers"] = {
+    fetchOptions.headers = {
       "Content-Type": "application/json",
     };
   }
 
   if (next?.tags) {
-    // @ts-ignore
     fetchOptions.headers = {
-      // @ts-ignore
       ...fetchOptions.headers,
       "Cache-Control": `max-age=0, s-maxage=86400, stale-while-revalidate, tag=${next.tags.join(",")}`,
     };

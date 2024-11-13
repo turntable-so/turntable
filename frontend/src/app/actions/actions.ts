@@ -752,22 +752,6 @@ export async function discardBranchChanges(branchId: string) {
   return response.ok;
 }
 
-type DbtQueryValidateInput = {
-  query: string;
-  project_id: string;
-  use_fast_compile?: boolean;
-  limit?: number;
-};
-
-export async function validateDbtQuery(input: DbtQueryValidateInput) {
-  const response = await fetcher("/validate/dbt/", {
-    cookies,
-    method: "POST",
-    body: input,
-  });
-  return response.json();
-}
-
 export async function formatDbtQuery(payload: { query: string }) {
   const response = await fetcher("/query/format/", {
     cookies,
