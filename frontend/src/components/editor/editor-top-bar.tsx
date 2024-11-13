@@ -181,11 +181,11 @@ const EditorTopBar = () => {
           </PopoverTrigger>
           <PopoverContent side="bottom" align="end">
             <div className="flex flex-col gap-4">
-              <div className="flex gap-2 items-center">
+              <div className="flex gap-2 items-center justify-between">
                 <div>
                   <div className="text-sm font-medium py-1">Format on save</div>
                   <div className="text-xs text-muted-foreground">
-                    Formats the file on save.
+                    Format the file on save
                   </div>
                 </div>
                 <Switch
@@ -193,13 +193,13 @@ const EditorTopBar = () => {
                   onCheckedChange={(value) => setFormatOnSave(value)}
                 />
               </div>
-              <div className="flex gap-2 items-center">
+              <div className="flex gap-2 items-center justify-between">
                 <div>
                   <div className="text-sm font-medium py-1">
-                    Check for problems on edit
+                    Query validation
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    Checks for problems in the query as you type.
+                    Checks for problems as you type
                   </div>
                 </div>
                 <Switch

@@ -16,9 +16,11 @@ import {
   ChevronRight,
   Ellipsis,
   File,
+  FilePlus2,
   FileText,
   Folder,
   FolderOpen,
+  FolderPlus,
   Pencil,
   Plus,
   Trash,
@@ -48,7 +50,7 @@ export default function Node({
   style,
   dragHandle,
 }: { node: any; style: any; dragHandle: any }) {
-  const { openFile, createFileAndRefresh, deleteFileAndRefresh, closeFile, renameFile } =
+  const { openFile, createFileAndRefresh, deleteFileAndRefresh, closeFile, renameFile, createDirectoryAndRefresh } =
     useFiles();
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const contextMenuRef = useRef<ContextMenuPrimitive.ContextMenuTriggerElement>(null);
@@ -58,7 +60,7 @@ export default function Node({
     const newFileName = prompt("Enter new file name:");
     if (newFileName) {
       const newPath = `${node.data.path}/${newFileName}`;
-      await createFileAndRefresh(newPath, ""); // Call your backend API to create the file
+      await createFileAndRefresh(newPath, "", false); // Call your backend API to create the file
       openFile({
         name: newFileName,
         path: newPath,
@@ -109,6 +111,15 @@ export default function Node({
     }
   };
 
+  const handleCreateDirectory = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newDirName = prompt("Enter new directory name:");
+    if (newDirName) {
+      const newPath = `${node.data.path}/${newDirName}`;
+      await createDirectoryAndRefresh(newPath);
+    }
+  };
+
   const openContextMenu = (e: React.MouseEvent) => {
     e.stopPropagation();
     // Simulate a right click at the element's position
@@ -140,9 +151,9 @@ export default function Node({
         >
           {!node.isLeaf &&
             (node.isOpen ? (
-              <FolderOpen className="mr-1 size-4" />
+              <FolderOpen className="mr-1 size-4 flex-shrink-0" />
             ) : (
-              <Folder className="mr-1 size-4" />
+              <Folder className="mr-1 size-4 flex-shrink-0" />
             ))}
           {node.isLeaf && node.data.name.endsWith(".sql") && (
             <div
@@ -152,11 +163,11 @@ export default function Node({
             </div>
           )}
           {node.isLeaf && node.data.name.endsWith(".yml") && (
-            <FileText className="mr-1 h-4 w-4 flex-shrink-0" />
+            <FileText className="mr-1 size-4 flex-shrink-0" />
           )}
           {node.isLeaf &&
             !node.data.name.endsWith(".sql") &&
-            !node.data.name.endsWith(".yml") && <File className="mr-1 size-4" />}
+            !node.data.name.endsWith(".yml") && <File className="mr-1 size-4 flex-shrink-0" />}
           {node.isEditing ? (
             <input
               type="text"
@@ -177,23 +188,6 @@ export default function Node({
                   className="mr-1 size-4"
                   onClick={openContextMenu}
                 />
-                {!node.isLeaf && (
-                  <>
-                    <div
-                      className="text-muted-foreground text-xs hover:cursor-pointer hover:text-foreground relative"
-                      onClick={handleCreateFile}
-                    >
-                      <Plus className="mr-1 size-4" />
-                    </div>
-                    {/* <div
-                                    className='text-muted-foreground text-xs hover:cursor-pointer hover:text-foreground relative'
-                                    onClick={handleCreateFolder}
-                                >
-                                    <Folder className='mr-1 size-4' />
-                                    <span>New Folder</span>
-                                </div> */}
-                  </>
-                )}
               </div>
             </div>
           )}
@@ -203,6 +197,18 @@ export default function Node({
         align="end"
         alignOffset={-5}
       >
+        <ContextMenuItem onClick={handleCreateFile}>
+          <div className="flex items-center text-xs">
+            <FilePlus2 className="mr-2 h-3 w-3" />
+            Add File
+          </div>
+        </ContextMenuItem>
+        <ContextMenuItem onClick={handleCreateDirectory}>
+          <div className="flex items-center text-xs">
+            <FolderPlus className="mr-2 h-3 w-3" />
+            Add Folder
+          </div>
+        </ContextMenuItem>
         <ContextMenuItem onClick={handleRename}>
           <div className="flex items-center text-xs">
             <Pencil className="mr-2 h-3 w-3" />

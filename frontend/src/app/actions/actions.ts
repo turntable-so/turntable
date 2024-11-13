@@ -585,16 +585,18 @@ export async function changeFilePath(
 
 export async function createFile(
   branchId: string,
-  filePath: string,
+  path: string,
+  isDirectory: boolean,
   fileContents: string,
 ) {
   const response = await fetcher(
-    `/project/${branchId}/files/?filepath=${filePath}`,
+    `/project/${branchId}/files/?filepath=${path}`,
     {
       cookies,
       method: "POST",
       body: {
         contents: fileContents,
+        is_directory: isDirectory,
       },
     },
   );
