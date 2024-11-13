@@ -1,6 +1,7 @@
 import os
 import shlex
 import shutil
+from typing import Callable
 
 from celery import shared_task
 
@@ -93,7 +94,7 @@ def stream_dbt_command(
     dbt_resource_id: str,
     command: str,
     defer: bool = True,
-    should_terminate: bool = None,
+    should_terminate: Callable[[], bool] | None = None,
 ):
     dbt_resource = DBTResource.objects.get(id=dbt_resource_id)
     if not dbt_resource.development_allowed:
@@ -107,7 +108,9 @@ def stream_dbt_command(
             project_dir,
             _,
         ):
-            yield from dbtproj.stream_dbt_command(command)
+            yield from dbtproj.stream_dbt_command(
+                command, should_terminate=should_terminate
+            )
     else:
         with dbt_resource.dbt_transition_context(
             project_id=project_id, override_job_resource=job_environment

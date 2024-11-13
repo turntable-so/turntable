@@ -163,6 +163,7 @@ class ScheduledWorkflow(PolymorphicModel):
 
         # update the corresponding periodic tasks
         try:
+            print("deleting", self.replacement_identifier)
             PeriodicTask.objects.get(name=self.replacement_identifier).delete()
         except PeriodicTask.DoesNotExist:
             pass
