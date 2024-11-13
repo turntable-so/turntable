@@ -337,12 +337,11 @@ class DBTProject(object):
         self, command: list[str], should_terminate: Callable[[], bool] = None
     ) -> Generator[str, None, tuple[str, str, bool]]:
         env, cwd = self._dbt_cli_env()
-        env["FORCE_COLOR"] = "1"
 
         stdouts = []
         stderrs = []
         process = subprocess.Popen(
-            ["dbtx", "--use-colors", *command],
+            ["dbtx", *command],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             env=env,
@@ -362,7 +361,6 @@ class DBTProject(object):
                         stdouts.append(line)
                     else:
                         stderrs.append(line)
-
                     yield line
 
         # Read any remaining output after termination
@@ -653,7 +651,7 @@ class DBTProject(object):
 
         msg = f"Compiled SQL not found for {node_id.split('.')[-1]}"
         if locals().get("stdout", None):
-            msg += f". DBT output: {sys.stdout}"
+            msg += f". DBT output: {stdout}"
         errors.extend(
             [
                 VinylError(

@@ -180,7 +180,11 @@ class ProjectViewSet(viewsets.ViewSet):
                 {"error": "Commit message and file paths are required"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        result = project.commit(commit_message, file_paths)
+        result = project.commit(
+            commit_message=commit_message,
+            file_paths=file_paths,
+            user_email=request.user.email,
+        )
         return Response(result, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
