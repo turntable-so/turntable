@@ -70,6 +70,7 @@ class LiveDBTParser:
         predecessor_depth: int | None = 1,
         successor_depth: int | None = 1,
         defer: bool = False,
+        asset_only: bool = False,
     ):
         if before_proj is not None:
             transition = DBTTransition(before_proj, proj)
@@ -103,11 +104,12 @@ class LiveDBTParser:
         out.id_map = {}
 
         # compile sql for relevant nodes
-        if before_proj is not None:
-            before_proj.dbt_compile(
-                [n for n in out.lineage_nodes if n in before_proj.manifest["nodes"]]
-            )
-        proj.dbt_compile(out.lineage_nodes, defer=defer)
+        if not asset_only:
+            if before_proj is not None:
+                before_proj.dbt_compile(
+                    [n for n in out.lineage_nodes if n in before_proj.manifest["nodes"]]
+                )
+            proj.dbt_compile(out.lineage_nodes, defer=defer)
 
         # process nodes
         for nid in out.catalog_nodes:
@@ -129,31 +131,32 @@ class LiveDBTParser:
                 resource_id=resource.id,
                 workspace_id=resource.workspace.id,
             )
+            if not asset_only:
+                compiled_sql, error = proj.get_compiled_sql(nid, defer=defer, errors=[])
 
-            compiled_sql, error = proj.get_compiled_sql(nid, defer=defer, errors=[])
-
-            if error:
-                out.asset_errors.append(error)
-            else:
-                asset.sql = compiled_sql
+                if error:
+                    out.asset_errors.append(error)
+                else:
+                    asset.sql = compiled_sql
             out.asset_dict[asset_id] = asset
 
             # build column info
-            catalog_node = out.get_catalog_node(proj, nid, defer=defer)
-            if catalog_node is not None:
-                for k, v in catalog_node["columns"].items():
-                    column_id = f"urn:li:schemaField:({asset_id},{k})"
-                    column = Column(
-                        id=column_id,
-                        name=k,
-                        asset_id=asset_id,
-                        type=v["type"],
-                        workspace_id=resource.workspace.id,
-                        description=manifest_node.get("columns", {})
-                        .get(k, {})
-                        .get("description"),
-                    )
-                    out.column_dict[column_id] = column
+            if not asset_only:
+                catalog_node = out.get_catalog_node(proj, nid, defer=defer)
+                if catalog_node is not None:
+                    for k, v in catalog_node["columns"].items():
+                        column_id = f"urn:li:schemaField:({asset_id},{k})"
+                        column = Column(
+                            id=column_id,
+                            name=k,
+                            asset_id=asset_id,
+                            type=v["type"],
+                            workspace_id=resource.workspace.id,
+                            description=manifest_node.get("columns", {})
+                            .get(k, {})
+                            .get("description"),
+                        )
+                        out.column_dict[column_id] = column
         nx.relabel_nodes(out.asset_graph, out.id_map, copy=False)
         out.asset_id = out.id_map[node_id]
         return out
@@ -184,15 +187,17 @@ class LiveDBTParser:
     def get_lineage(
         self,
         lineage_type: ColumnLink.LineageType = ColumnLink.LineageType.ALL,
+        asset_only: bool = False,
     ) -> tuple[Lineage, list[AssetError]]:
         parser = DataHubDBParser(resource=self.resource)
         parser.asset_dict = self.asset_dict
-        parser.column_dict = self.column_dict
         parser.asset_graph = self.asset_graph
         parser.asset_errors = self.asset_errors
         ignore_dbt_ids = set(self.catalog_nodes) - set(self.lineage_nodes)
         ignore_ids = [self.id_map[k] for k in ignore_dbt_ids]
-        parser.get_db_cll(ignore_ids=ignore_ids)
+        if not asset_only:
+            parser.column_dict = self.column_dict
+            parser.get_db_cll(ignore_ids=ignore_ids)
         parser.get_links()
 
         raw_lineage = Lineage(
@@ -202,6 +207,7 @@ class LiveDBTParser:
             columns=list(parser.column_dict.values()),
             column_links=parser.column_links,
         )
-        return self.filter_out_catalog_nodes_and_column_links(
-            raw_lineage, lineage_type
-        ), parser.asset_errors
+        return (
+            self.filter_out_catalog_nodes_and_column_links(raw_lineage, lineage_type),
+            parser.asset_errors,
+        )
