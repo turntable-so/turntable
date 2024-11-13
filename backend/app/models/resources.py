@@ -1017,18 +1017,8 @@ class RedshiftDetails(DBDetails):
 
 class BigqueryDetails(DBDetails):
     subtype = models.CharField(max_length=255, default=ResourceSubtype.BIGQUERY)
-    bq_project_id = encrypt(models.CharField(max_length=255, blank=False))
     location = models.CharField(max_length=255, null=True, default="US")
     service_account = encrypt(models.JSONField())
-
-    def clean(self):
-        if self.bq_project_id is not None:
-            return
-        if self.service_account_dict.get("project_id") is None:
-            raise ValidationError(
-                "project_id is required in service_account if bq_project_id is not set"
-            )
-        self.bq_project_id = self.service_account_dict.get("project_id")
 
     @property
     def service_account_dict(self):
@@ -1048,9 +1038,11 @@ class BigqueryDetails(DBDetails):
         return ["bigquery", "dbt"]
 
     def get_connector(self):
+        project_id = self.service_account_dict.get("project_id")
+        assert project_id, "project_id is required in service_account"
         return BigQueryConnector(
             service_account_info=self.service_account_dict,
-            tables=[f"{self.bq_project_id}.*.*"],
+            tables=[f"{self.service_account_dict['project_id']}.*.*"],
         )
 
     def get_datahub_config(self, db_path):
@@ -1062,7 +1054,7 @@ class BigqueryDetails(DBDetails):
                 "config": {
                     "start_time": f"-{self.lookback_days}d",
                     "credential": service_account,
-                    "project_ids": [self.bq_project_id],
+                    "project_ids": [service_account["project_id"]],
                     "include_table_lineage": False,
                     "include_table_location_lineage": False,
                     "include_view_lineage": False,
@@ -1081,7 +1073,7 @@ class BigqueryDetails(DBDetails):
         core_target_info = {
             "type": "bigquery",
             "method": "service-account-json",
-            "project": dbt_core_resource.database or self.bq_project_id,
+            "project": dbt_core_resource.database,
             "schema": schema or dbt_core_resource.schema,
             "keyfile_json": self.service_account_dict,
             "threads": dbt_core_resource.threads,
