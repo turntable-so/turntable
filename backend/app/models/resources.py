@@ -1046,6 +1046,7 @@ class BigqueryDetails(DBDetails):
         return BigQueryConnector(
             service_account_info=self.service_account_dict,
             tables=[f"{self.bq_project_id}.*.*"],
+            project_id=self.bq_project_id,
         )
 
     def get_datahub_config(self, db_path):

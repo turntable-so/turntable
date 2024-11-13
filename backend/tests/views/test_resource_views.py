@@ -40,7 +40,8 @@ class TestResourceViews:
         assert response.status_code == 200
         assert response.data == serializer.data
 
-    def test_create_bigquery_resource(self, client):
+    @pytest.mark.parametrize("bq_project_id", [None, "test-project-id"])
+    def test_create_bigquery_resource(self, client, bq_project_id):
         data = {
             "resource": {
                 "name": "Test Resource",
@@ -51,6 +52,7 @@ class TestResourceViews:
                 "service_account": "{ 'key': 'value' }",
                 "location": "US",
                 "schema_include": ["analytics"],
+                "bq_project_id": bq_project_id,
             },
         }
         response = client.post("/resources/", data, format="json")

@@ -494,22 +494,28 @@ class BigQueryConnector(_DatabaseConnector):
         tables: list[str],
         service_account_path: str | None = None,
         service_account_info: dict[str, str] | None = None,
+        project_id: str | None = None,
     ):
         self._service_account_path = service_account_path
         self._service_account_info = service_account_info
         self._tables = tables
+        self._project_id = project_id
 
     def _connect(self) -> BaseBackend:
-        self._conn = BigQueryConnector._connect_helper(
-            self._service_account_path,
-            json.dumps(self._service_account_info)
-            if self._service_account_info
-            else None,
-        )
+        connect_args = {}
+        if self._service_account_path is not None:
+            connect_args["service_account_path"] = self._service_account_path
+        elif self._service_account_info is not None:
+            connect_args["service_account_info_str"] = json.dumps(
+                self._service_account_info
+            )
+        if self._project_id is not None:
+            connect_args["project_id"] = self._project_id
+        self._conn = BigQueryConnector._connect_helper(**connect_args)
         return self._conn
 
     def _list_sources(self, with_schema=False) -> list[SourceInfo]:
-        conn = self._connect()
+        self._connect()
         out, errors = self._find_sources_in_db(
             with_schema=with_schema,
             databases_override=[
@@ -524,6 +530,7 @@ class BigQueryConnector(_DatabaseConnector):
     def _connect_helper(
         service_account_path: str | None = None,
         service_account_info_str: str | None = None,
+        project_id: str | None = None,
     ) -> BaseBackend:
         from google.oauth2 import service_account
 
@@ -539,7 +546,12 @@ class BigQueryConnector(_DatabaseConnector):
             )
         else:
             credentials = None
-        conn = ibis.bigquery.connect(credentials=credentials)
+        conn_args = {
+            "credentials": credentials,
+        }
+        if project_id is not None:
+            conn_args["project_id"] = project_id
+        conn = ibis.bigquery.connect(**conn_args)
 
         # fixes BQ-specific error related to caching
         if not hasattr(conn, "_session_dataset") and isinstance(
