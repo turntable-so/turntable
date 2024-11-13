@@ -78,18 +78,36 @@ class Project(models.Model):
                 repo.git.checkout(self.branch_name, env=env)
                 return self.branch_name
 
-    def commit(self, commit_message: str, file_paths: list[str]):
+    def commit(
+        self,
+        commit_message: str,
+        file_paths: list[str],
+        user_email: str,
+    ):
         with self._code_repo_path() as repo_path:
             with self.repository.with_ssh_env() as env:
                 repo = GitRepo(repo_path)
-                # Add each specified file
-                for file_path in file_paths:
-                    repo.git.add(os.path.join(repo.working_tree_dir, file_path))
-                # Commit the changes
-                repo.git.commit(m=commit_message, env=env)
-                # Push to remote
-                repo.git.push("origin", self.branch_name, env=env)
 
+                with repo.config_writer() as git_config:
+                    # Configure the user name and email
+                    # github doesn't actually use this, but it's required by git
+                    git_config.set_value("user", "name", "NAME")
+                    # github uses the email for commit authorship
+                    git_config.set_value("user", "email", user_email)
+
+                    # Add each specified file
+                    for file_path in file_paths:
+                        repo.git.add(os.path.join(repo.working_tree_dir, file_path))
+
+                    # Commit the changes
+                    repo.git.commit(m=commit_message, env=env)
+
+                    # Push to remote
+                    repo.git.push("origin", self.branch_name, env=env)
+
+                    # Revert the configs
+                    git_config.set_value("user", "name", "")
+                    git_config.set_value("user", "email", "")
         return True
 
     def discard_changes(self):
