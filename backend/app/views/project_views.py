@@ -13,7 +13,6 @@ from app.core.dbt import LiveDBTParser
 from app.models.project import Project
 from app.models.resources import Resource
 from app.views.query_views import format_query
-from scripts.debug.pyinstrument import pyprofile
 from vinyl.lib.dbt import DBTProject, DBTTransition
 
 
@@ -47,7 +46,6 @@ def get_file_tree(user_id: str, path: str, base_path: str):
     }
 
 
-@pyprofile()
 def get_lineage_helper(
     proj: DBTProject,
     before_proj: DBTProject | None,
