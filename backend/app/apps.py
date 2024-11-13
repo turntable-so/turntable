@@ -13,4 +13,5 @@ class TurntableAppConfig(AppConfig):
     name = "app"
 
     def ready(self):
+        import polymorphic  # noqa
         import app.signals  # noqa

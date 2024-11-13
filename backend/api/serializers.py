@@ -9,7 +9,6 @@ from app.models import (
     AssetLink,
     BigqueryDetails,
     Block,
-    Branch,
     Column,
     ColumnLink,
     DatabricksDetails,
@@ -29,6 +28,7 @@ from app.models import (
     Workspace,
     WorkspaceGroup,
 )
+from app.models.project import Project
 from app.models.resources import MetabaseDetails
 from vinyl.lib.dbt_methods import DBTVersion
 
@@ -286,9 +286,11 @@ class LookerDetailsSerializer(ResourceDetailsSerializer):
 
 
 class BigQueryDetailsSerializer(ResourceDetailsSerializer):
+    bq_project_id = serializers.CharField(allow_null=True, required=False)
+
     class Meta:
         model = BigqueryDetails
-        fields = ["service_account", "schema_include", "location"]
+        fields = ["service_account", "schema_include", "location", "bq_project_id"]
 
 
 class SnowflakeDetailsSerializer(ResourceDetailsSerializer):
@@ -435,12 +437,12 @@ class ResourceSerializer(serializers.HyperlinkedModelSerializer):
         return obj.has_dbt
 
 
-class BranchSerializer(serializers.ModelSerializer):
+class ProjectSerializer(serializers.ModelSerializer):
     is_cloned = serializers.SerializerMethodField()
     pull_request_url = serializers.SerializerMethodField()
 
     class Meta:
-        model = Branch
+        model = Project
         fields = [
             "id",
             "name",

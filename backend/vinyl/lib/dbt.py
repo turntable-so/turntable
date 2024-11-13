@@ -350,7 +350,7 @@ class DBTProject(object):
         )
 
         while process.poll() is None:
-            if should_terminate():
+            if should_terminate is not None and should_terminate():
                 process.terminate()
                 return
             ready, _, _ = select.select([process.stdout, process.stderr], [], [], 0.1)
@@ -644,10 +644,10 @@ class DBTProject(object):
                 update_manifest=False,
                 defer=defer,
             )
-
-            with open(compiled_sql_abs_location, "r") as f:
-                out = f.read()
-            return out, errors
+            if os.path.exists(compiled_sql_abs_location):
+                with open(compiled_sql_abs_location, "r") as f:
+                    out = f.read()
+                return out, errors
 
         msg = f"Compiled SQL not found for {node_id.split('.')[-1]}"
         if locals().get("stdout", None):

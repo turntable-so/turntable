@@ -86,7 +86,7 @@ type FilesContextType = {
   }) => void;
   saveFile: (path: string, content: string) => void;
   searchFileIndex: FileNode[];
-  createFileAndRefresh: (path: string, fileContents: string) => void;
+  createFileAndRefresh: (path: string, fileContents: string, isDirectory: boolean) => void;
   deleteFileAndRefresh: (path: string) => void;
   createNewFileTab: () => void;
   changes: ProjectChanges | null;
@@ -115,13 +115,15 @@ type FilesContextType = {
   formatActiveFile: () => Promise<void>;
   formatOnSave: boolean;
   setFormatOnSave: Dispatch<SetStateAction<boolean>>;
+  createDirectoryAndRefresh: (path: string) => Promise<void>;
+  filesLoading: boolean;
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
 
 const defaultFileTab = {
   node: {
-    name: "New tab",
+    name: "new_tab",
     path: `Untitled-${crypto.randomUUID()}`,
     type: "file",
   },
@@ -142,6 +144,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   const [branchId, setBranchId] = useState("");
   const [branchName, setBranchName] = useState("");
+  const [filesLoading, setFilesLoading] = useState(false);
   const [readOnly, setReadOnly] = useState<boolean | undefined>(undefined);
   const [isCloned, setIsCloned] = useState<boolean | undefined>(undefined);
   const [pullRequestUrl, setPullRequestUrl] = useState<string | undefined>(
@@ -233,6 +236,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const fetchFiles = async () => {
+    setFilesLoading(true);
     const { file_index } = await getFileIndex(branchId);
     const fileIndex = file_index.map((file: FileNode) => ({ ...file }));
     const sortFileTree = (files: FileNode[]): FileNode[] => {
@@ -267,6 +271,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         !file.path.includes("target/"),
     );
     setSearchFileIndex(searchableFiles);
+    setFilesLoading(false);
   };
 
   const openFile = useCallback(
@@ -369,8 +374,8 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     [openedFiles, activeFile],
   );
 
-  const createFileAndRefresh = async (path: string, fileContents: string) => {
-    await createFile(branchId, path, fileContents);
+  const createFileAndRefresh = async (path: string, fileContents: string, isDirectory: boolean) => {
+    await createFile(branchId, path, isDirectory, fileContents);
     await fetchFiles();
   };
 
@@ -448,7 +453,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   const createNewFileTab = () => {
     const newTab: OpenedFile = {
       node: {
-        name: "New tab",
+        name: "new_tab",
         path: `Untitled-${crypto.randomUUID()}`,
         type: "file",
       },
@@ -470,7 +475,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     setProblems((prev) => ({ ...prev, loading: true, data: [] }));
     const data = await validateDbtQuery({
       query,
-      branch_id: branchId,
+      project_id: branchId,
     });
 
     if (data.error) {
@@ -537,6 +542,11 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     updateFileContent(activeFile.node.path, formattedQuery);
   };
 
+  const createDirectoryAndRefresh = async (path: string) => {
+    await createFile(branchId, path, true, "");
+    await fetchFiles();
+  };
+
   return (
     <FilesContext.Provider
       value={{
@@ -578,6 +588,8 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         formatActiveFile,
         formatOnSave,
         setFormatOnSave,
+        createDirectoryAndRefresh,
+        filesLoading,
       }}
     >
       {children}

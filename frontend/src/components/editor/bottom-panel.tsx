@@ -33,6 +33,7 @@ import CommandPanel from "./command-panel";
 import ProblemsPanel from "./problems-panel/problems-panel";
 import { Badge } from "../ui/badge";
 import { useTheme } from "next-themes";
+import CommandPanelActionBtn from "./command-panel/command-panel-action-btn";
 
 const SkeletonLoadingTable = () => {
   const Loader = () => (
@@ -190,6 +191,7 @@ export default function BottomPanel({
               Refresh
             </Button>
           )}
+          {activeTab === "command" && <CommandPanelActionBtn />}
         </div>
       </div>
       <Panel

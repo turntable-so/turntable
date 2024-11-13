@@ -531,7 +531,7 @@ export async function executeQueryPreview({
     method: "POST",
     body: {
       query: dbtSql,
-      branch_id: branchId,
+      project_id: branchId,
       use_fast_compile: true,
     },
   });
@@ -585,16 +585,18 @@ export async function changeFilePath(
 
 export async function createFile(
   branchId: string,
-  filePath: string,
+  path: string,
+  isDirectory: boolean,
   fileContents: string,
 ) {
   const response = await fetcher(
-    `/project/${branchId}/files/?filepath=${filePath}`,
+    `/project/${branchId}/files/?filepath=${path}`,
     {
       cookies,
       method: "POST",
       body: {
         contents: fileContents,
+        is_directory: isDirectory,
       },
     },
   );
@@ -752,7 +754,7 @@ export async function discardBranchChanges(branchId: string) {
 
 type DbtQueryValidateInput = {
   query: string;
-  branch_id: string;
+  project_id: string;
   use_fast_compile?: boolean;
   limit?: number;
 };

@@ -34,12 +34,12 @@ const links = [
     variant: "ghost",
     link: "/projects",
   },
-  {
-    title: "Jobs",
-    icon: Workflow,
-    variant: "ghost",
-    link: "/jobs",
-  },
+  // {
+  //   title: "Jobs",
+  //   icon: Workflow,
+  //   variant: "ghost",
+  //   link: "/jobs",
+  // },
   {
     title: "Lineage",
     icon: Network,

@@ -20,7 +20,7 @@ class DBTCommandConsumer(WebsocketConsumer):
         if not self.workspace:
             raise ValueError("User does not have a current workspace")
 
-        self.dbt_details = self.workspace.get_dbt_details()
+        self.dbt_details = self.workspace.get_dbt_dev_details()
         if not self.dbt_details:
             raise ValueError("Workspace does not have a dbt resource")
 
@@ -55,38 +55,41 @@ class DBTCommandConsumer(WebsocketConsumer):
             )
 
     def run_workflow(self, data):
-        from app.models.repository import Branch
+        from app.models.project import Project
+        from app.workflows.orchestration import stream_dbt_command
+
+        command = data.get("command")
+        project_id = data.get("project_id")
+        defer = data.get("defer", False)
 
         try:
-            command = data.get("command")
-            branch_id = data.get("branch_id")
-
             if command is None:
                 raise ValueError("Command is required")
             else:
                 command = shlex.split(command)
 
-            if branch_id:
+            if project_id:
                 try:
-                    Branch.objects.get(
+                    Project.objects.get(
                         workspace=self.workspace,
                         repository=self.dbt_details.repository,
-                        id=branch_id,
+                        id=project_id,
                     )
-                except Branch.DoesNotExist:
-                    raise ValueError(f"Branch id {branch_id} not found")
+                except Project.DoesNotExist:
+                    raise ValueError(f"Branch id {project_id} not found")
             else:
-                branch_id = None
+                project_id = None
 
-            with self.dbt_details.dbt_transition_context(branch_id=branch_id) as (
-                transition,
-                project_dir,
-                _,
+            for output_chunk in stream_dbt_command(
+                workspace_id=self.workspace.id,
+                resource_id=self.dbt_details.resource.id,
+                dbt_resource_id=self.dbt_details.id,
+                command=command,
+                project_id=project_id,
+                defer=defer,
+                should_terminate=self.terminate_event.is_set,
             ):
-                for output_chunk in transition.after.stream_dbt_command(
-                    command, should_terminate=self.terminate_event.is_set
-                ):
-                    self.send(text_data=output_chunk)
+                self.send(text_data=output_chunk)
 
             # assume success if we've reached the end of the event stream
             self.close()

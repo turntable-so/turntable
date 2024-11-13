@@ -8,7 +8,7 @@ from app.workflows.query import execute_dbt_query, execute_query
 
 TEST_QUERY = "select * from mydb.dbt_sl_test.raw_products"
 
-TEST_DBT_QUERY = "select * from {{ ref('raw_products') }}"
+TEST_DBT_QUERY = "select * from {{ source('ecom', 'raw_products') }}"
 
 
 def run_test_query(

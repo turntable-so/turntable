@@ -6,11 +6,12 @@ from django.core.files.base import ContentFile
 from django.db import models
 from django.utils import timezone
 
-from .repository import Branch
-from .resources import DBTResource, Resource
-from .workspace import Workspace
 from app.services.storage_backends import CustomS3Boto3Storage
 from vinyl.lib.utils.query import _QUERY_LIMIT
+
+from .project import Project
+from .resources import DBTResource, Resource
+from .workspace import Workspace
 
 
 def query_to_json(df: pd.DataFrame, columns: dict[str, str]) -> str:
@@ -32,7 +33,7 @@ class Query(models.Model):
     )
 
     # relationships
-    branch = models.ForeignKey(Branch, on_delete=models.CASCADE, null=True)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, null=True)
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
 
     def run(self, limit: int | None = _QUERY_LIMIT):
@@ -74,7 +75,7 @@ class DBTQuery(models.Model):
     )
 
     # relationships
-    branch = models.ForeignKey(Branch, on_delete=models.CASCADE, null=True)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, null=True)
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
 
     def run(
@@ -82,8 +83,12 @@ class DBTQuery(models.Model):
         use_fast_compile: bool = True,
         limit: int | None = _QUERY_LIMIT,
     ):
-        branch_id = self.branch.id if self.branch else None
-        with self.dbtresource.dbt_repo_context(branch_id) as (dbtproj, project_path, _):
+        project_id = self.project.id if self.project else None
+        with self.dbtresource.dbt_repo_context(project_id) as (
+            dbtproj,
+            project_path,
+            _,
+        ):
             connector = self.dbtresource.resource.details.get_connector()
             sql = None
             if use_fast_compile:

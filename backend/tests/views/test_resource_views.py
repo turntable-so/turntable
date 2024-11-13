@@ -22,7 +22,7 @@ class TestResourceViews:
             },
             "subtype": "bigquery",
             "config": {
-                "service_account": "{ 'key': 'value' }",
+                "service_account": '{ "project_id": "value" }',
                 "schema_include": ["analytics"],
             },
         }
@@ -40,7 +40,8 @@ class TestResourceViews:
         assert response.status_code == 200
         assert response.data == serializer.data
 
-    def test_create_bigquery_resource(self, client):
+    @pytest.mark.parametrize("bq_project_id", [None, "test-project-id"])
+    def test_create_bigquery_resource(self, client, bq_project_id):
         data = {
             "resource": {
                 "name": "Test Resource",
@@ -48,12 +49,14 @@ class TestResourceViews:
             },
             "subtype": "bigquery",
             "config": {
-                "service_account": "{ 'key': 'value' }",
+                "service_account": '{ "project_id": "value" }',
                 "location": "US",
                 "schema_include": ["analytics"],
+                "bq_project_id": bq_project_id,
             },
         }
         response = client.post("/resources/", data, format="json")
+        print(response.json())
         assert response.status_code == 201
 
     def test_get_bigquery_resource(self, client, resource_id):

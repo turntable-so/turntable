@@ -18,6 +18,7 @@ import { Switch } from "../ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import { toast } from "sonner";
 import { Loader2, Undo2 } from "lucide-react";
+import useSession from "@/app/hooks/use-session";
 interface BranchReviewDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -73,7 +74,18 @@ export default function BranchReviewDialog({
   const [commitMessage, setCommitMessage] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { changes, schema, branchId, fetchChanges, commitChanges, pullRequestUrl, branchName, isCloned, discardChanges } = useFiles();
+  const {
+    changes,
+    schema,
+    branchId,
+    fetchChanges,
+    commitChanges,
+    pullRequestUrl,
+    branchName,
+    isCloned,
+    discardChanges,
+  } = useFiles();
+  const { user } = useSession();
 
   useEffect(() => {
     if (branchId) {
@@ -107,8 +119,7 @@ export default function BranchReviewDialog({
       toast.error("Failed to commit changes");
     }
     setIsSubmitting(false);
-
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -125,9 +136,7 @@ export default function BranchReviewDialog({
                 </div>
                 <div className="mt-4">
                   <label className="text-sm font-medium">Schema</label>
-                  <div className="text-xs text-muted-foreground">
-                    {schema}
-                  </div>
+                  <div className="text-xs text-muted-foreground">{schema}</div>
                 </div>
                 <div className="mt-4">
                   <label className="text-sm font-medium">Commit message</label>
@@ -146,7 +155,11 @@ export default function BranchReviewDialog({
                         size="sm"
                         variant="ghost"
                         onClick={() => {
-                          if (window.confirm('Are you sure you want to discard all changes?')) {
+                          if (
+                            window.confirm(
+                              "Are you sure you want to discard all changes?",
+                            )
+                          ) {
                             discardChanges(branchId);
                           }
                         }}
@@ -170,7 +183,12 @@ export default function BranchReviewDialog({
                         <div className="flex items-center gap-2">
                           <Checkbox
                             checked={selectedFilePaths.includes(change.path)}
-                            onCheckedChange={(checked) => handleCheckboxChange(checked as boolean, change.path)}
+                            onCheckedChange={(checked) =>
+                              handleCheckboxChange(
+                                checked as boolean,
+                                change.path,
+                              )
+                            }
                           />
                           <div onClick={() => setSelectedChangeIndex(index)}>
                             {change.path}
@@ -196,9 +214,16 @@ export default function BranchReviewDialog({
                   </div>
                 </div>
                 <div className="mt-4">
-                  <label className="text-sm font-medium">Create Pull Request</label>
+                  <label className="text-sm font-medium">
+                    Create Pull Request
+                  </label>
                   <div>
-                    <a href={pullRequestUrl} target="_blank" rel="noreferrer" className="text-blue-500 text-xs text-medium underline">
+                    <a
+                      href={pullRequestUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-blue-500 text-xs text-medium underline"
+                    >
                       {pullRequestUrl}
                     </a>
                   </div>
@@ -207,33 +232,38 @@ export default function BranchReviewDialog({
             </div>
             <div className="flex flex-col gap-4">
               <div className="text-xs text-muted-foreground">
-                Committing as <b>root</b>.<br />
-                <a
-                  href="https://github.com/"
-                  target="_blank"
-                  className="text-black"
-                  rel="noreferrer"
-                >
-                  Sign into Github
-                </a>{" "}
-                to use your account
+                Committing as <b>{user?.email}</b>.<br />
               </div>
               <div className="flex gap-2 justify-end">
-                <Button variant="outline" onClick={() => handleOpenChange(false)}>Cancel</Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleOpenChange(false)}
+                >
+                  Cancel
+                </Button>
                 {isSubmitting ? (
                   <Button disabled>
                     <Loader2 className="w-4 h-4 mr-1 animate-spin" />
                     Committing
                   </Button>
                 ) : (
-                  <Button disabled={selectedFilePaths.length === 0 || commitMessage.length === 0} onClick={handleSubmit}>Commit</Button>
+                  <Button
+                    disabled={
+                      selectedFilePaths.length === 0 ||
+                      commitMessage.length === 0
+                    }
+                    onClick={handleSubmit}
+                  >
+                    Commit
+                  </Button>
                 )}
               </div>
             </div>
           </div>
 
           <div className="pl-1 w-3/4">
-            {selectedChangeIndex !== undefined && changes?.[selectedChangeIndex] ? (
+            {selectedChangeIndex !== undefined &&
+            changes?.[selectedChangeIndex] ? (
               <DiffView
                 key={selectedChangeIndex}
                 original={changes?.[selectedChangeIndex].before}

@@ -7,7 +7,7 @@ export default function CommandPanel({
   bottomPanelHeight,
 }: { bottomPanelHeight: number | undefined }) {
   const { commandHistory } = useCommandPanelContext();
-  const componentHeight = (bottomPanelHeight || 500) - 96;
+  const componentHeight = (bottomPanelHeight || 500) - 24;
 
   return (
     <div

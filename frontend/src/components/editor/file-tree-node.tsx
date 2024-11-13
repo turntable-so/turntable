@@ -1,10 +1,4 @@
-import { OpenedFile, useFiles } from "@/app/contexts/FilesContext";
-import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { type OpenedFile, useFiles } from "@/app/contexts/FilesContext";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -12,19 +6,18 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import {
-  ChevronDown,
-  ChevronRight,
   Ellipsis,
   File,
+  FilePlus2,
   FileText,
   Folder,
   FolderOpen,
+  FolderPlus,
   Pencil,
-  Plus,
   Trash,
 } from "lucide-react";
 import { useState, useRef } from "react";
-import * as ContextMenuPrimitive from "@radix-ui/react-context-menu";
+import type { ContextMenuTriggerElement } from "@radix-ui/react-context-menu";
 
 const DbtLogo = () => (
   <svg
@@ -54,17 +47,17 @@ export default function Node({
     deleteFileAndRefresh,
     closeFile,
     renameFile,
+    createDirectoryAndRefresh,
   } = useFiles();
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
-  const contextMenuRef =
-    useRef<ContextMenuPrimitive.ContextMenuTriggerElement>(null);
+  const contextMenuRef = useRef<ContextMenuTriggerElement>(null);
 
   const handleCreateFile = async (e: React.MouseEvent) => {
     e.stopPropagation();
     const newFileName = prompt("Enter new file name:");
     if (newFileName) {
       const newPath = `${node.data.path}/${newFileName}`;
-      await createFileAndRefresh(newPath, ""); // Call your backend API to create the file
+      await createFileAndRefresh(newPath, "", false); // Call your backend API to create the file
       openFile({
         name: newFileName,
         path: newPath,
@@ -118,6 +111,15 @@ export default function Node({
     }
   };
 
+  const handleCreateDirectory = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newDirName = prompt("Enter new directory name:");
+    if (newDirName) {
+      const newPath = `${node.data.path}/${newDirName}`;
+      await createDirectoryAndRefresh(newPath);
+    }
+  };
+
   const openContextMenu = (e: React.MouseEvent) => {
     e.stopPropagation();
     // Simulate a right click at the element's position
@@ -145,13 +147,13 @@ export default function Node({
             }
           }}
           ref={dragHandle}
-          className={`${node.isSelected ? "rounded font-medium bg-accent text-accent-foreground dark:bg-zinc-700 dark:text-zinc-100" : ""} hover:bg-white dark:hover:bg-zinc-700 hover:cursor-pointer ${contextMenuOpen ? "bg-white" : ""} flex items-center rounded`}
+          className={`${node.isSelected ? "rounded font-medium bg-accent text-accent-foreground" : ""} hover:bg-white hover:cursor-pointer ${contextMenuOpen ? "bg-white" : ""} flex items-center rounded`}
         >
           {!node.isLeaf &&
             (node.isOpen ? (
-              <FolderOpen className="mr-1 size-4 dark:text-zinc-100" />
+              <FolderOpen className="mr-1 size-4 flex-shrink-0 dark:text-zinc-100" />
             ) : (
-              <Folder className="mr-1 size-4 dark:text-zinc-100" />
+              <Folder className="mr-1 size-4 flex-shrink-0 dark:text-zinc-100" />
             ))}
           {node.isLeaf && node.data.name.endsWith(".sql") && (
             <div
@@ -161,12 +163,12 @@ export default function Node({
             </div>
           )}
           {node.isLeaf && node.data.name.endsWith(".yml") && (
-            <FileText className="mr-1 h-4 w-4 flex-shrink-0 dark:text-zinc-100" />
+            <FileText className="mr-1 size-4 flex-shrink-0 dark:text-zinc-100" />
           )}
           {node.isLeaf &&
             !node.data.name.endsWith(".sql") &&
             !node.data.name.endsWith(".yml") && (
-              <File className="mr-1 size-4 dark:text-zinc-100" />
+              <File className="mr-1 size-4 flex-shrink-0 dark:text-zinc-100" />
             )}
           {node.isEditing ? (
             <input
@@ -182,37 +184,30 @@ export default function Node({
             />
           ) : (
             <div className="w-full flex items-center justify-between group">
-              <div className="truncate dark:text-zinc-100">
-                {node.data.name}
-              </div>
+              <div className="truncate">{node.data.name}</div>
               <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <Ellipsis
                   className="mr-1 size-4 dark:text-zinc-100"
                   onClick={openContextMenu}
                 />
-                {!node.isLeaf && (
-                  <>
-                    <div
-                      className="text-muted-foreground text-xs hover:cursor-pointer hover:text-foreground relative"
-                      onClick={handleCreateFile}
-                    >
-                      <Plus className="mr-1 size-4 dark:text-zinc-100" />
-                    </div>
-                    {/* <div
-                                    className='text-muted-foreground text-xs hover:cursor-pointer hover:text-foreground relative'
-                                    onClick={handleCreateFolder}
-                                >
-                                    <Folder className='mr-1 size-4' />
-                                    <span>New Folder</span>
-                                </div> */}
-                  </>
-                )}
               </div>
             </div>
           )}
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent align="end" alignOffset={-5}>
+        <ContextMenuItem onClick={handleCreateFile}>
+          <div className="flex items-center text-xs">
+            <FilePlus2 className="mr-2 h-3 w-3" />
+            Add File
+          </div>
+        </ContextMenuItem>
+        <ContextMenuItem onClick={handleCreateDirectory}>
+          <div className="flex items-center text-xs">
+            <FolderPlus className="mr-2 h-3 w-3" />
+            Add Folder
+          </div>
+        </ContextMenuItem>
         <ContextMenuItem onClick={handleRename}>
           <div className="flex items-center text-xs">
             <Pencil className="mr-2 h-3 w-3" />
