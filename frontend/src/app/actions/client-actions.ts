@@ -57,7 +57,6 @@ export async function validateDbtQuery(
   input: DbtQueryValidateInput,
   signal?: AbortSignal,
 ) {
-  console.log("MAKING API CALL!!!", input);
   const response = await fetcher(
     "/validate/dbt/",
     {
