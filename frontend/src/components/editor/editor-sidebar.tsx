@@ -27,6 +27,12 @@ const SkeletonFileTree = () => {
         <FolderOpen className="h-4 w-4" />
         <div className={cn("h-4 w-72 bg-gray-200 dark:bg-gray-800 rounded-sm")} />
       </div>
+      {Array.from({ length: 30 }).map((_, index) => (
+        <div key={index} className="flex items-center space-x-2 space-y-2">
+          <FolderOpen className="h-4 w-4 invisible" />
+          <div className={cn("h-4 w-72 bg-gray-200 dark:bg-gray-800 rounded-sm")} />
+        </div>
+      ))}
     </div>
   )
 }
