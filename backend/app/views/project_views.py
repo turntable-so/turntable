@@ -369,31 +369,21 @@ class ProjectViewSet(viewsets.ViewSet):
         if defer:
             with dbt_details.dbt_transition_context(
                 project_id=project.id, isolate=False
-            ) as (
-                transition,
-                _,
-                repo,
-            ):
-                root_asset, lineage = get_lineage_helper(
-                    proj=transition.after,
-                    before_proj=transition.before,
-                    resource=dbt_details.resource,
-                    filepath=filepath,
-                    predecessor_depth=predecessor_depth,
-                    successor_depth=successor_depth,
-                    lineage_type=lineage_type,
-                    defer=defer,
-                    asset_only=asset_only,
-                )
+            ) as (transition, project_path, git_repo):
+                proj_args = {
+                    "proj": transition.after,
+                    "before_proj": transition.before,
+                }
         else:
             with dbt_details.dbt_repo_context(project_id=project.id, isolate=False) as (
-                proj,
-                _,
-                _,
+                project,
+                project_path,
+                git_repo,
             ):
+                proj_args = {"proj": project, "before_proj": None}
+
                 root_asset, lineage = get_lineage_helper(
-                    proj=proj,
-                    before_proj=None,
+                    **proj_args,
                     resource=dbt_details.resource,
                     filepath=filepath,
                     predecessor_depth=predecessor_depth,
@@ -403,11 +393,15 @@ class ProjectViewSet(viewsets.ViewSet):
                     asset_only=asset_only,
                 )
 
-        asset_serializer = AssetSerializer(root_asset, context={"request": request})
-        lineage_serializer = LineageSerializer(lineage, context={"request": request})
-        return Response(
-            {
-                "root_asset": asset_serializer.data,
-                "lineage": lineage_serializer.data,
-            }
-        )
+                asset_serializer = AssetSerializer(
+                    root_asset, context={"request": request}
+                )
+                lineage_serializer = LineageSerializer(
+                    lineage, context={"request": request}
+                )
+                return Response(
+                    {
+                        "root_asset": asset_serializer.data,
+                        "lineage": lineage_serializer.data,
+                    }
+                )

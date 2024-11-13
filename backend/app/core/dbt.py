@@ -195,6 +195,7 @@ class LiveDBTParser:
         parser.asset_errors = self.asset_errors
         ignore_dbt_ids = set(self.catalog_nodes) - set(self.lineage_nodes)
         ignore_ids = [self.id_map[k] for k in ignore_dbt_ids]
+
         if not asset_only:
             parser.column_dict = self.column_dict
             parser.get_db_cll(ignore_ids=ignore_ids)
