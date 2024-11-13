@@ -342,7 +342,7 @@ class DBTProject(object):
         stdouts = []
         stderrs = []
         process = subprocess.Popen(
-            ["dbtx", *command],
+            ["dbtx", "--use-colors", *command],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             env=env,
@@ -351,7 +351,7 @@ class DBTProject(object):
         )
 
         while process.poll() is None:
-            if should_terminate():
+            if should_terminate is not None and should_terminate():
                 process.terminate()
                 return
             ready, _, _ = select.select([process.stdout, process.stderr], [], [], 0.1)
@@ -362,6 +362,7 @@ class DBTProject(object):
                         stdouts.append(line)
                     else:
                         stderrs.append(line)
+
                     yield line
 
         # Read any remaining output after termination
@@ -646,13 +647,14 @@ class DBTProject(object):
                 defer=defer,
             )
 
-            with open(compiled_sql_abs_location, "r") as f:
-                out = f.read()
-            return out, errors
+            if os.path.exists(compiled_sql_abs_location):
+                with open(compiled_sql_abs_location, "r") as f:
+                    out = f.read()
+                return out, errors
 
         msg = f"Compiled SQL not found for {node_id.split('.')[-1]}"
         if locals().get("stdout", None):
-            msg += f". DBT output: {stdout}"
+            msg += f". DBT output: {sys.stdout}"
         errors.extend(
             [
                 VinylError(

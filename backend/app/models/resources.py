@@ -362,6 +362,11 @@ class DBTResource(PolymorphicModel):
     manifest_json = models.JSONField(null=True)
     catalog_json = models.JSONField(null=True)
 
+    def save(self, *args, **kwargs):
+        if self.resource and not self.workspace:
+            self.workspace = self.resource.workspace
+        super().save(*args, **kwargs)
+
     @classmethod
     def get_default_subtype(cls):
         return ResourceSubtype.DBT
@@ -589,7 +594,7 @@ class DBTCoreDetails(DBTResource):
             for dbtresource in dbtresource_options:
                 if dbtresource.environment == env:
                     return dbtresource
-        raise None
+        return None
 
     @classmethod
     def get_development_dbtresource(cls, workspace_id: str, resource_id: str = None):
