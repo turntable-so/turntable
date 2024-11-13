@@ -810,8 +810,6 @@ class DataHubDBParser:
     def get_asset_column_dict(self):
         self.asset_column_dict = {}
         for col in self.column_dict.values():
-            if "." in col.name:
-                print(col.asset.id, col.name)
             self.asset_column_dict.setdefault(col.asset_id, []).append(col.name)
 
     def get_schema_helper(self, k: str):
