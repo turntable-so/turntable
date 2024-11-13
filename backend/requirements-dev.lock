@@ -7,6 +7,7 @@
 #   all-features: false
 #   with-sources: false
 #   generate-hashes: false
+#   universal: false
 
 acryl-datahub==0.13.3
 adrf==0.1.6
@@ -201,6 +202,7 @@ django==5.0.6
     # via djangorestframework
     # via djangorestframework-simplejwt
     # via djoser
+    # via sentry-sdk
     # via social-auth-app-django
 django-allauth==0.61.1
     # via dj-rest-auth
@@ -210,7 +212,7 @@ django-cors-headers==4.4.0
 django-health-check==3.18.3
 django-invitations==2.1.0
 django-pgbulk==3.0.0
-django-polymorphic @ git+https://github.com/jazzband/django-polymorphic.git@1039f882b99f97bf657bd958c949ee6a3b00377a
+django-polymorphic @ git+https://github.com/jazzband/django-polymorphic.git@1039f882b99f97bf657bd958c949ee6a3b00377a#egg=django-polymorphic
 django-storages==1.14.3
 django-templated-mail==1.1.1
     # via djoser
@@ -736,7 +738,7 @@ s3transfer==0.10.2
 scipy==1.14.0
     # via networkx
 selenium==4.22.0
-sentry-sdk==2.7.1
+sentry-sdk==2.18.0
     # via acryl-datahub
 service-identity==24.1.0
     # via twisted
