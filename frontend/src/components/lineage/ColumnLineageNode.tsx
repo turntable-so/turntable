@@ -14,7 +14,7 @@ import {
   Position,
   useReactFlow,
   useUpdateNodeInternals,
-} from "reactflow";
+} from "@xyflow/react";
 import { useAppContext } from "../../contexts/AppContext";
 import { getAssetIcon } from "../../lib/utils";
 import { ColumnTypeIcon } from "../ColumnTypeIcon";
@@ -43,7 +43,7 @@ const ModelIcon = () => (
 function Column({ label, handleId, type }) {
   return (
     <div className="custom-node__select relative">
-      <div className="flex flex-row gap-1.5 items-center dark:text-white truncate text-ellipsis">
+      <div className="flex flex-row gap-1.5 items-center truncate text-ellipsis">
         <div>
           <ColumnTypeIcon dataType={type} className="size-3" />
         </div>
@@ -81,7 +81,7 @@ function Header({
   columnCount,
 }: any) {
   return (
-    <div className="flex justify-between gap-1 text-black dark:text-white">
+    <div className="flex justify-between gap-1">
       <Handle
         isConnectable={false}
         id={`${tableId}-target`}
@@ -120,7 +120,7 @@ function Header({
             </TooltipTrigger>
             <TooltipContent>{tableName}</TooltipContent>
           </Tooltip>
-          <div className="text-gray-500 dark:text-gray-300">{type}</div>
+          <div className="">{type}</div>
         </div>
       </div>
 
@@ -197,7 +197,7 @@ function LineageNode({ id, data, yPos }: any) {
       if (columnId != null && e) {
         const reactFlowBounds =
           reactFlowWrapper?.current?.getBoundingClientRect();
-        const position = reactFlowInstance.project({
+        const position = reactFlowInstance.screenToFlowPosition({
           x: e.clientX - reactFlowBounds.left + 8,
           y: e.clientY - reactFlowBounds.top,
         });
@@ -262,7 +262,7 @@ function LineageNode({ id, data, yPos }: any) {
   return (
     <div className="group">
       <div
-        className={`cursor-pointer border-2 font-mono shadow-lg text-[12px] text-black dark:text-white rounded-md
+        className={`cursor-pointer border-2 font-mono shadow-lg text-[12px] rounded-md
         border-solid ${isActiveResource ? "border-blue-400" : "border-gray-300"}
         bg-muted w-72 max-h-72 overflow-y-scroll overflow-x-hidden relative
         ${columnsToDisplay.length > 10 ? "nowheel" : ""}
@@ -296,7 +296,7 @@ function LineageNode({ id, data, yPos }: any) {
         {data.name && data.name.length > 27 && (
           <div className="flex absolute top-[-24px] left-0">
             <ModelIcon />
-            <div className="dark:text-white text-xs">{data.name}</div>
+            <div className="text-xs">{data.name}</div>
           </div>
         )}
         <div
@@ -339,8 +339,8 @@ function LineageNode({ id, data, yPos }: any) {
                     ${column.hasEdges ? "cursor-pointer" : "cursor-not-allowed"}
                     px-2 rounded-md ${
                       selectedColumn === column.columnId
-                        ? "bg-gray-200"
-                        : "hover:bg-gray-200"
+                        ? "bg-card"
+                        : "hover:bg-card"
                     } ${
                       selectedColumn != null &&
                       !data.collapsed &&

@@ -132,7 +132,7 @@ export default function EditorSidebar() {
         <ResizablePanel defaultSize={75} minSize={30} maxSize={75}>
           <div className="h-full w-full px-2">
             <div className="flex items-center space-x-2">
-              <div className="px-1 text-black dark:text-white text-sm font-medium">
+              <div className="px-1 text-foreground text-sm font-medium">
                 Files
               </div>
             </div>

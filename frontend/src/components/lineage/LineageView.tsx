@@ -1,15 +1,15 @@
 "use client";
-import React, {useEffect, useRef, useState} from "react";
-import {ErrorBoundary} from "react-error-boundary";
-import {type Edge, ReactFlowProvider} from "reactflow";
+import React, { useEffect, useRef, useState } from "react";
+import { ErrorBoundary } from "react-error-boundary";
+import { type Edge, ReactFlowProvider } from "@xyflow/react";
 import ColumnLineage from "./ColumnLineage";
 
-import {AlertCircle} from "lucide-react";
+import { AlertCircle } from "lucide-react";
 
-import {getLineage, getProjectBasedLineage} from "../../app/actions/actions";
-import {useAppContext} from "../../contexts/AppContext";
-import {Alert, AlertDescription, AlertTitle} from "../ui/alert";
-import {useLineage} from "@/app/contexts/LineageContext";
+import { getLineage, getProjectBasedLineage } from "../../app/actions/actions";
+import { useAppContext } from "../../contexts/AppContext";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { useLineage } from "@/app/contexts/LineageContext";
 
 export function ErrorFallback() {
   return (

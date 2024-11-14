@@ -1,3 +1,5 @@
+import "@xyflow/react/dist/style.css";
+
 import React, {
   useContext,
   useEffect,
@@ -5,12 +7,13 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import ReactFlow, {
+import {
+  ReactFlow,
   Background,
   Panel,
   type ReactFlowInstance,
   useNodesInitialized,
-} from "reactflow";
+} from "@xyflow/react";
 
 import { getColumnLineageForAsset } from "../../lib/lineage";
 import ColumnConnectionEdge, {
@@ -26,8 +29,6 @@ import ErrorNode from "./ErrorNode";
 import { LineageViewContext } from "./LineageView";
 import LoadingNode from "./LoadingNode";
 import buildLineageReactFlow from "./renderLineage";
-
-import "reactflow/dist/style.css";
 import { FilterPanel } from "./FilterPanel";
 import "./lineage.css";
 import { Loader2 } from "lucide-react";
@@ -186,7 +187,7 @@ const ColumnLineageFlow = () => {
 
         const reactFlowBounds =
           reactFlowWrapper.current.getBoundingClientRect();
-        const position = reactFlowInstance?.project({
+        const position = reactFlowInstance?.screenToFlowPosition({
           x: e.clientX - reactFlowBounds.left + 8,
           y: e.clientY - reactFlowBounds.top,
         });
@@ -211,7 +212,7 @@ const ColumnLineageFlow = () => {
 
         const reactFlowBounds =
           reactFlowWrapper.current.getBoundingClientRect();
-        const position = reactFlowInstance?.project({
+        const position = reactFlowInstance?.screenToFlowPosition({
           x: e.clientX - reactFlowBounds.left + 8,
           y: e.clientY - reactFlowBounds.top - 8,
         });

@@ -133,7 +133,7 @@ const LoginForm = ({ invitationCode = "" }: any) => {
               Continue with Google
             </Button>
           </div>
-          <div className="text-muted-foreground text-sm text-center my-2"></div>
+          <div className="text-muted-foreground text-sm text-center my-2" />
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
