@@ -99,24 +99,41 @@ class DbtQueryPreviewView(APIView):
             project_path,
             _,
         ):
-            sql = None
-            if serializer.validated_data.get("use_fast_compile"):
-                sql = dbtproj.fast_compile(serializer.validated_data.get("query"))
-            if sql is None:
-                sql = dbtproj.preview(
-                    serializer.validated_data.get("query"),
-                    data=False,
+            try:
+                sql = None
+                if serializer.validated_data.get("use_fast_compile"):
+                    sql = dbtproj.fast_compile(serializer.validated_data.get("query"))
+                if sql is None:
+                    sql = dbtproj.preview(
+                        serializer.validated_data.get("query"),
+                        data=False,
+                    )
+                # # TODO: hacky way to catch errors from dbt
+            # # we'll eventually need a more robust system for handling this
+            except Exception as e:
+                ## TODO: this is hacky, we'll eventually want a more robust error handling solution
+                if "Compilation Error" in str(e):
+                    error_message = str(e).split("Compilation Error")[1].strip()
+                    return Response(
+                        {"error": error_message},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                else:
+                    raise e
+
+            try:
+                result = (
+                    execute_query.si(
+                        workspace_id=str(workspace.id),
+                        resource_id=str(dbt_resource.resource.id),
+                        sql=sql,
+                        limit=serializer.validated_data.get("limit"),
+                    )
+                    .apply_async()
+                    .get()
                 )
-            result = (
-                execute_query.si(
-                    workspace_id=str(workspace.id),
-                    resource_id=str(dbt_resource.resource.id),
-                    sql=sql,
-                    limit=serializer.validated_data.get("limit"),
-                )
-                .apply_async()
-                .get()
-            )
+            except Exception as e:
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return make_signed_url_response(result)
 
 
