@@ -766,3 +766,14 @@ export async function formatDbtQuery(payload: { query: string }) {
   });
   return response.json();
 }
+
+export async function compileDbtQuery(project_id: string, payload: {
+  filepath: string;
+}) {
+  const response = await fetcher(`/project/${project_id}/compile/`, {
+    cookies,
+    method: "POST",
+    body: payload,
+  });
+  return await response.json();
+}

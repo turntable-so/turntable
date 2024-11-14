@@ -3,6 +3,7 @@ import { useLineage } from "@/app/contexts/LineageContext";
 import { useBottomPanelTabs } from "@/components/editor/use-bottom-panel-tabs";
 import {
   CircleAlertIcon,
+  DatabaseZap,
   Loader2,
   Network,
   Play,
@@ -21,7 +22,19 @@ import CommandPanel from "./command-panel";
 import ProblemsPanel from "./problems-panel/problems-panel";
 import { Badge } from "../ui/badge";
 import CommandPanelActionBtn from "./command-panel/command-panel-action-btn";
+import { Editor } from "@monaco-editor/react";
 import PreviewPanel from "./preview-panel/preview-panel";
+
+// Define your custom theme
+const customTheme = {
+  base: "vs",
+  inherit: true,
+  rules: [],
+  colors: {
+    "editor.foreground": "#000000",
+    "editorLineNumber.foreground": "#A1A1AA",
+  },
+};
 
 export default function BottomPanel({
   rowData,
@@ -39,12 +52,12 @@ export default function BottomPanel({
   queryPreviewError: string | null;
 }) {
   const { fetchFileBasedLineage, lineageData } = useLineage();
-  const { activeFile, branchId, problems } = useFiles();
+  const { activeFile, branchId, problems, compileActiveFile, compiledSql, isCompiling, compileError } = useFiles();
   const [activeTab, setActiveTab] = useBottomPanelTabs({
     branchId: branchId || "",
   });
 
-  const { ref: bottomPanelRef, height: bottomPanelHeight } =
+  const { ref: bottomPanelRef, height: bottomPanelHeight, width: bottomPanelWidth } =
     useResizeObserver();
 
   const showPreviewQueryButton =
@@ -59,7 +72,7 @@ export default function BottomPanel({
         <Tabs
           value={activeTab}
           onValueChange={(value) =>
-            setActiveTab(value as "lineage" | "results" | "command")
+            setActiveTab(value as "lineage" | "results" | "command" | "compile")
           }
           className="text-sm"
         >
@@ -67,6 +80,14 @@ export default function BottomPanel({
             <TabsTrigger value="results">
               <TableIcon className="h-4 w-4 mr-2" />
               Preview
+            </TabsTrigger>
+            <TabsTrigger value="compile">
+              {isCompiling ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <DatabaseZap className="h-4 w-4 mr-2" />
+              )}
+              Compile
             </TabsTrigger>
             <TabsTrigger value="lineage">
               {lineageData[activeFile?.node.path || ""]?.isLoading ? (
@@ -76,6 +97,7 @@ export default function BottomPanel({
               )}
               Lineage
             </TabsTrigger>
+
 
             <TabsTrigger value="command">
               <TerminalIcon className="h-4 w-4 mr-2" />
@@ -110,7 +132,17 @@ export default function BottomPanel({
               ) : (
                 <Play className="h-4 w-4 mr-2" />
               )}
-              Preview Query
+              Preview
+            </Button>
+          )}
+          {activeTab === "compile" && (
+            <Button
+              size="sm"
+              onClick={compileActiveFile}
+              disabled={isCompiling}
+              variant="outline"
+            >
+              Compile
             </Button>
           )}
           {activeTab === "lineage" && (
@@ -208,6 +240,56 @@ export default function BottomPanel({
             <CommandPanel bottomPanelHeight={bottomPanelHeight} />
           )}
           {activeTab === "problems" && <ProblemsPanel />}
+          {activeTab === "compile" && (
+            <div className="h-full w-full p-1">
+              {compileError ? (
+                <div className="text-red-500 text-sm flex items-center justify-center h-full">
+                  <div className="flex items-center">
+                    <CircleAlertIcon className="h-4 w-4 mr-2" />
+                    {compileError}
+                  </div>
+                </div>
+              ) : (
+                <Editor
+                  key={compiledSql}
+                  value={compiledSql || ""}
+                  language="sql"
+                  options={{
+                    readOnly: true,
+                    minimap: { enabled: false },
+                    scrollbar: {
+                      vertical: "visible",
+                      horizontal: "visible",
+                      verticalScrollbarSize: 8,
+                      horizontalScrollbarSize: 8,
+                      verticalSliderSize: 8,
+                      horizontalSliderSize: 8,
+                    },
+                    lineNumbers: "on",
+                    wordWrap: "on",
+                    fontSize: 14,
+                    lineNumbersMinChars: 3,
+                    renderLineHighlight: "none",
+                  }}
+                  height={bottomPanelHeight}
+                  width={bottomPanelWidth}
+                  beforeMount={(monaco) => {
+                    monaco.editor.defineTheme("mutedTheme", {
+                      ...customTheme,
+                      colors: {
+                        ...customTheme.colors,
+                      },
+                    } as any);
+                    monaco.editor.setTheme("mutedTheme");
+                  }}
+                  onMount={(editor, monaco) => {
+                    monaco.editor.setTheme("mutedTheme");
+                  }}
+                  theme="mutedTheme"
+                />
+              )}
+            </div>
+          )}
         </div>
       </Panel>
     </Fragment>
