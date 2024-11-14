@@ -130,6 +130,10 @@ type FilesContextType = {
   createDirectoryAndRefresh: (path: string) => Promise<void>;
   filesLoading: boolean;
   downloadFile: (path: string) => Promise<void>;
+  closeFilesToLeft: (file: OpenedFile) => void;
+  closeFilesToRight: (file: OpenedFile) => void;
+  closeAllOtherFiles: (file: OpenedFile) => void;
+  closeAllFiles: () => void;
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
@@ -651,6 +655,48 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     await fetchFiles();
   };
 
+  const closeFilesToLeft = useCallback(
+    (file: OpenedFile) => {
+      const fileIndex = openedFiles.findIndex(
+        (f) => f.node.path === file.node.path,
+      );
+      if (fileIndex > 0) {
+        const newOpenedFiles = openedFiles.slice(fileIndex);
+        setOpenedFiles(newOpenedFiles);
+        if (!newOpenedFiles.includes(activeFile)) {
+          setActiveFile(newOpenedFiles[0] || null);
+        }
+      }
+    },
+    [openedFiles, activeFile],
+  );
+
+  const closeFilesToRight = useCallback(
+    (file: OpenedFile) => {
+      const fileIndex = openedFiles.findIndex(
+        (f) => f.node.path === file.node.path,
+      );
+      if (fileIndex >= 0 && fileIndex < openedFiles.length - 1) {
+        const newOpenedFiles = openedFiles.slice(0, fileIndex + 1);
+        setOpenedFiles(newOpenedFiles);
+        if (!newOpenedFiles.includes(activeFile)) {
+          setActiveFile(newOpenedFiles[newOpenedFiles.length - 1] || null);
+        }
+      }
+    },
+    [openedFiles, activeFile],
+  );
+
+  const closeAllOtherFiles = useCallback((file: OpenedFile) => {
+    setOpenedFiles([file]);
+    setActiveFile(file);
+  }, []);
+
+  const closeAllFiles = useCallback(() => {
+    setOpenedFiles([]);
+    setActiveFile(null);
+  }, []);
+
   return (
     <FilesContext.Provider
       value={{
@@ -696,6 +742,10 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         filesLoading,
         downloadFile,
         openError,
+        closeFilesToLeft,
+        closeFilesToRight,
+        closeAllOtherFiles,
+        closeAllFiles,
       }}
     >
       {children}
