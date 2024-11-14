@@ -47,6 +47,11 @@ export default function BottomPanel({
   const { ref: bottomPanelRef, height: bottomPanelHeight } =
     useResizeObserver();
 
+  const showPreviewQueryButton =
+    activeTab === "results" &&
+    activeFile?.node.type === "file" &&
+    activeFile.node.name.endsWith(".sql");
+
   return (
     <Fragment>
       <PanelResizeHandle className="h-1 bg-gray hover:bg-gray-300 hover:cursor-col-resize  transition-colors" />
@@ -93,7 +98,7 @@ export default function BottomPanel({
           </TabsList>
         </Tabs>
         <div className="mr-2">
-          {activeTab === "results" && (
+          {showPreviewQueryButton && (
             <Button
               size="sm"
               onClick={runQueryPreview}
