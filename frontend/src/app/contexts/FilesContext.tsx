@@ -130,6 +130,10 @@ type FilesContextType = {
   createDirectoryAndRefresh: (path: string) => Promise<void>;
   filesLoading: boolean;
   downloadFile: (path: string) => Promise<void>;
+  showConfirmSaveDialog: boolean;
+  setShowConfirmSaveDialog: Dispatch<SetStateAction<boolean>>;
+  fileToClose: OpenedFile | null;
+  setFileToClose: Dispatch<SetStateAction<OpenedFile | null>>;
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
@@ -200,6 +204,8 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   useEffect(() => {
     formatOnSaveRef.current = formatOnSave;
   }, [formatOnSave]);
+  const [showConfirmSaveDialog, setShowConfirmSaveDialog] = useState(false);
+  const [fileToClose, setFileToClose] = useState<OpenedFile | null>(null);
 
   const fetchBranch = async (id: string) => {
     if (id) {
@@ -416,9 +422,12 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
 
   const closeFile = useCallback(
     (file: OpenedFile) => {
-      const fileIndex = openedFiles.findIndex(
-        (f) => f.node.path === file.node.path,
-      );
+      if (file.isDirty) {
+        setFileToClose(file);
+        setShowConfirmSaveDialog(true);
+        return;
+      }
+
       const newOpenedFiles = openedFiles.filter(
         (f) => f.node.path !== file.node.path,
       );
@@ -507,25 +516,27 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   }, []);
 
   const saveFile = async (filepath: string, content: string) => {
-    if (activeFile) {
-      const result = await persistFile({
-        branchId,
-        filePath: filepath,
-        fileContents: content,
-        format: formatOnSaveRef.current,
-      });
-      const newContent = result.content;
-      setOpenedFiles((prev) =>
-        prev.map((f) =>
-          f.node.path === filepath
-            ? { ...f, isDirty: false, content: newContent }
-            : f,
-        ),
-      );
-      setActiveFile((prev) =>
-        prev?.node.path === filepath ? { ...prev, content: newContent } : prev,
-      );
+    if (!activeFile) {
+      return;
     }
+
+    const result = await persistFile({
+      branchId,
+      filePath: filepath,
+      fileContents: content,
+      format: formatOnSaveRef.current,
+    });
+    const newContent = result.content;
+    setOpenedFiles((prev) =>
+      prev.map((f) =>
+        f.node.path === filepath
+          ? { ...f, isDirty: false, content: newContent }
+          : f,
+      ),
+    );
+    setActiveFile((prev) =>
+      prev?.node.path === filepath ? { ...prev, content: newContent } : prev,
+    );
   };
 
   const deleteFileAndRefresh = async (filepath: string) => {
@@ -696,6 +707,10 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         filesLoading,
         downloadFile,
         openError,
+        showConfirmSaveDialog,
+        setShowConfirmSaveDialog,
+        fileToClose,
+        setFileToClose,
       }}
     >
       {children}

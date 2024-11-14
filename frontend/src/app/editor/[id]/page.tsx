@@ -18,6 +18,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { useLayoutContext } from "../../contexts/LayoutContext";
 import { usePathname } from "next/navigation";
 import EditorTopBar from "@/components/editor/editor-top-bar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import ConfirmSaveDialog from "@/components/editor/dialogs/confirm-save-dialog";
 
 const PromptBox = ({
   setPromptBoxOpen,
@@ -672,5 +684,10 @@ function EditorPageContent() {
 }
 
 export default function EditorPage() {
-  return <EditorPageContent />;
+  return (
+    <div>
+      <EditorPageContent />
+      <ConfirmSaveDialog />
+    </div>
+  );
 }
