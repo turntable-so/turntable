@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import { type Edge, ReactFlowProvider } from "reactflow";
+import { type Edge, ReactFlowProvider } from "@xyflow/react";
 import ColumnLineage from "./ColumnLineage";
 
 import { AlertCircle } from "lucide-react";

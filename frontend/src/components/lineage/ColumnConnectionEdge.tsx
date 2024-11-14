@@ -7,7 +7,7 @@ import {
   getBezierPath,
   useEdges,
   useStoreApi,
-} from "reactflow";
+} from "@xyflow/react";
 import * as colors from "tailwindcss/colors";
 import { LineageViewContext } from "./LineageView";
 

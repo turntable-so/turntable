@@ -42,6 +42,7 @@ export default function Node({
   dragHandle,
 }: { node: any; style: any; dragHandle: any }) {
   const {
+    activeFile,
     openFile,
     createFileAndRefresh,
     deleteFileAndRefresh,
@@ -153,7 +154,13 @@ export default function Node({
             }
           }}
           ref={dragHandle}
-          className={`${node.isSelected ? "rounded font-medium bg-accent text-accent-foreground" : ""} hover:bg-white hover:cursor-pointer ${contextMenuOpen ? "bg-white" : ""} flex items-center rounded`}
+          className={`${
+            node.isSelected
+              ? "rounded font-medium bg-accent text-accent-foreground"
+              : ""
+          } ${activeFile?.node.path === node.data.path ? "bg-card" : ""} hover:bg-card hover:cursor-pointer ${
+            contextMenuOpen ? "bg-card" : ""
+          } flex items-center rounded`}
         >
           {!node.isLeaf &&
             (node.isOpen ? (
@@ -190,7 +197,9 @@ export default function Node({
             />
           ) : (
             <div className="w-full flex items-center justify-between group">
-              <div className="truncate">{node.data.name}</div>
+              <div className="truncate text-muted-foreground">
+                {node.data.name}
+              </div>
               <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <Ellipsis
                   className="mr-1 size-4 dark:text-zinc-100"
