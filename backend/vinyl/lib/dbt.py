@@ -544,7 +544,9 @@ class DBTProject(object):
             command.append("test_type:singular")
             command.append("test_type:generic")
 
-        adj_exclusions = set(self.compile_exclusions)
+        adj_exclusions = (
+            set(self.compile_exclusions) if self.compile_exclusions else set()
+        )
         if exclude_introspective:
             adj_exclusions |= set(self.get_introspective_models())
 
