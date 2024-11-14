@@ -427,7 +427,7 @@ function EditorPageContent() {
   }, [branchId, isCloned]);
 
   useEffect(() => {
-    if (pathname && pathname.includes("/editor/")) {
+    if (pathname?.includes("/editor/")) {
       const id = pathname.split("/").slice(-1)[0];
       if (id && id.length > 0) {
         fetchBranch(id);
@@ -504,11 +504,7 @@ function EditorPageContent() {
     setIsLoading(true);
     setQueryPreview(null);
     setQueryPreviewError(null);
-    if (
-      activeFile &&
-      activeFile.content &&
-      typeof activeFile.content === "string"
-    ) {
+    if (activeFile?.content && typeof activeFile.content === "string") {
       const dbtSql = activeFile.content;
       try {
         const preview = await executeQueryPreview({ dbtSql, branchId });
