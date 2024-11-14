@@ -666,7 +666,6 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     const result = await compileDbtQuery(branchId, {
       filepath: activeFile?.node.path || "",
     });
-    console.log({ result });
     if (result.error) {
       setCompileError(result.error);
     } else {
