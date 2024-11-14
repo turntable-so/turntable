@@ -4,7 +4,6 @@ from celery import shared_task
 
 from app.core.e2e import DataHubDBParser
 from app.models import Resource, ResourceSubtype
-from scripts.debug.pyinstrument import pyprofile
 
 
 @shared_task
@@ -31,7 +30,6 @@ def ingest_metadata(
 
 
 @shared_task
-@pyprofile()
 def process_metadata(workspace_id: str, resource_id: str):
     resource = Resource.objects.get(id=resource_id)
     with resource.datahub_db.open("rb") as f:
