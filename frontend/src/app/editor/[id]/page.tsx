@@ -18,6 +18,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { useLayoutContext } from "../../contexts/LayoutContext";
 import { usePathname } from "next/navigation";
 import EditorTopBar from "@/components/editor/editor-top-bar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import ConfirmSaveDialog from "@/components/editor/dialogs/confirm-save-dialog";
 
 const PromptBox = ({
   setPromptBoxOpen,
@@ -427,7 +439,7 @@ function EditorPageContent() {
   }, [branchId, isCloned]);
 
   useEffect(() => {
-    if (pathname && pathname.includes("/editor/")) {
+    if (pathname?.includes("/editor/")) {
       const id = pathname.split("/").slice(-1)[0];
       if (id && id.length > 0) {
         fetchBranch(id);
@@ -504,11 +516,7 @@ function EditorPageContent() {
     setIsLoading(true);
     setQueryPreview(null);
     setQueryPreviewError(null);
-    if (
-      activeFile &&
-      activeFile.content &&
-      typeof activeFile.content === "string"
-    ) {
+    if (activeFile?.content && typeof activeFile.content === "string") {
       const dbtSql = activeFile.content;
       try {
         const preview = await executeQueryPreview({ dbtSql, branchId });
@@ -672,5 +680,10 @@ function EditorPageContent() {
 }
 
 export default function EditorPage() {
-  return <EditorPageContent />;
+  return (
+    <div>
+      <EditorPageContent />
+      <ConfirmSaveDialog />
+    </div>
+  );
 }

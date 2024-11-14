@@ -135,6 +135,14 @@ type FilesContextType = {
   compiledSql: string | null;
   isCompiling: boolean;
   compileError: string | null;
+  showConfirmSaveDialog: boolean;
+  setShowConfirmSaveDialog: Dispatch<SetStateAction<boolean>>;
+  fileToClose: OpenedFile | null;
+  setFileToClose: Dispatch<SetStateAction<OpenedFile | null>>;
+  closeFilesToLeft: (file: OpenedFile) => void;
+  closeFilesToRight: (file: OpenedFile) => void;
+  closeAllOtherFiles: (file: OpenedFile) => void;
+  closeAllFiles: () => void;
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
@@ -208,6 +216,8 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   useEffect(() => {
     formatOnSaveRef.current = formatOnSave;
   }, [formatOnSave]);
+  const [showConfirmSaveDialog, setShowConfirmSaveDialog] = useState(false);
+  const [fileToClose, setFileToClose] = useState<OpenedFile | null>(null);
 
   const fetchBranch = async (id: string) => {
     if (id) {
@@ -424,9 +434,12 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
 
   const closeFile = useCallback(
     (file: OpenedFile) => {
-      const fileIndex = openedFiles.findIndex(
-        (f) => f.node.path === file.node.path,
-      );
+      if (file.isDirty) {
+        setFileToClose(file);
+        setShowConfirmSaveDialog(true);
+        return;
+      }
+
       const newOpenedFiles = openedFiles.filter(
         (f) => f.node.path !== file.node.path,
       );
@@ -515,25 +528,27 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   }, []);
 
   const saveFile = async (filepath: string, content: string) => {
-    if (activeFile) {
-      const result = await persistFile({
-        branchId,
-        filePath: filepath,
-        fileContents: content,
-        format: formatOnSaveRef.current,
-      });
-      const newContent = result.content;
-      setOpenedFiles((prev) =>
-        prev.map((f) =>
-          f.node.path === filepath
-            ? { ...f, isDirty: false, content: newContent }
-            : f,
-        ),
-      );
-      setActiveFile((prev) =>
-        prev?.node.path === filepath ? { ...prev, content: newContent } : prev,
-      );
+    if (!activeFile) {
+      return;
     }
+
+    const result = await persistFile({
+      branchId,
+      filePath: filepath,
+      fileContents: content,
+      format: formatOnSaveRef.current,
+    });
+    const newContent = result.content;
+    setOpenedFiles((prev) =>
+      prev.map((f) =>
+        f.node.path === filepath
+          ? { ...f, isDirty: false, content: newContent }
+          : f,
+      ),
+    );
+    setActiveFile((prev) =>
+      prev?.node.path === filepath ? { ...prev, content: newContent } : prev,
+    );
   };
 
   const deleteFileAndRefresh = async (filepath: string) => {
@@ -674,6 +689,48 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     setIsCompiling(false);
   };
 
+  const closeFilesToLeft = useCallback(
+    (file: OpenedFile) => {
+      const fileIndex = openedFiles.findIndex(
+        (f) => f.node.path === file.node.path,
+      );
+      if (fileIndex > 0) {
+        const newOpenedFiles = openedFiles.slice(fileIndex);
+        setOpenedFiles(newOpenedFiles);
+        if (!newOpenedFiles.includes(activeFile)) {
+          setActiveFile(newOpenedFiles[0] || null);
+        }
+      }
+    },
+    [openedFiles, activeFile],
+  );
+
+  const closeFilesToRight = useCallback(
+    (file: OpenedFile) => {
+      const fileIndex = openedFiles.findIndex(
+        (f) => f.node.path === file.node.path,
+      );
+      if (fileIndex >= 0 && fileIndex < openedFiles.length - 1) {
+        const newOpenedFiles = openedFiles.slice(0, fileIndex + 1);
+        setOpenedFiles(newOpenedFiles);
+        if (!newOpenedFiles.includes(activeFile)) {
+          setActiveFile(newOpenedFiles[newOpenedFiles.length - 1] || null);
+        }
+      }
+    },
+    [openedFiles, activeFile],
+  );
+
+  const closeAllOtherFiles = useCallback((file: OpenedFile) => {
+    setOpenedFiles([file]);
+    setActiveFile(file);
+  }, []);
+
+  const closeAllFiles = useCallback(() => {
+    setOpenedFiles([]);
+    setActiveFile(null);
+  }, []);
+
   return (
     <FilesContext.Provider
       value={{
@@ -720,11 +777,16 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         downloadFile,
         openError,
         compileActiveFile,
-        compiledSql,
         isCompiling,
         compileError,
-      }}
-    >
+        showConfirmSaveDialog,
+        fileToClose,
+        setFileToClose,
+        closeFilesToLeft,
+        closeFilesToRight,
+        closeAllOtherFiles,
+        closeAllFiles,
+      }}>
       {children}
     </FilesContext.Provider>
   );
