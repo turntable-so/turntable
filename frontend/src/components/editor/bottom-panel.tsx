@@ -2,15 +2,6 @@ import { useFiles } from "@/app/contexts/FilesContext";
 import { useLineage } from "@/app/contexts/LineageContext";
 import { useBottomPanelTabs } from "@/components/editor/use-bottom-panel-tabs";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { AgGridReact } from "ag-grid-react";
-import {
   CircleAlertIcon,
   Loader2,
   Network,
@@ -30,49 +21,7 @@ import CommandPanel from "./command-panel";
 import ProblemsPanel from "./problems-panel/problems-panel";
 import { Badge } from "../ui/badge";
 import CommandPanelActionBtn from "./command-panel/command-panel-action-btn";
-
-const SkeletonLoadingTable = () => {
-  return (
-    <div className="w-full flex items-center justify-center">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[100px]">
-              <div className="animate-pulse h-4 bg-gray-200 rounded" />
-            </TableHead>
-            <TableHead>
-              <div className="animate-pulse h-4 bg-gray-200 rounded" />
-            </TableHead>
-            <TableHead>
-              <div className="animate-pulse h-4 bg-gray-200 rounded" />
-            </TableHead>
-            <TableHead className="text-right">
-              <div className="animate-pulse h-4 bg-gray-200 rounded" />
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {Array.from({ length: 20 }).map((_, i) => (
-            <TableRow key={i}>
-              <TableCell className="">
-                <div className="animate-pulse h-4 bg-gray-200 rounded" />
-              </TableCell>
-              <TableCell className="">
-                <div className="animate-pulse h-4 bg-gray-200 rounded" />
-              </TableCell>
-              <TableCell className="">
-                <div className="animate-pulse h-4 bg-gray-200 rounded" />
-              </TableCell>
-              <TableCell className="">
-                <div className="animate-pulse h-4 bg-gray-200 rounded" />
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
-  );
-};
+import PreviewPanel from "./preview-panel/preview-panel";
 
 export default function BottomPanel({
   rowData,
@@ -193,48 +142,23 @@ export default function BottomPanel({
           className="flex flex-col w-full h-full flex-grow-1"
           ref={bottomPanelRef}
         >
-          {activeTab === "results" &&
-            (() => {
-              switch (true) {
-                case isQueryLoading:
-                  return <SkeletonLoadingTable />;
-                case !!queryPreviewError:
-                  return (
-                    <div
-                      style={{
-                        height: bottomPanelHeight,
-                      }}
-                      className="overflow-y-scroll  p-6 "
-                    >
-                      <div className=" text-red-500 text-sm">
-                        {queryPreviewError}
-                      </div>
-                      <div className="h-24" />
-                    </div>
-                  );
-                default:
-                  return (
-                    <AgGridReact
-                      className="ag-theme-custom"
-                      ref={gridRef}
-                      suppressRowHoverHighlight={true}
-                      columnHoverHighlight={true}
-                      rowData={rowData}
-                      pagination={true}
-                      // @ts-ignore
-                      columnDefs={colDefs}
-                    />
-                  );
-              }
-            })()}
+          {activeTab === "results" && (
+            <PreviewPanel
+              isQueryLoading={isQueryLoading}
+              queryPreviewError={queryPreviewError}
+              bottomPanelHeight={bottomPanelHeight}
+              gridRef={gridRef}
+              rowData={rowData}
+              colDefs={colDefs}
+            />
+          )}
           {activeTab === "lineage" && (
             <div className="h-full">
               <ErrorBoundary
                 FallbackComponent={() => <div>Something went wrong</div>}
               >
                 <>
-                  {lineageData &&
-                    lineageData[activeFile?.node.path || ""] &&
+                  {lineageData?.[activeFile?.node.path || ""] &&
                     lineageData[activeFile?.node.path || ""].isLoading && (
                       <div
                         className="w-full bg-gray-200 flex items-center justify-center"
@@ -243,8 +167,7 @@ export default function BottomPanel({
                         <Loader2 className="h-6 w-6 animate-spin opacity-50" />
                       </div>
                     )}
-                  {lineageData &&
-                    lineageData[activeFile?.node.path || ""] &&
+                  {lineageData?.[activeFile?.node.path || ""] &&
                     lineageData[activeFile?.node.path || ""].data && (
                       <LineageView
                         key={activeFile?.node.path}
@@ -261,8 +184,7 @@ export default function BottomPanel({
                         branchId={branchId}
                       />
                     )}
-                  {lineageData &&
-                    lineageData[activeFile?.node.path || ""] &&
+                  {lineageData?.[activeFile?.node.path || ""] &&
                     lineageData[activeFile?.node.path || ""].error && (
                       <div
                         className="w-full bg-gray-200 flex items-center justify-center"
