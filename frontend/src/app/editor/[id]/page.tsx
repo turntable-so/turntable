@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import Editor, { DiffEditor } from "@monaco-editor/react";
 import type { AgGridReact } from "ag-grid-react";
-import { Check, Loader2, X } from "lucide-react";
+import { Check, Download, Loader2, X } from "lucide-react";
 import type React from "react";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
@@ -100,78 +100,76 @@ const PromptBox = ({
           disabled={isLoading}
         />
         <div className="flex space-x-2 justify-end w-full">
-          <>
-            {model === "PROMPT" ? (
-              <>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="rounded-sm"
-                  onClick={() => setPromptBoxOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  size="sm"
-                  disabled={!prompt || isLoading}
-                  variant="default"
-                  className="rounded-sm"
-                  onClick={() => {
-                    callInference();
-                  }}
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    "Generate"
-                  )}
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  className="rounded-sm"
-                  onClick={() => {
-                    if (activeFile) {
-                      setActiveFile({
-                        ...activeFile,
-                        view: "edit",
-                      });
-                    }
-                    setPromptBoxOpen(false);
-                  }}
-                >
-                  <X className="mr-2 size-4" />
-                  Reject
-                </Button>
-                <Button
-                  size="sm"
-                  disabled={!prompt || isLoading}
-                  variant="default"
-                  className="rounded-sm"
-                  onClick={() => {
-                    updateFileContent(
-                      activeFile?.node.path || "",
-                      activeFile?.diff?.modified || "",
-                    );
+          {model === "PROMPT" ? (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                className="rounded-sm"
+                onClick={() => setPromptBoxOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                disabled={!prompt || isLoading}
+                variant="default"
+                className="rounded-sm"
+                onClick={() => {
+                  callInference();
+                }}
+              >
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  "Generate"
+                )}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                size="sm"
+                variant="destructive"
+                className="rounded-sm"
+                onClick={() => {
+                  if (activeFile) {
                     setActiveFile({
                       ...activeFile,
-                      isDirty: true,
-                      content: activeFile?.diff?.modified || "",
                       view: "edit",
-                      diff: undefined,
-                    } as OpenedFile);
-                    setPromptBoxOpen(false);
-                  }}
-                >
-                  <Check className="mr-2 size-4" />
-                  Accept
-                </Button>
-              </>
-            )}
-          </>
+                    });
+                  }
+                  setPromptBoxOpen(false);
+                }}
+              >
+                <X className="mr-2 size-4" />
+                Reject
+              </Button>
+              <Button
+                size="sm"
+                disabled={!prompt || isLoading}
+                variant="default"
+                className="rounded-sm"
+                onClick={() => {
+                  updateFileContent(
+                    activeFile?.node.path || "",
+                    activeFile?.diff?.modified || "",
+                  );
+                  setActiveFile({
+                    ...activeFile,
+                    isDirty: true,
+                    content: activeFile?.diff?.modified || "",
+                    view: "edit",
+                    diff: undefined,
+                  } as OpenedFile);
+                  setPromptBoxOpen(false);
+                }}
+              >
+                <Check className="mr-2 size-4" />
+                Accept
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -182,8 +180,14 @@ function EditorContent({
   setPromptBoxOpen,
   containerWidth,
 }: { setPromptBoxOpen: (open: boolean) => void; containerWidth: number }) {
-  const { activeFile, updateFileContent, saveFile, setActiveFile, isCloning } =
-    useFiles();
+  const {
+    activeFile,
+    updateFileContent,
+    saveFile,
+    setActiveFile,
+    isCloning,
+    downloadFile,
+  } = useFiles();
 
   // Define your custom theme
   const customTheme = {
@@ -197,6 +201,19 @@ function EditorContent({
   };
 
   if (activeFile?.node?.type === "error") {
+    if (activeFile.content === "FILE_EXCEEDS_SIZE_LIMIT") {
+      return (
+        <div className="h-full w-full flex flex-col gap-4 items-center justify-center">
+          <div>
+            This file is too large to open. Please download the file instead.
+          </div>
+          <Button onClick={() => downloadFile(activeFile.node.path)}>
+            <Download className="mr-2 h-4 w-4" />
+            Download
+          </Button>
+        </div>
+      );
+    }
     return (
       <div className="h-full w-full flex items-center justify-center">
         {activeFile.content}
@@ -273,7 +290,10 @@ function EditorContent({
     if (activeFile.node?.path.endsWith(".sql")) {
       return "sql";
     }
-    if (activeFile.node?.path.endsWith(".yml") || activeFile.node?.path.endsWith(".yaml")) {
+    if (
+      activeFile.node?.path.endsWith(".yml") ||
+      activeFile.node?.path.endsWith(".yaml")
+    ) {
       return "yaml";
     }
     if (activeFile.node?.path.endsWith(".md")) {

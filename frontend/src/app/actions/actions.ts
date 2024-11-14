@@ -502,7 +502,13 @@ export async function getFileIndex(branchId: string) {
   return response.json();
 }
 
-export async function fetchFileContents(branchId: string, path: string) {
+export async function fetchFileContents({
+  branchId,
+  path,
+}: {
+  branchId: string;
+  path: string;
+}) {
   const encodedPath = encodeURIComponent(path);
   const response = await fetcher(
     `/project/${branchId}/files/?filepath=${encodedPath}`,
