@@ -780,6 +780,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         isCompiling,
         compileError,
         showConfirmSaveDialog,
+        setShowConfirmSaveDialog,
         fileToClose,
         setFileToClose,
         closeFilesToLeft,
