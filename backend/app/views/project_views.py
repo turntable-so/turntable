@@ -96,15 +96,6 @@ def get_lineage_helper(
 
     return root_asset, lineage
 
-    asset_serializer = AssetSerializer(root_asset, context={"request": request})
-    lineage_serializer = LineageSerializer(lineage, context={"request": request})
-    return Response(
-        {
-            "root_asset": asset_serializer.data,
-            "lineage": lineage_serializer.data,
-        }
-    )
-
 
 class ProjectViewSet(viewsets.ViewSet):
     def list(self, request):

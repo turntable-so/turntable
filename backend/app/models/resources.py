@@ -562,6 +562,7 @@ class DBTCoreDetails(DBTResource):
         choices=[(v, v.value) for v in DBTVersion], max_length=255, blank=False
     )
     env_vars = encrypt(models.JSONField(null=True))
+    compile_exclusions = ArrayField(models.TextField(), null=True)
 
     # relationships
     repository = models.ForeignKey(
@@ -662,6 +663,7 @@ class DBTCoreDetails(DBTResource):
                         self.version,
                         dbt_profiles_dir=dbt_profiles_dir,
                         env_vars={} if env_vars is None else env_vars,
+                        compile_exclusions=self.compile_exclusions,
                     ),
                     project_path,
                     git_repo,
@@ -710,14 +712,18 @@ class DBTCoreDetails(DBTResource):
                     git_repo,
                 )
 
-    def upload_artifacts(self, project_id: str | None = None):
+    def upload_artifacts(
+        self, project_id: str | None = None, exclude_introspective: bool = True
+    ):
         with self.dbt_repo_context(isolate=True, project_id=project_id) as (
             dbtproj,
             project_path,
             _,
         ):
             stdout, stderr, success = dbtproj.dbt_compile(
-                models_only=True, update_manifest=True
+                models_only=True,
+                update_manifest=True,
+                exclude_introspective=exclude_introspective,
             )
             if not success:
                 raise Exception(
@@ -728,6 +734,7 @@ class DBTCoreDetails(DBTResource):
                 raise Exception(
                     f"Error generating docs. Stderr: {stderr}. Stdout: {stdout}"
                 )
+
             dbtproj.mount_manifest()
             dbtproj.mount_catalog()
             self.manifest_json = dbtproj.manifest
