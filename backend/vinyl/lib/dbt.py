@@ -485,7 +485,7 @@ class DBTProject(object):
             command,
             cli_args,
             write_json,
-            dbt_cache,
+            use_colors=True,
             defer,
             defer_selection,
             use_colors=True,
