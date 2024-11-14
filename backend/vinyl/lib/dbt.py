@@ -40,6 +40,7 @@ class DBTProject(object):
     target_path: str
     manifest: dict[str, Any]
     model_graph: DAG
+    macro_graph: DAG
     catalog: dict[str, Any]
     profile_name: str
     dbt_profiles_dir: str
@@ -166,7 +167,7 @@ class DBTProject(object):
         if hasattr(self, "manifest") and not force_run and not force_read:
             return "", "", True
         elif force_run or not os.path.exists(self.manifest_path):
-            return self.dbt_parse(defer=defer)
+            self.dbt_parse(defer=defer)
 
         if read:
             self.manifest = load_orjson(self.manifest_path)
@@ -174,6 +175,15 @@ class DBTProject(object):
         elif (force_read or force_run) and hasattr(self, "manifest"):
             # make sure you don't accidentally read an outdated manifest in the future
             del self.manifest
+
+    def build_macro_graph(self, rebuild=False) -> DAG:
+        self.mount_manifest()
+        self.macro_graph = DAG()
+        for k, v in self.manifest["macros"].items():
+            self.macro_graph.add_node(k)
+            for dep in v["depends_on"]["macros"]:
+                self.macro_graph.add_edge(dep, k)
+        return self.macro_graph
 
     def build_model_graph(self, include_sources: bool = False, rebuild=False) -> DAG:
         self.mount_manifest()
@@ -516,6 +526,7 @@ class DBTProject(object):
         models_only: bool = False,
         defer: bool = False,
         defer_selection: bool = True,
+        exclude_introspective: bool = False,
     ) -> tuple[str, str, bool]:
         if not node_ids:
             command = ["compile", "-f"]
@@ -527,24 +538,23 @@ class DBTProject(object):
             )
             command += [v.split(".")[-1] for v in full_node_list]
 
+        # determine exclusions
         if models_only:
             command.append("--exclude")
             command.append("test_type:singular")
             command.append("test_type:generic")
 
-        # don't exclude node if explicitly provided
-        adj_exclusions = (
-            list(
-                set(self.compile_exclusions)
-                - set([id.split(".")[-1] for id in node_ids])
-            )
-            if self.compile_exclusions
-            else []
-        )
+        adj_exclusions = set(self.compile_exclusions)
+        if exclude_introspective:
+            adj_exclusions |= set(self.get_introspective_models())
+
+        if adj_exclusions:
+            ## don't exclude node if explicitly provided
+            adj_exclusions -= set([id.split(".")[-1] for id in node_ids])
         if adj_exclusions:
             if "--exclude" not in command:
                 command.append("--exclude")
-            command.extend(self.compile_exclusions)
+            command.extend(adj_exclusions)
 
         stdout, stderr, success = self.run_dbt_command(
             command,
@@ -569,7 +579,7 @@ class DBTProject(object):
         stdout, stderr, success = self.run_dbt_command(
             ["docs", "generate", "--no-compile"],
             write_json=True,
-            dbt_cache=True,
+            dbt_cache=False,
             defer=defer,
         )
         return stdout, stderr, success
@@ -915,6 +925,19 @@ class DBTProject(object):
         if "{{" in contents:
             return None
         return contents
+
+    def get_introspective_models(self):
+        self.build_macro_graph()
+        run_query_macros = set(self.macro_graph.get_relatives(["macro.dbt.statement"]))
+        project = self.manifest["metadata"]["project_name"]
+        introspective_models = []
+        for node_id, node in self.manifest["nodes"].items():
+            if node["resource_type"] != "model" or node["package_name"] != project:
+                continue
+            macros = node["depends_on"]["macros"]
+            if set(macros) & run_query_macros:
+                introspective_models.append(node_id.split(".")[-1])
+        return introspective_models
 
 
 class DBTTransition:
