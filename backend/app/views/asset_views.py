@@ -146,9 +146,7 @@ class AssetViewSet(viewsets.ModelViewSet):
         # Paginate the filtered assets
         page = self.paginate_queryset(filtered_assets)
         if page is not None:
-            serializer = AssetIndexSerializer(
-                page, many=True, context={"request": request}
-            )
+            serializer = AssetSerializer(page, many=True, context={"request": request})
             response = self.get_paginated_response(serializer.data)
             response.data["filters"] = {
                 "types": list(types) if len(types) > 0 else [],
@@ -158,7 +156,7 @@ class AssetViewSet(viewsets.ModelViewSet):
             response.data["resources"] = resources_serializer.data
             return response
 
-        serializer = AssetIndexSerializer(
+        serializer = AssetSerializer(
             filtered_assets, many=True, context={"request": request}
         )
 
