@@ -1,8 +1,10 @@
 from app.core.dbt import LiveDBTParser
 from app.models.resources import Resource
 from vinyl.lib.dbt import DBTProject, DBTTransition
+from scripts.debug.pyinstrument import pyprofile
 
 
+@pyprofile()
 def get_lineage_helper(
     proj: DBTProject,
     before_proj: DBTProject | None,
@@ -17,10 +19,12 @@ def get_lineage_helper(
     if defer:
         transition = DBTTransition(before_project=before_proj, after_project=proj)
         transition.mount_manifest(defer=defer)
-        transition.mount_catalog(defer=defer)
+        if not asset_only:
+            transition.mount_catalog(defer=defer)
     else:
         proj.mount_manifest()
-        proj.mount_catalog()
+        if not asset_only:
+            proj.mount_catalog()
 
     node_id = LiveDBTParser.get_node_id_from_filepath(proj, filepath, defer)
     if not node_id:

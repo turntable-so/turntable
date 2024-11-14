@@ -359,7 +359,7 @@ class ProjectViewSet(viewsets.ViewSet):
         serializer = self.ProjectLineageSerializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
 
-        asset_only = serializer.validated_data.get("asset_only")
+        asset_only = bool(serializer.validated_data.get("asset_only"))
         filepath = unquote(serializer.validated_data.get("filepath"))
         predecessor_depth = serializer.validated_data.get("predecessor_depth")
         successor_depth = serializer.validated_data.get("successor_depth")
@@ -369,21 +369,31 @@ class ProjectViewSet(viewsets.ViewSet):
         if defer:
             with dbt_details.dbt_transition_context(
                 project_id=project.id, isolate=False
-            ) as (transition, project_path, git_repo):
-                proj_args = {
-                    "proj": transition.after,
-                    "before_proj": transition.before,
-                }
+            ) as (
+                transition,
+                _,
+                repo,
+            ):
+                root_asset, lineage = get_lineage_helper(
+                    proj=transition.after,
+                    before_proj=transition.before,
+                    resource=dbt_details.resource,
+                    filepath=filepath,
+                    predecessor_depth=predecessor_depth,
+                    successor_depth=successor_depth,
+                    lineage_type=lineage_type,
+                    defer=defer,
+                    asset_only=asset_only,
+                )
         else:
             with dbt_details.dbt_repo_context(project_id=project.id, isolate=False) as (
-                project,
-                project_path,
-                git_repo,
+                proj,
+                _,
+                _,
             ):
-                proj_args = {"proj": project, "before_proj": None}
-
                 root_asset, lineage = get_lineage_helper(
-                    **proj_args,
+                    proj=proj,
+                    before_proj=None,
                     resource=dbt_details.resource,
                     filepath=filepath,
                     predecessor_depth=predecessor_depth,
@@ -393,15 +403,11 @@ class ProjectViewSet(viewsets.ViewSet):
                     asset_only=asset_only,
                 )
 
-                asset_serializer = AssetSerializer(
-                    root_asset, context={"request": request}
-                )
-                lineage_serializer = LineageSerializer(
-                    lineage, context={"request": request}
-                )
-                return Response(
-                    {
-                        "root_asset": asset_serializer.data,
-                        "lineage": lineage_serializer.data,
-                    }
-                )
+        asset_serializer = AssetSerializer(root_asset, context={"request": request})
+        lineage_serializer = LineageSerializer(lineage, context={"request": request})
+        return Response(
+            {
+                "root_asset": asset_serializer.data,
+                "lineage": lineage_serializer.data,
+            }
+        )

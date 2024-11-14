@@ -72,13 +72,16 @@ class LiveDBTParser:
         defer: bool = False,
         asset_only: bool = False,
     ):
+        print("<parse_project> asset_only: ", asset_only, flush=True)
         if before_proj is not None:
             transition = DBTTransition(before_proj, proj)
             transition.mount_manifest(defer=defer)
-            transition.mount_catalog(defer=defer)
+            if not asset_only:
+                transition.mount_catalog(defer=defer)
         else:
             proj.mount_manifest(defer=defer)
-            proj.mount_catalog(defer=defer)
+            if not asset_only:
+                proj.mount_catalog(defer=defer)
 
         proj.build_model_graph()
         all_downstream_nodes = proj.model_graph.get_relatives(

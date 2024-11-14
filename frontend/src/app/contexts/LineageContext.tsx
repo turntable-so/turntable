@@ -19,6 +19,8 @@ type LineageContextType = {
     lineageType: "all" | "direct_only";
   }) => Promise<void>;
   setFilePathToLoading: ({ loading: boolean, filePath: string }) => void;
+  assetOnly: boolean;
+  setAssetOnly: (assetOnly: boolean) => void;
 };
 
 export const LineageContext = createContext<LineageContextType | undefined>(
@@ -29,6 +31,8 @@ export const LineageProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [lineageData, setLineageData] = useState({});
+  const [assetOnly, setAssetOnly] = useState(true);
+  const [loadingColumnLineage, setLoadingColumnLineage] = useState(false);
 
   const fetchFileBasedLineage = async ({
     filePath,
@@ -53,6 +57,7 @@ export const LineageProvider: React.FC<{ children: ReactNode }> = ({
       lineage_type: lineageType,
       successor_depth: 1,
       predecessor_depth: 1,
+      asset_only: assetOnly,
     });
     if (result.error) {
       setLineageData((prev) => ({
@@ -91,7 +96,13 @@ export const LineageProvider: React.FC<{ children: ReactNode }> = ({
 
   return (
     <LineageContext.Provider
-      value={{ lineageData, fetchFileBasedLineage, setFilePathToLoading }}
+      value={{
+        lineageData,
+        fetchFileBasedLineage,
+        setFilePathToLoading,
+        assetOnly,
+        setAssetOnly,
+      }}
     >
       {children}
     </LineageContext.Provider>

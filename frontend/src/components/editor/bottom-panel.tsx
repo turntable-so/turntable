@@ -30,6 +30,7 @@ import CommandPanel from "./command-panel";
 import ProblemsPanel from "./problems-panel/problems-panel";
 import { Badge } from "../ui/badge";
 import CommandPanelActionBtn from "./command-panel/command-panel-action-btn";
+import { Switch } from "../ui/switch";
 
 const SkeletonLoadingTable = () => {
   return (
@@ -89,7 +90,8 @@ export default function BottomPanel({
   isLoading: boolean;
   queryPreviewError: string | null;
 }) {
-  const { fetchFileBasedLineage, lineageData } = useLineage();
+  const { fetchFileBasedLineage, lineageData, assetOnly, setAssetOnly } =
+    useLineage();
   const { activeFile, branchId, problems } = useFiles();
   const [activeTab, setActiveTab] = useBottomPanelTabs({
     branchId: branchId || "",
@@ -160,27 +162,36 @@ export default function BottomPanel({
             </Button>
           )}
           {activeTab === "lineage" && (
-            <Button
-              size="sm"
-              onClick={() =>
-                fetchFileBasedLineage({
-                  filePath: activeFile?.node.path || "",
-                  branchId,
-                  // TODO: we need to get the selected type from the LineageView,
-                  // but right now that would take too much effort to refactor that
-                  lineageType: "all",
-                })
-              }
-              disabled={lineageData[activeFile?.node.path || ""]?.isLoading}
-              variant="outline"
-            >
-              {lineageData[activeFile?.node.path || ""]?.isLoading ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <RefreshCcw className="h-4 w-4 mr-2" />
-              )}
-              Refresh
-            </Button>
+            <div className="flex items-center justify-center gap-2">
+              <Switch
+                checked={!assetOnly}
+                onCheckedChange={() => {
+                  setAssetOnly(!assetOnly);
+                }}
+              />
+              <div className="text-xs font-medium">Show Columns</div>
+              <Button
+                size="sm"
+                onClick={() =>
+                  fetchFileBasedLineage({
+                    filePath: activeFile?.node.path || "",
+                    branchId,
+                    // TODO: we need to get the selected type from the LineageView,
+                    // but right now that would take too much effort to refactor that
+                    lineageType: "all",
+                  })
+                }
+                disabled={lineageData[activeFile?.node.path || ""]?.isLoading}
+                variant="outline"
+              >
+                {lineageData[activeFile?.node.path || ""]?.isLoading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <RefreshCcw className="h-4 w-4 mr-2" />
+                )}
+                Refresh
+              </Button>
+            </div>
           )}
           {activeTab === "command" && <CommandPanelActionBtn />}
         </div>

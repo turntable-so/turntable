@@ -1,15 +1,15 @@
 "use client";
-import React, {useEffect, useRef, useState} from "react";
-import {ErrorBoundary} from "react-error-boundary";
-import {type Edge, ReactFlowProvider} from "reactflow";
+import React, { useEffect, useRef, useState } from "react";
+import { ErrorBoundary } from "react-error-boundary";
+import { type Edge, ReactFlowProvider } from "reactflow";
 import ColumnLineage from "./ColumnLineage";
 
-import {AlertCircle} from "lucide-react";
+import { AlertCircle } from "lucide-react";
 
-import {getLineage, getProjectBasedLineage} from "../../app/actions/actions";
-import {useAppContext} from "../../contexts/AppContext";
-import {Alert, AlertDescription, AlertTitle} from "../ui/alert";
-import {useLineage} from "@/app/contexts/LineageContext";
+import { getLineage, getProjectBasedLineage } from "../../app/actions/actions";
+import { useAppContext } from "../../contexts/AppContext";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { useLineage } from "@/app/contexts/LineageContext";
 
 export function ErrorFallback() {
   return (
@@ -77,7 +77,7 @@ export const LineageViewContext = React.createContext<{
   lineage: null,
   isTableOnly: true,
   isFilterOpen: false,
-  toggleFilter: () => {},
+  toggleFilter: () => { },
   isLoading: true,
   isLoadingColumns: true,
   error: null,
@@ -95,20 +95,20 @@ export const LineageViewContext = React.createContext<{
     lineageType: "all",
   },
   isLineageOptionsPanelOpen: false,
-  setIsLineageOptionsPanelOpen: () => {},
-  handleSelectColumn: () => {},
-  handleExpandNode: () => {},
-  handleColumnHover: () => {},
+  setIsLineageOptionsPanelOpen: () => { },
+  handleSelectColumn: () => { },
+  handleExpandNode: () => { },
+  handleColumnHover: () => { },
   onTableHeaderClick: () => Promise.resolve(),
-  onMouseEnterNode: () => {},
-  onMouseLeaveNode: () => {},
-  updateHoveredEdge: () => {},
-  updateSelectedEdge: () => {},
-  updateGraph: () => {},
+  onMouseEnterNode: () => { },
+  onMouseLeaveNode: () => { },
+  updateHoveredEdge: () => { },
+  updateSelectedEdge: () => { },
+  updateGraph: () => { },
   rootAsset: null,
   isLineageLevelSelectorOpen: false,
-  setIsLineageLevelSelectorOpen: () => {},
-  setLineageOptionsAndRefetch: () => {},
+  setIsLineageLevelSelectorOpen: () => { },
+  setLineageOptionsAndRefetch: () => { },
 });
 
 type Column = {
@@ -322,7 +322,9 @@ export function LineageViewProvider(props: LineageViewProviderProps) {
         lineage_type: options.lineageType,
       });
       setIsLineageLoading(false);
-      setLineage(data.lineage);
+      if (data) {
+        setLineage(data.lineage);
+      }
     } else if (page === "editor") {
       setLineageOptions(options);
       setIsLineageLoading(true);
