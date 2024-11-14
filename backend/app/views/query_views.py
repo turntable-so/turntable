@@ -112,14 +112,11 @@ class DbtQueryPreviewView(APIView):
             # # we'll eventually need a more robust system for handling this
             except Exception as e:
                 ## TODO: this is hacky, we'll eventually want a more robust error handling solution
-                if "Compilation Error" in str(e):
-                    error_message = str(e).split("Compilation Error")[1].strip()
-                    return Response(
-                        {"error": error_message},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-                else:
-                    raise e
+                error_message = str(e)
+                return Response(
+                    {"error": error_message},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             try:
                 result = (
