@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import Editor, { DiffEditor } from "@monaco-editor/react";
 import type { AgGridReact } from "ag-grid-react";
-import { Check, Loader2, X } from "lucide-react";
+import { Check, Download, Loader2, X } from "lucide-react";
 import type React from "react";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
@@ -18,6 +18,18 @@ import { useLayoutContext } from "../../contexts/LayoutContext";
 import { usePathname } from "next/navigation";
 import EditorTopBar from "@/components/editor/editor-top-bar";
 import { useTheme } from "next-themes";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import ConfirmSaveDialog from "@/components/editor/dialogs/confirm-save-dialog";
 
 const PromptBox = ({
   setPromptBoxOpen,
@@ -180,9 +192,15 @@ function EditorContent({
   setPromptBoxOpen,
   containerWidth,
 }: { setPromptBoxOpen: (open: boolean) => void; containerWidth: number }) {
-  const { activeFile, updateFileContent, saveFile, setActiveFile, isCloning } =
-    useFiles();
   const { theme } = useTheme();
+  const {
+    activeFile,
+    updateFileContent,
+    saveFile,
+    setActiveFile,
+    isCloning,
+    downloadFile,
+  } = useFiles();
 
   // Define your custom theme
   const customTheme = {
@@ -192,6 +210,19 @@ function EditorContent({
   };
 
   if (activeFile?.node?.type === "error") {
+    if (activeFile.content === "FILE_EXCEEDS_SIZE_LIMIT") {
+      return (
+        <div className="h-full w-full flex flex-col gap-4 items-center justify-center">
+          <div>
+            This file is too large to open. Please download the file instead.
+          </div>
+          <Button onClick={() => downloadFile(activeFile.node.path)}>
+            <Download className="mr-2 h-4 w-4" />
+            Download
+          </Button>
+        </div>
+      );
+    }
     return (
       <div className="h-full w-full flex items-center justify-center">
         {activeFile.content}
@@ -646,5 +677,10 @@ function EditorPageContent() {
 }
 
 export default function EditorPage() {
-  return <EditorPageContent />;
+  return (
+    <div>
+      <EditorPageContent />
+      <ConfirmSaveDialog />
+    </div>
+  );
 }

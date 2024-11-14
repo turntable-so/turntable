@@ -5,15 +5,6 @@ import { useFiles } from "@/app/contexts/FilesContext";
 import { useLineage } from "@/app/contexts/LineageContext";
 import { useBottomPanelTabs } from "@/components/editor/use-bottom-panel-tabs";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { AgGridReact } from "ag-grid-react";
-import {
   CircleAlertIcon,
   Loader2,
   Network,
@@ -34,53 +25,7 @@ import ProblemsPanel from "./problems-panel/problems-panel";
 import { Badge } from "../ui/badge";
 import { useTheme } from "next-themes";
 import CommandPanelActionBtn from "./command-panel/command-panel-action-btn";
-
-const SkeletonLoadingTable = () => {
-  const Loader = () => (
-    <div className="animate-pulse h-4 bg-gray-200 dark:bg-zinc-800 rounded" />
-  );
-
-  return (
-    <div className="w-full flex items-center justify-center">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[100px]">
-              <Loader />
-            </TableHead>
-            <TableHead>
-              <Loader />
-            </TableHead>
-            <TableHead>
-              <Loader />
-            </TableHead>
-            <TableHead className="text-right">
-              <Loader />
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {Array.from({ length: 20 }).map((_, i) => (
-            <TableRow key={i}>
-              <TableCell>
-                <Loader />
-              </TableCell>
-              <TableCell>
-                <Loader />
-              </TableCell>
-              <TableCell>
-                <Loader />
-              </TableCell>
-              <TableCell>
-                <Loader />
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
-  );
-};
+import PreviewPanel from "./preview-panel/preview-panel";
 
 export default function BottomPanel({
   rowData,
@@ -106,6 +51,11 @@ export default function BottomPanel({
   const { ref: bottomPanelRef, height: bottomPanelHeight } =
     useResizeObserver();
   const { theme } = useTheme();
+
+  const showPreviewQueryButton =
+    activeTab === "results" &&
+    activeFile?.node.type === "file" &&
+    activeFile.node.name.endsWith(".sql");
 
   return (
     <Fragment>
@@ -153,7 +103,7 @@ export default function BottomPanel({
           </TabsList>
         </Tabs>
         <div className="mr-2">
-          {activeTab === "results" && (
+          {showPreviewQueryButton && (
             <Button
               size="sm"
               onClick={runQueryPreview}
@@ -202,44 +152,16 @@ export default function BottomPanel({
           className="flex flex-col w-full h-full flex-grow-1 dark:bg-black"
           ref={bottomPanelRef}
         >
-          {activeTab === "results" &&
-            (() => {
-              switch (true) {
-                case isQueryLoading:
-                  return <SkeletonLoadingTable />;
-                case !!queryPreviewError:
-                  return (
-                    <div
-                      style={{
-                        height: bottomPanelHeight,
-                      }}
-                      className="overflow-y-scroll  p-6 "
-                    >
-                      <div className=" text-red-500 text-sm">
-                        {queryPreviewError}
-                      </div>
-                      <div className="h-24" />
-                    </div>
-                  );
-                default:
-                  return (
-                    <AgGridReact
-                      className={
-                        theme === "dark"
-                          ? "ag-theme-material-dark"
-                          : "ag-theme-material"
-                      }
-                      ref={gridRef}
-                      suppressRowHoverHighlight={true}
-                      columnHoverHighlight={true}
-                      rowData={rowData}
-                      pagination={true}
-                      // @ts-ignore
-                      columnDefs={colDefs}
-                    />
-                  );
-              }
-            })()}
+          {activeTab === "results" && (
+            <PreviewPanel
+              isQueryLoading={isQueryLoading}
+              queryPreviewError={queryPreviewError}
+              bottomPanelHeight={bottomPanelHeight}
+              gridRef={gridRef}
+              rowData={rowData}
+              colDefs={colDefs}
+            />
+          )}
           {activeTab === "lineage" && (
             <div className="h-full">
               <ErrorBoundary

@@ -97,9 +97,7 @@ export const CommandPanelProvider: FC<CommandPanelProviderProps> = ({
   const MAX_COMMAND_HISTORY_SIZE = 20;
 
   const addCommandToHistory = (newCommand: Command) => {
-    console.log("adding command to history", newCommand);
     setCommandHistory((prevHistory) => {
-      console.log("prevHistory", prevHistory);
       const updatedHistory = [newCommand, ...prevHistory];
       if (updatedHistory.length > MAX_COMMAND_HISTORY_SIZE) {
         updatedHistory.pop();
@@ -223,8 +221,6 @@ export const CommandPanelProvider: FC<CommandPanelProviderProps> = ({
     const trimmedInputValue = inputValue.trim();
     if (trimmedInputValue) {
       addRecentCommand(trimmedInputValue, branchId);
-      console.log("branchId", branchId);
-      console.log("getCommandOptions", getCommandOptions(branchId));
       setCommandOptions(getCommandOptions(branchId));
     }
   };

@@ -6,6 +6,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import {
+  Download,
   Ellipsis,
   File,
   FilePlus2,
@@ -17,7 +18,6 @@ import {
   Trash,
 } from "lucide-react";
 import { useState, useRef } from "react";
-import type { ContextMenuTriggerElement } from "@radix-ui/react-context-menu";
 
 const DbtLogo = () => (
   <svg
@@ -48,9 +48,10 @@ export default function Node({
     closeFile,
     renameFile,
     createDirectoryAndRefresh,
+    downloadFile,
   } = useFiles();
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
-  const contextMenuRef = useRef<ContextMenuTriggerElement>(null);
+  const contextMenuRef = useRef<HTMLDivElement>(null);
 
   const handleCreateFile = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -109,6 +110,11 @@ export default function Node({
         });
       }
     }
+  };
+
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    await downloadFile(node.data.path);
   };
 
   const handleCreateDirectory = async (e: React.MouseEvent) => {
@@ -212,6 +218,12 @@ export default function Node({
           <div className="flex items-center text-xs">
             <Pencil className="mr-2 h-3 w-3" />
             Rename
+          </div>
+        </ContextMenuItem>
+        <ContextMenuItem onClick={handleDownload}>
+          <div className="flex items-center text-xs">
+            <Download className="mr-2 h-3 w-3" />
+            Download
           </div>
         </ContextMenuItem>
         <ContextMenuItem onClick={handleDelete}>

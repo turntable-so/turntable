@@ -502,7 +502,13 @@ export async function getFileIndex(branchId: string) {
   return response.json();
 }
 
-export async function fetchFileContents(branchId: string, path: string) {
+export async function fetchFileContents({
+  branchId,
+  path,
+}: {
+  branchId: string;
+  path: string;
+}) {
   const encodedPath = encodeURIComponent(path);
   const response = await fetcher(
     `/project/${branchId}/files/?filepath=${encodedPath}`,
@@ -750,22 +756,6 @@ export async function discardBranchChanges(branchId: string) {
     method: "POST",
   });
   return response.ok;
-}
-
-type DbtQueryValidateInput = {
-  query: string;
-  project_id: string;
-  use_fast_compile?: boolean;
-  limit?: number;
-};
-
-export async function validateDbtQuery(input: DbtQueryValidateInput) {
-  const response = await fetcher("/validate/dbt/", {
-    cookies,
-    method: "POST",
-    body: input,
-  });
-  return response.json();
 }
 
 export async function formatDbtQuery(payload: { query: string }) {

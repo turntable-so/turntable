@@ -137,7 +137,7 @@ export default function EditorSidebar() {
               </div>
             </div>
             <div className="pt-2 h-full px-1" ref={treeContainerRef}>
-              {filesLoading ? (
+              {filesLoading && !files.length ? (
                 <SkeletonFileTree />
               ) : (
                 <Tree

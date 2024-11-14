@@ -3,7 +3,7 @@ import shutil
 from urllib.parse import unquote
 
 from django.db import transaction
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -220,6 +220,37 @@ class ProjectViewSet(viewsets.ViewSet):
                     return Response(status=status.HTTP_404_NOT_FOUND)
 
                 if request.method == "GET":
+                    if not os.path.exists(filepath):
+                        return Response(
+                            {"error": "FILE_NOT_FOUND"},
+                            status=status.HTTP_404_NOT_FOUND,
+                        )
+
+                    download = (
+                        request.query_params.get("download", "false").lower() == "true"
+                    )
+                    if download:
+                        if not os.path.isfile(filepath):
+                            return Response(
+                                {"error": "Can only download files, not directories"},
+                                status=status.HTTP_400_BAD_REQUEST,
+                            )
+                        with open(filepath, "rb") as file:
+                            response = HttpResponse(
+                                file.read(), content_type="application/octet-stream"
+                            )
+                            response["Content-Disposition"] = (
+                                f'attachment; filename="{os.path.basename(filepath)}"'
+                            )
+                            return response
+
+                    file_size = os.path.getsize(filepath)
+                    FILE_SIZE_LIMIT = 1024 * 1024  # 1MB
+                    if file_size > FILE_SIZE_LIMIT:
+                        return Response(
+                            {"error": "FILE_EXCEEDS_SIZE_LIMIT"},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
                     with open(filepath, "r") as file:
                         file_content = file.read()
                     return Response({"contents": file_content})
