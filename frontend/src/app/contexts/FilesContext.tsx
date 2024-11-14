@@ -25,6 +25,7 @@ import {
   persistFile,
   changeFilePath,
   formatDbtQuery,
+  compileDbtQuery,
 } from "../actions/actions";
 import { validateDbtQuery } from "../actions/client-actions";
 import { getDownloadableFile } from "../actions/client-actions";
@@ -130,6 +131,10 @@ type FilesContextType = {
   createDirectoryAndRefresh: (path: string) => Promise<void>;
   filesLoading: boolean;
   downloadFile: (path: string) => Promise<void>;
+  compileActiveFile: () => Promise<void>;
+  compiledSql: string | null;
+  isCompiling: boolean;
+  compileError: string | null;
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
@@ -187,6 +192,9 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     LocalStorageKeys.recentFiles(branchId),
     [],
   );
+  const [isCompiling, setIsCompiling] = useState(false);
+  const [compiledSql, setCompiledSql] = useState<string | null>(null);
+  const [compileError, setCompileError] = useState<string | null>(null);
   const [isCloning, setIsCloning] = useState(false);
   const [checkForProblemsOnEdit, setCheckForProblemsOnEdit] = useLocalStorage(
     LocalStorageKeys.checkForProblemsOnEdit(branchId),
@@ -477,10 +485,10 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         prev.map((f) =>
           f.node.path === path
             ? {
-                ...f,
-                content,
-                node: { ...f.node, type: newNodeType },
-              }
+              ...f,
+              content,
+              node: { ...f.node, type: newNodeType },
+            }
             : f,
         ),
       );
@@ -651,6 +659,22 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     await fetchFiles();
   };
 
+  const compileActiveFile = async () => {
+    setIsCompiling(true);
+    setCompileError(null);
+    setCompiledSql(null);
+    const result = await compileDbtQuery(branchId, {
+      filepath: activeFile?.node.path || "",
+    });
+    console.log({ result });
+    if (result.error) {
+      setCompileError(result.error);
+    } else {
+      setCompiledSql(result);
+    }
+    setIsCompiling(false);
+  };
+
   return (
     <FilesContext.Provider
       value={{
@@ -696,6 +720,10 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         filesLoading,
         downloadFile,
         openError,
+        compileActiveFile,
+        compiledSql,
+        isCompiling,
+        compileError,
       }}
     >
       {children}

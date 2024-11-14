@@ -14,6 +14,7 @@ from app.models.project import Project
 from app.models.resources import Resource
 from app.views.query_views import format_query
 from vinyl.lib.dbt import DBTProject, DBTTransition
+from rest_framework import serializers
 
 
 def _build_file_tree(user_id: str, path: str, base_path: str):
@@ -494,3 +495,51 @@ class ProjectViewSet(viewsets.ViewSet):
                 "lineage": lineage_serializer.data,
             }
         )
+
+    class CompileQueryPayloadSerializer(serializers.Serializer):
+        filepath = serializers.CharField(required=True)
+
+        def validate_filepath(self, value):
+            return unquote(value)
+
+    @action(detail=True, methods=["POST"])
+    def compile(self, request, pk=None):
+        project = Project.objects.get(id=pk)
+        workspace = request.user.current_workspace()
+        dbt_resource = workspace.get_dbt_dev_details()
+
+        serializer = self.CompileQueryPayloadSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        filepath = serializer.validated_data.get("filepath")
+
+        with dbt_resource.dbt_repo_context(project_id=project.id, isolate=False) as (
+            project,
+            project_path,
+            _,
+        ):
+            project_filepath = os.path.join(project_path, filepath)
+            if not os.path.exists(project_filepath):
+                return Response(
+                    {"error": "File not found"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            with open(project_filepath, "r") as file:
+                dbt_sql = file.read()
+
+            try:
+                sql = project.fast_compile(dbt_sql)
+                if not sql:
+                    sql = project.preview(dbt_sql, data=False)
+
+            except Exception as e:
+                ## TODO: this is hacky, we'll eventually want a more robust error handling solution
+                if "Compilation Error" in str(e):
+                    error_message = str(e).split("Compilation Error")[1].strip()
+                    return Response(
+                        {"error": error_message},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                else:
+                    raise e
+
+            return Response(sql, status=status.HTTP_200_OK)
