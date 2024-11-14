@@ -2,6 +2,7 @@ import { AgGridReact } from "ag-grid-react";
 import SkeletonLoadingTable from "./skeleton-loading-table";
 import { useFiles } from "@/app/contexts/FilesContext";
 import CsvPreview from "./csv-preview";
+import { useTheme } from "next-themes";
 
 interface PreviewPanelProps {
   isQueryLoading: boolean;
@@ -20,6 +21,7 @@ export default function PreviewPanel({
   rowData,
   colDefs,
 }: PreviewPanelProps) {
+  const { theme } = useTheme();
   const { activeFile } = useFiles();
 
   const activeFileContent = activeFile?.content;
@@ -49,7 +51,9 @@ export default function PreviewPanel({
     default:
       return (
         <AgGridReact
-          className="ag-theme-custom"
+          className={
+            theme === "dark" ? "ag-theme-material-dark" : "ag-theme-material"
+          }
           ref={gridRef}
           suppressRowHoverHighlight={true}
           columnHoverHighlight={true}
