@@ -1,6 +1,6 @@
 import { Minus, Plus } from "lucide-react";
 import { useContext } from "react";
-import { Panel } from "reactflow";
+import { Panel } from "@xyflow/react";
 import { Button } from "../ui/button";
 import { LineageViewContext } from "./LineageView";
 
@@ -37,7 +37,7 @@ export default function LineageOptions() {
       {isLineageOptionsPanelOpen ? (
         <div
           onClick={() => setIsLineageOptionsPanelOpen(true)}
-          className="px-3 p-2 text-sm font-medium text-muted-foreground border-2 border-gray-300 bg-white rounded-md"
+          className="px-3 p-2 text-sm font-medium text-muted-foreground border-2 border-card bg-card rounded-md"
         >
           <div className="flex space-x-2 text-muted-foreground items-center">
             <div className="flex flex-col items-center space-y-1">
@@ -80,14 +80,14 @@ export default function LineageOptions() {
       ) : (
         <div
           onClick={() => setIsLineageOptionsPanelOpen(true)}
-          className=" cursor-pointer opacity-70 hover:opacity-100 px-3 p-2 text-sm font-medium text-muted-foreground border-2 border-gray-300 bg-white rounded-md"
+          className=" cursor-pointer opacity-70 hover:opacity-100 px-3 p-2 text-sm font-medium text-muted-foreground border-2 border-card bg-card rounded-md"
         >
           <div className="flex space-x-2 items-center">
-            <div className="bg-gray-200 text-xs font-bold p-1 rounded-full w-4 h-4 flex items-center justify-center">
+            <div className="bg-muted text-xs font-bold p-1 rounded-full w-4 h-4 flex items-center justify-center">
               {lineageOptions.predecessor_depth}
             </div>
             <div>+{rootAsset.name}+</div>
-            <div className="bg-gray-200 text-xs font-bold p-1 rounded-full w-4 h-4 flex items-center justify-center">
+            <div className="bg-muted text-xs font-bold p-1 rounded-full w-4 h-4 flex items-center justify-center">
               {lineageOptions.successor_depth}
             </div>
           </div>
