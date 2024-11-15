@@ -263,7 +263,7 @@ function LineageNode({ id, data, yPos }: any) {
     <div className="group">
       <div
         className={`cursor-pointer border-2 font-mono shadow-lg text-[12px] rounded-md
-        border-solid ${isActiveResource ? "border-blue-400" : "border-gray-300"}
+        border-solid ${isActiveResource ? "border-blue-400" : "border-gray-300 dark:border-zinc-700"}
         bg-muted w-72 max-h-72 overflow-y-scroll overflow-x-hidden relative
         ${columnsToDisplay.length > 10 ? "nowheel" : ""}
         ${

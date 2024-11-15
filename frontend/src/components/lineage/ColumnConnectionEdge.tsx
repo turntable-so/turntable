@@ -254,9 +254,9 @@ export function CustomEdge({
           >
             <div
               style={{ fontSize: "10px" }}
-              className="z-100 min-w-[100px rounded-lg pt-1 pb-2 px-2
-                  bg-white
-                  border border-blue-400 border-solid
+              className="z-100 rounded-lg pt-1 pb-2 px-2
+                  bg-white dark:bg-zinc-800
+                  border border-blue-400 dark:border-zinc-700 border-solid
                   shadow-md
                 "
             >

@@ -26,7 +26,6 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 
 import { AgGridReact } from "ag-grid-react"; // React Data Grid Component
-import "./ag-grid-custom-theme.css"; // Custom CSS Theme for Data Grid
 
 // import 'codemirror/keymap/sublime';
 // import 'codemirror/theme/quietlight.css';
