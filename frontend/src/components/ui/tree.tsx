@@ -166,7 +166,7 @@ const TreeItem = React.forwardRef<HTMLDivElement, TreeItemProps>(
                           {item.isLoading ? (
                             <Loader2 className="ml-2 h-3 w-3 animate-spin opacity-70" />
                           ) : (
-                            <span className="text-xs ml-2 bg-gray-200 rounded-sm px-0.5">
+                            <span className="text-xs ml-2 bg-gray-200 dark:bg-zinc-900 rounded-sm px-0.5">
                               {item.count || 0}
                             </span>
                           )}

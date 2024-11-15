@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import Editor, { DiffEditor } from "@monaco-editor/react";
 import type { AgGridReact } from "ag-grid-react";
 import { Check, Download, Loader2, X } from "lucide-react";
 import type React from "react";
@@ -10,7 +9,6 @@ import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import useResizeObserver from "use-resize-observer";
 import { infer } from "../../actions/actions";
 import { type OpenedFile, useFiles } from "../../contexts/FilesContext";
-import "@/components/ag-grid-custom-theme.css"; // Custom CSS Theme for Data Grid
 import BottomPanel from "@/components/editor/bottom-panel";
 import EditorSidebar from "@/components/editor/editor-sidebar";
 import FileTabs from "@/components/editor/file-tabs";
@@ -18,18 +16,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useLayoutContext } from "../../contexts/LayoutContext";
 import { usePathname } from "next/navigation";
 import EditorTopBar from "@/components/editor/editor-top-bar";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { useTheme } from "next-themes";
 import ConfirmSaveDialog from "@/components/editor/dialogs/confirm-save-dialog";
+import CustomEditor from "@/components/editor/CustomEditor";
+import CustomDiffEditor from "@/components/editor/CustomDiffEditor";
 
 const PromptBox = ({
   setPromptBoxOpen,
@@ -192,6 +182,7 @@ function EditorContent({
   setPromptBoxOpen,
   containerWidth,
 }: { setPromptBoxOpen: (open: boolean) => void; containerWidth: number }) {
+  const { resolvedTheme } = useTheme();
   const {
     activeFile,
     updateFileContent,
@@ -203,16 +194,27 @@ function EditorContent({
     compileActiveFile,
   } = useFiles();
 
+  const editorRef = useRef<any>(null);
+  const monacoRef = useRef<any>(null);
+
   // Define your custom theme
   const customTheme = {
-    base: "vs",
+    base: resolvedTheme === "dark" ? "vs-dark" : "vs",
     inherit: true,
     rules: [],
-    colors: {
-      "editor.foreground": "#000000",
-      "editorLineNumber.foreground": "#A1A1AA",
-    },
   };
+
+  useEffect(() => {
+    if (monacoRef.current) {
+      monacoRef.current.editor.defineTheme("mutedTheme", {
+        ...customTheme,
+        colors: {
+          ...customTheme.colors,
+        },
+      });
+      monacoRef.current.editor.setTheme("mutedTheme");
+    }
+  }, [resolvedTheme]);
 
   if (activeFile?.node?.type === "error") {
     if (activeFile.content === "FILE_EXCEEDS_SIZE_LIMIT") {
@@ -259,7 +261,7 @@ function EditorContent({
 
   if (activeFile?.view === "diff") {
     return (
-      <DiffEditor
+      <CustomDiffEditor
         text-muted-foreground
         original={activeFile?.diff?.original || ""}
         modified={activeFile?.diff?.modified || ""}
@@ -287,7 +289,7 @@ function EditorContent({
 
   if (activeFile?.view === "new") {
     return (
-      <div className="h-full w-full flex items-center justify-center text-muted-foreground">
+      <div className="h-full w-full flex items-center justify-center text-muted-foreground dark:bg-black">
         {isCloning ? (
           <div className="flex items-center space-x-2">
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -320,7 +322,7 @@ function EditorContent({
   };
 
   return (
-    <Editor
+    <CustomEditor
       key={activeFile?.node.path}
       value={typeof activeFile?.content === "string" ? activeFile.content : ""}
       onChange={(value) => {
@@ -360,9 +362,16 @@ function EditorContent({
         monaco.editor.setTheme("mutedTheme");
       }}
       onMount={(editor, monaco) => {
+        editorRef.current = editor;
+        monacoRef.current = monaco;
+
+        monaco.editor.defineTheme("mutedTheme", {
+          ...customTheme,
+          colors: {
+            ...customTheme.colors,
+          },
+        } as any);
         monaco.editor.setTheme("mutedTheme");
-
-
 
         // Prevent default behavior for cmd+s
         editor.addCommand(
@@ -386,14 +395,11 @@ function EditorContent({
             compileActiveFile();
           },
         );
-
-
       }}
       theme="mutedTheme"
     />
   );
 }
-
 
 function EditorPageContent() {
   const [leftWidth, setLeftWidth] = useState(20);
@@ -406,7 +412,15 @@ function EditorPageContent() {
     height: topBarHeight,
   } = useResizeObserver();
 
-  const { files, activeFile, runQueryPreview, queryPreview, queryPreviewError, isQueryPreviewLoading, setIsQueryPreviewLoading } = useFiles();
+  const {
+    files,
+    activeFile,
+    runQueryPreview,
+    queryPreview,
+    queryPreviewError,
+    isQueryPreviewLoading,
+    setIsQueryPreviewLoading,
+  } = useFiles();
 
   const {
     sidebarLeftShown,
@@ -521,8 +535,6 @@ function EditorPageContent() {
     selectedIndex,
   ]);
 
-
-
   const getTablefromSignedUrl = async (signedUrl: string) => {
     const response = await fetch(signedUrl);
     if (response.ok) {
@@ -566,7 +578,7 @@ function EditorPageContent() {
             minSize={15}
             maxSize={30}
             onResize={setLeftWidth}
-            className="border-r  text-gray-600"
+            className="border-r text-gray-600 dark:border-zinc-700"
           >
             <EditorSidebar />
           </Panel>
@@ -619,12 +631,12 @@ function EditorPageContent() {
                 </Panel> */}
         <PanelResizeHandle className="bg-transparent   transition-colors" />
         <Panel>
-          <div className="h-full bg-white" ref={topBarRef}>
+          <div className="h-full" ref={topBarRef}>
             <FileTabs
               topBarRef={topBarRef as any}
               topBarWidth={topBarWidth as number}
             />
-            <div className="py-2 w-full h-full">
+            <div className="w-full h-full">
               <PanelGroup direction="vertical" className="h-fit">
                 {promptBoxOpen && (
                   <PromptBox setPromptBoxOpen={setPromptBoxOpen} />

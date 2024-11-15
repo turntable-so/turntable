@@ -1,3 +1,7 @@
+import "ag-grid-community/styles/ag-grid.css";
+import "ag-grid-community/styles/ag-theme-balham.css";
+import "./ag-grid-custom-theme.css";
+
 import { useFiles } from "@/app/contexts/FilesContext";
 import { useLineage } from "@/app/contexts/LineageContext";
 import { useBottomPanelTabs } from "@/components/editor/use-bottom-panel-tabs";
@@ -22,10 +26,10 @@ import CommandPanel from "./command-panel";
 import ProblemsPanel from "./problems-panel/problems-panel";
 import { Badge } from "../ui/badge";
 import CommandPanelActionBtn from "./command-panel/command-panel-action-btn";
-import { Editor } from "@monaco-editor/react";
 import PreviewPanel from "./preview-panel/preview-panel";
 import ErrorMessage from "./error-message";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import CustomEditor from "./CustomEditor";
 
 // Define your custom theme
 const customTheme = {
@@ -54,13 +58,25 @@ export default function BottomPanel({
   queryPreviewError: string | null;
 }) {
   const { fetchFileBasedLineage, lineageData } = useLineage();
-  const { activeFile, branchId, problems, compileActiveFile, compiledSql, isCompiling, compileError, isQueryPreviewLoading } = useFiles();
+  const {
+    activeFile,
+    branchId,
+    problems,
+    compileActiveFile,
+    compiledSql,
+    isCompiling,
+    compileError,
+    isQueryPreviewLoading,
+  } = useFiles();
   const [activeTab, setActiveTab] = useBottomPanelTabs({
     branchId: branchId || "",
   });
 
-  const { ref: bottomPanelRef, height: bottomPanelHeight, width: bottomPanelWidth } =
-    useResizeObserver();
+  const {
+    ref: bottomPanelRef,
+    height: bottomPanelHeight,
+    width: bottomPanelWidth,
+  } = useResizeObserver();
 
   const showPreviewQueryButton =
     activeTab === "results" &&
@@ -69,8 +85,8 @@ export default function BottomPanel({
 
   return (
     <Fragment>
-      <PanelResizeHandle className="h-1 bg-gray hover:bg-gray-300 hover:cursor-col-resize  transition-colors" />
-      <div className="h-10 bg-muted/50 border-t-2 flex justify-between items-center">
+      <PanelResizeHandle className="h-1 hover:bg-gray-300 dark:hover:bg-zinc-700 hover:cursor-col-resize transition-colors" />
+      <div className="h-10 bg-muted/50 dark:bg-zinc-800 border-t-2 flex justify-between items-center">
         <Tabs
           value={activeTab}
           onValueChange={(value) =>
@@ -103,7 +119,6 @@ export default function BottomPanel({
               )}
               Lineage
             </TabsTrigger>
-
 
             <TabsTrigger value="command">
               <TerminalIcon className="h-4 w-4 mr-2" />
@@ -198,10 +213,10 @@ export default function BottomPanel({
       </div>
       <Panel
         defaultSize={40}
-        className="border-t flex items-center justify-center"
+        className="border-t flex items-center justify-center dark:bg-zinc-950"
       >
         <div
-          className="flex flex-col w-full h-full flex-grow-1"
+          className="flex flex-col w-full h-full flex-grow-1 dark:bg-black"
           ref={bottomPanelRef}
         >
           {activeTab === "results" && (
@@ -223,7 +238,7 @@ export default function BottomPanel({
                   {lineageData?.[activeFile?.node.path || ""] &&
                     lineageData[activeFile?.node.path || ""].isLoading && (
                       <div
-                        className="w-full bg-gray-200 flex items-center justify-center"
+                        className="w-full bg-gray-200 dark:bg-black flex items-center justify-center"
                         style={{ height: bottomPanelHeight }}
                       >
                         <Loader2 className="h-6 w-6 animate-spin opacity-50" />
@@ -266,11 +281,11 @@ export default function BottomPanel({
           )}
           {activeTab === "problems" && <ProblemsPanel />}
           {activeTab === "compile" && (
-            <div className="h-full w-full p-1">
+            <div className="h-full w-full">
               {compileError ? (
                 <ErrorMessage error={compileError} />
               ) : (
-                <Editor
+                <CustomEditor
                   key={compiledSql}
                   value={compiledSql || ""}
                   language="sql"

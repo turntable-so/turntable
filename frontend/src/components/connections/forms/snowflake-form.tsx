@@ -92,7 +92,7 @@ export default function SnowflakeForm({
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-6 text-black"
+          className="space-y-6 text-black dark:text-white"
         >
           <FormField
             control={form.control}

@@ -33,10 +33,10 @@ export default function WorkspaceSwitcher({
     >
       <div className="flex items-center">
         <Avatar
-          className={`border ${isCollapsed ? "h-8 w-8" : "h-7 w-7"} flex items-center justify-center bg-gray-400 rounded-sm`}
+          className={`border ${isCollapsed ? "h-8 w-8" : "h-7 w-7"} flex items-center justify-center bg-gray-400 dark:bg-gray-700 rounded-sm`}
         >
           <AvatarImage src={current_workspace?.icon_url} />
-          <AvatarFallback className="text-white font-bold bg-gray-400">
+          <AvatarFallback className="text-white font-bold bg-gray-400 dark:bg-gray-700">
             {current_workspace?.name.slice(0, 1).toUpperCase()}
           </AvatarFallback>
         </Avatar>

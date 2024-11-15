@@ -123,13 +123,15 @@ export default function CommandPanelInput() {
       {isDropdownOpen && (
         <div
           ref={dropdownRef}
-          className="absolute top-full left-0 w-1/3 bg-white border border-gray-300 rounded-md mt-1 z-10"
+          className="absolute top-full left-0 w-1/3 bg-white dark:bg-zinc-950 border border-gray-300 dark:border-zinc-700 rounded-md mt-1 z-10"
         >
           {filteredOptions.map((option, index) => (
             <div
               key={option}
               className={`py-2 px-4 cursor-pointer text-sm ${
-                index === highlightedIndex ? "bg-gray-100" : "hover:bg-gray-100"
+                index === highlightedIndex
+                  ? "bg-gray-100 dark:bg-zinc-700"
+                  : "hover:bg-gray-100 dark:hover:bg-zinc-700"
               }`}
               onMouseDown={(e) => {
                 e.preventDefault();

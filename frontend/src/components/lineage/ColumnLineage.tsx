@@ -1,3 +1,5 @@
+import "@xyflow/react/dist/style.css";
+
 import React, {
   useContext,
   useEffect,
@@ -5,12 +7,13 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import ReactFlow, {
+import {
+  ReactFlow,
   Background,
   Panel,
   type ReactFlowInstance,
   useNodesInitialized,
-} from "reactflow";
+} from "@xyflow/react";
 
 import { getColumnLineageForAsset } from "../../lib/lineage";
 import ColumnConnectionEdge, {
@@ -26,11 +29,9 @@ import ErrorNode from "./ErrorNode";
 import { LineageViewContext } from "./LineageView";
 import LoadingNode from "./LoadingNode";
 import buildLineageReactFlow from "./renderLineage";
-
-import "reactflow/dist/style.css";
 import { FilterPanel } from "./FilterPanel";
 import "./lineage.css";
-import { ArrowLeftFromLine, Loader2, Minus, Plus } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useAppContext } from "../../contexts/AppContext";
 import { LineageControls } from "./LineageControls";
 import LineageOptionsPanel from "./LineageOptionsPanel";
@@ -180,15 +181,13 @@ const ColumnLineageFlow = () => {
           return;
         }
 
-        if (!reactFlowWrapper?.current || !reactFlowInstance) {
+        if (!reactFlowInstance) {
           return;
         }
 
-        const reactFlowBounds =
-          reactFlowWrapper.current.getBoundingClientRect();
-        const position = reactFlowInstance?.project({
-          x: e.clientX - reactFlowBounds.left + 8,
-          y: e.clientY - reactFlowBounds.top,
+        const position = reactFlowInstance.screenToFlowPosition({
+          x: e.clientX + 8,
+          y: e.clientY,
         });
 
         updateHoveredEdge({
@@ -205,15 +204,13 @@ const ColumnLineageFlow = () => {
           return;
         }
 
-        if (!reactFlowWrapper?.current || !reactFlowInstance) {
+        if (!reactFlowInstance) {
           return;
         }
 
-        const reactFlowBounds =
-          reactFlowWrapper.current.getBoundingClientRect();
-        const position = reactFlowInstance?.project({
-          x: e.clientX - reactFlowBounds.left + 8,
-          y: e.clientY - reactFlowBounds.top - 8,
+        const position = reactFlowInstance?.screenToFlowPosition({
+          x: e.clientX + 8,
+          y: e.clientY,
         });
 
         updateSelectedEdge({

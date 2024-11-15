@@ -327,7 +327,7 @@ export default function DbtProjectForm({
     if (res.name !== undefined) {
       if (isUpdate) {
         toast.success("Connection updated");
-        return
+        return;
       } else {
         toast.success("Connection created");
       }
@@ -371,7 +371,7 @@ export default function DbtProjectForm({
             <Form {...remoteForm}>
               <form
                 onSubmit={remoteForm.handleSubmit(onSubmit)}
-                className="space-y-6 text-black"
+                className="space-y-6 text-black dark:text-white"
               >
                 <Card className="w-full rounded-sm">
                   <CardHeader>
@@ -501,7 +501,7 @@ export default function DbtProjectForm({
             <Form {...localForm}>
               <form
                 onSubmit={localForm.handleSubmit(onSubmit)}
-                className="space-y-6 text-black"
+                className="space-y-6 text-black dark:text-white"
               >
                 <Card className="w-full rounded-sm">
                   <CardHeader>

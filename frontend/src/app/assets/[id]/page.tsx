@@ -26,13 +26,15 @@ export default async function AssetPage({
       <div className="max-w-7xl w-full px-16 pt-16 overflow-y-auto hide-scrollbar">
         <div className="flex gap-4 items-center">
           <div className="mb-8">
-            <h1 className="text-2xl font-medium text-black">{asset.name}</h1>
+            <h1 className="text-2xl font-medium text-black dark:text-white">
+              {asset.name}
+            </h1>
             <div className="flex gap-6 my-2 items-center">
               <div>
                 <div className="flex gap-2 items-center">
                   <div>{getResourceIcon(asset.resource_subtype)}</div>
                   <div>{asset.resource_has_dbt && getResourceIcon("dbt")}</div>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-gray-500 dark:text-gray-300">
                     {asset.unique_name}
                   </div>
                 </div>
@@ -51,22 +53,30 @@ export default async function AssetPage({
                 <CardContent className="p-4">
                   <div className="flex gap-6">
                     <div>
-                      <p className="text-sm text-gray-500">Schema</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-300">
+                        Schema
+                      </p>
                       <p className="text-sm my-1">{asset.schema}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Dataset</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-300">
+                        Dataset
+                      </p>
                       <p className="text-sm my-1">{asset.dataset}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Table</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-300">
+                        Table
+                      </p>
                       <p className="text-sm my-1">{asset.table_name}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Tags</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-300">
+                        Tags
+                      </p>
                       <div className="flex gap-2 my-1">
                         {asset.tags ? (
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-gray-500 dark:text-gray-300">
                             {asset.tags.map((tag: string) => (
                               <Badge variant="secondary" key={tag}>
                                 {tag}
@@ -74,7 +84,7 @@ export default async function AssetPage({
                             ))}
                           </p>
                         ) : (
-                          <p className="text-sm text-gray-500 italic">
+                          <p className="text-sm text-gray-500 dark:text-gray-300 italic">
                             No tags
                           </p>
                         )}
@@ -87,7 +97,7 @@ export default async function AssetPage({
           ) : null}
           {asset.description ? (
             <div>
-              <div className="font-medium text-muted-foreground my-1  text-lg">
+              <div className="font-medium text-muted-foreground my-1 text-lg">
                 Summary
               </div>
               <Card className="rounded-md">

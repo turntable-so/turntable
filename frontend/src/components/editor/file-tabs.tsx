@@ -33,7 +33,7 @@ export default function FileTabs({
   const [copiedText, copy] = useCopyToClipboard();
 
   return (
-    <div className="hover:cursor-pointer flex items-center space-x-0  bg-white">
+    <div className="hover:cursor-pointer flex items-center space-x-0 py-0 bg-white dark:bg-black">
       <div
         className=""
         style={{
@@ -46,10 +46,11 @@ export default function FileTabs({
               <ContextMenu key={file.node.path}>
                 <ContextMenuTrigger>
                   <div
+                    key={file.node.path}
                     onClick={() => {
                       setActiveFile(file);
                     }}
-                    className={`px-2 py-2 text-xs font-medium flex items-center space-x-1.5 group select-none text-muted-foreground ${file.node.path === activeFile?.node.path ? "text-black bg-white border-b-white border border-t-black" : "border border-gray-200"} ${index === 0 ? "border-l-0" : ""}`}
+                    className={`px-2 py-[0.57rem] text-xs font-medium flex items-center space-x-1.5 group select-none text-muted-foreground dark:bg-zinc-800 ${file.node.path === activeFile?.node.path ? "text-black bg-white dark:bg-zinc-700 dark:text-zinc-100 border-b-white border border-t-black" : "border border-gray-200 dark:border-zinc-800"} ${index === 0 ? "border-l-0" : ""}`}
                   >
                     {getIcon(file.node)}
                     <div>{file.node.name}</div>

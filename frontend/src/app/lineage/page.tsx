@@ -9,10 +9,10 @@ export default function Page() {
   const { isLineageLoading } = useAppContext();
   return (
     <div className="w-full">
-      <div className="absolute bg-zinc-200 w-full h-screen" />
+      <div className="absolute bg-zinc-200 dark:bg-zinc-900 w-full h-screen" />
       {isLineageLoading && (
         <div className="flex items-center w-full h-screen justify-center">
-          <Loader2 className="bg-zinc-200 h-8 w-8 animate-spin opacity-50" />
+          <Loader2 className="bg-zinc-200 dark:bg-zinc-900 h-8 w-8 animate-spin opacity-50" />
         </div>
       )}
     </div>

@@ -8,22 +8,25 @@ import {
 } from "@/components/ui/table";
 
 export default function SkeletonLoadingTable() {
+  const Loader = () => (
+    <div className="animate-pulse h-4 bg-gray-200 dark:bg-zinc-800 rounded" />
+  );
   return (
     <div className="w-full flex items-center justify-center">
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead className="w-[100px]">
-              <div className="animate-pulse h-4 bg-gray-200 rounded" />
+              <Loader />
             </TableHead>
             <TableHead>
-              <div className="animate-pulse h-4 bg-gray-200 rounded" />
+              <Loader />
             </TableHead>
             <TableHead>
-              <div className="animate-pulse h-4 bg-gray-200 rounded" />
+              <Loader />
             </TableHead>
             <TableHead className="text-right">
-              <div className="animate-pulse h-4 bg-gray-200 rounded" />
+              <Loader />
             </TableHead>
           </TableRow>
         </TableHeader>
@@ -31,16 +34,16 @@ export default function SkeletonLoadingTable() {
           {Array.from({ length: 20 }).map((_, i) => (
             <TableRow key={i}>
               <TableCell className="">
-                <div className="animate-pulse h-4 bg-gray-200 rounded" />
+                <Loader />
               </TableCell>
               <TableCell className="">
-                <div className="animate-pulse h-4 bg-gray-200 rounded" />
+                <Loader />
               </TableCell>
               <TableCell className="">
-                <div className="animate-pulse h-4 bg-gray-200 rounded" />
+                <Loader />
               </TableCell>
               <TableCell className="">
-                <div className="animate-pulse h-4 bg-gray-200 rounded" />
+                <Loader />
               </TableCell>
             </TableRow>
           ))}

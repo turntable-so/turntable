@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import { type Edge, ReactFlowProvider } from "reactflow";
+import { type Edge, ReactFlowProvider } from "@xyflow/react";
 import ColumnLineage from "./ColumnLineage";
 
 import { AlertCircle } from "lucide-react";
@@ -167,8 +167,6 @@ export function LineageViewProvider(props: LineageViewProviderProps) {
   });
   const { setFilePathToLoading } = useLineage();
 
-  const { setIsLineageLoading } = useAppContext();
-
   const resetSelections = () => {
     setSelectedColumn(null);
     setSelectedEdge(null);
@@ -312,7 +310,6 @@ export function LineageViewProvider(props: LineageViewProviderProps) {
 
   const setLineageOptionsAndRefetch = async (options: LineageOptions) => {
     setLineageOptions(options);
-    setIsLineageLoading(true);
 
     if (page === "lineage") {
       const data = await getLineage({
@@ -321,11 +318,9 @@ export function LineageViewProvider(props: LineageViewProviderProps) {
         predecessor_depth: options.predecessor_depth,
         lineage_type: options.lineageType,
       });
-      setIsLineageLoading(false);
       setLineage(data.lineage);
     } else if (page === "editor") {
       setLineageOptions(options);
-      setIsLineageLoading(true);
       setFilePathToLoading({
         loading: true,
         filePath: props.filePath,
@@ -339,7 +334,6 @@ export function LineageViewProvider(props: LineageViewProviderProps) {
         predecessor_depth: options.predecessor_depth,
       });
 
-      setIsLineageLoading(false);
       setLineage(data.lineage);
       setFilePathToLoading({
         loading: false,
