@@ -25,6 +25,8 @@ import {
   persistFile,
   changeFilePath,
   formatDbtQuery,
+  compileDbtQuery,
+  executeQueryPreview,
 } from "../actions/actions";
 import { validateDbtQuery } from "../actions/client-actions";
 import { getDownloadableFile } from "../actions/client-actions";
@@ -130,6 +132,10 @@ type FilesContextType = {
   createDirectoryAndRefresh: (path: string) => Promise<void>;
   filesLoading: boolean;
   downloadFile: (path: string) => Promise<void>;
+  compileActiveFile: () => Promise<void>;
+  compiledSql: string | null;
+  isCompiling: boolean;
+  compileError: string | null;
   showConfirmSaveDialog: boolean;
   setShowConfirmSaveDialog: Dispatch<SetStateAction<boolean>>;
   fileToClose: OpenedFile | null;
@@ -138,6 +144,17 @@ type FilesContextType = {
   closeFilesToRight: (file: OpenedFile) => void;
   closeAllOtherFiles: (file: OpenedFile) => void;
   closeAllFiles: () => void;
+  runQueryPreview: () => Promise<void>;
+  queryPreview: QueryPreview | null;
+  queryPreviewError: string | null;
+  isQueryPreviewLoading: boolean;
+  setIsQueryPreviewLoading: Dispatch<SetStateAction<boolean>>;
+};
+
+
+type QueryPreview = {
+  rows?: Object;
+  signed_url: string;
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
@@ -168,6 +185,9 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   const [filesLoading, setFilesLoading] = useState(false);
   const [readOnly, setReadOnly] = useState<boolean | undefined>(undefined);
   const [isCloned, setIsCloned] = useState<boolean | undefined>(undefined);
+  const [queryPreview, setQueryPreview] = useState<QueryPreview | null>(null);
+  const [isQueryPreviewLoading, setIsQueryPreviewLoading] = useState(false);
+  const [queryPreviewError, setQueryPreviewError] = useState<string | null>(null);
   const [pullRequestUrl, setPullRequestUrl] = useState<string | undefined>(
     undefined,
   );
@@ -195,6 +215,9 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     LocalStorageKeys.recentFiles(branchId),
     [],
   );
+  const [isCompiling, setIsCompiling] = useState(false);
+  const [compiledSql, setCompiledSql] = useState<string | null>(null);
+  const [compileError, setCompileError] = useState<string | null>(null);
   const [isCloning, setIsCloning] = useState(false);
   const [checkForProblemsOnEdit, setCheckForProblemsOnEdit] = useLocalStorage(
     LocalStorageKeys.checkForProblemsOnEdit(branchId),
@@ -490,10 +513,10 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         prev.map((f) =>
           f.node.path === path
             ? {
-                ...f,
-                content,
-                node: { ...f.node, type: newNodeType },
-              }
+              ...f,
+              content,
+              node: { ...f.node, type: newNodeType },
+            }
             : f,
         ),
       );
@@ -666,6 +689,21 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     await fetchFiles();
   };
 
+  const compileActiveFile = async () => {
+    setIsCompiling(true);
+    setCompileError(null);
+    setCompiledSql(null);
+    const result = await compileDbtQuery(branchId, {
+      filepath: activeFile?.node.path || "",
+    });
+    if (result.error) {
+      setCompileError(result.error);
+    } else {
+      setCompiledSql(result);
+    }
+    setIsCompiling(false);
+  };
+
   const closeFilesToLeft = useCallback(
     (file: OpenedFile) => {
       const fileIndex = openedFiles.findIndex(
@@ -707,6 +745,26 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     setOpenedFiles([]);
     setActiveFile(null);
   }, []);
+
+  const runQueryPreview = async () => {
+    setIsQueryPreviewLoading(true);
+    setQueryPreview(null);
+    setQueryPreviewError(null);
+    if (activeFile?.content && typeof activeFile.content === "string") {
+      const dbtSql = activeFile.content;
+      try {
+        const preview = await executeQueryPreview({ dbtSql, branchId });
+        if (preview.error) {
+          setQueryPreviewError(preview.error);
+        } else {
+          setQueryPreview(preview);
+        }
+      } catch (e) {
+        setQueryPreviewError("Error running query");
+      }
+    }
+    setIsQueryPreviewLoading(false);
+  };
 
   return (
     <FilesContext.Provider
@@ -753,6 +811,10 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         filesLoading,
         downloadFile,
         openError,
+        compileActiveFile,
+        isCompiling,
+        compiledSql,
+        compileError,
         showConfirmSaveDialog,
         setShowConfirmSaveDialog,
         fileToClose,
@@ -761,8 +823,12 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         closeFilesToRight,
         closeAllOtherFiles,
         closeAllFiles,
-      }}
-    >
+        runQueryPreview,
+        queryPreview,
+        queryPreviewError,
+        isQueryPreviewLoading,
+        setIsQueryPreviewLoading,
+      }}>
       {children}
     </FilesContext.Provider>
   );

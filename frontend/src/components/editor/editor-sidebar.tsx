@@ -147,7 +147,7 @@ export default function EditorSidebar() {
                   width={treeWidth}
                   data={files}
                   openByDefault={false}
-                  indent={12}
+                  indent={8}
                   // opens the root by default
                   initialOpenState={{
                     ".": true,

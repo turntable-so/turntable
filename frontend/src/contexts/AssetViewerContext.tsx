@@ -1,4 +1,4 @@
-import { getAssets, getColumns } from "@/app/actions/actions";
+import { getAssets } from "@/app/actions/actions";
 import type { SortingState } from "@tanstack/react-table";
 import type React from "react";
 import {
@@ -11,7 +11,6 @@ import {
   useEffect,
   useState,
 } from "react";
-import { current } from "tailwindcss/colors";
 
 interface AssetViewerContextType {
   assets: any;

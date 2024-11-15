@@ -2,6 +2,7 @@ import {
   CircleSlash,
   CornerDownLeft,
   Loader2,
+  Play,
   Command as PlayIcon,
 } from "lucide-react";
 import { useEffect } from "react";
@@ -14,9 +15,9 @@ export default function CommandPanelActionBtn() {
 
   const componentMap = {
     idling: (
-      <div className="flex flex-row gap-0.5 items-center mr-2 text-base">
-        <PlayIcon className="h-4 w-4 mr-0.5" />
-        <CornerDownLeft className="h-4 w-4 mr-2" /> Run
+      <div className="flex flex-row gap-0.5 items-center">
+        <Play className="h-4 w-4 mr-2" />
+        <div className="text-xs">Run</div>
       </div>
     ),
     running: (
@@ -35,21 +36,6 @@ export default function CommandPanelActionBtn() {
 
   const isDisabled = commandPanelState === "cancelling";
 
-  const handleCommandEnterShortcut = () => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
-        event.preventDefault();
-        runCommand();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  };
-  useEffect(handleCommandEnterShortcut, [inputValue]);
 
   return (
     <Button

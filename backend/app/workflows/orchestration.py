@@ -109,7 +109,7 @@ def stream_dbt_command(
             _,
         ):
             yield from dbtproj.stream_dbt_command(
-                command, should_terminate=should_terminate
+                command, should_terminate=should_terminate, write_json=True
             )
     else:
         with dbt_resource.dbt_transition_context(
@@ -118,5 +118,5 @@ def stream_dbt_command(
             transition.before.mount_manifest()
             transition.before.mount_catalog()
             yield from transition.after.stream_dbt_command(
-                command, should_terminate=should_terminate
+                command, should_terminate=should_terminate, write_json=True
             )

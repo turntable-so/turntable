@@ -3,6 +3,7 @@ import SkeletonLoadingTable from "./skeleton-loading-table";
 import { useFiles } from "@/app/contexts/FilesContext";
 import CsvPreview from "./csv-preview";
 import { useTheme } from "next-themes";
+import ErrorMessage from "../error-message";
 
 interface PreviewPanelProps {
   isQueryLoading: boolean;
@@ -42,8 +43,7 @@ export default function PreviewPanel({
           }}
           className="overflow-y-scroll p-6"
         >
-          <div className="text-red-500 text-sm">{queryPreviewError}</div>
-          <div className="h-24" />
+          <ErrorMessage error={queryPreviewError} />
         </div>
       );
     case isCsvPreviewable:

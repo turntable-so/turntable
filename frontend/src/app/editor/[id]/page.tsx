@@ -8,7 +8,7 @@ import type React from "react";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import useResizeObserver from "use-resize-observer";
-import { executeQueryPreview, infer } from "../../actions/actions";
+import { infer } from "../../actions/actions";
 import { type OpenedFile, useFiles } from "../../contexts/FilesContext";
 import BottomPanel from "@/components/editor/bottom-panel";
 import EditorSidebar from "@/components/editor/editor-sidebar";
@@ -189,6 +189,8 @@ function EditorContent({
     setActiveFile,
     isCloning,
     downloadFile,
+    runQueryPreview,
+    compileActiveFile,
   } = useFiles();
 
   const editorRef = useRef<any>(null);
@@ -370,10 +372,7 @@ function EditorContent({
         } as any);
         monaco.editor.setTheme("mutedTheme");
 
-        // Add cmd+k as a monaco keyboard listener
-        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK, () => {
-          setPromptBoxOpen(true);
-        });
+
 
         // Prevent default behavior for cmd+s
         editor.addCommand(
@@ -382,16 +381,29 @@ function EditorContent({
             saveFile(activeFile?.node.path || "", editor.getValue());
           },
         );
+
+        // Prevent default behavior for cmd+s
+        editor.addCommand(
+          monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+          (e: any) => {
+            runQueryPreview();
+          },
+        );
+
+        editor.addCommand(
+          monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Enter,
+          (e: any) => {
+            compileActiveFile();
+          },
+        );
+
+
       }}
       theme="mutedTheme"
     />
   );
 }
 
-type QueryPreview = {
-  rows?: Object;
-  signed_url: string;
-};
 
 function EditorPageContent() {
   const [leftWidth, setLeftWidth] = useState(20);
@@ -404,7 +416,7 @@ function EditorPageContent() {
     height: topBarHeight,
   } = useResizeObserver();
 
-  const { files, activeFile } = useFiles();
+  const { files, activeFile, runQueryPreview, queryPreview, queryPreviewError, isQueryPreviewLoading, setIsQueryPreviewLoading } = useFiles();
 
   const {
     sidebarLeftShown,
@@ -418,9 +430,7 @@ function EditorPageContent() {
   const [promptBoxOpen, setPromptBoxOpen] = useState(false);
   const [colDefs, setColDefs] = useState([]);
   const [rowData, setRowData] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
   const gridRef = useRef<AgGridReact>(null);
-  const [queryPreview, setQueryPreview] = useState<QueryPreview | null>(null);
 
   const treeRef = useRef<any>(null);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -428,7 +438,6 @@ function EditorPageContent() {
 
   const [filesearchQuery, setFilesearchQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [queryPreviewError, setQueryPreviewError] = useState(null);
   const pathname = usePathname();
   const {
     fetchFiles,
@@ -522,25 +531,7 @@ function EditorPageContent() {
     selectedIndex,
   ]);
 
-  const runQueryPreview = async () => {
-    setIsLoading(true);
-    setQueryPreview(null);
-    setQueryPreviewError(null);
-    if (activeFile?.content && typeof activeFile.content === "string") {
-      const dbtSql = activeFile.content;
-      try {
-        const preview = await executeQueryPreview({ dbtSql, branchId });
-        if (preview.error) {
-          setQueryPreviewError(preview.error);
-        } else {
-          setQueryPreview(preview);
-        }
-      } catch (e) {
-        setQueryPreviewError("Error running query");
-      }
-    }
-    setIsLoading(false);
-  };
+
 
   const getTablefromSignedUrl = async (signedUrl: string) => {
     const response = await fetch(signedUrl);
@@ -562,9 +553,8 @@ function EditorPageContent() {
       }));
       setColDefs(defs as any);
       setRowData(table.data);
-      // setDefaultDataChart(table.data, defs);
     }
-    setIsLoading(false);
+    setIsQueryPreviewLoading(false);
   };
 
   useEffect(() => {
@@ -662,7 +652,7 @@ function EditorPageContent() {
                     colDefs={colDefs}
                     runQueryPreview={runQueryPreview}
                     queryPreviewError={queryPreviewError}
-                    isLoading={isLoading}
+                    isLoading={isQueryPreviewLoading}
                   />
                 )}
               </PanelGroup>
