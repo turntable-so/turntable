@@ -1,3 +1,4 @@
+import { duplicateFileOrFolder } from "@/app/actions/actions";
 import { type OpenedFile, useFiles } from "@/app/contexts/FilesContext";
 import {
   ContextMenu,
@@ -22,6 +23,7 @@ import {
 } from "lucide-react";
 import { useState, useRef } from "react";
 import { useCopyToClipboard } from "usehooks-ts";
+import { toast } from "sonner";
 
 const DbtLogo = () => (
   <svg
@@ -46,10 +48,12 @@ export default function Node({
   dragHandle,
 }: { node: any; style: any; dragHandle: any }) {
   const {
+    branchId,
     activeFile,
     openFile,
     createFileAndRefresh,
     deleteFileAndRefresh,
+    duplicateFileOrFolderAndRefresh,
     closeFile,
     renameFile,
     createDirectoryAndRefresh,
@@ -148,6 +152,7 @@ export default function Node({
 
   const handleDuplicate = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    await duplicateFileOrFolderAndRefresh(node.data.path);
   };
 
   const handleCopyName = async (e: React.MouseEvent) => {

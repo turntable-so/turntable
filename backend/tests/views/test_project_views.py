@@ -167,6 +167,20 @@ class TestProjectViews:
         assert response.status_code == 200
         assert 'select * from "mydb"' in response.json()
 
+    def test_duplicate_file(self, client, project):
+        response = client.post(
+            f"/project/{project.id}/files/duplicate/",
+            {"filepath": safe_encode("models/marts/customer360/customers.sql")},
+        )
+        assert response.status_code == 200
+
+    def test_duplicate_folder(self, client, project):
+        response = client.post(
+            f"/project/{project.id}/files/duplicate/",
+            {"filepath": safe_encode("models/marts/customer360")},
+        )
+        assert response.status_code == 200
+
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("local_postgres")
