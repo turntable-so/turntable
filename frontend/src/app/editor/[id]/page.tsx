@@ -18,17 +18,6 @@ import { useLayoutContext } from "../../contexts/LayoutContext";
 import { usePathname } from "next/navigation";
 import EditorTopBar from "@/components/editor/editor-top-bar";
 import { useTheme } from "next-themes";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import ConfirmSaveDialog from "@/components/editor/dialogs/confirm-save-dialog";
 
 const PromptBox = ({
@@ -202,12 +191,27 @@ function EditorContent({
     downloadFile,
   } = useFiles();
 
+  const editorRef = useRef<any>(null);
+  const monacoRef = useRef<any>(null);
+
   // Define your custom theme
   const customTheme = {
     base: theme === "dark" ? "vs-dark" : "vs",
     inherit: true,
     rules: [],
   };
+
+  useEffect(() => {
+    if (monacoRef.current) {
+      monacoRef.current.editor.defineTheme("mutedTheme", {
+        ...customTheme,
+        colors: {
+          ...customTheme.colors,
+        },
+      });
+      monacoRef.current.editor.setTheme("mutedTheme");
+    }
+  }, [theme]);
 
   if (activeFile?.node?.type === "error") {
     if (activeFile.content === "FILE_EXCEEDS_SIZE_LIMIT") {
@@ -355,6 +359,15 @@ function EditorContent({
         monaco.editor.setTheme("mutedTheme");
       }}
       onMount={(editor, monaco) => {
+        editorRef.current = editor;
+        monacoRef.current = monaco;
+
+        monaco.editor.defineTheme("mutedTheme", {
+          ...customTheme,
+          colors: {
+            ...customTheme.colors,
+          },
+        } as any);
         monaco.editor.setTheme("mutedTheme");
 
         // Add cmd+k as a monaco keyboard listener
