@@ -4,8 +4,10 @@ import {
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
+  ContextMenuSeparator,
 } from "@/components/ui/context-menu";
 import {
+  Copy,
   Download,
   Ellipsis,
   File,
@@ -14,10 +16,12 @@ import {
   Folder,
   FolderOpen,
   FolderPlus,
+  Layers2,
   Pencil,
   Trash,
 } from "lucide-react";
 import { useState, useRef } from "react";
+import { useCopyToClipboard } from "usehooks-ts";
 
 const DbtLogo = () => (
   <svg
@@ -51,6 +55,7 @@ export default function Node({
     createDirectoryAndRefresh,
     downloadFile,
   } = useFiles();
+  const [copiedText, copy] = useCopyToClipboard();
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const contextMenuRef = useRef<HTMLDivElement>(null);
 
@@ -141,6 +146,26 @@ export default function Node({
     }
   };
 
+  const handleDuplicate = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
+  const handleCopyName = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    copy(node.data.name);
+  };
+
+  const handleCopyPath = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    copy(node.data.path);
+  };
+
+  const handleCopyRef = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const filenameWithoutExtension = node.data.name.split(".")[0];
+    copy(`{{ ref('${filenameWithoutExtension}') }}`);
+  };
+
   return (
     <ContextMenu onOpenChange={setContextMenuOpen}>
       <ContextMenuTrigger ref={contextMenuRef} asChild>
@@ -223,12 +248,42 @@ export default function Node({
             Add Folder
           </div>
         </ContextMenuItem>
+        <ContextMenuItem onClick={handleDuplicate}>
+          <div className="flex items-center text-xs">
+            <Layers2 className="mr-2 h-3 w-3" />
+            Duplicate
+          </div>
+        </ContextMenuItem>
         <ContextMenuItem onClick={handleRename}>
           <div className="flex items-center text-xs">
             <Pencil className="mr-2 h-3 w-3" />
             Rename
           </div>
         </ContextMenuItem>
+
+        <ContextMenuSeparator />
+
+        <ContextMenuItem onClick={handleCopyName}>
+          <div className="flex items-center text-xs">
+            <Copy className="mr-2 h-3 w-3" />
+            Copy name
+          </div>
+        </ContextMenuItem>
+        <ContextMenuItem onClick={handleCopyPath}>
+          <div className="flex items-center text-xs">
+            <Copy className="mr-2 h-3 w-3" />
+            Copy relative path
+          </div>
+        </ContextMenuItem>
+        <ContextMenuItem onClick={handleCopyRef}>
+          <div className="flex items-center text-xs">
+            <Copy className="mr-2 h-3 w-3" />
+            Copy as ref
+          </div>
+        </ContextMenuItem>
+
+        <ContextMenuSeparator />
+
         <ContextMenuItem onClick={handleDownload}>
           <div className="flex items-center text-xs">
             <Download className="mr-2 h-3 w-3" />
