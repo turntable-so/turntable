@@ -24,6 +24,8 @@ import { Badge } from "../ui/badge";
 import CommandPanelActionBtn from "./command-panel/command-panel-action-btn";
 import { Editor } from "@monaco-editor/react";
 import PreviewPanel from "./preview-panel/preview-panel";
+import ErrorMessage from "./error-message";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 // Define your custom theme
 const customTheme = {
@@ -52,7 +54,7 @@ export default function BottomPanel({
   queryPreviewError: string | null;
 }) {
   const { fetchFileBasedLineage, lineageData } = useLineage();
-  const { activeFile, branchId, problems, compileActiveFile, compiledSql, isCompiling, compileError } = useFiles();
+  const { activeFile, branchId, problems, compileActiveFile, compiledSql, isCompiling, compileError, isQueryPreviewLoading } = useFiles();
   const [activeTab, setActiveTab] = useBottomPanelTabs({
     branchId: branchId || "",
   });
@@ -78,7 +80,11 @@ export default function BottomPanel({
         >
           <TabsList>
             <TabsTrigger value="results">
-              <TableIcon className="h-4 w-4 mr-2" />
+              {isQueryPreviewLoading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <TableIcon className="h-4 w-4 mr-2" />
+              )}
               Preview
             </TabsTrigger>
             <TabsTrigger value="compile">
@@ -121,29 +127,48 @@ export default function BottomPanel({
         </Tabs>
         <div className="mr-2">
           {showPreviewQueryButton && (
-            <Button
-              size="sm"
-              onClick={runQueryPreview}
-              disabled={isQueryLoading}
-              variant="outline"
-            >
-              {isQueryLoading ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Play className="h-4 w-4 mr-2" />
-              )}
-              Preview
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  onClick={runQueryPreview}
+                  disabled={isQueryLoading}
+                  variant="outline"
+                >
+                  {isQueryLoading ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Play className="h-4 w-4 mr-2" />
+                  )}
+                  Preview
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Preview Query (⌘ + Enter)</p>
+              </TooltipContent>
+            </Tooltip>
           )}
           {activeTab === "compile" && (
-            <Button
-              size="sm"
-              onClick={compileActiveFile}
-              disabled={isCompiling}
-              variant="outline"
-            >
-              Compile
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  onClick={compileActiveFile}
+                  disabled={isCompiling}
+                  variant="outline"
+                >
+                  {isCompiling ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Play className="h-4 w-4 mr-2" />
+                  )}
+                  Compile
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Compile (⌘ + Shift + Enter)</p>
+              </TooltipContent>
+            </Tooltip>
           )}
           {activeTab === "lineage" && (
             <Button
@@ -243,12 +268,7 @@ export default function BottomPanel({
           {activeTab === "compile" && (
             <div className="h-full w-full p-1">
               {compileError ? (
-                <div className="text-red-500 text-sm flex items-center justify-center h-full">
-                  <div className="flex items-center">
-                    <CircleAlertIcon className="h-4 w-4 mr-2" />
-                    {compileError}
-                  </div>
-                </div>
+                <ErrorMessage error={compileError} />
               ) : (
                 <Editor
                   key={compiledSql}
