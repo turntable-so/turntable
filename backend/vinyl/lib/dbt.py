@@ -409,6 +409,7 @@ class DBTProject(object):
         dbt_cache: bool = False,
         defer: bool = False,
         defer_selection: bool = True,
+        use_colors: bool = False,
     ) -> tuple[str, str, bool]:
         if cli_args is None:
             cli_args = []
@@ -417,7 +418,8 @@ class DBTProject(object):
         if not write_json:
             full_command.append("--no-write-json")
 
-        full_command.append("--no-use-colors")
+        if not use_colors:
+            full_command.append("--no-use-colors")
 
         if not self.dbt1_5:
             full_command.append("--no-anonymous-usage-stats")
@@ -496,6 +498,7 @@ class DBTProject(object):
             dbt_cache,
             defer,
             defer_selection,
+            use_colors=True,
         )
         if self.dbt1_5 and not force_terminal and not self.multitenant:
             # self.install_dbt_if_necessary()
