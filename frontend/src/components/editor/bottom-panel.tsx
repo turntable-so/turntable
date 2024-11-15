@@ -25,12 +25,11 @@ import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import CommandPanel from "./command-panel";
 import ProblemsPanel from "./problems-panel/problems-panel";
 import { Badge } from "../ui/badge";
-import { useTheme } from "next-themes";
 import CommandPanelActionBtn from "./command-panel/command-panel-action-btn";
-import { Editor } from "@monaco-editor/react";
 import PreviewPanel from "./preview-panel/preview-panel";
 import ErrorMessage from "./error-message";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import CustomEditor from "./CustomEditor";
 
 // Define your custom theme
 const customTheme = {
@@ -59,14 +58,25 @@ export default function BottomPanel({
   queryPreviewError: string | null;
 }) {
   const { fetchFileBasedLineage, lineageData } = useLineage();
-  const { activeFile, branchId, problems, compileActiveFile, compiledSql, isCompiling, compileError, isQueryPreviewLoading } = useFiles();
+  const {
+    activeFile,
+    branchId,
+    problems,
+    compileActiveFile,
+    compiledSql,
+    isCompiling,
+    compileError,
+    isQueryPreviewLoading,
+  } = useFiles();
   const [activeTab, setActiveTab] = useBottomPanelTabs({
     branchId: branchId || "",
   });
 
-  const { ref: bottomPanelRef, height: bottomPanelHeight, width: bottomPanelWidth } =
-    useResizeObserver();
-  const { theme } = useTheme();
+  const {
+    ref: bottomPanelRef,
+    height: bottomPanelHeight,
+    width: bottomPanelWidth,
+  } = useResizeObserver();
 
   const showPreviewQueryButton =
     activeTab === "results" &&
@@ -109,7 +119,6 @@ export default function BottomPanel({
               )}
               Lineage
             </TabsTrigger>
-
 
             <TabsTrigger value="command">
               <TerminalIcon className="h-4 w-4 mr-2" />
@@ -272,11 +281,11 @@ export default function BottomPanel({
           )}
           {activeTab === "problems" && <ProblemsPanel />}
           {activeTab === "compile" && (
-            <div className="h-full w-full p-1">
+            <div className="h-full w-full">
               {compileError ? (
                 <ErrorMessage error={compileError} />
               ) : (
-                <Editor
+                <CustomEditor
                   key={compiledSql}
                   value={compiledSql || ""}
                   language="sql"

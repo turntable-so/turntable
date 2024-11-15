@@ -9,7 +9,7 @@ type CsvPreviewProps = {
 };
 
 export default function CsvPreview({ content, gridRef }: CsvPreviewProps) {
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
   const { rowData, columnDefs } = useMemo(() => {
     const parsedData = Papa.parse(content, { header: true });
     const { data, meta } = parsedData;
@@ -29,7 +29,7 @@ export default function CsvPreview({ content, gridRef }: CsvPreviewProps) {
   return (
     <AgGridReact
       className={
-        theme === "dark" ? "ag-theme-balham-dark" : "ag-theme-balham"
+        resolvedTheme === "dark" ? "ag-theme-balham-dark" : "ag-theme-balham"
       }
       ref={gridRef}
       suppressRowHoverHighlight={true}

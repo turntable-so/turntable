@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import Editor, { DiffEditor } from "@monaco-editor/react";
 import type { AgGridReact } from "ag-grid-react";
 import { Check, Download, Loader2, X } from "lucide-react";
 import type React from "react";
@@ -19,6 +18,8 @@ import { usePathname } from "next/navigation";
 import EditorTopBar from "@/components/editor/editor-top-bar";
 import { useTheme } from "next-themes";
 import ConfirmSaveDialog from "@/components/editor/dialogs/confirm-save-dialog";
+import CustomEditor from "@/components/editor/CustomEditor";
+import CustomDiffEditor from "@/components/editor/CustomDiffEditor";
 
 const PromptBox = ({
   setPromptBoxOpen,
@@ -181,7 +182,7 @@ function EditorContent({
   setPromptBoxOpen,
   containerWidth,
 }: { setPromptBoxOpen: (open: boolean) => void; containerWidth: number }) {
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
   const {
     activeFile,
     updateFileContent,
@@ -198,7 +199,7 @@ function EditorContent({
 
   // Define your custom theme
   const customTheme = {
-    base: theme === "dark" ? "vs-dark" : "vs",
+    base: resolvedTheme === "dark" ? "vs-dark" : "vs",
     inherit: true,
     rules: [],
   };
@@ -213,7 +214,7 @@ function EditorContent({
       });
       monacoRef.current.editor.setTheme("mutedTheme");
     }
-  }, [theme]);
+  }, [resolvedTheme]);
 
   if (activeFile?.node?.type === "error") {
     if (activeFile.content === "FILE_EXCEEDS_SIZE_LIMIT") {
@@ -260,7 +261,7 @@ function EditorContent({
 
   if (activeFile?.view === "diff") {
     return (
-      <DiffEditor
+      <CustomDiffEditor
         text-muted-foreground
         original={activeFile?.diff?.original || ""}
         modified={activeFile?.diff?.modified || ""}
@@ -321,7 +322,7 @@ function EditorContent({
   };
 
   return (
-    <Editor
+    <CustomEditor
       key={activeFile?.node.path}
       value={typeof activeFile?.content === "string" ? activeFile.content : ""}
       onChange={(value) => {
@@ -372,8 +373,6 @@ function EditorContent({
         } as any);
         monaco.editor.setTheme("mutedTheme");
 
-
-
         // Prevent default behavior for cmd+s
         editor.addCommand(
           monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
@@ -396,14 +395,11 @@ function EditorContent({
             compileActiveFile();
           },
         );
-
-
       }}
       theme="mutedTheme"
     />
   );
 }
-
 
 function EditorPageContent() {
   const [leftWidth, setLeftWidth] = useState(20);
@@ -416,7 +412,15 @@ function EditorPageContent() {
     height: topBarHeight,
   } = useResizeObserver();
 
-  const { files, activeFile, runQueryPreview, queryPreview, queryPreviewError, isQueryPreviewLoading, setIsQueryPreviewLoading } = useFiles();
+  const {
+    files,
+    activeFile,
+    runQueryPreview,
+    queryPreview,
+    queryPreviewError,
+    isQueryPreviewLoading,
+    setIsQueryPreviewLoading,
+  } = useFiles();
 
   const {
     sidebarLeftShown,
@@ -530,8 +534,6 @@ function EditorPageContent() {
     isSearchFocused,
     selectedIndex,
   ]);
-
-
 
   const getTablefromSignedUrl = async (signedUrl: string) => {
     const response = await fetch(signedUrl);

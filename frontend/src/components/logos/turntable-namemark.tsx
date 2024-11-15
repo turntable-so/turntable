@@ -4,8 +4,8 @@ const width = 315 / 2.5;
 const height = 54 / 2.5;
 
 const NameMark = () => {
-  const { theme } = useTheme();
-  const fillColor = theme === "dark" ? "#fff" : "#1D1D1D";
+  const { resolvedTheme } = useTheme();
+  const fillColor = resolvedTheme === "dark" ? "#ffffff" : "#1D1D1D";
   return (
     <svg
       aria-label="Turntable Namemark"

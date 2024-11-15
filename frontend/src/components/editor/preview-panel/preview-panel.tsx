@@ -22,7 +22,7 @@ export default function PreviewPanel({
   rowData,
   colDefs,
 }: PreviewPanelProps) {
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
   const { activeFile } = useFiles();
 
   const activeFileContent = activeFile?.content;
@@ -52,7 +52,9 @@ export default function PreviewPanel({
       return (
         <AgGridReact
           className={
-            theme === "dark" ? "ag-theme-balham-dark" : "ag-theme-balham"
+            resolvedTheme === "dark"
+              ? "ag-theme-balham-dark"
+              : "ag-theme-balham"
           }
           ref={gridRef}
           suppressRowHoverHighlight={true}
