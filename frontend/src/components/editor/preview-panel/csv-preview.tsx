@@ -29,7 +29,7 @@ export default function CsvPreview({ content, gridRef }: CsvPreviewProps) {
   return (
     <AgGridReact
       className={
-        theme === "dark" ? "ag-theme-material-dark" : "ag-theme-material"
+        theme === "dark" ? "ag-theme-balham-dark" : "ag-theme-balham"
       }
       ref={gridRef}
       suppressRowHoverHighlight={true}
