@@ -151,7 +151,6 @@ type FilesContextType = {
   setIsQueryPreviewLoading: Dispatch<SetStateAction<boolean>>;
 };
 
-
 type QueryPreview = {
   rows?: Object;
   signed_url: string;
@@ -187,7 +186,9 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   const [isCloned, setIsCloned] = useState<boolean | undefined>(undefined);
   const [queryPreview, setQueryPreview] = useState<QueryPreview | null>(null);
   const [isQueryPreviewLoading, setIsQueryPreviewLoading] = useState(false);
-  const [queryPreviewError, setQueryPreviewError] = useState<string | null>(null);
+  const [queryPreviewError, setQueryPreviewError] = useState<string | null>(
+    null,
+  );
   const [pullRequestUrl, setPullRequestUrl] = useState<string | undefined>(
     undefined,
   );
@@ -710,7 +711,12 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         (f) => f.node.path === file.node.path,
       );
       if (fileIndex > 0) {
-        const newOpenedFiles = openedFiles.slice(fileIndex);
+        const filesToClose = openedFiles.slice(0, fileIndex);
+        const dirtyFilesToKeep = filesToClose.filter((f) => f.isDirty);
+        const newOpenedFiles = [
+          ...dirtyFilesToKeep,
+          ...openedFiles.slice(fileIndex),
+        ];
         setOpenedFiles(newOpenedFiles);
         if (!newOpenedFiles.includes(activeFile)) {
           setActiveFile(newOpenedFiles[0] || null);
@@ -726,7 +732,12 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         (f) => f.node.path === file.node.path,
       );
       if (fileIndex >= 0 && fileIndex < openedFiles.length - 1) {
-        const newOpenedFiles = openedFiles.slice(0, fileIndex + 1);
+        const filesToClose = openedFiles.slice(fileIndex + 1);
+        const dirtyFilesToKeep = filesToClose.filter((f) => f.isDirty);
+        const newOpenedFiles = [
+          ...openedFiles.slice(0, fileIndex + 1),
+          ...dirtyFilesToKeep,
+        ];
         setOpenedFiles(newOpenedFiles);
         if (!newOpenedFiles.includes(activeFile)) {
           setActiveFile(newOpenedFiles[newOpenedFiles.length - 1] || null);
@@ -736,15 +747,24 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     [openedFiles, activeFile],
   );
 
-  const closeAllOtherFiles = useCallback((file: OpenedFile) => {
-    setOpenedFiles([file]);
-    setActiveFile(file);
-  }, []);
+  const closeAllOtherFiles = useCallback(
+    (file: OpenedFile) => {
+      const filesToKeep = openedFiles.filter(
+        (f) => f.isDirty || f.node.path === file.node.path,
+      );
+      setOpenedFiles(filesToKeep);
+      setActiveFile(file);
+    },
+    [openedFiles],
+  );
 
   const closeAllFiles = useCallback(() => {
-    setOpenedFiles([]);
-    setActiveFile(null);
-  }, []);
+    const dirtyFilesToKeep = openedFiles.filter((f) => f.isDirty);
+    setOpenedFiles(dirtyFilesToKeep);
+    if (!dirtyFilesToKeep.includes(activeFile)) {
+      setActiveFile(dirtyFilesToKeep[0] || null);
+    }
+  }, [openedFiles, activeFile]);
 
   const runQueryPreview = async () => {
     setIsQueryPreviewLoading(true);
@@ -828,7 +848,8 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         queryPreviewError,
         isQueryPreviewLoading,
         setIsQueryPreviewLoading,
-      }}>
+      }}
+    >
       {children}
     </FilesContext.Provider>
   );
