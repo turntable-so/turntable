@@ -813,6 +813,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         openError,
         compileActiveFile,
         isCompiling,
+        compiledSql,
         compileError,
         showConfirmSaveDialog,
         setShowConfirmSaveDialog,

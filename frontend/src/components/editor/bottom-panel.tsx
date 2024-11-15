@@ -24,6 +24,7 @@ import { Badge } from "../ui/badge";
 import CommandPanelActionBtn from "./command-panel/command-panel-action-btn";
 import { Editor } from "@monaco-editor/react";
 import PreviewPanel from "./preview-panel/preview-panel";
+import ErrorMessage from "./error-message";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 // Define your custom theme
@@ -267,12 +268,7 @@ export default function BottomPanel({
           {activeTab === "compile" && (
             <div className="h-full w-full p-1">
               {compileError ? (
-                <div className="text-red-500 text-sm flex items-center justify-center h-full">
-                  <div className="flex items-center">
-                    <CircleAlertIcon className="h-4 w-4 mr-2" />
-                    {compileError}
-                  </div>
-                </div>
+                <ErrorMessage error={compileError} />
               ) : (
                 <Editor
                   key={compiledSql}
