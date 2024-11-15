@@ -26,6 +26,7 @@ import {
   changeFilePath,
   formatDbtQuery,
   compileDbtQuery,
+  executeQueryPreview,
 } from "../actions/actions";
 import { validateDbtQuery } from "../actions/client-actions";
 import { getDownloadableFile } from "../actions/client-actions";
@@ -143,6 +144,17 @@ type FilesContextType = {
   closeFilesToRight: (file: OpenedFile) => void;
   closeAllOtherFiles: (file: OpenedFile) => void;
   closeAllFiles: () => void;
+  runQueryPreview: () => Promise<void>;
+  queryPreview: QueryPreview | null;
+  queryPreviewError: string | null;
+  isQueryPreviewLoading: boolean;
+  setIsQueryPreviewLoading: Dispatch<SetStateAction<boolean>>;
+};
+
+
+type QueryPreview = {
+  rows?: Object;
+  signed_url: string;
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
@@ -173,6 +185,9 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   const [filesLoading, setFilesLoading] = useState(false);
   const [readOnly, setReadOnly] = useState<boolean | undefined>(undefined);
   const [isCloned, setIsCloned] = useState<boolean | undefined>(undefined);
+  const [queryPreview, setQueryPreview] = useState<QueryPreview | null>(null);
+  const [isQueryPreviewLoading, setIsQueryPreviewLoading] = useState(false);
+  const [queryPreviewError, setQueryPreviewError] = useState<string | null>(null);
   const [pullRequestUrl, setPullRequestUrl] = useState<string | undefined>(
     undefined,
   );
@@ -731,6 +746,26 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     setActiveFile(null);
   }, []);
 
+  const runQueryPreview = async () => {
+    setIsQueryPreviewLoading(true);
+    setQueryPreview(null);
+    setQueryPreviewError(null);
+    if (activeFile?.content && typeof activeFile.content === "string") {
+      const dbtSql = activeFile.content;
+      try {
+        const preview = await executeQueryPreview({ dbtSql, branchId });
+        if (preview.error) {
+          setQueryPreviewError(preview.error);
+        } else {
+          setQueryPreview(preview);
+        }
+      } catch (e) {
+        setQueryPreviewError("Error running query");
+      }
+    }
+    setIsQueryPreviewLoading(false);
+  };
+
   return (
     <FilesContext.Provider
       value={{
@@ -787,6 +822,11 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         closeFilesToRight,
         closeAllOtherFiles,
         closeAllFiles,
+        runQueryPreview,
+        queryPreview,
+        queryPreviewError,
+        isQueryPreviewLoading,
+        setIsQueryPreviewLoading,
       }}>
       {children}
     </FilesContext.Provider>
