@@ -181,15 +181,13 @@ const ColumnLineageFlow = () => {
           return;
         }
 
-        if (!reactFlowWrapper?.current || !reactFlowInstance) {
+        if (!reactFlowInstance) {
           return;
         }
 
-        const reactFlowBounds =
-          reactFlowWrapper.current.getBoundingClientRect();
-        const position = reactFlowInstance?.screenToFlowPosition({
-          x: e.clientX - reactFlowBounds.left + 8,
-          y: e.clientY - reactFlowBounds.top,
+        const position = reactFlowInstance.screenToFlowPosition({
+          x: e.clientX + 8,
+          y: e.clientY,
         });
 
         updateHoveredEdge({
@@ -206,15 +204,13 @@ const ColumnLineageFlow = () => {
           return;
         }
 
-        if (!reactFlowWrapper?.current || !reactFlowInstance) {
+        if (!reactFlowInstance) {
           return;
         }
 
-        const reactFlowBounds =
-          reactFlowWrapper.current.getBoundingClientRect();
         const position = reactFlowInstance?.screenToFlowPosition({
-          x: e.clientX - reactFlowBounds.left + 8,
-          y: e.clientY - reactFlowBounds.top - 8,
+          x: e.clientX + 8,
+          y: e.clientY,
         });
 
         updateSelectedEdge({

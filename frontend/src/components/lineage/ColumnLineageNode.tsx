@@ -204,7 +204,10 @@ function LineageNode({ id, data, yPos }: any) {
 
         handleColumnHover({
           columnId,
-          mousePosition: position,
+          mousePosition: {
+            x: position.x + 100,
+            y: position.y,
+          },
         });
       } else {
         handleColumnHover(null);
@@ -332,7 +335,7 @@ function LineageNode({ id, data, yPos }: any) {
                   }}
                   onMouseEnter={(e) => onHover(column.columnId, e)}
                   onMouseLeave={(e) => onHover(null)}
-                  className={`nodeColumn h-5 sticky top-[15px] left-0 right-0 bottom-[-15px]`}
+                  className={"nodeColumn h-5"}
                 >
                   <div
                     className={`
