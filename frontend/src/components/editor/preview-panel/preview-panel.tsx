@@ -2,6 +2,7 @@ import { AgGridReact } from "ag-grid-react";
 import SkeletonLoadingTable from "./skeleton-loading-table";
 import { useFiles } from "@/app/contexts/FilesContext";
 import CsvPreview from "./csv-preview";
+import MarkdownPreview from "./markdown-preview";
 import { useTheme } from "next-themes";
 import ErrorMessage from "../error-message";
 
@@ -32,6 +33,12 @@ export default function PreviewPanel({
     activeFile.node.name.endsWith(".csv") &&
     activeFile.node.type === "file";
 
+  const isMarkdownPreviewable =
+    activeFileContent &&
+    typeof activeFileContent === "string" &&
+    activeFile.node.name.endsWith(".md") &&
+    activeFile.node.type === "file";
+
   switch (true) {
     case isQueryLoading:
       return <SkeletonLoadingTable />;
@@ -48,6 +55,8 @@ export default function PreviewPanel({
       );
     case isCsvPreviewable:
       return <CsvPreview content={activeFileContent} gridRef={gridRef} />;
+    case isMarkdownPreviewable:
+      return <MarkdownPreview content={activeFileContent} />;
     default:
       return (
         <AgGridReact
