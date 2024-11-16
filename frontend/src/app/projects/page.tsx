@@ -1,13 +1,8 @@
 "use client";
+
 import FullWidthPageLayout from "@/components/layout/FullWidthPageLayout";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 import {
@@ -23,15 +18,13 @@ import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Plus, Router } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -44,7 +37,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 
 const formSchema = z.object({
   projectName: z.string().min(2, {
@@ -78,7 +70,6 @@ const NewProjectButton = () => {
   const [branches, setBranches] = useState<string[]>([]);
   const { isSubmitting } = form.formState;
 
-
   useEffect(() => {
     const fetchBranches = async () => {
       const result = await getBranches();
@@ -92,13 +83,17 @@ const NewProjectButton = () => {
   useEffect(() => {
     const transformedName = projectName
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
     form.setValue("branchName", transformedName);
   }, [projectName, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    const result = await createBranch(values.branchName, values.branchFrom, values.schema);
+    const result = await createBranch(
+      values.branchName,
+      values.branchFrom,
+      values.schema,
+    );
     if (result.error) {
       toast.error(result.error);
     } else {
@@ -146,9 +141,7 @@ const NewProjectButton = () => {
                     <FormControl>
                       <Input {...field} disabled className="bg-muted" />
                     </FormControl>
-                    <FormDescription>
-                      Created git branch name
-                    </FormDescription>
+                    <FormDescription>Created git branch name</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -206,12 +199,11 @@ const NewProjectButton = () => {
                 ) : (
                   <Button type="submit">Create</Button>
                 )}
-
               </div>
             </form>
           </Form>
         </DialogContent>
-      </Dialog >
+      </Dialog>
     </>
   );
 };
@@ -234,7 +226,7 @@ export default function Projects() {
 
   return (
     <FullWidthPageLayout title="Projects" button={<NewProjectButton />}>
-      <Table className="bg-white rounded">
+      <Table className="bg-white dark:bg-black rounded">
         <TableHeader>
           <TableRow>
             <TableHead className="p-4">Name</TableHead>
@@ -244,35 +236,38 @@ export default function Projects() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {isLoading ? (
-            Array.from({ length: 3 }).map((_, i) => (
-              <TableRow key={i}>
-                <TableCell className="font-semibold hover:underline hover:cursor-pointer p-4" >
-                  <div className="h-4 w-full bg-muted rounded animate-pulse" />
-                </TableCell>
-                <TableCell className="p-4">
-                  <div className="h-4 w-full bg-muted rounded animate-pulse" />
-                </TableCell>
-                <TableCell className="p-4">
-                  <div className="h-4 w-full bg-muted rounded animate-pulse" />
-                </TableCell>
-                <TableCell className="p-4">
-                  <div className="h-4 w-full bg-muted rounded animate-pulse" />
-                </TableCell>
-              </TableRow>
-            ))
-          ) : (
-            projects.map((project: any, i: number) => (
-              <TableRow key={i}>
-                <TableCell className="font-semibold hover:underline hover:cursor-pointer p-4" onClick={() => router.push(`/editor/${project.id}`)}>
-                  {project.name}
-                </TableCell>
-                <TableCell className="p-4">{project.branch_name}</TableCell>
-                <TableCell className="p-4">{project.schema}</TableCell>
-                <TableCell className="p-4">{project.read_only ? "Read Only" : "Read/Write"}</TableCell>
-              </TableRow>
-            ))
-          )}
+          {isLoading
+            ? Array.from({ length: 3 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell className="font-semibold hover:underline hover:cursor-pointer p-4">
+                    <div className="h-4 w-full bg-muted rounded animate-pulse" />
+                  </TableCell>
+                  <TableCell className="p-4">
+                    <div className="h-4 w-full bg-muted rounded animate-pulse" />
+                  </TableCell>
+                  <TableCell className="p-4">
+                    <div className="h-4 w-full bg-muted rounded animate-pulse" />
+                  </TableCell>
+                  <TableCell className="p-4">
+                    <div className="h-4 w-full bg-muted rounded animate-pulse" />
+                  </TableCell>
+                </TableRow>
+              ))
+            : projects.map((project: any, i: number) => (
+                <TableRow key={i}>
+                  <TableCell
+                    className="font-semibold hover:underline hover:cursor-pointer p-4"
+                    onClick={() => router.push(`/editor/${project.id}`)}
+                  >
+                    {project.name}
+                  </TableCell>
+                  <TableCell className="p-4">{project.branch_name}</TableCell>
+                  <TableCell className="p-4">{project.schema}</TableCell>
+                  <TableCell className="p-4">
+                    {project.read_only ? "Read Only" : "Read/Write"}
+                  </TableCell>
+                </TableRow>
+              ))}
         </TableBody>
       </Table>
     </FullWidthPageLayout>

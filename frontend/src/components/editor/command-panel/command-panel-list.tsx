@@ -25,8 +25,8 @@ export default function CommandPanelList() {
         <div
           key={item.id}
           className={`flex justify-between ${
-            index === selectedCommandIndex ? "bg-gray-100" : ""
-          } hover:bg-gray-100 cursor-pointer p-2`}
+            index === selectedCommandIndex ? "bg-gray-100 dark:bg-zinc-700" : ""
+          } hover:bg-gray-100 dark:hover:bg-zinc-700 cursor-pointer p-2`}
           onClick={() => setSelectedCommandIndex(index)}
         >
           <div

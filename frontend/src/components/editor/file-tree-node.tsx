@@ -1,19 +1,15 @@
-import { OpenedFile, useFiles } from "@/app/contexts/FilesContext";
-import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { duplicateFileOrFolder } from "@/app/actions/actions";
+import { type OpenedFile, useFiles } from "@/app/contexts/FilesContext";
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
-} from "@/components/ui/context-menu"
+  ContextMenuSeparator,
+} from "@/components/ui/context-menu";
 import {
-  ChevronDown,
-  ChevronRight,
+  Copy,
+  Download,
   Ellipsis,
   File,
   FilePlus2,
@@ -21,12 +17,13 @@ import {
   Folder,
   FolderOpen,
   FolderPlus,
+  Layers2,
   Pencil,
-  Plus,
   Trash,
 } from "lucide-react";
 import { useState, useRef } from "react";
-import * as ContextMenuPrimitive from "@radix-ui/react-context-menu";
+import { useCopyToClipboard } from "usehooks-ts";
+import { toast } from "sonner";
 
 const DbtLogo = () => (
   <svg
@@ -50,10 +47,21 @@ export default function Node({
   style,
   dragHandle,
 }: { node: any; style: any; dragHandle: any }) {
-  const { openFile, createFileAndRefresh, deleteFileAndRefresh, closeFile, renameFile, createDirectoryAndRefresh } =
-    useFiles();
+  const {
+    branchId,
+    activeFile,
+    openFile,
+    createFileAndRefresh,
+    deleteFileAndRefresh,
+    duplicateFileOrFolderAndRefresh,
+    closeFile,
+    renameFile,
+    createDirectoryAndRefresh,
+    downloadFile,
+  } = useFiles();
+  const [copiedText, copy] = useCopyToClipboard();
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
-  const contextMenuRef = useRef<ContextMenuPrimitive.ContextMenuTriggerElement>(null);
+  const contextMenuRef = useRef<HTMLDivElement>(null);
 
   const handleCreateFile = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -92,7 +100,8 @@ export default function Node({
     if (newName && newName !== node.data.name) {
       const success = await renameFile(
         node.data.path,
-        node.data.path.substring(0, node.data.path.lastIndexOf('/') + 1) + newName
+        node.data.path.substring(0, node.data.path.lastIndexOf("/") + 1) +
+          newName,
       );
       if (success) {
         closeFile({
@@ -104,11 +113,18 @@ export default function Node({
         } as OpenedFile);
         openFile({
           name: newName,
-          path: node.data.path.substring(0, node.data.path.lastIndexOf('/') + 1) + newName,
+          path:
+            node.data.path.substring(0, node.data.path.lastIndexOf("/") + 1) +
+            newName,
           type: "file",
         });
       }
     }
+  };
+
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    await downloadFile(node.data.path);
   };
 
   const handleCreateDirectory = async (e: React.MouseEvent) => {
@@ -125,13 +141,34 @@ export default function Node({
     // Simulate a right click at the element's position
     const rect = contextMenuRef.current?.getBoundingClientRect();
     if (rect) {
-      const event = new MouseEvent('contextmenu', {
+      const event = new MouseEvent("contextmenu", {
         bubbles: true,
         clientX: rect.right,
         clientY: rect.top,
       });
       contextMenuRef.current?.dispatchEvent(event);
     }
+  };
+
+  const handleDuplicate = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    await duplicateFileOrFolderAndRefresh(node.data.path);
+  };
+
+  const handleCopyName = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    copy(node.data.name);
+  };
+
+  const handleCopyPath = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    copy(node.data.path);
+  };
+
+  const handleCopyRef = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const filenameWithoutExtension = node.data.name.split(".")[0];
+    copy(`{{ ref('${filenameWithoutExtension}') }}`);
   };
 
   return (
@@ -147,13 +184,19 @@ export default function Node({
             }
           }}
           ref={dragHandle}
-          className={`${node.isSelected ? "rounded font-medium bg-accent text-accent-foreground" : ""} hover:bg-white hover:cursor-pointer ${contextMenuOpen ? "bg-white" : ""} flex items-center rounded`}
+          className={`${
+            node.isSelected
+              ? "rounded font-medium bg-accent text-accent-foreground"
+              : ""
+          } ${activeFile?.node.path === node.data.path ? "bg-card" : ""} hover:bg-card hover:cursor-pointer ${
+            contextMenuOpen ? "bg-card" : ""
+          } flex items-center rounded`}
         >
           {!node.isLeaf &&
             (node.isOpen ? (
-              <FolderOpen className="mr-1 size-4 flex-shrink-0" />
+              <FolderOpen className="mr-1 size-4 flex-shrink-0 dark:text-zinc-100" />
             ) : (
-              <Folder className="mr-1 size-4 flex-shrink-0" />
+              <Folder className="mr-1 size-4 flex-shrink-0 dark:text-zinc-100" />
             ))}
           {node.isLeaf && node.data.name.endsWith(".sql") && (
             <div
@@ -163,11 +206,13 @@ export default function Node({
             </div>
           )}
           {node.isLeaf && node.data.name.endsWith(".yml") && (
-            <FileText className="mr-1 size-4 flex-shrink-0" />
+            <FileText className="mr-1 size-4 flex-shrink-0 dark:text-zinc-100" />
           )}
           {node.isLeaf &&
             !node.data.name.endsWith(".sql") &&
-            !node.data.name.endsWith(".yml") && <File className="mr-1 size-4 flex-shrink-0" />}
+            !node.data.name.endsWith(".yml") && (
+              <File className="mr-1 size-4 flex-shrink-0 dark:text-zinc-100" />
+            )}
           {node.isEditing ? (
             <input
               type="text"
@@ -182,10 +227,12 @@ export default function Node({
             />
           ) : (
             <div className="w-full flex items-center justify-between group">
-              <div className="truncate">{node.data.name}</div>
+              <div className="truncate text-muted-foreground">
+                {node.data.name}
+              </div>
               <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <Ellipsis
-                  className="mr-1 size-4"
+                  className="mr-1 size-4 dark:text-zinc-100"
                   onClick={openContextMenu}
                 />
               </div>
@@ -193,10 +240,7 @@ export default function Node({
           )}
         </div>
       </ContextMenuTrigger>
-      <ContextMenuContent
-        align="end"
-        alignOffset={-5}
-      >
+      <ContextMenuContent align="end" alignOffset={-5}>
         <ContextMenuItem onClick={handleCreateFile}>
           <div className="flex items-center text-xs">
             <FilePlus2 className="mr-2 h-3 w-3" />
@@ -209,10 +253,46 @@ export default function Node({
             Add Folder
           </div>
         </ContextMenuItem>
+        <ContextMenuItem onClick={handleDuplicate}>
+          <div className="flex items-center text-xs">
+            <Layers2 className="mr-2 h-3 w-3" />
+            Duplicate
+          </div>
+        </ContextMenuItem>
         <ContextMenuItem onClick={handleRename}>
           <div className="flex items-center text-xs">
             <Pencil className="mr-2 h-3 w-3" />
             Rename
+          </div>
+        </ContextMenuItem>
+
+        <ContextMenuSeparator />
+
+        <ContextMenuItem onClick={handleCopyName}>
+          <div className="flex items-center text-xs">
+            <Copy className="mr-2 h-3 w-3" />
+            Copy name
+          </div>
+        </ContextMenuItem>
+        <ContextMenuItem onClick={handleCopyPath}>
+          <div className="flex items-center text-xs">
+            <Copy className="mr-2 h-3 w-3" />
+            Copy relative path
+          </div>
+        </ContextMenuItem>
+        <ContextMenuItem onClick={handleCopyRef}>
+          <div className="flex items-center text-xs">
+            <Copy className="mr-2 h-3 w-3" />
+            Copy as ref
+          </div>
+        </ContextMenuItem>
+
+        <ContextMenuSeparator />
+
+        <ContextMenuItem onClick={handleDownload}>
+          <div className="flex items-center text-xs">
+            <Download className="mr-2 h-3 w-3" />
+            Download
           </div>
         </ContextMenuItem>
         <ContextMenuItem onClick={handleDelete}>

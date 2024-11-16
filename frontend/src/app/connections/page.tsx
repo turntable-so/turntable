@@ -284,7 +284,7 @@ export default async function Page() {
         </div>
       ) : (
         <div className="mt-24">
-          <div className="flex flex-col items-center space-y-1 border-2 border-gray-200 rounded-lg p-8">
+          <div className="flex flex-col items-center space-y-1 border-2 border-gray-300 dark:border-gray-950 rounded-lg p-8">
             <DatabaseZap className="size-5" />
             <div className="text-lg font-semibold">No Connections yet</div>
             <div className="text-sm text-gray-500">

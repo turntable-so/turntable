@@ -158,7 +158,7 @@ export default function BigqueryForm({
       }
       router.push(`/connections/${res.id}`);
     } else {
-      toast.error("Failed to save connection: " + res[0]);
+      toast.error(`Failed to save connection: ${res[0]}`);
     }
   }
 
@@ -169,7 +169,7 @@ export default function BigqueryForm({
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-6 text-black"
+          className="space-y-6 text-black dark:text-white"
         >
           <FormField
             control={form.control}

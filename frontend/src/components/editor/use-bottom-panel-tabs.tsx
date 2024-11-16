@@ -1,13 +1,12 @@
-import {LocalStorageKeys} from "@/app/constants/local-storage-keys";
-import {useLocalStorage} from "usehooks-ts";
+import { LocalStorageKeys } from "@/app/constants/local-storage-keys";
+import { useLocalStorage } from "usehooks-ts";
 
 type UseBottomPanelTabsProps = {
   branchId: string;
 };
 
 export const useBottomPanelTabs = ({ branchId }: UseBottomPanelTabsProps) => {
-  return useLocalStorage<"lineage" | "results" | "command" | "problems">(
-    LocalStorageKeys.bottomPanelTab(branchId),
-    "lineage",
-  );
+  return useLocalStorage<
+    "lineage" | "results" | "command" | "problems" | "compile"
+  >(LocalStorageKeys.bottomPanelTab(branchId), "results");
 };

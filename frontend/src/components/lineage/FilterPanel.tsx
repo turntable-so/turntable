@@ -1,7 +1,6 @@
 import { Filter, X } from "lucide-react";
 import React, { useContext } from "react";
-import { Panel } from "reactflow";
-import { Button } from "../ui/button";
+import { Panel } from "@xyflow/react";
 import { Label } from "../ui/label";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { ConnectionTypeLabel, getLabelName } from "./ColumnConnectionEdge";
@@ -20,14 +19,7 @@ export function FilterPanel() {
     return (
       <Panel position="top-right">
         <div
-          className="
-          bg-white opacity-70
-          border-2 border-gray-300
-              p-1.5
-              rounded-lg
-              flex items-center gap-1.5
-              cursor-pointer
-              "
+          className="bg-card opacity-70 border-2 border-card p-1.5 rounded-lg flex items-center gap-1.5 cursor-pointer"
           onClick={toggleFilter}
         >
           <div className="flex items-center text-xs text-muted-foreground uppercase  font-medium">
@@ -47,25 +39,19 @@ export function FilterPanel() {
 
   return (
     <Panel position="top-right">
-      <div
-        className="
-          w-64
-          p-1.5
-          rounded-lg
-          bg-white"
-      >
+      <div className="w-64 p-1.5 rounded-lg bg-card border-2 border-card">
         <div className="flex justify-between items-center">
           <div className="w-full flex gap-1.5 items-center justify-center mb-1">
-            <div className="flex flex-grow justify-between text-xs font-semibold text-muted-foreground dark:text-gray-300">
+            <div className="flex flex-grow justify-between text-xs font-semibold text-muted-foreground">
               <div className="px-1 flex items-center">
                 <Filter size="16" className="mr-1" />
                 Connection Type Filter
               </div>
 
               <X
-                size="20"
+                size="24"
                 onClick={toggleFilter}
-                className="bg-gray-200 rounded-md m-0.5 text-muted-foreground opacity-70 hover:opacity-100 cursor-pointer"
+                className="bg-muted rounded-md m-0.5 p-0.5 opacity-70 hover:opacity-100 cursor-pointer"
               />
             </div>
           </div>

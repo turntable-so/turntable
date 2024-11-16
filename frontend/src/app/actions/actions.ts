@@ -505,7 +505,13 @@ export async function getFileIndex(branchId: string) {
   return response.json();
 }
 
-export async function fetchFileContents(branchId: string, path: string) {
+export async function fetchFileContents({
+  branchId,
+  path,
+}: {
+  branchId: string;
+  path: string;
+}) {
   const encodedPath = encodeURIComponent(path);
   const response = await fetcher(
     `/project/${branchId}/files/?filepath=${encodedPath}`,
@@ -614,6 +620,23 @@ export async function deleteFile(branchId: string, filePath: string) {
       method: "DELETE",
     },
   );
+  return response.ok;
+}
+
+export async function duplicateFileOrFolder({
+  branchId,
+  filePath,
+}: {
+  branchId: string;
+  filePath: string;
+}) {
+  const response = await fetcher(`/project/${branchId}/files/duplicate/`, {
+    cookies,
+    method: "POST",
+    body: {
+      filepath: filePath,
+    },
+  });
   return response.ok;
 }
 
@@ -757,22 +780,6 @@ export async function discardBranchChanges(branchId: string) {
   return response.ok;
 }
 
-type DbtQueryValidateInput = {
-  query: string;
-  project_id: string;
-  use_fast_compile?: boolean;
-  limit?: number;
-};
-
-export async function validateDbtQuery(input: DbtQueryValidateInput) {
-  const response = await fetcher("/validate/dbt/", {
-    cookies,
-    method: "POST",
-    body: input,
-  });
-  return response.json();
-}
-
 export async function formatDbtQuery(payload: { query: string }) {
   const response = await fetcher("/query/format/", {
     cookies,
@@ -780,4 +787,18 @@ export async function formatDbtQuery(payload: { query: string }) {
     body: payload,
   });
   return response.json();
+}
+
+export async function compileDbtQuery(
+  project_id: string,
+  payload: {
+    filepath: string;
+  },
+) {
+  const response = await fetcher(`/project/${project_id}/compile/`, {
+    cookies,
+    method: "POST",
+    body: payload,
+  });
+  return await response.json();
 }

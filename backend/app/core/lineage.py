@@ -4,7 +4,6 @@ from vinyl.lib.dbt import DBTProject, DBTTransition
 from scripts.debug.pyinstrument import pyprofile
 
 
-@pyprofile()
 def get_lineage_helper(
     proj: DBTProject,
     before_proj: DBTProject | None,

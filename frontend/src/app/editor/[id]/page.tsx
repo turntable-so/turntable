@@ -1,16 +1,14 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import Editor, { DiffEditor } from "@monaco-editor/react";
 import type { AgGridReact } from "ag-grid-react";
-import { Check, Loader2, X } from "lucide-react";
+import { Check, Download, Loader2, X } from "lucide-react";
 import type React from "react";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import useResizeObserver from "use-resize-observer";
-import { executeQueryPreview, infer } from "../../actions/actions";
+import { infer } from "../../actions/actions";
 import { type OpenedFile, useFiles } from "../../contexts/FilesContext";
-import "@/components/ag-grid-custom-theme.css"; // Custom CSS Theme for Data Grid
 import BottomPanel from "@/components/editor/bottom-panel";
 import EditorSidebar from "@/components/editor/editor-sidebar";
 import FileTabs from "@/components/editor/file-tabs";
@@ -18,6 +16,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useLayoutContext } from "../../contexts/LayoutContext";
 import { usePathname } from "next/navigation";
 import EditorTopBar from "@/components/editor/editor-top-bar";
+import { useTheme } from "next-themes";
+import ConfirmSaveDialog from "@/components/editor/dialogs/confirm-save-dialog";
+import CustomEditor from "@/components/editor/CustomEditor";
+import CustomDiffEditor from "@/components/editor/CustomDiffEditor";
 
 const PromptBox = ({
   setPromptBoxOpen,
@@ -100,78 +102,76 @@ const PromptBox = ({
           disabled={isLoading}
         />
         <div className="flex space-x-2 justify-end w-full">
-          <>
-            {model === "PROMPT" ? (
-              <>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="rounded-sm"
-                  onClick={() => setPromptBoxOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  size="sm"
-                  disabled={!prompt || isLoading}
-                  variant="default"
-                  className="rounded-sm"
-                  onClick={() => {
-                    callInference();
-                  }}
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    "Generate"
-                  )}
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  className="rounded-sm"
-                  onClick={() => {
-                    if (activeFile) {
-                      setActiveFile({
-                        ...activeFile,
-                        view: "edit",
-                      });
-                    }
-                    setPromptBoxOpen(false);
-                  }}
-                >
-                  <X className="mr-2 size-4" />
-                  Reject
-                </Button>
-                <Button
-                  size="sm"
-                  disabled={!prompt || isLoading}
-                  variant="default"
-                  className="rounded-sm"
-                  onClick={() => {
-                    updateFileContent(
-                      activeFile?.node.path || "",
-                      activeFile?.diff?.modified || "",
-                    );
+          {model === "PROMPT" ? (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                className="rounded-sm"
+                onClick={() => setPromptBoxOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                disabled={!prompt || isLoading}
+                variant="default"
+                className="rounded-sm"
+                onClick={() => {
+                  callInference();
+                }}
+              >
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  "Generate"
+                )}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                size="sm"
+                variant="destructive"
+                className="rounded-sm"
+                onClick={() => {
+                  if (activeFile) {
                     setActiveFile({
                       ...activeFile,
-                      isDirty: true,
-                      content: activeFile?.diff?.modified || "",
                       view: "edit",
-                      diff: undefined,
-                    } as OpenedFile);
-                    setPromptBoxOpen(false);
-                  }}
-                >
-                  <Check className="mr-2 size-4" />
-                  Accept
-                </Button>
-              </>
-            )}
-          </>
+                    });
+                  }
+                  setPromptBoxOpen(false);
+                }}
+              >
+                <X className="mr-2 size-4" />
+                Reject
+              </Button>
+              <Button
+                size="sm"
+                disabled={!prompt || isLoading}
+                variant="default"
+                className="rounded-sm"
+                onClick={() => {
+                  updateFileContent(
+                    activeFile?.node.path || "",
+                    activeFile?.diff?.modified || "",
+                  );
+                  setActiveFile({
+                    ...activeFile,
+                    isDirty: true,
+                    content: activeFile?.diff?.modified || "",
+                    view: "edit",
+                    diff: undefined,
+                  } as OpenedFile);
+                  setPromptBoxOpen(false);
+                }}
+              >
+                <Check className="mr-2 size-4" />
+                Accept
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -182,21 +182,54 @@ function EditorContent({
   setPromptBoxOpen,
   containerWidth,
 }: { setPromptBoxOpen: (open: boolean) => void; containerWidth: number }) {
-  const { activeFile, updateFileContent, saveFile, setActiveFile, isCloning } =
-    useFiles();
+  const { resolvedTheme } = useTheme();
+  const {
+    activeFile,
+    updateFileContent,
+    saveFile,
+    setActiveFile,
+    isCloning,
+    downloadFile,
+    runQueryPreview,
+    compileActiveFile,
+  } = useFiles();
+
+  const editorRef = useRef<any>(null);
+  const monacoRef = useRef<any>(null);
 
   // Define your custom theme
   const customTheme = {
-    base: "vs",
+    base: resolvedTheme === "dark" ? "vs-dark" : "vs",
     inherit: true,
     rules: [],
-    colors: {
-      "editor.foreground": "#000000",
-      "editorLineNumber.foreground": "#A1A1AA",
-    },
   };
 
+  useEffect(() => {
+    if (monacoRef.current) {
+      monacoRef.current.editor.defineTheme("mutedTheme", {
+        ...customTheme,
+        colors: {
+          ...customTheme.colors,
+        },
+      });
+      monacoRef.current.editor.setTheme("mutedTheme");
+    }
+  }, [resolvedTheme]);
+
   if (activeFile?.node?.type === "error") {
+    if (activeFile.content === "FILE_EXCEEDS_SIZE_LIMIT") {
+      return (
+        <div className="h-full w-full flex flex-col gap-4 items-center justify-center">
+          <div>
+            This file is too large to open. Please download the file instead.
+          </div>
+          <Button onClick={() => downloadFile(activeFile.node.path)}>
+            <Download className="mr-2 h-4 w-4" />
+            Download
+          </Button>
+        </div>
+      );
+    }
     return (
       <div className="h-full w-full flex items-center justify-center">
         {activeFile.content}
@@ -228,7 +261,7 @@ function EditorContent({
 
   if (activeFile?.view === "diff") {
     return (
-      <DiffEditor
+      <CustomDiffEditor
         text-muted-foreground
         original={activeFile?.diff?.original || ""}
         modified={activeFile?.diff?.modified || ""}
@@ -256,7 +289,7 @@ function EditorContent({
 
   if (activeFile?.view === "new") {
     return (
-      <div className="h-full w-full flex items-center justify-center text-muted-foreground">
+      <div className="h-full w-full flex items-center justify-center text-muted-foreground dark:bg-black">
         {isCloning ? (
           <div className="flex items-center space-x-2">
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -273,7 +306,10 @@ function EditorContent({
     if (activeFile.node?.path.endsWith(".sql")) {
       return "sql";
     }
-    if (activeFile.node?.path.endsWith(".yml") || activeFile.node?.path.endsWith(".yaml")) {
+    if (
+      activeFile.node?.path.endsWith(".yml") ||
+      activeFile.node?.path.endsWith(".yaml")
+    ) {
       return "yaml";
     }
     if (activeFile.node?.path.endsWith(".md")) {
@@ -286,7 +322,7 @@ function EditorContent({
   };
 
   return (
-    <Editor
+    <CustomEditor
       key={activeFile?.node.path}
       value={typeof activeFile?.content === "string" ? activeFile.content : ""}
       onChange={(value) => {
@@ -326,12 +362,16 @@ function EditorContent({
         monaco.editor.setTheme("mutedTheme");
       }}
       onMount={(editor, monaco) => {
-        monaco.editor.setTheme("mutedTheme");
+        editorRef.current = editor;
+        monacoRef.current = monaco;
 
-        // Add cmd+k as a monaco keyboard listener
-        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK, () => {
-          setPromptBoxOpen(true);
-        });
+        monaco.editor.defineTheme("mutedTheme", {
+          ...customTheme,
+          colors: {
+            ...customTheme.colors,
+          },
+        } as any);
+        monaco.editor.setTheme("mutedTheme");
 
         // Prevent default behavior for cmd+s
         editor.addCommand(
@@ -340,16 +380,26 @@ function EditorContent({
             saveFile(activeFile?.node.path || "", editor.getValue());
           },
         );
+
+        // Prevent default behavior for cmd+s
+        editor.addCommand(
+          monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+          (e: any) => {
+            runQueryPreview();
+          },
+        );
+
+        editor.addCommand(
+          monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Enter,
+          (e: any) => {
+            compileActiveFile();
+          },
+        );
       }}
       theme="mutedTheme"
     />
   );
 }
-
-type QueryPreview = {
-  rows?: Object;
-  signed_url: string;
-};
 
 function EditorPageContent() {
   const [leftWidth, setLeftWidth] = useState(20);
@@ -362,7 +412,15 @@ function EditorPageContent() {
     height: topBarHeight,
   } = useResizeObserver();
 
-  const { files, activeFile } = useFiles();
+  const {
+    files,
+    activeFile,
+    runQueryPreview,
+    queryPreview,
+    queryPreviewError,
+    isQueryPreviewLoading,
+    setIsQueryPreviewLoading,
+  } = useFiles();
 
   const {
     sidebarLeftShown,
@@ -376,9 +434,7 @@ function EditorPageContent() {
   const [promptBoxOpen, setPromptBoxOpen] = useState(false);
   const [colDefs, setColDefs] = useState([]);
   const [rowData, setRowData] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
   const gridRef = useRef<AgGridReact>(null);
-  const [queryPreview, setQueryPreview] = useState<QueryPreview | null>(null);
 
   const treeRef = useRef<any>(null);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -386,7 +442,6 @@ function EditorPageContent() {
 
   const [filesearchQuery, setFilesearchQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [queryPreviewError, setQueryPreviewError] = useState(null);
   const pathname = usePathname();
   const {
     fetchFiles,
@@ -407,7 +462,7 @@ function EditorPageContent() {
   }, [branchId, isCloned]);
 
   useEffect(() => {
-    if (pathname && pathname.includes("/editor/")) {
+    if (pathname?.includes("/editor/")) {
       const id = pathname.split("/").slice(-1)[0];
       if (id && id.length > 0) {
         fetchBranch(id);
@@ -480,30 +535,6 @@ function EditorPageContent() {
     selectedIndex,
   ]);
 
-  const runQueryPreview = async () => {
-    setIsLoading(true);
-    setQueryPreview(null);
-    setQueryPreviewError(null);
-    if (
-      activeFile &&
-      activeFile.content &&
-      typeof activeFile.content === "string"
-    ) {
-      const dbtSql = activeFile.content;
-      try {
-        const preview = await executeQueryPreview({ dbtSql, branchId });
-        if (preview.error) {
-          setQueryPreviewError(preview.error);
-        } else {
-          setQueryPreview(preview);
-        }
-      } catch (e) {
-        setQueryPreviewError("Error running query");
-      }
-    }
-    setIsLoading(false);
-  };
-
   const getTablefromSignedUrl = async (signedUrl: string) => {
     const response = await fetch(signedUrl);
     if (response.ok) {
@@ -524,9 +555,8 @@ function EditorPageContent() {
       }));
       setColDefs(defs as any);
       setRowData(table.data);
-      // setDefaultDataChart(table.data, defs);
     }
-    setIsLoading(false);
+    setIsQueryPreviewLoading(false);
   };
 
   useEffect(() => {
@@ -548,7 +578,7 @@ function EditorPageContent() {
             minSize={15}
             maxSize={30}
             onResize={setLeftWidth}
-            className="border-r  text-gray-600"
+            className="border-r text-gray-600 dark:border-zinc-700"
           >
             <EditorSidebar />
           </Panel>
@@ -601,12 +631,12 @@ function EditorPageContent() {
                 </Panel> */}
         <PanelResizeHandle className="bg-transparent   transition-colors" />
         <Panel>
-          <div className="h-full bg-white" ref={topBarRef}>
+          <div className="h-full" ref={topBarRef}>
             <FileTabs
               topBarRef={topBarRef as any}
               topBarWidth={topBarWidth as number}
             />
-            <div className="py-2 w-full h-full">
+            <div className="w-full h-full">
               <PanelGroup direction="vertical" className="h-fit">
                 {promptBoxOpen && (
                   <PromptBox setPromptBoxOpen={setPromptBoxOpen} />
@@ -624,7 +654,7 @@ function EditorPageContent() {
                     colDefs={colDefs}
                     runQueryPreview={runQueryPreview}
                     queryPreviewError={queryPreviewError}
-                    isLoading={isLoading}
+                    isLoading={isQueryPreviewLoading}
                   />
                 )}
               </PanelGroup>
@@ -652,5 +682,10 @@ function EditorPageContent() {
 }
 
 export default function EditorPage() {
-  return <EditorPageContent />;
+  return (
+    <div>
+      <EditorPageContent />
+      <ConfirmSaveDialog />
+    </div>
+  );
 }

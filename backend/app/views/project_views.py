@@ -158,6 +158,37 @@ class ProjectViewSet(viewsets.ViewSet):
                     return Response(status=status.HTTP_404_NOT_FOUND)
 
                 if request.method == "GET":
+                    if not os.path.exists(filepath):
+                        return Response(
+                            {"error": "FILE_NOT_FOUND"},
+                            status=status.HTTP_404_NOT_FOUND,
+                        )
+
+                    download = (
+                        request.query_params.get("download", "false").lower() == "true"
+                    )
+                    if download:
+                        if not os.path.isfile(filepath):
+                            return Response(
+                                {"error": "Can only download files, not directories"},
+                                status=status.HTTP_400_BAD_REQUEST,
+                            )
+                        with open(filepath, "rb") as file:
+                            response = HttpResponse(
+                                file.read(), content_type="application/octet-stream"
+                            )
+                            response["Content-Disposition"] = (
+                                f'attachment; filename="{os.path.basename(filepath)}"'
+                            )
+                            return response
+
+                    file_size = os.path.getsize(filepath)
+                    FILE_SIZE_LIMIT = 1024 * 1024  # 1MB
+                    if file_size > FILE_SIZE_LIMIT:
+                        return Response(
+                            {"error": "FILE_EXCEEDS_SIZE_LIMIT"},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
                     with open(filepath, "r") as file:
                         file_content = file.read()
                     return Response({"contents": file_content})
@@ -215,6 +246,48 @@ class ProjectViewSet(viewsets.ViewSet):
                 "file_index": [root],
             }
         )
+
+    @action(detail=True, methods=["POST"], url_path="files/duplicate")
+    def duplicate(self, request, pk=None):
+        filepath = request.data.get("filepath")
+        if not filepath:
+            return Response(
+                {"success": False, "error": "filepath is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        project = Project.objects.get(id=pk)
+        try:
+            with project.repo_context() as (repo, env):
+                filepath = os.path.join(repo.working_tree_dir, unquote(filepath))
+                if not os.path.exists(filepath):
+                    return Response(
+                        {"success": False, "error": "File or directory not found"},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+
+                base_dir = os.path.dirname(filepath)
+                base_name = os.path.basename(filepath)
+                name, ext = os.path.splitext(base_name)
+
+                if os.path.isfile(filepath):
+                    print(f"copying file {filepath} to {base_dir}")
+                    new_name = f"{name} copy{ext}"
+                    print(f"new name: {new_name}")
+                    new_path = os.path.join(base_dir, new_name)
+                    print(f"new path: {new_path}")
+                    shutil.copy2(filepath, new_path)
+                else:
+                    new_name = f"{base_name} copy"
+                    new_path = os.path.join(base_dir, new_name)
+                    shutil.copytree(filepath, new_path)
+
+            return Response({"success": True}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"success": False, "error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
     @action(detail=True, methods=["GET"])
     def changes(self, request, pk=None):
@@ -411,3 +484,51 @@ class ProjectViewSet(viewsets.ViewSet):
                 "lineage": lineage_serializer.data,
             }
         )
+
+    class CompileQueryPayloadSerializer(serializers.Serializer):
+        filepath = serializers.CharField(required=True)
+
+        def validate_filepath(self, value):
+            return unquote(value)
+
+    @action(detail=True, methods=["POST"])
+    def compile(self, request, pk=None):
+        project = Project.objects.get(id=pk)
+        workspace = request.user.current_workspace()
+        dbt_resource = workspace.get_dbt_dev_details()
+
+        serializer = self.CompileQueryPayloadSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        filepath = serializer.validated_data.get("filepath")
+
+        with dbt_resource.dbt_repo_context(project_id=project.id, isolate=False) as (
+            project,
+            project_path,
+            _,
+        ):
+            project_filepath = os.path.join(project_path, filepath)
+            if not os.path.exists(project_filepath):
+                return Response(
+                    {"error": "File not found"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            with open(project_filepath, "r") as file:
+                dbt_sql = file.read()
+
+            try:
+                sql = project.fast_compile(dbt_sql)
+                if not sql:
+                    sql = project.preview(dbt_sql, data=False)
+
+            except Exception as e:
+                ## TODO: this is hacky, we'll eventually want a more robust error handling solution
+                if "Compilation Error" in str(e):
+                    error_message = str(e).split("Compilation Error")[1].strip()
+                    return Response(
+                        {"error": error_message},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                else:
+                    raise e
+
+            return Response(sql, status=status.HTTP_200_OK)

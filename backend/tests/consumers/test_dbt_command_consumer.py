@@ -1,5 +1,3 @@
-
-
 import asyncio
 
 import pytest
@@ -20,11 +18,9 @@ class TestDBTCommandConsumer:
 
     async def test_no_token(self):
         communicator = WebsocketCommunicator(application, self.url)
-
-        with pytest.raises(InvalidToken) as exc_info:
-            await communicator.connect()
-
-        assert "token_not_valid" in str(exc_info.value)
+        connected, _ = await communicator.connect()
+        assert not connected
+        await communicator.disconnect()
 
     async def test_valid_token(self, client_with_token):
         communicator = WebsocketCommunicator(
@@ -48,7 +44,9 @@ class TestDBTCommandConsumer:
         out = ""
         try:
             while True:
-                response = await communicator.receive_from(timeout=DBT_COMMAND_STREAM_TIMEOUT)
+                response = await communicator.receive_from(
+                    timeout=DBT_COMMAND_STREAM_TIMEOUT
+                )
                 out += response
         except (asyncio.TimeoutError, AssertionError):
             pass

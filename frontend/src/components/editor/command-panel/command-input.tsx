@@ -7,7 +7,7 @@ const CommandInput = React.forwardRef<HTMLInputElement, InputProps>(
     return (
       <div
         className={cn(
-          "flex h-10 w-full items-center rounded-md border border-input bg-white pl-3 text-sm ring-offset-background focus-within:ring-1 focus-within:ring-ring focus-within:ring-offset-2",
+          "flex h-10 w-full items-center rounded-md border border-input bg-white dark:bg-zinc-950 pl-3 text-sm ring-offset-background focus-within:ring-1 focus-within:ring-ring focus-within:ring-offset-2",
           className,
         )}
       >
@@ -15,7 +15,7 @@ const CommandInput = React.forwardRef<HTMLInputElement, InputProps>(
         <input
           {...props}
           ref={ref}
-          className="w-full p-2 placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full p-2 dark:bg-zinc-950 placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
         />
       </div>
     );

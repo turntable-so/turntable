@@ -166,6 +166,28 @@ class TestProjectViews:
         if not asset_only:
             assert len(lineage_out["column_links"]) > 0
 
+    def test_compile_query(self, client, project):
+        response = client.post(
+            f"/project/{project.id}/compile/",
+            {"filepath": safe_encode("models/marts/customer360/customers.sql")},
+        )
+        assert response.status_code == 200
+        assert 'select * from "mydb"' in response.json()
+
+    def test_duplicate_file(self, client, project):
+        response = client.post(
+            f"/project/{project.id}/files/duplicate/",
+            {"filepath": safe_encode("models/marts/customer360/customers.sql")},
+        )
+        assert response.status_code == 200
+
+    def test_duplicate_folder(self, client, project):
+        response = client.post(
+            f"/project/{project.id}/files/duplicate/",
+            {"filepath": safe_encode("models/marts/customer360")},
+        )
+        assert response.status_code == 200
+
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("local_postgres")

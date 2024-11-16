@@ -1,8 +1,8 @@
 import { LocalStorageKeys } from "@/app/constants/local-storage-keys";
 import {
-  Dispatch,
+  type Dispatch,
   type ReactNode,
-  SetStateAction,
+  type SetStateAction,
   createContext,
   useCallback,
   useContext,
@@ -23,10 +23,15 @@ import {
   discardBranchChanges,
   getProjectChanges,
   persistFile,
-  validateDbtQuery,
   changeFilePath,
   formatDbtQuery,
+  compileDbtQuery,
+  executeQueryPreview,
+  duplicateFileOrFolder,
 } from "../actions/actions";
+import { validateDbtQuery } from "../actions/client-actions";
+import { getDownloadableFile } from "../actions/client-actions";
+import { toast } from "sonner";
 
 export const MAX_RECENT_COMMANDS = 5;
 
@@ -86,8 +91,20 @@ type FilesContextType = {
   }) => void;
   saveFile: (path: string, content: string) => void;
   searchFileIndex: FileNode[];
-  createFileAndRefresh: (path: string, fileContents: string, isDirectory: boolean) => void;
+  openError: (params: {
+    id: string;
+    name: string;
+    errorMessage: string;
+    buttonLabel: string;
+    buttonOnClick: () => void;
+  }) => void;
+  createFileAndRefresh: (
+    path: string,
+    fileContents: string,
+    isDirectory: boolean,
+  ) => void;
   deleteFileAndRefresh: (path: string) => void;
+  duplicateFileOrFolderAndRefresh: (filePath: string) => void;
   createNewFileTab: () => void;
   changes: ProjectChanges | null;
   fetchChanges: (branchId: string) => void;
@@ -117,6 +134,29 @@ type FilesContextType = {
   setFormatOnSave: Dispatch<SetStateAction<boolean>>;
   createDirectoryAndRefresh: (path: string) => Promise<void>;
   filesLoading: boolean;
+  downloadFile: (path: string) => Promise<void>;
+  compileActiveFile: () => Promise<void>;
+  compiledSql: string | null;
+  isCompiling: boolean;
+  compileError: string | null;
+  showConfirmSaveDialog: boolean;
+  setShowConfirmSaveDialog: Dispatch<SetStateAction<boolean>>;
+  fileToClose: OpenedFile | null;
+  setFileToClose: Dispatch<SetStateAction<OpenedFile | null>>;
+  closeFilesToLeft: (file: OpenedFile) => void;
+  closeFilesToRight: (file: OpenedFile) => void;
+  closeAllOtherFiles: (file: OpenedFile) => void;
+  closeAllFiles: () => void;
+  runQueryPreview: () => Promise<void>;
+  queryPreview: QueryPreview | null;
+  queryPreviewError: string | null;
+  isQueryPreviewLoading: boolean;
+  setIsQueryPreviewLoading: Dispatch<SetStateAction<boolean>>;
+};
+
+type QueryPreview = {
+  rows?: Object;
+  signed_url: string;
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
@@ -147,6 +187,11 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   const [filesLoading, setFilesLoading] = useState(false);
   const [readOnly, setReadOnly] = useState<boolean | undefined>(undefined);
   const [isCloned, setIsCloned] = useState<boolean | undefined>(undefined);
+  const [queryPreview, setQueryPreview] = useState<QueryPreview | null>(null);
+  const [isQueryPreviewLoading, setIsQueryPreviewLoading] = useState(false);
+  const [queryPreviewError, setQueryPreviewError] = useState<string | null>(
+    null,
+  );
   const [pullRequestUrl, setPullRequestUrl] = useState<string | undefined>(
     undefined,
   );
@@ -174,6 +219,9 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     LocalStorageKeys.recentFiles(branchId),
     [],
   );
+  const [isCompiling, setIsCompiling] = useState(false);
+  const [compiledSql, setCompiledSql] = useState<string | null>(null);
+  const [compileError, setCompileError] = useState<string | null>(null);
   const [isCloning, setIsCloning] = useState(false);
   const [checkForProblemsOnEdit, setCheckForProblemsOnEdit] = useLocalStorage(
     LocalStorageKeys.checkForProblemsOnEdit(branchId),
@@ -187,6 +235,8 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   useEffect(() => {
     formatOnSaveRef.current = formatOnSave;
   }, [formatOnSave]);
+  const [showConfirmSaveDialog, setShowConfirmSaveDialog] = useState(false);
+  const [fileToClose, setFileToClose] = useState<OpenedFile | null>(null);
 
   const fetchBranch = async (id: string) => {
     if (id) {
@@ -274,37 +324,87 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     setFilesLoading(false);
   };
 
+  const openError = useCallback(
+    ({
+      id,
+      name,
+      errorMessage,
+    }: {
+      id: string;
+      name: string;
+      errorMessage: string;
+    }) => {
+      const errorNode: FileNode = {
+        name,
+        path: id,
+        type: "error",
+      };
+
+      const openedFileNode: OpenedFile = {
+        node: errorNode,
+        content: errorMessage,
+        isDirty: false,
+        view: "edit",
+      };
+
+      setOpenedFiles((prev) => [...prev, openedFileNode]);
+      setActiveFile(openedFileNode);
+    },
+    [setOpenedFiles, setActiveFile],
+  );
+
   const openFile = useCallback(
     async (node: FileNode) => {
-      if (node.type === "file") {
-        const existingFile = openedFiles.find((f) => f.node.path === node.path);
-        if (!existingFile) {
-          const { contents } = await fetchFileContents(branchId, node.path);
-          const newFile: OpenedFile = {
-            node,
-            content: contents,
-            isDirty: false,
-            view: "edit",
-          };
-          setOpenedFiles((prev) => {
-            return [...prev, newFile];
-          });
-          setActiveFile(newFile);
-        } else {
-          setActiveFile(existingFile);
-        }
-
-        setRecentFiles((prevRecentFiles) => {
-          const updatedRecentFiles = prevRecentFiles.filter(
-            (file) => file.path !== node.path,
-          );
-          updatedRecentFiles.unshift(node);
-          if (updatedRecentFiles.length > MAX_RECENT_COMMANDS) {
-            updatedRecentFiles.pop();
-          }
-          return updatedRecentFiles;
-        });
+      if (node.type !== "file") {
+        return;
       }
+
+      const existingFile = openedFiles.find((f) => f.node.path === node.path);
+      if (!existingFile) {
+        const { contents, error } = await fetchFileContents({
+          branchId,
+          path: node.path,
+        });
+        if (error === "FILE_NOT_FOUND") {
+          alert("We couldn't find this file. Please try again.");
+          return;
+        }
+        if (error === "FILE_EXCEEDS_SIZE_LIMIT") {
+          openError({
+            id: node.path,
+            name: node.name,
+            errorMessage: "FILE_EXCEEDS_SIZE_LIMIT",
+          });
+          return;
+        }
+        if (error) {
+          alert("Something went wrong. Please try again.");
+          return;
+        }
+        const newFile: OpenedFile = {
+          node,
+          content: contents,
+          isDirty: false,
+          view: "edit",
+        };
+        setOpenedFiles((prev) => {
+          return [...prev, newFile];
+        });
+        setActiveFile(newFile);
+      } else {
+        setActiveFile(existingFile);
+      }
+
+      setRecentFiles((prevRecentFiles) => {
+        const updatedRecentFiles = prevRecentFiles.filter(
+          (file) => file.path !== node.path,
+        );
+        updatedRecentFiles.unshift(node);
+        if (updatedRecentFiles.length > MAX_RECENT_COMMANDS) {
+          updatedRecentFiles.pop();
+        }
+        return updatedRecentFiles;
+      });
     },
     [openedFiles, branchId],
   );
@@ -353,9 +453,12 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
 
   const closeFile = useCallback(
     (file: OpenedFile) => {
-      const fileIndex = openedFiles.findIndex(
-        (f) => f.node.path === file.node.path,
-      );
+      if (file.isDirty) {
+        setFileToClose(file);
+        setShowConfirmSaveDialog(true);
+        return;
+      }
+
       const newOpenedFiles = openedFiles.filter(
         (f) => f.node.path !== file.node.path,
       );
@@ -374,8 +477,40 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     [openedFiles, activeFile],
   );
 
-  const createFileAndRefresh = async (path: string, fileContents: string, isDirectory: boolean) => {
+  const downloadFile = async (path: string) => {
+    const response = await getDownloadableFile({
+      branchId,
+      path,
+    });
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = path.split("/").pop() || "download";
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  };
+
+  const createFileAndRefresh = async (
+    path: string,
+    fileContents: string,
+    isDirectory: boolean,
+  ) => {
     await createFile(branchId, path, isDirectory, fileContents);
+    await fetchFiles();
+  };
+
+  const duplicateFileOrFolderAndRefresh = async (filePath: string) => {
+    const success = await duplicateFileOrFolder({
+      branchId,
+      filePath,
+    });
+    if (!success) {
+      toast.error("Failed to duplicate file");
+    }
     await fetchFiles();
   };
 
@@ -393,10 +528,10 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         prev.map((f) =>
           f.node.path === path
             ? {
-              ...f,
-              content,
-              node: { ...f.node, type: newNodeType },
-            }
+                ...f,
+                content,
+                node: { ...f.node, type: newNodeType },
+              }
             : f,
         ),
       );
@@ -423,26 +558,27 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   }, []);
 
   const saveFile = async (filepath: string, content: string) => {
-    if (activeFile) {
-      console.log("formatOnSaveRef.current", formatOnSaveRef.current);
-      const result = await persistFile({
-        branchId,
-        filePath: filepath,
-        fileContents: content,
-        format: formatOnSaveRef.current,
-      });
-      const newContent = result.content;
-      setOpenedFiles((prev) =>
-        prev.map((f) =>
-          f.node.path === filepath
-            ? { ...f, isDirty: false, content: newContent }
-            : f,
-        ),
-      );
-      setActiveFile((prev) =>
-        prev?.node.path === filepath ? { ...prev, content: newContent } : prev,
-      );
+    if (!activeFile) {
+      return;
     }
+
+    const result = await persistFile({
+      branchId,
+      filePath: filepath,
+      fileContents: content,
+      format: formatOnSaveRef.current,
+    });
+    const newContent = result.content;
+    setOpenedFiles((prev) =>
+      prev.map((f) =>
+        f.node.path === filepath
+          ? { ...f, isDirty: false, content: newContent }
+          : f,
+      ),
+    );
+    setActiveFile((prev) =>
+      prev?.node.path === filepath ? { ...prev, content: newContent } : prev,
+    );
   };
 
   const deleteFileAndRefresh = async (filepath: string) => {
@@ -471,39 +607,53 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     return result;
   };
 
-  const validateQuery = async (query: string) => {
-    setProblems((prev) => ({ ...prev, loading: true, data: [] }));
-    const data = await validateDbtQuery({
-      query,
-      project_id: branchId,
-    });
+  const validateQuery = async (query: string, signal?: AbortSignal) => {
+    try {
+      setProblems((prev) => ({ ...prev, loading: true, data: [] }));
+      const data = await validateDbtQuery(
+        {
+          query,
+          project_id: branchId,
+        },
+        signal,
+      );
 
-    if (data.error) {
+      if (data.error) {
+        setProblems((prev) => ({
+          ...prev,
+          loading: false,
+          data: [{ message: data.error }],
+        }));
+        return;
+      }
+
+      if (!data.errors) {
+        setProblems((prev) => ({
+          ...prev,
+          loading: false,
+          data: [],
+        }));
+        return;
+      }
+
+      const formattedProblems = data.errors.map((error: any) => ({
+        message: error.msg,
+      }));
       setProblems((prev) => ({
         ...prev,
         loading: false,
-        data: [{ message: data.error }],
+        data: formattedProblems,
       }));
-      return;
-    }
-
-    if (!data.errors) {
+    } catch (e: any) {
+      if (e instanceof Error && e.name === "AbortError") {
+        return;
+      }
       setProblems((prev) => ({
         ...prev,
         loading: false,
-        data: [],
+        data: [{ message: "An error occurred while validating the query" }],
       }));
-      return;
     }
-
-    const formattedProblems = data.errors.map((error: any) => ({
-      message: error.msg,
-    }));
-    setProblems((prev) => ({
-      ...prev,
-      loading: false,
-      data: formattedProblems,
-    }));
   };
 
   useEffect(() => {
@@ -512,7 +662,14 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
       typeof debouncedActiveFileContent === "string" &&
       checkForProblemsOnEdit
     ) {
-      validateQuery(debouncedActiveFileContent);
+      const abortController = new AbortController();
+      const signal = abortController.signal;
+
+      validateQuery(debouncedActiveFileContent, signal);
+
+      return () => {
+        abortController.abort();
+      };
     }
   }, [debouncedActiveFileContent, checkForProblemsOnEdit]);
 
@@ -547,6 +704,102 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     await fetchFiles();
   };
 
+  const compileActiveFile = async () => {
+    setIsCompiling(true);
+    setCompileError(null);
+    setCompiledSql(null);
+    const result = await compileDbtQuery(branchId, {
+      filepath: activeFile?.node.path || "",
+    });
+    if (result.error) {
+      setCompileError(result.error);
+    } else {
+      setCompiledSql(result);
+    }
+    setIsCompiling(false);
+  };
+
+  const closeFilesToLeft = useCallback(
+    (file: OpenedFile) => {
+      const fileIndex = openedFiles.findIndex(
+        (f) => f.node.path === file.node.path,
+      );
+      if (fileIndex > 0) {
+        const filesToClose = openedFiles.slice(0, fileIndex);
+        const dirtyFilesToKeep = filesToClose.filter((f) => f.isDirty);
+        const newOpenedFiles = [
+          ...dirtyFilesToKeep,
+          ...openedFiles.slice(fileIndex),
+        ];
+        setOpenedFiles(newOpenedFiles);
+        if (!newOpenedFiles.includes(activeFile)) {
+          setActiveFile(newOpenedFiles[0] || null);
+        }
+      }
+    },
+    [openedFiles, activeFile],
+  );
+
+  const closeFilesToRight = useCallback(
+    (file: OpenedFile) => {
+      const fileIndex = openedFiles.findIndex(
+        (f) => f.node.path === file.node.path,
+      );
+      if (fileIndex >= 0 && fileIndex < openedFiles.length - 1) {
+        const filesToClose = openedFiles.slice(fileIndex + 1);
+        const dirtyFilesToKeep = filesToClose.filter((f) => f.isDirty);
+        const newOpenedFiles = [
+          ...openedFiles.slice(0, fileIndex + 1),
+          ...dirtyFilesToKeep,
+        ];
+        setOpenedFiles(newOpenedFiles);
+        if (!newOpenedFiles.includes(activeFile)) {
+          setActiveFile(newOpenedFiles[newOpenedFiles.length - 1] || null);
+        }
+      }
+    },
+    [openedFiles, activeFile],
+  );
+
+  const closeAllOtherFiles = useCallback(
+    (file: OpenedFile) => {
+      const filesToKeep = openedFiles.filter(
+        (f) => f.isDirty || f.node.path === file.node.path,
+      );
+      setOpenedFiles(filesToKeep);
+      setActiveFile(file);
+    },
+    [openedFiles],
+  );
+
+  const closeAllFiles = useCallback(() => {
+    const dirtyFilesToKeep = openedFiles.filter((f) => f.isDirty);
+    setOpenedFiles(dirtyFilesToKeep);
+    if (!dirtyFilesToKeep.includes(activeFile)) {
+      setActiveFile(dirtyFilesToKeep[0] || null);
+    }
+  }, [openedFiles, activeFile]);
+
+  const runQueryPreview = async () => {
+    setIsQueryPreviewLoading(true);
+    setQueryPreview(null);
+    setQueryPreviewError(null);
+    if (activeFile?.content && typeof activeFile.content === "string") {
+      const dbtSql = activeFile.content;
+      try {
+        const preview = await executeQueryPreview({ dbtSql, branchId });
+        if (preview.error) {
+          setQueryPreviewError(preview.error);
+        } else {
+          setQueryPreview(preview);
+        }
+      } catch (e) {
+        setQueryPreviewError("Error running query");
+      }
+    }
+    setIsQueryPreviewLoading(false);
+  };
+
   return (
     <FilesContext.Provider
       value={{
@@ -564,6 +817,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         searchFileIndex,
         createFileAndRefresh,
         deleteFileAndRefresh,
+        duplicateFileOrFolderAndRefresh,
         createNewFileTab,
         changes,
         fetchChanges,
@@ -590,6 +844,25 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         setFormatOnSave,
         createDirectoryAndRefresh,
         filesLoading,
+        downloadFile,
+        openError,
+        compileActiveFile,
+        isCompiling,
+        compiledSql,
+        compileError,
+        showConfirmSaveDialog,
+        setShowConfirmSaveDialog,
+        fileToClose,
+        setFileToClose,
+        closeFilesToLeft,
+        closeFilesToRight,
+        closeAllOtherFiles,
+        closeAllFiles,
+        runQueryPreview,
+        queryPreview,
+        queryPreviewError,
+        isQueryPreviewLoading,
+        setIsQueryPreviewLoading,
       }}
     >
       {children}

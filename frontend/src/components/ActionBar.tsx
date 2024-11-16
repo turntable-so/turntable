@@ -11,7 +11,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Fragment, useEffect, useRef, useState } from "react";
 import useResizeObserver from "use-resize-observer";
-import { getAssetIndex, getNotebooks } from "../app/actions/actions";
+import { getAssetIndex } from "../app/actions/actions";
 import ModelPreviewer from "./ModelPreviewer";
 import {
   ResizableHandle,
@@ -203,12 +203,12 @@ export default function ActionBar({
         .map((name) =>
           nameGrouped[name].length > 1
             ? createChildNode(
-              resource,
-              assetType,
-              nameGrouped[name],
-              getAssetIcon,
-              name,
-            )
+                resource,
+                assetType,
+                nameGrouped[name],
+                getAssetIcon,
+                name,
+              )
             : createFinalNode(nameGrouped[name][0], getLeafIcon(assetType)),
         ),
     });
@@ -270,7 +270,7 @@ export default function ActionBar({
             ref={searchRef}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="focus:outline-none bg-gray-100 w-full text-sm rounded-md py-2 px-2 border"
+            className="focus:outline-none bg-gray-100 dark:bg-zinc-900 w-full text-sm rounded-md py-2 px-2 border"
             placeholder="Filter assets"
           />
         </div>
@@ -279,15 +279,16 @@ export default function ActionBar({
             {filteredAssets.length} Assets
           </div> */}
           {selectedTagFilters.length + selectedTypeFilters.length > 0 && (
-            <div className="text-xs mt-2 px-1 bg-gray-100">
+            <div className="text-xs mt-2 px-1 bg-gray-100 dark:bg-zinc-900">
               {selectedTagFilters.length + selectedTypeFilters.length} Filters
             </div>
           )}
         </div>
       </div>
       <div
-        className={`flex-grow border-t mt-0 h-500 ${isFilterPopoverOpen ? "z-[-1]" : ""
-          }`}
+        className={`flex-grow border-t dark:border-zinc-900 mt-0 h-500 ${
+          isFilterPopoverOpen ? "z-[-1]" : ""
+        }`}
       >
         <Tabs defaultValue="assets" className="h-full">
           <TabsList
@@ -295,10 +296,10 @@ export default function ActionBar({
             style={
               !isNotebook
                 ? {
-                  opacity: 0,
-                  pointerEvents: "none",
-                  height: 0,
-                }
+                    opacity: 0,
+                    pointerEvents: "none",
+                    height: 0,
+                  }
                 : {}
             }
           >
@@ -307,9 +308,9 @@ export default function ActionBar({
               style={
                 !isNotebook
                   ? {
-                    opacity: 0,
-                    pointerEvents: "none",
-                  }
+                      opacity: 0,
+                      pointerEvents: "none",
+                    }
                   : {}
               }
             >
@@ -371,7 +372,10 @@ export default function ActionBar({
                   </ResizablePanel>
                   {context !== "EDITOR" && (
                     <>
-                      <ResizableHandle withHandle className="bg-gray-300" />
+                      <ResizableHandle
+                        withHandle
+                        className="bg-gray-300 dark:bg-zinc-700"
+                      />
                       <ResizablePanel
                         defaultSize={75}
                         className="p-0"
@@ -403,21 +407,24 @@ export default function ActionBar({
                   <Button
                     variant={"ghost"}
                     size="icon"
-                    className={`w-full ${isCurrentNotebook(pathName, notebook.id)
-                      ? "opacity-100"
-                      : "opacity-50"
-                      } ${isCurrentNotebook(pathName, notebook.id)
+                    className={`w-full ${
+                      isCurrentNotebook(pathName, notebook.id)
+                        ? "opacity-100"
+                        : "opacity-50"
+                    } ${
+                      isCurrentNotebook(pathName, notebook.id)
                         ? "bg-"
                         : "bg-transparent"
-                      } `}
+                    } `}
                     aria-label={notebook.title}
                   >
                     <Link href={`/notebooks/${notebook.id}`} className="w-full">
                       <div
-                        className={`${isCurrentNotebook(pathName, notebook.id)
-                          ? "bg-[#ebebeb]"
-                          : "hover:bg-[#ebebeb]"
-                          } px-4 p-2 w-full flex  space-x-2`}
+                        className={`${
+                          isCurrentNotebook(pathName, notebook.id)
+                            ? "bg-[#ebebeb]"
+                            : "hover:bg-[#ebebeb]"
+                        } px-4 p-2 w-full flex  space-x-2`}
                       >
                         <p className="font-normal text-[15px]">
                           {notebook.title}
