@@ -301,6 +301,48 @@ class ProjectViewSet(viewsets.ViewSet):
             }
         )
 
+    @action(detail=True, methods=["POST"], url_path="files/duplicate")
+    def duplicate(self, request, pk=None):
+        filepath = request.data.get("filepath")
+        if not filepath:
+            return Response(
+                {"success": False, "error": "filepath is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        project = Project.objects.get(id=pk)
+        try:
+            with project.repo_context() as (repo, env):
+                filepath = os.path.join(repo.working_tree_dir, unquote(filepath))
+                if not os.path.exists(filepath):
+                    return Response(
+                        {"success": False, "error": "File or directory not found"},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+
+                base_dir = os.path.dirname(filepath)
+                base_name = os.path.basename(filepath)
+                name, ext = os.path.splitext(base_name)
+
+                if os.path.isfile(filepath):
+                    print(f"copying file {filepath} to {base_dir}")
+                    new_name = f"{name} copy{ext}"
+                    print(f"new name: {new_name}")
+                    new_path = os.path.join(base_dir, new_name)
+                    print(f"new path: {new_path}")
+                    shutil.copy2(filepath, new_path)
+                else:
+                    new_name = f"{base_name} copy"
+                    new_path = os.path.join(base_dir, new_name)
+                    shutil.copytree(filepath, new_path)
+
+            return Response({"success": True}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"success": False, "error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
     @action(detail=True, methods=["GET"])
     def changes(self, request, pk=None):
         project = Project.objects.get(id=pk)

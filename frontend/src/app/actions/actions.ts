@@ -620,6 +620,23 @@ export async function deleteFile(branchId: string, filePath: string) {
   return response.ok;
 }
 
+export async function duplicateFileOrFolder({
+  branchId,
+  filePath,
+}: {
+  branchId: string;
+  filePath: string;
+}) {
+  const response = await fetcher(`/project/${branchId}/files/duplicate/`, {
+    cookies,
+    method: "POST",
+    body: {
+      filepath: filePath,
+    },
+  });
+  return response.ok;
+}
+
 export async function infer({
   instructions,
   content,
@@ -767,9 +784,12 @@ export async function formatDbtQuery(payload: { query: string }) {
   return response.json();
 }
 
-export async function compileDbtQuery(project_id: string, payload: {
-  filepath: string;
-}) {
+export async function compileDbtQuery(
+  project_id: string,
+  payload: {
+    filepath: string;
+  },
+) {
   const response = await fetcher(`/project/${project_id}/compile/`, {
     cookies,
     method: "POST",

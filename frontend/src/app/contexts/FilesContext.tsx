@@ -27,9 +27,11 @@ import {
   formatDbtQuery,
   compileDbtQuery,
   executeQueryPreview,
+  duplicateFileOrFolder,
 } from "../actions/actions";
 import { validateDbtQuery } from "../actions/client-actions";
 import { getDownloadableFile } from "../actions/client-actions";
+import { toast } from "sonner";
 
 export const MAX_RECENT_COMMANDS = 5;
 
@@ -102,6 +104,7 @@ type FilesContextType = {
     isDirectory: boolean,
   ) => void;
   deleteFileAndRefresh: (path: string) => void;
+  duplicateFileOrFolderAndRefresh: (filePath: string) => void;
   createNewFileTab: () => void;
   changes: ProjectChanges | null;
   fetchChanges: (branchId: string) => void;
@@ -500,6 +503,17 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     await fetchFiles();
   };
 
+  const duplicateFileOrFolderAndRefresh = async (filePath: string) => {
+    const success = await duplicateFileOrFolder({
+      branchId,
+      filePath,
+    });
+    if (!success) {
+      toast.error("Failed to duplicate file");
+    }
+    await fetchFiles();
+  };
+
   const updateLoaderContent = useCallback(
     ({
       path,
@@ -803,6 +817,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         searchFileIndex,
         createFileAndRefresh,
         deleteFileAndRefresh,
+        duplicateFileOrFolderAndRefresh,
         createNewFileTab,
         changes,
         fetchChanges,
