@@ -22,8 +22,8 @@ export default function CommandPanel({
             <div className="w-1/3 flex flex-col border-2 rounded-md overflow-y-auto">
               <CommandPanelList />
             </div>
-            <div className="w-2/3 flex flex-col rounded-md border-2 p-2 overflow-y-auto bg-black text-white">
-              <CommandLog bottomPanelHeight={componentHeight} />
+            <div className="w-2/3 flex flex-col rounded-md border-2 p-2 overflow-y-auto bg-black text-white hide-scrollbar">
+              <CommandLog />
             </div>
           </div>
         ) : (
