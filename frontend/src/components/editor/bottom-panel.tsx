@@ -308,19 +308,6 @@ export default function BottomPanel({
                   }}
                   height={bottomPanelHeight}
                   width={bottomPanelWidth}
-                  beforeMount={(monaco) => {
-                    monaco.editor.defineTheme("mutedTheme", {
-                      ...customTheme,
-                      colors: {
-                        ...customTheme.colors,
-                      },
-                    } as any);
-                    monaco.editor.setTheme("mutedTheme");
-                  }}
-                  onMount={(editor, monaco) => {
-                    monaco.editor.setTheme("mutedTheme");
-                  }}
-                  theme="mutedTheme"
                 />
               )}
             </div>
