@@ -35,6 +35,7 @@ import { Loader2 } from "lucide-react";
 import { useAppContext } from "../../contexts/AppContext";
 import { LineageControls } from "./LineageControls";
 import LineageOptionsPanel from "./LineageOptionsPanel";
+import { usePathname } from "next/navigation";
 
 const nodeTypes = {
   custom: ColumnLineageNode,
@@ -162,6 +163,8 @@ const ColumnLineageFlow = () => {
     hoveredColumn,
   ]);
 
+  const pathName = usePathname();
+
   useLayoutEffect(() => {
     reactFlowInstance?.fitView({
       padding: 0.2,
@@ -244,7 +247,7 @@ const ColumnLineageFlow = () => {
     >
       <LineageOptionsPanel />
       <LineageControls />
-      <FilterPanel />
+      {pathName.includes("/lineage") && <FilterPanel />}
       {isLineageLoading && (
         <Panel
           className="flex flex-col w-full h-full items-center justify-center"

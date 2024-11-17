@@ -15,11 +15,11 @@ import {
   Table as TableIcon,
   Terminal as TerminalIcon,
 } from "lucide-react";
-import { Fragment, useEffect } from "react";
+import { Fragment, useContext, useEffect } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { Panel, PanelResizeHandle } from "react-resizable-panels";
 import useResizeObserver from "use-resize-observer";
-import { LineageView } from "../lineage/LineageView";
+import { LineageView, LineageViewContext } from "../lineage/LineageView";
 import { Button } from "../ui/button";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import CommandPanel from "./command-panel";
@@ -58,8 +58,7 @@ export default function BottomPanel({
   isLoading: boolean;
   queryPreviewError: string | null;
 }) {
-  const { fetchFileBasedLineage, lineageData, assetOnly, setAssetOnly } =
-    useLineage();
+  const { fetchFileBasedLineage, lineageData } = useLineage();
   const {
     activeFile,
     branchId,
@@ -70,6 +69,12 @@ export default function BottomPanel({
     compileError,
     isQueryPreviewLoading,
   } = useFiles();
+
+  const {
+    lineageOptions,
+    setLineageOptionsAndRefetch,
+  } = useContext(LineageViewContext);
+
   const [activeTab, setActiveTab] = useBottomPanelTabs({
     branchId: branchId || "",
   });
@@ -199,13 +204,7 @@ export default function BottomPanel({
           )}
           {activeTab === "lineage" && (
             <div className="flex items-center justify-center gap-2">
-              <Switch
-                checked={!assetOnly}
-                onCheckedChange={() => {
-                  setAssetOnly(!assetOnly);
-                }}
-              />
-              <div className="text-xs font-medium">Show Columns</div>
+
               <Button
                 size="sm"
                 onClick={() =>
@@ -214,7 +213,7 @@ export default function BottomPanel({
                     branchId,
                     // TODO: we need to get the selected type from the LineageView,
                     // but right now that would take too much effort to refactor that
-                    lineageType: "all",
+                    lineage_type: "all",
                   })
                 }
                 disabled={lineageData[activeFile?.node.path || ""]?.isLoading}

@@ -56,8 +56,8 @@ export const LineageProvider: React.FC<{ children: ReactNode }> = ({
     const result = await getProjectBasedLineage({
       filePath,
       branchId,
-      lineage_type: 'all',
-      successorq_depth: 1,
+      lineage_type: "all",
+      successor_depth: 1,
       predecessor_depth: 1,
       asset_only: true,
     });
