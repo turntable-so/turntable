@@ -15,7 +15,7 @@ import {
   Table as TableIcon,
   Terminal as TerminalIcon,
 } from "lucide-react";
-import { Fragment } from "react";
+import { Fragment, useEffect } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { Panel, PanelResizeHandle } from "react-resizable-panels";
 import useResizeObserver from "use-resize-observer";
@@ -79,6 +79,16 @@ export default function BottomPanel({
     height: bottomPanelHeight,
     width: bottomPanelWidth,
   } = useResizeObserver();
+
+
+  useEffect(() => {
+    if (activeFile) {
+      fetchFileBasedLineage({
+        filePath: activeFile.node.path,
+        branchId,
+      });
+    }
+  }, [activeFile?.node.path]);
 
   const showPreviewQueryButton =
     activeTab === "results" &&
@@ -274,14 +284,7 @@ export default function BottomPanel({
                     )}
                   {lineageData?.[activeFile?.node.path || ""] &&
                     lineageData[activeFile?.node.path || ""].error && (
-                      <div
-                        className="w-full bg-gray-200 flex items-center justify-center"
-                        style={{ height: bottomPanelHeight }}
-                      >
-                        <div className="text-red-500 text-sm">
-                          {lineageData[activeFile?.node.path || ""].error}
-                        </div>
-                      </div>
+                      <ErrorMessage error={lineageData[activeFile?.node.path || ""].error} />
                     )}
                 </>
               </ErrorBoundary>

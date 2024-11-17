@@ -2,25 +2,27 @@ import { type ReactNode, createContext, useContext, useState } from "react";
 import { getProjectBasedLineage } from "../actions/actions";
 
 type LineageContextType = {
-  lineageData: {
-    [filePath: string]: {
-      data: any;
-      isLoading: boolean;
-      error: string | null;
-    };
-  };
+  lineageData: LineageData;
   fetchFileBasedLineage: ({
     filePath,
     branchId,
-    lineageType,
   }: {
     filePath: string;
     branchId: string;
-    lineageType: "all" | "direct_only";
   }) => Promise<void>;
-  setFilePathToLoading: ({ loading: boolean, filePath: string }) => void;
-  assetOnly: boolean;
-  setAssetOnly: (assetOnly: boolean) => void;
+  setFilePathToLoading: ({ loading, filePath }: { loading: boolean; filePath: string }) => void;
+};
+
+type LineageData = {
+  [filePath: string]: {
+    data: any;
+    isLoading: boolean;
+    error: string | null;
+    assetOnly: boolean;
+    predecessorDepth: number;
+    successorDepth: number;
+    lineageType: "all" | "direct_only";
+  };
 };
 
 export const LineageContext = createContext<LineageContextType | undefined>(
@@ -30,19 +32,19 @@ export const LineageContext = createContext<LineageContextType | undefined>(
 export const LineageProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const [lineageData, setLineageData] = useState({});
-  const [assetOnly, setAssetOnly] = useState(true);
-  const [loadingColumnLineage, setLoadingColumnLineage] = useState(false);
+  const [lineageData, setLineageData] = useState<LineageData>({});
 
   const fetchFileBasedLineage = async ({
     filePath,
     branchId,
-    lineageType,
   }: {
     filePath: string;
     branchId: string;
-    lineageType: "all" | "direct_only";
   }) => {
+    if (!branchId || !filePath || !filePath.endsWith(".sql")) {
+      return;
+    }
+    console.log("fetching lineage for", filePath);
     setLineageData((prev) => ({
       ...prev,
       [filePath]: {
@@ -54,10 +56,10 @@ export const LineageProvider: React.FC<{ children: ReactNode }> = ({
     const result = await getProjectBasedLineage({
       filePath,
       branchId,
-      lineage_type: lineageType,
-      successor_depth: 1,
+      lineage_type: 'all',
+      successorq_depth: 1,
       predecessor_depth: 1,
-      asset_only: assetOnly,
+      asset_only: true,
     });
     if (result.error) {
       setLineageData((prev) => ({
@@ -66,6 +68,7 @@ export const LineageProvider: React.FC<{ children: ReactNode }> = ({
           data: null,
           isLoading: false,
           error: result.error,
+          assetOnly: true,
         },
       }));
     } else {
@@ -76,6 +79,7 @@ export const LineageProvider: React.FC<{ children: ReactNode }> = ({
           data: { lineage, root_asset },
           isLoading: false,
           error: null,
+          assetOnly: true,
         },
       }));
     }
@@ -100,8 +104,6 @@ export const LineageProvider: React.FC<{ children: ReactNode }> = ({
         lineageData,
         fetchFileBasedLineage,
         setFilePathToLoading,
-        assetOnly,
-        setAssetOnly,
       }}
     >
       {children}

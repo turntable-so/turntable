@@ -420,7 +420,6 @@ class ProjectViewSet(viewsets.ViewSet):
         lineage_type = serializers.ChoiceField(
             choices=["all", "direct_only"], required=False, default="all"
         )
-        defer = serializers.BooleanField(required=False, default=False)
 
     @action(detail=True, methods=["GET"])
     def lineage(self, request, pk=None):
@@ -437,33 +436,13 @@ class ProjectViewSet(viewsets.ViewSet):
         predecessor_depth = serializer.validated_data.get("predecessor_depth")
         successor_depth = serializer.validated_data.get("successor_depth")
         lineage_type = serializer.validated_data.get("lineage_type")
-        defer = serializer.validated_data.get("defer")
 
-        if defer:
-            with dbt_details.dbt_transition_context(
-                project_id=project.id, isolate=False
-            ) as (
-                transition,
-                _,
-                repo,
-            ):
-                root_asset, lineage = get_lineage_helper(
-                    proj=transition.after,
-                    before_proj=transition.before,
-                    resource=dbt_details.resource,
-                    filepath=filepath,
-                    predecessor_depth=predecessor_depth,
-                    successor_depth=successor_depth,
-                    lineage_type=lineage_type,
-                    defer=defer,
-                    asset_only=asset_only,
-                )
-        else:
-            with dbt_details.dbt_repo_context(project_id=project.id, isolate=False) as (
-                proj,
-                _,
-                _,
-            ):
+        with dbt_details.dbt_repo_context(project_id=project.id, isolate=False) as (
+            proj,
+            _,
+            _,
+        ):
+            try:
                 root_asset, lineage = get_lineage_helper(
                     proj=proj,
                     before_proj=None,
@@ -472,8 +451,18 @@ class ProjectViewSet(viewsets.ViewSet):
                     predecessor_depth=predecessor_depth,
                     successor_depth=successor_depth,
                     lineage_type=lineage_type,
-                    defer=defer,
+                    defer=False,
                     asset_only=asset_only,
+                )
+            except KeyError as e:
+                return Response(
+                    {"error": f"Node {str(e)} does not exist in graph"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            except ValueError as e:
+                return Response(
+                    {"error": str(e)},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
         asset_serializer = AssetSerializer(root_asset, context={"request": request})
