@@ -352,26 +352,10 @@ function EditorContent({
         renderLineHighlight: "none",
       }}
       width={containerWidth - 2}
-      beforeMount={(monaco) => {
-        monaco.editor.defineTheme("mutedTheme", {
-          ...customTheme,
-          colors: {
-            ...customTheme.colors,
-          },
-        } as any);
-        monaco.editor.setTheme("mutedTheme");
-      }}
       onMount={(editor, monaco) => {
         editorRef.current = editor;
         monacoRef.current = monaco;
-
-        monaco.editor.defineTheme("mutedTheme", {
-          ...customTheme,
-          colors: {
-            ...customTheme.colors,
-          },
-        } as any);
-        monaco.editor.setTheme("mutedTheme");
+        editor.updateOptions({ theme: "mutedTheme" });
 
         // Prevent default behavior for cmd+s
         editor.addCommand(
@@ -397,7 +381,6 @@ function EditorContent({
           },
         );
       }}
-      theme="mutedTheme"
     />
   );
 }
@@ -416,11 +399,11 @@ function EditorPageContent() {
   const {
     files,
     activeFile,
-    runQueryPreview,
     queryPreview,
     queryPreviewError,
     isQueryPreviewLoading,
     setIsQueryPreviewLoading,
+    saveFile,
   } = useFiles();
 
   const {
@@ -451,6 +434,8 @@ function EditorPageContent() {
     branchId,
     isCloned,
     cloneBranch,
+    compileActiveFile,
+    runQueryPreview
   } = useFiles();
 
   useEffect(() => {
@@ -484,6 +469,12 @@ function EditorPageContent() {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey) {
         switch (event.key.toLowerCase()) {
+          case "s":
+            event.preventDefault();
+            if (activeFile?.node.path) {
+              saveFile(activeFile.node.path, activeFile.content as string);
+            }
+            break;
           case "b":
             event.preventDefault();
             if (event.shiftKey) {
@@ -499,6 +490,14 @@ function EditorPageContent() {
           case "j":
             event.preventDefault();
             setBottomPanelShown(!bottomPanelShown);
+            break;
+          case "enter":
+            event.preventDefault();
+            if (event.shiftKey) {
+              compileActiveFile();
+            } else {
+              runQueryPreview();
+            }
             break;
         }
       }
@@ -534,6 +533,10 @@ function EditorPageContent() {
     bottomPanelShown,
     isSearchFocused,
     selectedIndex,
+    activeFile,
+    saveFile,
+    runQueryPreview,
+    compileActiveFile
   ]);
 
   const getTablefromSignedUrl = async (signedUrl: string) => {
