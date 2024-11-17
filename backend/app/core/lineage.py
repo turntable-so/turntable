@@ -1,7 +1,6 @@
 from app.core.dbt import LiveDBTParser
 from app.models.resources import Resource
 from vinyl.lib.dbt import DBTProject, DBTTransition
-from scripts.debug.pyinstrument import pyprofile
 
 
 def get_lineage_helper(
