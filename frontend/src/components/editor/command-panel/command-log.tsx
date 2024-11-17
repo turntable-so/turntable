@@ -53,7 +53,7 @@ export default function CommandLog() {
 
   if (isExpanded) {
     return (
-      <div className="fixed inset-0 z-50 bg-white dark:bg-black overflow-hidden">
+      <div className="fixed inset-0 z-50 bg-black overflow-hidden">
         <Button
           variant="ghost"
           size="icon"
