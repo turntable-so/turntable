@@ -361,7 +361,7 @@ function EditorContent({
         editor.addCommand(
           monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
           (e: any) => {
-            console.log("saving file", activeFile?.node.path);
+            e.preventDefault();
             saveFile(activeFile?.node.path || "", editor.getValue());
           },
         );

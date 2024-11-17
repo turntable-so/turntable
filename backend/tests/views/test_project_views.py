@@ -143,7 +143,10 @@ class TestProjectViews:
             "models/staging/stg_products.sql",
         ],
     )
-    def test_get_project_based_lineage_view(self, client, project, filepath_param):
+    @pytest.mark.parametrize("asset_only", [True, False])
+    def test_get_project_based_lineage_view(
+        self, client, project, filepath_param, asset_only
+    ):
         encoded_filepath = safe_encode(filepath_param)
         response = client.get(
             build_url(
@@ -152,12 +155,16 @@ class TestProjectViews:
                     "filepath": encoded_filepath,
                     "predecessor_depth": 1,
                     "successor_depth": 1,
+                    "asset_only": asset_only,
                 },
             )
         )
         assert response.status_code == 200
-        assert len(response.json()["lineage"]["asset_links"]) > 0
-        assert len(response.json()["lineage"]["column_links"]) > 0
+
+        lineage_out = response.json()["lineage"]
+        assert len(lineage_out["asset_links"]) > 0
+        if not asset_only:
+            assert len(lineage_out["column_links"]) > 0
 
     def test_compile_query(self, client, project):
         response = client.post(

@@ -36,6 +36,7 @@ export type LineageOptions = {
   lineageType: "all" | "direct_only";
   predecessor_depth: number;
   successor_depth: number;
+  asset_only: boolean;
 };
 
 export const LineageViewContext = React.createContext<{
@@ -77,7 +78,7 @@ export const LineageViewContext = React.createContext<{
   lineage: null,
   isTableOnly: true,
   isFilterOpen: false,
-  toggleFilter: () => {},
+  toggleFilter: () => { },
   isLoading: true,
   isLoadingColumns: true,
   error: null,
@@ -93,22 +94,23 @@ export const LineageViewContext = React.createContext<{
     predecessor_depth: 1,
     successor_depth: 1,
     lineageType: "all",
+    asset_only: true,
   },
   isLineageOptionsPanelOpen: false,
-  setIsLineageOptionsPanelOpen: () => {},
-  handleSelectColumn: () => {},
-  handleExpandNode: () => {},
-  handleColumnHover: () => {},
+  setIsLineageOptionsPanelOpen: () => { },
+  handleSelectColumn: () => { },
+  handleExpandNode: () => { },
+  handleColumnHover: () => { },
   onTableHeaderClick: () => Promise.resolve(),
-  onMouseEnterNode: () => {},
-  onMouseLeaveNode: () => {},
-  updateHoveredEdge: () => {},
-  updateSelectedEdge: () => {},
-  updateGraph: () => {},
+  onMouseEnterNode: () => { },
+  onMouseLeaveNode: () => { },
+  updateHoveredEdge: () => { },
+  updateSelectedEdge: () => { },
+  updateGraph: () => { },
   rootAsset: null,
   isLineageLevelSelectorOpen: false,
-  setIsLineageLevelSelectorOpen: () => {},
-  setLineageOptionsAndRefetch: () => {},
+  setIsLineageLevelSelectorOpen: () => { },
+  setLineageOptionsAndRefetch: () => { },
 });
 
 type Column = {
@@ -157,6 +159,7 @@ export function LineageViewProvider(props: LineageViewProviderProps) {
   const [isTableOnly, setIsTableOnly] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lineage, setLineage] = useState<Lineage>(startingLineage);
+  const [assetOnly, setAssetOnly] = useState(true);
 
   const [isLineageOptionsPanelOpen, setIsLineageOptionsPanelOpen] =
     useState(false);
@@ -164,6 +167,7 @@ export function LineageViewProvider(props: LineageViewProviderProps) {
     predecessor_depth: 1,
     successor_depth: 1,
     lineageType: "all",
+    asset_only: true,
   });
   const { setFilePathToLoading } = useLineage();
 
@@ -311,6 +315,8 @@ export function LineageViewProvider(props: LineageViewProviderProps) {
   const setLineageOptionsAndRefetch = async (options: LineageOptions) => {
     setLineageOptions(options);
 
+    console.log("options", options);
+
     if (page === "lineage") {
       const data = await getLineage({
         nodeId: rootAsset.id,
@@ -332,6 +338,7 @@ export function LineageViewProvider(props: LineageViewProviderProps) {
         lineage_type: options.lineageType,
         successor_depth: options.successor_depth,
         predecessor_depth: options.predecessor_depth,
+        asset_only: true,
       });
 
       setLineage(data.lineage);

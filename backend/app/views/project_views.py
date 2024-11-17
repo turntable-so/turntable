@@ -3,18 +3,15 @@ import shutil
 from urllib.parse import unquote
 
 from django.db import transaction
-from django.http import HttpResponse, JsonResponse
-from rest_framework import status, viewsets
+from django.http import JsonResponse
+from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from api.serializers import AssetSerializer, LineageSerializer, ProjectSerializer
-from app.core.dbt import LiveDBTParser
+from app.core.lineage import get_lineage_helper
 from app.models.project import Project
-from app.models.resources import Resource
 from app.views.query_views import format_query
-from vinyl.lib.dbt import DBTProject, DBTTransition
-from rest_framework import serializers
 
 
 def _build_file_tree(user_id: str, path: str, base_path: str):
@@ -45,57 +42,6 @@ def get_file_tree(user_id: str, path: str, base_path: str):
         "id": relative_path,
         "children": file_tree,
     }
-
-
-def get_lineage_helper(
-    proj: DBTProject,
-    before_proj: DBTProject | None,
-    resource: Resource,
-    filepath: str,
-    predecessor_depth: int,
-    successor_depth: int,
-    lineage_type: str,
-    defer: bool,
-):
-    if defer:
-        transition = DBTTransition(before_project=before_proj, after_project=proj)
-        transition.mount_manifest(defer=defer)
-        transition.mount_catalog(defer=defer)
-    else:
-        proj.mount_manifest()
-        proj.mount_catalog()
-
-    node_id = LiveDBTParser.get_node_id_from_filepath(proj, filepath, defer)
-    if not node_id:
-        raise ValueError(f"Node at filepath{filepath} not found in manifest")
-
-    dbtparser = LiveDBTParser.parse_project(
-        proj=proj,
-        before_proj=before_proj,
-        node_id=node_id,
-        resource=resource,
-        predecessor_depth=predecessor_depth,
-        successor_depth=successor_depth,
-        defer=defer,
-    )
-    lineage, _ = dbtparser.get_lineage(lineage_type=lineage_type)
-    root_asset = None
-    column_lookup = {}
-    for asset in lineage.assets:
-        column_lookup[asset.id] = []
-    for column in lineage.columns:
-        column_lookup[column.asset_id].append(column)
-
-    for asset in lineage.assets:
-        if asset.id == lineage.asset_id:
-            root_asset = asset
-
-        asset.temp_columns = column_lookup[asset.id]
-
-    if not root_asset:
-        raise ValueError(f"Root asset not found for {lineage.asset_id}")
-
-    return root_asset, lineage
 
 
 class ProjectViewSet(viewsets.ViewSet):
@@ -466,49 +412,37 @@ class ProjectViewSet(viewsets.ViewSet):
 
         return Response(status=status.HTTP_501_NOT_IMPLEMENTED)
 
+    class ProjectLineageSerializer(serializers.Serializer):
+        asset_only = serializers.BooleanField(required=False, default=False)
+        filepath = serializers.CharField(required=True)
+        predecessor_depth = serializers.IntegerField(required=True)
+        successor_depth = serializers.IntegerField(required=True)
+        lineage_type = serializers.ChoiceField(
+            choices=["all", "direct_only"], required=False, default="all"
+        )
+
     @action(detail=True, methods=["GET"])
     def lineage(self, request, pk=None):
         workspace = request.user.current_workspace()
+        dbt_details = workspace.get_dbt_dev_details()
+
         project = Project.objects.get(id=pk)
 
-        dbt_details = workspace.get_dbt_dev_details()
-        filepath = unquote(request.query_params.get("filepath"))
-        predecessor_depth = int(request.query_params.get("predecessor_depth"))
-        successor_depth = int(request.query_params.get("successor_depth"))
-        lineage_type = request.query_params.get("lineage_type", "all")
-        defer = request.query_params.get("defer", False)
-        if lineage_type not in ["all", "direct_only"]:
-            return Response(
-                {
-                    "error": "lineage_type query parameter must be either 'all' or 'direct_only'."
-                },
-                status=400,
-            )
+        serializer = self.ProjectLineageSerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
 
-        if defer:
-            with dbt_details.dbt_transition_context(
-                project_id=project.id, isolate=False
-            ) as (
-                transition,
-                _,
-                repo,
-            ):
-                root_asset, lineage = get_lineage_helper(
-                    proj=transition.after,
-                    before_proj=transition.before,
-                    resource=dbt_details.resource,
-                    filepath=filepath,
-                    predecessor_depth=predecessor_depth,
-                    successor_depth=successor_depth,
-                    lineage_type=lineage_type,
-                    defer=defer,
-                )
-        else:
-            with dbt_details.dbt_repo_context(project_id=project.id, isolate=False) as (
-                proj,
-                _,
-                _,
-            ):
+        asset_only = bool(serializer.validated_data.get("asset_only"))
+        filepath = unquote(serializer.validated_data.get("filepath"))
+        predecessor_depth = serializer.validated_data.get("predecessor_depth")
+        successor_depth = serializer.validated_data.get("successor_depth")
+        lineage_type = serializer.validated_data.get("lineage_type")
+
+        with dbt_details.dbt_repo_context(project_id=project.id, isolate=False) as (
+            proj,
+            _,
+            _,
+        ):
+            try:
                 root_asset, lineage = get_lineage_helper(
                     proj=proj,
                     before_proj=None,
@@ -517,7 +451,18 @@ class ProjectViewSet(viewsets.ViewSet):
                     predecessor_depth=predecessor_depth,
                     successor_depth=successor_depth,
                     lineage_type=lineage_type,
-                    defer=defer,
+                    defer=False,
+                    asset_only=asset_only,
+                )
+            except KeyError as e:
+                return Response(
+                    {"error": f"Node {str(e)} does not exist in graph"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            except ValueError as e:
+                return Response(
+                    {"error": str(e)},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
         asset_serializer = AssetSerializer(root_asset, context={"request": request})

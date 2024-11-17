@@ -15,17 +15,18 @@ import {
   Table as TableIcon,
   Terminal as TerminalIcon,
 } from "lucide-react";
-import { Fragment } from "react";
+import { Fragment, useContext, useEffect } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { Panel, PanelResizeHandle } from "react-resizable-panels";
 import useResizeObserver from "use-resize-observer";
-import { LineageView } from "../lineage/LineageView";
+import { LineageView, LineageViewContext } from "../lineage/LineageView";
 import { Button } from "../ui/button";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import CommandPanel from "./command-panel";
 import ProblemsPanel from "./problems-panel/problems-panel";
 import { Badge } from "../ui/badge";
 import CommandPanelActionBtn from "./command-panel/command-panel-action-btn";
+import { Switch } from "../ui/switch";
 import PreviewPanel from "./preview-panel/preview-panel";
 import ErrorMessage from "./error-message";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
@@ -68,6 +69,12 @@ export default function BottomPanel({
     compileError,
     isQueryPreviewLoading,
   } = useFiles();
+
+  const {
+    lineageOptions,
+    setLineageOptionsAndRefetch,
+  } = useContext(LineageViewContext);
+
   const [activeTab, setActiveTab] = useBottomPanelTabs({
     branchId: branchId || "",
   });
@@ -77,6 +84,16 @@ export default function BottomPanel({
     height: bottomPanelHeight,
     width: bottomPanelWidth,
   } = useResizeObserver();
+
+
+  useEffect(() => {
+    if (activeFile) {
+      fetchFileBasedLineage({
+        filePath: activeFile.node.path,
+        branchId,
+      });
+    }
+  }, [activeFile?.node.path]);
 
   const showPreviewQueryButton =
     activeTab === "results" &&
@@ -186,27 +203,30 @@ export default function BottomPanel({
             </Tooltip>
           )}
           {activeTab === "lineage" && (
-            <Button
-              size="sm"
-              onClick={() =>
-                fetchFileBasedLineage({
-                  filePath: activeFile?.node.path || "",
-                  branchId,
-                  // TODO: we need to get the selected type from the LineageView,
-                  // but right now that would take too much effort to refactor that
-                  lineageType: "all",
-                })
-              }
-              disabled={lineageData[activeFile?.node.path || ""]?.isLoading}
-              variant="outline"
-            >
-              {lineageData[activeFile?.node.path || ""]?.isLoading ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <RefreshCcw className="h-4 w-4 mr-2" />
-              )}
-              Refresh
-            </Button>
+            <div className="flex items-center justify-center gap-2">
+
+              <Button
+                size="sm"
+                onClick={() =>
+                  fetchFileBasedLineage({
+                    filePath: activeFile?.node.path || "",
+                    branchId,
+                    // TODO: we need to get the selected type from the LineageView,
+                    // but right now that would take too much effort to refactor that
+                    lineage_type: "all",
+                  })
+                }
+                disabled={lineageData[activeFile?.node.path || ""]?.isLoading}
+                variant="outline"
+              >
+                {lineageData[activeFile?.node.path || ""]?.isLoading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <RefreshCcw className="h-4 w-4 mr-2" />
+                )}
+                Refresh
+              </Button>
+            </div>
           )}
           {activeTab === "command" && <CommandPanelActionBtn />}
         </div>
@@ -263,14 +283,7 @@ export default function BottomPanel({
                     )}
                   {lineageData?.[activeFile?.node.path || ""] &&
                     lineageData[activeFile?.node.path || ""].error && (
-                      <div
-                        className="w-full bg-gray-200 flex items-center justify-center"
-                        style={{ height: bottomPanelHeight }}
-                      >
-                        <div className="text-red-500 text-sm">
-                          {lineageData[activeFile?.node.path || ""].error}
-                        </div>
-                      </div>
+                      <ErrorMessage error={lineageData[activeFile?.node.path || ""].error} />
                     )}
                 </>
               </ErrorBoundary>

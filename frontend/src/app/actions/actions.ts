@@ -232,7 +232,10 @@ export async function getLineage({
       method: "GET",
     },
   );
-  return await response.json();
+  if (response.ok) {
+    return await response.json();
+  }
+  return null;
 }
 
 export async function createGithubConnection(data: any) {
@@ -664,16 +667,18 @@ export async function getProjectBasedLineage({
   lineage_type,
   successor_depth,
   predecessor_depth,
+  asset_only,
 }: {
   branchId: string;
   filePath: string;
   lineage_type: "all" | "direct_only";
   successor_depth: number;
   predecessor_depth: number;
+  asset_only: boolean;
 }) {
   const encodedPath = encodeURIComponent(filePath);
   const response = await fetcher(
-    `/project/${branchId}/lineage/?filepath=${encodedPath}&predecessor_depth=${predecessor_depth}&successor_depth=${successor_depth}&lineage_type=${lineage_type}`,
+    `/project/${branchId}/lineage/?filepath=${encodedPath}&predecessor_depth=${predecessor_depth}&successor_depth=${successor_depth}&lineage_type=${lineage_type}&asset_only=${asset_only}`,
     {
       cookies,
       method: "GET",
