@@ -72,7 +72,6 @@ class LiveDBTParser:
         defer: bool = False,
         asset_only: bool = False,
     ):
-        print("<parse_project> asset_only: ", asset_only, flush=True)
         if before_proj is not None:
             transition = DBTTransition(before_proj, proj)
             transition.mount_manifest(defer=defer)
