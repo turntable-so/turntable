@@ -299,9 +299,6 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
     setLineageOptions(options);
 
     if (lineageFetchType?.type === "asset") {
-      console.log("fetching asset lineage for ", {
-        nodeId: lineageFetchType.data.nodeId,
-      });
       const data = await getLineage({
         nodeId: params.id,
         lineage_type: options.lineageType,
@@ -317,10 +314,6 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
         return;
       }
 
-      if (lineageData[lineageFetchType.data.filePath]) {
-        return;
-      }
-
       setLineageData((prev) => ({
         ...prev,
         [lineageFetchType.data.filePath]: {
@@ -330,10 +323,6 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
         },
       }));
 
-      console.log("fetching project lineage for ", {
-        branchId: lineageFetchType.data.branchId,
-        filePath: lineageFetchType.data.filePath,
-      });
       const data = await getProjectBasedLineage({
         branchId: lineageFetchType.data.branchId,
         filePath: lineageFetchType.data.filePath,
@@ -368,7 +357,6 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
   useEffect(onLineageFetchTypeChange, [lineageFetchType]);
 
   const onPathnameChange = () => {
-    console.log("onPathnameChange", { pathname, paramId: params.id });
     if (isAssetLineage) {
       setLineageFetchType({ type: "asset", data: { nodeId: params.id } });
     } else if (isProjectLineage) {

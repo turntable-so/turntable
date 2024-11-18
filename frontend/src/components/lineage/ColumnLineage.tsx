@@ -144,15 +144,6 @@ const ColumnLineageFlow = () => {
       edges = [...filteredEdges, ...tableEdges] as any;
     }
 
-    if (nodes.length === 0 && edges.length === 0) {
-      nodes = [
-        {
-          id: "error-node",
-          type: "error",
-          position: { x: 0, y: 0 },
-        },
-      ];
-    }
     return {
       nodes,
       edges,

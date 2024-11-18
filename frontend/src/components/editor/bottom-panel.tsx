@@ -14,11 +14,14 @@ import {
   Table as TableIcon,
   Terminal as TerminalIcon,
 } from "lucide-react";
-import { Fragment, useEffect } from "react";
+import { Fragment, useContext, useEffect } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { Panel, PanelResizeHandle } from "react-resizable-panels";
 import useResizeObserver from "use-resize-observer";
-import { LineageView } from "../../app/contexts/LineageView";
+import {
+  LineageView,
+  LineageViewContext,
+} from "../../app/contexts/LineageView";
 import { Button } from "../ui/button";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import CommandPanel from "./command-panel";
@@ -29,6 +32,8 @@ import PreviewPanel from "./preview-panel/preview-panel";
 import ErrorMessage from "./error-message";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import CustomEditor from "./CustomEditor";
+import { Switch } from "../ui/switch";
+import { Label } from "../ui/label";
 
 export default function BottomPanel({
   rowData,
@@ -45,10 +50,12 @@ export default function BottomPanel({
   isLoading: boolean;
   queryPreviewError: string | null;
 }) {
-  const { lineageData, setLineageData } = useFiles();
+  const { setLineageOptionsAndRefetch, lineageOptions } =
+    useContext(LineageViewContext);
+  const { lineageData } = useFiles();
 
-  const fetchFileBasedLineage = (a) => {
-    console.log(a);
+  const fetchFileBasedLineage = () => {
+    setLineageOptionsAndRefetch(lineageOptions);
   };
 
   const {
@@ -62,7 +69,6 @@ export default function BottomPanel({
     isQueryPreviewLoading,
   } = useFiles();
 
-  console.log({ checkHere: lineageData[activeFile?.node.path || ""] });
   const [activeTab, setActiveTab] = useBottomPanelTabs({
     branchId: branchId || "",
   });
@@ -72,15 +78,6 @@ export default function BottomPanel({
     height: bottomPanelHeight,
     width: bottomPanelWidth,
   } = useResizeObserver();
-
-  useEffect(() => {
-    if (activeFile) {
-      fetchFileBasedLineage({
-        filePath: activeFile.node.path,
-        branchId,
-      });
-    }
-  }, [activeFile?.node.path]);
 
   const showPreviewQueryButton =
     activeTab === "results" &&
@@ -191,17 +188,15 @@ export default function BottomPanel({
           )}
           {activeTab === "lineage" && (
             <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center space-x-2">
+                <Switch id="asset-only" />
+                <Label htmlFor="asset-only" className="text-muted-foreground">
+                  Asset Only
+                </Label>
+              </div>
               <Button
                 size="sm"
-                onClick={() =>
-                  fetchFileBasedLineage({
-                    filePath: activeFile?.node.path || "",
-                    branchId,
-                    // TODO: we need to get the selected type from the LineageView,
-                    // but right now that would take too much effort to refactor that
-                    lineage_type: "all",
-                  })
-                }
+                onClick={fetchFileBasedLineage}
                 disabled={lineageData[activeFile?.node.path || ""]?.isLoading}
                 variant="outline"
               >
