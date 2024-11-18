@@ -189,7 +189,16 @@ export default function BottomPanel({
           {activeTab === "lineage" && (
             <div className="flex items-center justify-center gap-2">
               <div className="flex items-center space-x-2">
-                <Switch id="asset-only" />
+                <Switch
+                  id="asset-only"
+                  checked={lineageOptions.asset_only}
+                  onCheckedChange={(checked) => {
+                    setLineageOptionsAndRefetch({
+                      ...lineageOptions,
+                      asset_only: checked,
+                    });
+                  }}
+                />
                 <Label htmlFor="asset-only" className="text-muted-foreground">
                   Asset Only
                 </Label>

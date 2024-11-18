@@ -329,7 +329,7 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
         lineage_type: options.lineageType,
         successor_depth: options.successor_depth,
         predecessor_depth: options.predecessor_depth,
-        asset_only: true,
+        asset_only: options.asset_only,
       });
 
       setLineage(data.lineage);
