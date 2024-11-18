@@ -9,6 +9,7 @@ import { getLineage, getProjectBasedLineage } from "../actions/actions";
 import { useAppContext } from "../../contexts/AppContext";
 import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert";
 import { useParams, usePathname } from "next/navigation";
+import { useFiles } from "./FilesContext";
 
 export type WithMousePosition<T> = T & {
   mousePosition: {
@@ -28,7 +29,7 @@ export type LineageOptions = {
   asset_only: boolean;
 };
 
-type Lineage = {
+export type Lineage = {
   asset_id: string;
   assets: Asset[];
   asset_links: {
@@ -199,7 +200,7 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
   const [lineageFetchType, setLineageFetchType] =
     useState<LineageFetchType | null>(null);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  // const { setFilePathToLoading } = useLineage();
+  const { setLineageData, branchId, activeFile } = useFiles();
 
   const toggleFilter = () => {
     setIsFilterOpen((prev) => !prev);
@@ -311,10 +312,22 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
       setRootAsset(data.root_asset);
     } else if (lineageFetchType?.type === "project") {
       setLineageOptions(options);
+      setLineageData((prev) => ({
+        ...prev,
+        [activeFile?.node.path || ""]: {
+          isLoading: true,
+          data: null,
+          error: null,
+        },
+      }));
 
+      console.log("fetching project lineage for ", {
+        branchId: lineageFetchType.data.branchId,
+        filePath: lineageFetchType.data.filePath,
+      });
       const data = await getProjectBasedLineage({
-        branchId: props.branchId,
-        filePath: props.filePath,
+        branchId: lineageFetchType.data.branchId,
+        filePath: lineageFetchType.data.filePath,
         lineage_type: options.lineageType,
         successor_depth: options.successor_depth,
         predecessor_depth: options.predecessor_depth,
@@ -323,6 +336,14 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
 
       setLineage(data.lineage);
       setRootAsset(data.root_asset);
+      setLineageData((prev) => ({
+        ...prev,
+        [activeFile?.node.path || ""]: {
+          isLoading: false,
+          data: data.lineage,
+          error: null,
+        },
+      }));
     }
   };
 
@@ -344,13 +365,13 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
     } else if (isProjectLineage) {
       setLineageFetchType({
         type: "project",
-        data: { branchId: params.branchId, filePath: params.filePath },
+        data: { branchId, filePath: activeFile?.node.path || "" },
       });
     } else {
       setLineageFetchType(null);
     }
   };
-  useEffect(onPathnameChange, [pathname, params]);
+  useEffect(onPathnameChange, [pathname, params, activeFile, branchId]);
 
   useEffect(() => {
     setFocusedAsset(rootAsset);

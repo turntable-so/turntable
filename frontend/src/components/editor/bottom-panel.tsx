@@ -45,7 +45,12 @@ export default function BottomPanel({
   isLoading: boolean;
   queryPreviewError: string | null;
 }) {
-  // const { fetchFileBasedLineage, lineageData } = useLineage();
+  const { lineageData, setLineageData } = useFiles();
+
+  const fetchFileBasedLineage = (a) => {
+    console.log(a);
+  };
+
   const {
     activeFile,
     branchId,
