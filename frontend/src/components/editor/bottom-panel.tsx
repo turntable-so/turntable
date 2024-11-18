@@ -62,6 +62,7 @@ export default function BottomPanel({
     isQueryPreviewLoading,
   } = useFiles();
 
+  console.log({ checkHere: lineageData[activeFile?.node.path || ""] });
   const [activeTab, setActiveTab] = useBottomPanelTabs({
     branchId: branchId || "",
   });

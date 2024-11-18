@@ -160,6 +160,7 @@ type LineageFetchType =
 
 export function LineageViewProvider({ children }: LineageViewProviderProps) {
   const { setFocusedAsset, setAssetPreview } = useAppContext();
+  const { lineageData, setLineageData, branchId, activeFile } = useFiles();
   const pathname = usePathname();
   const params = useParams<{ id: string }>();
 
@@ -200,7 +201,6 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
   const [lineageFetchType, setLineageFetchType] =
     useState<LineageFetchType | null>(null);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const { setLineageData, branchId, activeFile } = useFiles();
 
   const toggleFilter = () => {
     setIsFilterOpen((prev) => !prev);
@@ -312,9 +312,18 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
       setRootAsset(data.root_asset);
     } else if (lineageFetchType?.type === "project") {
       setLineageOptions(options);
+
+      if (!lineageFetchType.data.filePath.includes(".sql")) {
+        return;
+      }
+
+      if (lineageData[lineageFetchType.data.filePath]) {
+        return;
+      }
+
       setLineageData((prev) => ({
         ...prev,
-        [activeFile?.node.path || ""]: {
+        [lineageFetchType.data.filePath]: {
           isLoading: true,
           data: null,
           error: null,
@@ -338,7 +347,7 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
       setRootAsset(data.root_asset);
       setLineageData((prev) => ({
         ...prev,
-        [activeFile?.node.path || ""]: {
+        [lineageFetchType.data.filePath]: {
           isLoading: false,
           data: data.lineage,
           error: null,
@@ -367,6 +376,7 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
         type: "project",
         data: { branchId, filePath: activeFile?.node.path || "" },
       });
+      setLineage(lineageData[activeFile?.node.path || ""]?.data);
     } else {
       setLineageFetchType(null);
     }
