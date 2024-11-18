@@ -36,6 +36,7 @@ import { useAppContext } from "../../contexts/AppContext";
 import { LineageControls } from "./LineageControls";
 import LineageOptionsPanel from "./LineageOptionsPanel";
 import { usePathname } from "next/navigation";
+import { useTheme } from "next-themes";
 
 const nodeTypes = {
   custom: ColumnLineageNode,
@@ -68,6 +69,8 @@ const ColumnLineageFlow = () => {
   const [reactFlowInstance, setReactFlowInstance] =
     useState<ReactFlowInstance | null>(null);
   const nodesInitialized = useNodesInitialized();
+
+  const { resolvedTheme } = useTheme();
 
   const {
     error,
@@ -256,7 +259,10 @@ const ColumnLineageFlow = () => {
           </div>
         </Panel>
       )}
-      <Background />
+      <Background
+        bgColor={resolvedTheme === "dark" ? "black" : "white"}
+        size={1.5}
+      />
     </ReactFlow>
   );
 };

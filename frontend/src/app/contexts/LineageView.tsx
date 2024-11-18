@@ -448,7 +448,7 @@ export function LineageView(props: LineageViewProps) {
         position: "relative",
         width: "100%",
         maxWidth: "100%",
-        height: "100vh",
+        height: "96vh",
         ...props.style,
       }}
     >
