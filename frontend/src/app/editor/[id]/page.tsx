@@ -20,6 +20,7 @@ import { useTheme } from "next-themes";
 import ConfirmSaveDialog from "@/components/editor/dialogs/confirm-save-dialog";
 import CustomEditor from "@/components/editor/CustomEditor";
 import CustomDiffEditor from "@/components/editor/CustomDiffEditor";
+import InlineTabSearch from "@/components/editor/search-bar/inline-tab-search";
 
 const PromptBox = ({
   setPromptBoxOpen,
@@ -289,14 +290,16 @@ function EditorContent({
 
   if (activeFile?.view === "new") {
     return (
-      <div className="h-full w-full flex items-center justify-center text-muted-foreground dark:bg-black">
+      <div className="h-full w-full flex justify-center text-muted-foreground dark:bg-black bg-white">
         {isCloning ? (
           <div className="flex items-center space-x-2">
             <Loader2 className="h-4 w-4 animate-spin" />
             <div>Setting up environment</div>
           </div>
         ) : (
-          "new tab experience coming soon"
+          <div className="w-full h-full flex pt-10 justify-center">
+            <InlineTabSearch />
+          </div>
         )}
       </div>
     );
