@@ -258,7 +258,6 @@ function LineageNode({ id, data, yPos }: any) {
   const isWindows = navigator.userAgent.includes("Windows");
 
   const pathname = usePathname();
-  console.log({ pathname });
 
   const fileName = data.originalFilePath?.split(isWindows ? `\\` : "/").pop();
 

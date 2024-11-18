@@ -14,8 +14,7 @@ import { useEffect, useState } from "react";
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathName = usePathname();
   const router = useRouter();
-  const { focusedAsset, setIsLineageLoading, fetchAssetPreview } =
-    useAppContext();
+  const { focusedAsset, fetchAssetPreview } = useAppContext();
   const [sidebarCollapsed, collapseSidebar] = useState<boolean>(false);
   const [sidebarContext, setSidebarContext] = useState<"ACTION" | "HIDDEN">(
     "ACTION",
@@ -31,7 +30,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
     if (actionBarContext === "LINEAGE") {
       if (focusedAsset?.id !== item.id) {
-        setIsLineageLoading(true);
         router.push(`/lineage/${item.id}`);
       }
     } else if (actionBarContext === "NOTEBOOK") {
@@ -47,13 +45,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         pathName.includes("/assets") ||
         pathName.includes("/editor"),
     );
-  }, [pathName, collapseSidebar]);
 
-  useEffect(() => {
     if (pathName.includes("/lineage")) {
       setActionBarContext("LINEAGE");
-    }
-    if (pathName.includes("/notebooks")) {
+    } else if (pathName.includes("/notebooks")) {
       setActionBarContext("NOTEBOOK");
     }
 

@@ -27,7 +27,7 @@ function ErrorNode() {
         <div className="mr-1">
           <ErrorIcon />
         </div>
-        <p className="font-semibold">{error || "something went wrong"}</p>
+        <p className="font-semibold">{error || "Something went wrong"}</p>
       </div>
     </div>
   );

@@ -169,20 +169,11 @@ const ColumnLineageFlow = () => {
     });
   }, [nodesInitialized, reactFlowInstance]);
 
-  return isLineageLoading ? (
-    <Panel
-      className="flex flex-col w-full h-full items-center justify-center"
-      position="top-left"
-    >
-      <div>
-        <Loader2 className="mr-2 h-8 w-8 animate-spin opacity-50" />
-      </div>
-    </Panel>
-  ) : (
+  return (
     <ReactFlow
       onlyRenderVisibleElements={true}
       ref={reactFlowWrapper}
-      key={lineage.asset_id}
+      key={lineage?.asset_id || ""}
       nodes={nodes}
       edges={edges}
       edgeTypes={edgeTypes}
@@ -255,6 +246,16 @@ const ColumnLineageFlow = () => {
       <LineageOptionsPanel />
       <LineageControls />
       <FilterPanel />
+      {isLineageLoading && (
+        <Panel
+          className="flex flex-col w-full h-full items-center justify-center"
+          position="top-left"
+        >
+          <div>
+            <Loader2 className="mr-2 h-8 w-8 animate-spin opacity-50" />
+          </div>
+        </Panel>
+      )}
       <Background />
     </ReactFlow>
   );

@@ -142,10 +142,28 @@ type LineageViewProviderProps = {
   children: React.ReactNode;
 };
 
+type LineageFetchType =
+  | {
+      type: "asset";
+      data: {
+        nodeId: string;
+      };
+    }
+  | {
+      type: "project";
+      data: {
+        branchId: string;
+        filePath: string;
+      };
+    };
+
 export function LineageViewProvider({ children }: LineageViewProviderProps) {
   const { setFocusedAsset, setAssetPreview } = useAppContext();
   const pathname = usePathname();
   const params = useParams<{ id: string }>();
+
+  const isAssetLineage = !!(pathname.includes("lineage") && params.id);
+  const isProjectLineage = pathname.includes("editor");
 
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingColumns, setIsLoadingColumns] = useState(false);
@@ -178,9 +196,8 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
     nodeId: string;
     yPos: number;
   } | null>(null);
-  const [lineageFetchType, setLineageFetchType] = useState<
-    "asset" | "project" | null
-  >(null);
+  const [lineageFetchType, setLineageFetchType] =
+    useState<LineageFetchType | null>(null);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   // const { setFilePathToLoading } = useLineage();
 
@@ -280,17 +297,19 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
   const setLineageOptionsAndRefetch = async (options: LineageOptions) => {
     setLineageOptions(options);
 
-    if (lineageFetchType === "asset") {
-      console.log("fetching asset lineage");
+    if (lineageFetchType?.type === "asset") {
+      console.log("fetching asset lineage for ", {
+        nodeId: lineageFetchType.data.nodeId,
+      });
       const data = await getLineage({
         nodeId: params.id,
-        lineage_type: options.lineageType || "all",
-        successor_depth: options.successor_depth || 1,
-        predecessor_depth: options.predecessor_depth || 1,
+        lineage_type: options.lineageType,
+        successor_depth: options.successor_depth,
+        predecessor_depth: options.predecessor_depth,
       });
       setLineage(data.lineage);
       setRootAsset(data.root_asset);
-    } else if (lineageFetchType === "project") {
+    } else if (lineageFetchType?.type === "project") {
       setLineageOptions(options);
 
       const data = await getProjectBasedLineage({
@@ -307,26 +326,31 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
     }
   };
 
-  const loadLineageOnMount = () => {
-    if (lineage) {
+  const onLineageFetchTypeChange = () => {
+    if (lineageFetchType === null) {
+      setLineage(null);
+      setRootAsset(null);
       return;
     }
 
     setLineageOptionsAndRefetch(lineageOptions);
   };
-  useEffect(loadLineageOnMount, []);
+  useEffect(onLineageFetchTypeChange, [lineageFetchType]);
 
   const onPathnameChange = () => {
-    console.log("onPathnameChange", { pathname, params });
-    const isAssetLineage = pathname.includes("lineage") && params.id;
+    console.log("onPathnameChange", { pathname, paramId: params.id });
     if (isAssetLineage) {
-      setLineageFetchType("asset");
-      setLineageOptionsAndRefetch(lineageOptions);
-    } else if (pathname.includes("editor")) {
-      setLineageFetchType("project");
+      setLineageFetchType({ type: "asset", data: { nodeId: params.id } });
+    } else if (isProjectLineage) {
+      setLineageFetchType({
+        type: "project",
+        data: { branchId: params.branchId, filePath: params.filePath },
+      });
+    } else {
+      setLineageFetchType(null);
     }
   };
-  useEffect(onPathnameChange, [pathname]);
+  useEffect(onPathnameChange, [pathname, params]);
 
   useEffect(() => {
     setFocusedAsset(rootAsset);

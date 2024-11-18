@@ -106,7 +106,6 @@ export default function ActionBar({
   const [lowHeight, setLowheight] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const pathName = usePathname();
-  const router = useRouter();
   const isNotebook = pathName.includes("/notebooks/");
 
   useEffect(() => {
