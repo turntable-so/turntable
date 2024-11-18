@@ -26,7 +26,7 @@ import ColumnConnectionEdge, {
 } from "./ColumnConnectionEdge";
 import ColumnLineageNode from "./ColumnLineageNode";
 import ErrorNode from "./ErrorNode";
-import { LineageViewContext } from "./LineageView";
+import { LineageViewContext } from "@/app/contexts/LineageView";
 import LoadingNode from "./LoadingNode";
 import buildLineageReactFlow from "./renderLineage";
 import { FilterPanel } from "./FilterPanel";
@@ -163,15 +163,22 @@ const ColumnLineageFlow = () => {
     hoveredColumn,
   ]);
 
-  const pathName = usePathname();
-
   useLayoutEffect(() => {
     reactFlowInstance?.fitView({
       padding: 0.2,
     });
   }, [nodesInitialized, reactFlowInstance]);
 
-  return (
+  return isLineageLoading ? (
+    <Panel
+      className="flex flex-col w-full h-full items-center justify-center"
+      position="top-left"
+    >
+      <div>
+        <Loader2 className="mr-2 h-8 w-8 animate-spin opacity-50" />
+      </div>
+    </Panel>
+  ) : (
     <ReactFlow
       onlyRenderVisibleElements={true}
       ref={reactFlowWrapper}
@@ -247,18 +254,8 @@ const ColumnLineageFlow = () => {
     >
       <LineageOptionsPanel />
       <LineageControls />
-      {pathName.includes("/lineage") && <FilterPanel />}
-      {isLineageLoading && (
-        <Panel
-          className="flex flex-col w-full h-full items-center justify-center"
-          position="top-left"
-        >
-          <div>
-            <Loader2 className="mr-2 h-8 w-8 animate-spin opacity-50" />
-          </div>
-        </Panel>
-      )}
-      <Background className="bg-zinc-200" />
+      <FilterPanel />
+      <Background />
     </ReactFlow>
   );
 };

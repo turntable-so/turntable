@@ -3,7 +3,6 @@ import "ag-grid-community/styles/ag-theme-balham.css";
 import "./ag-grid-custom-theme.css";
 
 import { useFiles } from "@/app/contexts/FilesContext";
-import { useLineage } from "@/app/contexts/LineageContext";
 import { useBottomPanelTabs } from "@/components/editor/use-bottom-panel-tabs";
 import {
   CircleAlertIcon,
@@ -15,33 +14,21 @@ import {
   Table as TableIcon,
   Terminal as TerminalIcon,
 } from "lucide-react";
-import { Fragment, useContext, useEffect } from "react";
+import { Fragment, useEffect } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { Panel, PanelResizeHandle } from "react-resizable-panels";
 import useResizeObserver from "use-resize-observer";
-import { LineageView, LineageViewContext } from "../lineage/LineageView";
+import { LineageView } from "../../app/contexts/LineageView";
 import { Button } from "../ui/button";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import CommandPanel from "./command-panel";
 import ProblemsPanel from "./problems-panel/problems-panel";
 import { Badge } from "../ui/badge";
 import CommandPanelActionBtn from "./command-panel/command-panel-action-btn";
-import { Switch } from "../ui/switch";
 import PreviewPanel from "./preview-panel/preview-panel";
 import ErrorMessage from "./error-message";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import CustomEditor from "./CustomEditor";
-
-// Define your custom theme
-const customTheme = {
-  base: "vs",
-  inherit: true,
-  rules: [],
-  colors: {
-    "editor.foreground": "#000000",
-    "editorLineNumber.foreground": "#A1A1AA",
-  },
-};
 
 export default function BottomPanel({
   rowData,
@@ -58,7 +45,7 @@ export default function BottomPanel({
   isLoading: boolean;
   queryPreviewError: string | null;
 }) {
-  const { fetchFileBasedLineage, lineageData } = useLineage();
+  // const { fetchFileBasedLineage, lineageData } = useLineage();
   const {
     activeFile,
     branchId,
@@ -70,11 +57,6 @@ export default function BottomPanel({
     isQueryPreviewLoading,
   } = useFiles();
 
-  const {
-    lineageOptions,
-    setLineageOptionsAndRefetch,
-  } = useContext(LineageViewContext);
-
   const [activeTab, setActiveTab] = useBottomPanelTabs({
     branchId: branchId || "",
   });
@@ -84,7 +66,6 @@ export default function BottomPanel({
     height: bottomPanelHeight,
     width: bottomPanelWidth,
   } = useResizeObserver();
-
 
   useEffect(() => {
     if (activeFile) {
@@ -204,7 +185,6 @@ export default function BottomPanel({
           )}
           {activeTab === "lineage" && (
             <div className="flex items-center justify-center gap-2">
-
               <Button
                 size="sm"
                 onClick={() =>
@@ -268,22 +248,14 @@ export default function BottomPanel({
                     lineageData[activeFile?.node.path || ""].data && (
                       <LineageView
                         key={activeFile?.node.path}
-                        lineage={
-                          lineageData[activeFile?.node.path || ""].data.lineage
-                        }
-                        rootAsset={
-                          lineageData[activeFile?.node.path || ""].data
-                            .root_asset
-                        }
-                        style={{ height: bottomPanelHeight }}
-                        page="editor"
-                        filePath={activeFile?.node.path || ""}
-                        branchId={branchId}
+                        style={{ height: (bottomPanelHeight ?? 0) - 28 }}
                       />
                     )}
                   {lineageData?.[activeFile?.node.path || ""] &&
                     lineageData[activeFile?.node.path || ""].error && (
-                      <ErrorMessage error={lineageData[activeFile?.node.path || ""].error} />
+                      <ErrorMessage
+                        error={lineageData[activeFile?.node.path || ""].error}
+                      />
                     )}
                 </>
               </ErrorBoundary>

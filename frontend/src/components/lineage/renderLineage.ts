@@ -6,7 +6,7 @@ import {
 } from "../../lib/lineage";
 
 import dagre from "@dagrejs/dagre";
-import type { ColumnWithPosition } from "./LineageView";
+import type { ColumnWithPosition } from "../../app/contexts/LineageView";
 
 const maxNodeHeight = 260;
 

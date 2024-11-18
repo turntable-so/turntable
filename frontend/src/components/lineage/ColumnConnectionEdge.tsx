@@ -8,7 +8,7 @@ import {
   useStoreApi,
 } from "@xyflow/react";
 import * as colors from "tailwindcss/colors";
-import { LineageViewContext } from "./LineageView";
+import { LineageViewContext } from "../../app/contexts/LineageView";
 
 function getStrokeColorForConnectionType(type: string) {
   switch (type) {

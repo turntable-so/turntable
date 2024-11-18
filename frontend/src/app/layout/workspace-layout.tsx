@@ -1,9 +1,9 @@
-import { LineageProvider } from "@/app/contexts/LineageContext";
 import { CommandPanelProvider } from "@/components/editor/command-panel/command-panel-context";
 import AppContextProvider from "@/contexts/AppContext";
 import { FilesProvider } from "@/app/contexts/FilesContext";
 import { LayoutProvider } from "@/app/contexts/LayoutContext";
 import AppLayout from "./app-layout";
+import { LineageViewProvider } from "@/app/contexts/LineageView";
 
 export default function WorkspaceLayout({
   children,
@@ -12,11 +12,11 @@ export default function WorkspaceLayout({
     <LayoutProvider>
       <AppContextProvider>
         <FilesProvider>
-          <LineageProvider>
+          <LineageViewProvider>
             <CommandPanelProvider>
               <AppLayout>{children}</AppLayout>
             </CommandPanelProvider>
-          </LineageProvider>
+          </LineageViewProvider>
         </FilesProvider>
       </AppContextProvider>
     </LayoutProvider>

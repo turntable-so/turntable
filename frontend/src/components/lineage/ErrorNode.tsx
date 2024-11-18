@@ -1,5 +1,5 @@
 import React, { memo, useContext } from "react";
-import { LineageViewContext } from "./LineageView";
+import { LineageViewContext } from "../../app/contexts/LineageView";
 
 const ErrorIcon = () => (
   <svg

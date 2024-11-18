@@ -2,7 +2,7 @@ import { Minus, Plus } from "lucide-react";
 import { useContext } from "react";
 import { Panel } from "@xyflow/react";
 import { Button } from "../ui/button";
-import { LineageViewContext } from "./LineageView";
+import { LineageViewContext } from "../../app/contexts/LineageView";
 
 export default function LineageOptions() {
   const {

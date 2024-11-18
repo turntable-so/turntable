@@ -1,25 +1,14 @@
 "use client";
+
 import React, { useEffect, useRef, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { type Edge, ReactFlowProvider } from "@xyflow/react";
-import ColumnLineage from "./ColumnLineage";
-
+import ColumnLineage from "../../components/lineage/ColumnLineage";
 import { AlertCircle } from "lucide-react";
-
-import { getLineage, getProjectBasedLineage } from "../../app/actions/actions";
+import { getLineage, getProjectBasedLineage } from "../actions/actions";
 import { useAppContext } from "../../contexts/AppContext";
-import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
-import { useLineage } from "@/app/contexts/LineageContext";
-
-export function ErrorFallback() {
-  return (
-    <Alert variant="default">
-      <AlertCircle className="h-4 w-4" />
-      <AlertTitle>Something went wrong</AlertTitle>
-      <AlertDescription>Contact support@turntable.so</AlertDescription>
-    </Alert>
-  );
-}
+import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert";
+import { useParams, usePathname } from "next/navigation";
 
 export type WithMousePosition<T> = T & {
   mousePosition: {
@@ -37,6 +26,21 @@ export type LineageOptions = {
   predecessor_depth: number;
   successor_depth: number;
   asset_only: boolean;
+};
+
+type Lineage = {
+  asset_id: string;
+  assets: Asset[];
+  asset_links: {
+    id: string;
+    source: string;
+    target: string;
+  };
+  column_links: {
+    id: string;
+    source: string;
+    target: string;
+  };
 };
 
 export const LineageViewContext = React.createContext<{
@@ -78,7 +82,7 @@ export const LineageViewContext = React.createContext<{
   lineage: null,
   isTableOnly: true,
   isFilterOpen: false,
-  toggleFilter: () => { },
+  toggleFilter: () => {},
   isLoading: true,
   isLoadingColumns: true,
   error: null,
@@ -97,20 +101,20 @@ export const LineageViewContext = React.createContext<{
     asset_only: true,
   },
   isLineageOptionsPanelOpen: false,
-  setIsLineageOptionsPanelOpen: () => { },
-  handleSelectColumn: () => { },
-  handleExpandNode: () => { },
-  handleColumnHover: () => { },
+  setIsLineageOptionsPanelOpen: () => {},
+  handleSelectColumn: () => {},
+  handleExpandNode: () => {},
+  handleColumnHover: () => {},
   onTableHeaderClick: () => Promise.resolve(),
-  onMouseEnterNode: () => { },
-  onMouseLeaveNode: () => { },
-  updateHoveredEdge: () => { },
-  updateSelectedEdge: () => { },
-  updateGraph: () => { },
+  onMouseEnterNode: () => {},
+  onMouseLeaveNode: () => {},
+  updateHoveredEdge: () => {},
+  updateSelectedEdge: () => {},
+  updateGraph: () => {},
   rootAsset: null,
   isLineageLevelSelectorOpen: false,
-  setIsLineageLevelSelectorOpen: () => { },
-  setLineageOptionsAndRefetch: () => { },
+  setIsLineageLevelSelectorOpen: () => {},
+  setLineageOptionsAndRefetch: () => {},
 });
 
 type Column = {
@@ -134,33 +138,21 @@ export type Asset = {
   name: string;
 };
 
-type BaseLineageViewProviderProps = {
+type LineageViewProviderProps = {
   children: React.ReactNode;
-  startingLineage: Lineage;
-  rootAsset: Asset;
 };
 
-type LineagePageProps = BaseLineageViewProviderProps & {
-  page: "lineage";
-};
+export function LineageViewProvider({ children }: LineageViewProviderProps) {
+  const { setFocusedAsset, setAssetPreview } = useAppContext();
+  const pathname = usePathname();
+  const params = useParams<{ id: string }>();
 
-type EditorPageProps = BaseLineageViewProviderProps & {
-  page: "editor";
-  filePath: string;
-  branchId: string;
-};
-
-type LineageViewProviderProps = LineagePageProps | EditorPageProps;
-
-export function LineageViewProvider(props: LineageViewProviderProps) {
-  const { children, startingLineage, rootAsset, page } = props;
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingColumns, setIsLoadingColumns] = useState(false);
   const [isTableOnly, setIsTableOnly] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [lineage, setLineage] = useState<Lineage>(startingLineage);
-  const [assetOnly, setAssetOnly] = useState(true);
-
+  const [lineage, setLineage] = useState<Lineage | null>(null);
+  const [rootAsset, setRootAsset] = useState<Asset | null>(null);
   const [isLineageOptionsPanelOpen, setIsLineageOptionsPanelOpen] =
     useState(false);
   const [lineageOptions, setLineageOptions] = useState<LineageOptions>({
@@ -169,7 +161,32 @@ export function LineageViewProvider(props: LineageViewProviderProps) {
     lineageType: "all",
     asset_only: true,
   });
-  const { setFilePathToLoading } = useLineage();
+  const [modelsMap, setModelsMap] = useState<Record<string, any>>({});
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isLineageLevelSelectorOpen, setIsLineageLevelSelectorOpen] =
+    useState(false);
+  const [hoveredEdge, setHoveredEdge] =
+    useState<WithMousePosition<Edge> | null>(null);
+  const [selectedEdge, setSelectedEdge] =
+    useState<WithMousePosition<Edge> | null>(null);
+  const [selectedColumn, setSelectedColumn] = useState<string | null>(null);
+  const [hoveredColumn, setHoveredColumn] = useState<ColumnWithPosition | null>(
+    null,
+  );
+  const [expandedNodes, setExpandedNodes] = useState<string[]>([]);
+  const [hoveredNode, setHoveredNode] = useState<{
+    nodeId: string;
+    yPos: number;
+  } | null>(null);
+  const [lineageFetchType, setLineageFetchType] = useState<
+    "asset" | "project" | null
+  >(null);
+  const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  // const { setFilePathToLoading } = useLineage();
+
+  const toggleFilter = () => {
+    setIsFilterOpen((prev) => !prev);
+  };
 
   const resetSelections = () => {
     setSelectedColumn(null);
@@ -194,33 +211,6 @@ export function LineageViewProvider(props: LineageViewProviderProps) {
     }
   };
 
-  const [modelsMap, setModelsMap] = useState<Record<string, any>>({});
-
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [isLineageLevelSelectorOpen, setIsLineageLevelSelectorOpen] =
-    useState(false);
-  const toggleFilter = () => {
-    setIsFilterOpen((prev) => !prev);
-  };
-
-  const reactFlowWrapper = useRef<HTMLDivElement>(null);
-
-  const [hoveredEdge, setHoveredEdge] =
-    useState<WithMousePosition<Edge> | null>(null);
-  const [selectedEdge, setSelectedEdge] =
-    useState<WithMousePosition<Edge> | null>(null);
-
-  const [selectedColumn, setSelectedColumn] = useState<string | null>(null);
-  const [hoveredColumn, setHoveredColumn] = useState<ColumnWithPosition | null>(
-    null,
-  );
-  const [expandedNodes, setExpandedNodes] = useState<string[]>([]);
-
-  const [hoveredNode, setHoveredNode] = useState<{
-    nodeId: string;
-    yPos: number;
-  } | null>(null);
-
   async function getColumnLineage() {
     // setIsLoadingColumns(true);
     // // const data = request()
@@ -229,27 +219,6 @@ export function LineageViewProvider(props: LineageViewProviderProps) {
     // }
     // setIsLoadingColumns(false);
   }
-
-  /**
-   * Initial load:
-   * 1. Get stored filter options
-   * 2. Get lineage data
-   */
-  useEffect(() => {
-    async function load() {
-      setIsLoading(false);
-    }
-
-    load();
-  }, []);
-
-  useEffect(() => {
-    if (isLoading) {
-      return;
-    }
-
-    getColumnLineage();
-  }, [isLoading]);
 
   const updateHoveredEdge = (edge: WithMousePosition<Edge> | null) => {
     setHoveredEdge(edge);
@@ -308,29 +277,21 @@ export function LineageViewProvider(props: LineageViewProviderProps) {
     setHoveredNode(null);
   };
 
-  if (isLoading) {
-    return <div>loading</div>;
-  }
-
   const setLineageOptionsAndRefetch = async (options: LineageOptions) => {
     setLineageOptions(options);
 
-    console.log("options", options);
-
-    if (page === "lineage") {
+    if (lineageFetchType === "asset") {
+      console.log("fetching asset lineage");
       const data = await getLineage({
-        nodeId: rootAsset.id,
-        successor_depth: options.successor_depth,
-        predecessor_depth: options.predecessor_depth,
-        lineage_type: options.lineageType,
+        nodeId: params.id,
+        lineage_type: options.lineageType || "all",
+        successor_depth: options.successor_depth || 1,
+        predecessor_depth: options.predecessor_depth || 1,
       });
       setLineage(data.lineage);
-    } else if (page === "editor") {
+      setRootAsset(data.root_asset);
+    } else if (lineageFetchType === "project") {
       setLineageOptions(options);
-      setFilePathToLoading({
-        loading: true,
-        filePath: props.filePath,
-      });
 
       const data = await getProjectBasedLineage({
         branchId: props.branchId,
@@ -342,12 +303,35 @@ export function LineageViewProvider(props: LineageViewProviderProps) {
       });
 
       setLineage(data.lineage);
-      setFilePathToLoading({
-        loading: false,
-        filePath: props.filePath,
-      });
+      setRootAsset(data.root_asset);
     }
   };
+
+  const loadLineageOnMount = () => {
+    if (lineage) {
+      return;
+    }
+
+    setLineageOptionsAndRefetch(lineageOptions);
+  };
+  useEffect(loadLineageOnMount, []);
+
+  const onPathnameChange = () => {
+    console.log("onPathnameChange", { pathname, params });
+    const isAssetLineage = pathname.includes("lineage") && params.id;
+    if (isAssetLineage) {
+      setLineageFetchType("asset");
+      setLineageOptionsAndRefetch(lineageOptions);
+    } else if (pathname.includes("editor")) {
+      setLineageFetchType("project");
+    }
+  };
+  useEffect(onPathnameChange, [pathname]);
+
+  useEffect(() => {
+    setFocusedAsset(rootAsset);
+    setAssetPreview(rootAsset);
+  }, [rootAsset]);
 
   return (
     <LineageViewContext.Provider
@@ -390,51 +374,27 @@ export function LineageViewProvider(props: LineageViewProviderProps) {
   );
 }
 
-type Lineage = {
-  asset_id: string;
-  assets: Asset[];
-  asset_links: {
-    id: string;
-    source: string;
-    target: string;
-  };
-  column_links: {
-    id: string;
-    source: string;
-    target: string;
-  };
-};
-
-type BaseLineageViewProps = {
-  lineage: Lineage;
-  rootAsset: Asset;
+type LineageViewProps = {
   style?: React.CSSProperties;
 };
 
-type LineagePageViewProps = BaseLineageViewProps & {
-  page: "lineage";
-};
-
-type EditorLineageViewProps = BaseLineageViewProps & {
-  page: "editor";
-  filePath: string;
-  branchId: string;
-};
-
-type LineageViewProps = LineagePageViewProps | EditorLineageViewProps;
-
 export function LineageView(props: LineageViewProps) {
-  const { lineage, rootAsset, style, page } = props;
-  const { setFocusedAsset, setAssetPreview } = useAppContext();
+  const ErrorFallback = () => (
+    <Alert variant="default">
+      <AlertCircle className="h-4 w-4" />
+      <AlertTitle>Something went wrong</AlertTitle>
+      <AlertDescription>Contact support@turntable.so</AlertDescription>
+    </Alert>
+  );
 
-  const LineageContent = () => (
+  return (
     <div
       style={{
         position: "relative",
         width: "100%",
         maxWidth: "100%",
         height: "100vh",
-        ...style,
+        ...props.style,
       }}
     >
       <ErrorBoundary
@@ -452,37 +412,4 @@ export function LineageView(props: LineageViewProps) {
       </ErrorBoundary>
     </div>
   );
-
-  useEffect(() => {
-    setFocusedAsset(rootAsset);
-    setAssetPreview(rootAsset);
-  }, [rootAsset, setFocusedAsset, setAssetPreview]);
-
-  if (page === "editor") {
-    return (
-      <LineageViewProvider
-        startingLineage={lineage}
-        rootAsset={rootAsset}
-        page="editor"
-        filePath={props.filePath}
-        branchId={props.branchId}
-      >
-        <LineageContent />
-      </LineageViewProvider>
-    );
-  }
-
-  if (page === "lineage") {
-    return (
-      <LineageViewProvider
-        startingLineage={lineage}
-        rootAsset={rootAsset}
-        page="lineage"
-      >
-        <LineageContent />
-      </LineageViewProvider>
-    );
-  }
-
-  throw new Error("Invalid page prop");
 }
