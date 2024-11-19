@@ -136,7 +136,7 @@ type FilesContextType = {
   createDirectoryAndRefresh: (path: string) => Promise<void>;
   filesLoading: boolean;
   downloadFile: (path: string) => Promise<void>;
-  compileActiveFile: () => Promise<void>;
+  compileActiveFile: (content?: string) => Promise<void>;
   compiledSql: string | null;
   isCompiling: boolean;
   compileError: string | null;
@@ -148,7 +148,7 @@ type FilesContextType = {
   closeFilesToRight: (file: OpenedFile) => void;
   closeAllOtherFiles: (file: OpenedFile) => void;
   closeAllFiles: () => void;
-  runQueryPreview: () => Promise<void>;
+  runQueryPreview: (content?: string) => Promise<void>;
   queryPreview: QueryPreview | null;
   queryPreviewError: string | null;
   isQueryPreviewLoading: boolean;
@@ -562,10 +562,10 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         prev.map((f) =>
           f.node.path === path
             ? {
-                ...f,
-                content,
-                node: { ...f.node, type: newNodeType },
-              }
+              ...f,
+              content,
+              node: { ...f.node, type: newNodeType },
+            }
             : f,
         ),
       );
@@ -814,25 +814,24 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     }
   }, [openedFiles, activeFile]);
 
-  const runQueryPreview = async () => {
+  const runQueryPreview = useCallback(async (content?: string) => {
     setIsQueryPreviewLoading(true);
     setQueryPreview(null);
     setQueryPreviewError(null);
-    if (activeFile?.content && typeof activeFile.content === "string") {
-      const dbtSql = activeFile.content;
-      try {
-        const preview = await executeQueryPreview({ dbtSql, branchId });
-        if (preview.error) {
-          setQueryPreviewError(preview.error);
-        } else {
-          setQueryPreview(preview);
-        }
-      } catch (e) {
-        setQueryPreviewError("Error running query");
+    if (
+      content ||
+      (activeFile?.content && typeof activeFile.content === "string")
+    ) {
+      const dbtSql = content || activeFile?.content;
+      const preview = await executeQueryPreview({ dbtSql, branchId });
+      if (preview.error) {
+        setQueryPreviewError(preview.error);
+      } else {
+        setQueryPreview(preview);
       }
     }
     setIsQueryPreviewLoading(false);
-  };
+  }, [activeFile]);
 
   return (
     <FilesContext.Provider

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import type { AgGridReact } from "ag-grid-react";
 import { Check, Download, Loader2, X } from "lucide-react";
 import type React from "react";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import useResizeObserver from "use-resize-observer";
 import { infer } from "../../actions/actions";
@@ -26,7 +26,6 @@ const PromptBox = ({
   setPromptBoxOpen,
 }: { setPromptBoxOpen: (open: boolean) => void }) => {
   const { activeFile, setActiveFile, updateFileContent } = useFiles();
-
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState<"PROMPT" | "CONFIRM">("PROMPT");
   const [isLoading, setIsLoading] = useState(false);
@@ -371,16 +370,12 @@ function EditorContent({
         // Prevent default behavior for cmd+s
         editor.addCommand(
           monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-          (e: any) => {
-            runQueryPreview();
-          },
+          () => runQueryPreview(editor.getValue())
         );
 
         editor.addCommand(
           monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Enter,
-          (e: any) => {
-            compileActiveFile();
-          },
+          () => compileActiveFile(editor.getValue())
         );
       }}
     />
