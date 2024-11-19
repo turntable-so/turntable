@@ -7,7 +7,7 @@ from typing import Callable
 from git import Repo as GitRepo
 
 from app.models.resources import DBTResource
-from app.workflows.utils import task
+from app.workflows.utils import chain, task
 from vinyl.lib.utils.files import load_orjson
 
 
@@ -148,18 +148,16 @@ def run_dbt_commands(
             "repo_override_dir": repo.working_tree_dir,
         }
         # Create a chain of tasks
-        outs = []
-        for command in commands:
-            out = run_dbt_command.si(**task_kwargs, command=command).apply_async().get()
-            outs.append(out)
+        tasks = [
+            run_dbt_command.si(**task_kwargs, command=command) for command in commands
+        ]
 
         if save_artifacts:
-            out = (
+            tasks.append(
                 save_artifacts_task.si(**task_kwargs, parent_task_id=self.request.id)
-                .apply_async()
-                .get()
             )
-            outs.append(out)
+
+        outs = chain(*tasks).apply_async_and_get_all()
 
     return returns_helper(outs)
 

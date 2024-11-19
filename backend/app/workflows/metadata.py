@@ -3,7 +3,7 @@ import tempfile
 from app.core.e2e import DataHubDBParser
 from app.models import Resource
 from app.models.resources import ArtifactSource
-from app.workflows.utils import task
+from app.workflows.utils import chain, task
 
 
 @task
@@ -57,5 +57,4 @@ def sync_metadata(self, workspace_id: str, resource_id: str):
         ),
         process_metadata.si(workspace_id=workspace_id, resource_id=resource_id),
     ]
-    for t in tasks:
-        t.apply_async().get()
+    chain(*tasks).apply_async().get()

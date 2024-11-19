@@ -3,6 +3,7 @@ import os
 import uuid
 
 from celery import Task, shared_task, states
+from celery import chain as celery_chain
 from django_celery_results.models import TaskResult
 
 
@@ -36,3 +37,21 @@ def task(*args, **kwargs):
     if os.getenv("CUSTOM_CELERY_EAGER") == "true":
         kwargs.setdefault("base", CustomTask)
     return shared_task(*args, **kwargs)
+
+
+class chain(celery_chain):
+    def apply_async_and_get_all(self, *args, **kwargs):
+        task = self.apply_async(*args, **kwargs)
+
+        def recurse_results(task):
+            res = task
+            if res.parent is None:
+                return [res.get()]
+            return recurse_results(res.parent) + [res.get()]
+
+        return recurse_results(task)
+
+    def apply_async(self, *args, **kwargs):
+        if os.getenv("CUSTOM_CELERY_EAGER") == "true":
+            return self.apply(*args, **kwargs)
+        return celery_chain.apply_async(self, *args, **kwargs)
