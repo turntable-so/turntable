@@ -767,6 +767,7 @@ class DBTCoreDetails(DBTResource):
         raise_exception: bool = True,
         repo_override: Repository | None = None,
         artifact_source: ArtifactSource = ArtifactSource.ORCHESTRATION,
+        exclude_introspective: bool = True,
     ):
         with self.dbt_repo_context(
             isolate=True, project_id=project_id, repo_override=repo_override
