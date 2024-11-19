@@ -47,6 +47,7 @@ interface CommandPanelContextType {
   setInputValue: Dispatch<SetStateAction<string>>;
   commandOptions: string[];
   setCommandOptions: Dispatch<SetStateAction<string[]>>;
+  runCommandCore: (command?: string) => void;
 }
 
 const defaultContextValue: CommandPanelContextType = {
@@ -62,6 +63,7 @@ const defaultContextValue: CommandPanelContextType = {
   setInputValue: () => {},
   commandOptions: [],
   setCommandOptions: () => {},
+  runCommandCore: () => {},
 };
 
 const CommandPanelContext =
@@ -203,7 +205,7 @@ export const CommandPanelProvider: FC<CommandPanelProviderProps> = ({
     },
   });
 
-  const _runCommandCore = (command?: string) => {
+  const runCommandCore = (command?: string) => {
     const payloadCommand = command ?? inputValue;
     startWebSocket({ command: payloadCommand });
     setCommandPanelState("running");
@@ -236,12 +238,12 @@ export const CommandPanelProvider: FC<CommandPanelProviderProps> = ({
       return;
     }
 
-    _runCommandCore();
+    runCommandCore();
   };
 
   const runCommandFromSearchBar = (command: string) => {
     setActiveTab("command");
-    _runCommandCore(command);
+    runCommandCore(command);
   };
 
   return (
@@ -259,6 +261,7 @@ export const CommandPanelProvider: FC<CommandPanelProviderProps> = ({
         setInputValue,
         commandOptions,
         setCommandOptions,
+        runCommandCore,
       }}
     >
       {children}
