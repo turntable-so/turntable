@@ -4,6 +4,7 @@ from urllib.parse import unquote
 
 from django.db import transaction
 from django.http import JsonResponse
+from git import GitCommandError
 from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -271,11 +272,8 @@ class ProjectViewSet(viewsets.ViewSet):
                 name, ext = os.path.splitext(base_name)
 
                 if os.path.isfile(filepath):
-                    print(f"copying file {filepath} to {base_dir}")
                     new_name = f"{name} copy{ext}"
-                    print(f"new name: {new_name}")
                     new_path = os.path.join(base_dir, new_name)
-                    print(f"new path: {new_path}")
                     shutil.copy2(filepath, new_path)
                 else:
                     new_name = f"{base_name} copy"
@@ -291,6 +289,7 @@ class ProjectViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=["GET"])
     def changes(self, request, pk=None):
+        print(f"changes for {pk}")
         project = Project.objects.get(id=pk)
         if not project.is_cloned:
             return Response(
@@ -341,6 +340,66 @@ class ProjectViewSet(viewsets.ViewSet):
                 }
             )
 
+    @action(detail=True, methods=["POST"])
+    def sync(self, request, pk=None):
+        project = Project.objects.get(id=pk)
+        if not project.is_cloned:
+            return Response(
+                {"error": "Project not cloned"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        with project.repo_context() as (repo, env):
+            if repo.is_dirty(untracked_files=True):
+                return Response(
+                    {
+                        "error": "UNCOMMITTED_CHANGES",
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            try:
+                base_branch = project.source_branch or "main"
+                repo.git.fetch("origin", base_branch, env=env)
+                repo.git.merge(f"origin/{base_branch}", env=env)
+                return Response(
+                    {"detail": "success"},
+                    status=status.HTTP_200_OK,
+                )
+            except GitCommandError as e:
+                error_string = str(e).lower()
+                if "merge_head exists" in error_string:
+                    print("merging aborted")
+                    try:
+                        repo.git.merge("--abort", env=env)
+                    except GitCommandError:
+                        pass
+
+                if "permission denied" in error_string:
+                    print("permission denied")
+                    return Response(
+                        {
+                            "error": "Authentication failed. Please check your Git credentials.",
+                            "details": str(e),
+                        },
+                        status=status.HTTP_401_UNAUTHORIZED,
+                    )
+                elif "merge conflict" in error_string:
+                    print("merge conflict")
+                    return Response(
+                        {
+                            "error": "Merge conflict occurred. Merge aborted.",
+                            "details": str(e),
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                else:
+                    print("other error: ", e)
+                    return Response(
+                        {"error": str(e)},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    )
+
     @action(detail=False, methods=["GET", "POST", "PATCH"])
     def branches(self, request):
         workspace = request.user.current_workspace()
@@ -386,6 +445,7 @@ class ProjectViewSet(viewsets.ViewSet):
                     repository=dbt_details.repository,
                     branch_name=request.data.get("branch_name"),
                     schema=request.data.get("schema"),
+                    source_branch=request.data.get("source_branch"),
                 )
                 project.create_git_branch(
                     source_branch=request.data.get("source_branch"),

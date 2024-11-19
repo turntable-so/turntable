@@ -216,3 +216,18 @@ class TestFileChanges:
         assert response.status_code == 200
         assert len(response.json()["untracked"]) == 1
         assert len(response.json()["modified"]) == 1
+
+    # def test_sync_remote(self, client, project):
+    #     client.post(f"/project/{project.id}/clone/")
+    #     response = client.post(f"/project/{project.id}/sync/")
+    #     assert response.status_code == 200
+
+    def test_sync_remote_dirty(self, client, project):
+        client.put(
+            f"/project/{project.id}/files/?filepath={safe_encode('models/marts/customer360/customers.sql')}",
+            {"contents": "modified customers content"},
+        )
+
+        response = client.post(f"/project/{project.id}/sync/")
+        assert response.status_code == 400
+        assert response.json()["error"] == "UNCOMMITTED_CHANGES"

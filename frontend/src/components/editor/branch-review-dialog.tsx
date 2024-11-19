@@ -19,6 +19,7 @@ import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import { toast } from "sonner";
 import { Loader2, Undo2 } from "lucide-react";
 import useSession from "@/app/hooks/use-session";
+import { sync } from "@/app/actions/actions";
 interface BranchReviewDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -82,10 +83,12 @@ export default function BranchReviewDialog({
     commitChanges,
     pullRequestUrl,
     branchName,
-    isCloned,
     discardChanges,
+    fetchFiles,
   } = useFiles();
   const { user } = useSession();
+
+  const hasChanges = !!(changes && changes.length > 0);
 
   useEffect(() => {
     if (branchId) {
@@ -94,7 +97,7 @@ export default function BranchReviewDialog({
   }, [open]);
 
   useEffect(() => {
-    if (changes?.length > 0) {
+    if (hasChanges) {
       setSelectedChangeIndex(0);
     }
   }, [changes]);
@@ -121,12 +124,32 @@ export default function BranchReviewDialog({
     setIsSubmitting(false);
   };
 
+  const handleSyncWithRemote = async () => {
+    const response = await sync(branchId);
+    console.log({ response });
+    if (response.error) {
+      console.error({ error: response.error, details: response.details });
+      toast.error("Failed to sync with remote.");
+    } else {
+      toast.success("Changes synced with remote successfully.");
+      fetchFiles();
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="w-full max-w-[1700px] min-h-[900px]">
+      <DialogContent className="w-[96vw] h-[96vh] max-w-[96vw] max-h-[96vh]">
         <div className="flex gap-4  h-full">
           <div className="w-1/4  h-full justify-between flex-col flex">
             <div>
+              <Button
+                disabled={hasChanges}
+                variant="secondary"
+                className="w-full"
+                onClick={handleSyncWithRemote}
+              >
+                Sync with remote
+              </Button>
               <>
                 <div className="mt-4">
                   <label className="text-sm font-medium">Branch</label>
