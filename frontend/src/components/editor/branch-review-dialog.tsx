@@ -163,7 +163,7 @@ export default function BranchReviewDialog({
                     Syncing with {sourceBranch}
                   </div>
                 ) : (
-                  `Sync with ${sourceBranch}`
+                  `Sync with ${sourceBranch || "main"}`
                 )}
               </Button>
               <>
