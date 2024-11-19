@@ -78,7 +78,10 @@ export const LineageViewContext = React.createContext<{
   rootAsset: Asset | null;
   lineageOptions: LineageOptions;
   setIsLineageLevelSelectorOpen: (open: boolean) => void;
-  setLineageOptionsAndRefetch: (options: LineageOptions) => void;
+  setLineageOptionsAndRefetch: (
+    options: LineageOptions,
+    { shouldCheckLineageData }?: { shouldCheckLineageData?: boolean },
+  ) => void;
 }>({
   lineage: null,
   isTableOnly: true,
@@ -295,7 +298,12 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
     setHoveredNode(null);
   };
 
-  const setLineageOptionsAndRefetch = async (options: LineageOptions) => {
+  const setLineageOptionsAndRefetch = async (
+    options: LineageOptions,
+    {
+      shouldCheckLineageData = true,
+    }: { shouldCheckLineageData?: boolean } = {},
+  ) => {
     setLineageOptions(options);
 
     if (lineageFetchType?.type === "asset") {
@@ -310,7 +318,13 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
     } else if (lineageFetchType?.type === "project") {
       setLineageOptions(options);
 
-      if (!lineageFetchType.data.filePath.includes(".sql")) {
+      if (
+        // don't refetch if the file is a sql file
+        !lineageFetchType.data.filePath.includes(".sql") ||
+        // or if the file is already loaded in the editor
+        (shouldCheckLineageData &&
+          lineageData[lineageFetchType.data.filePath]?.data)
+      ) {
         return;
       }
 
