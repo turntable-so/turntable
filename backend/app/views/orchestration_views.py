@@ -30,9 +30,9 @@ class JobViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def retrieve(self, request, pk=None):
-        return Response(
-            DBTOrchestrator.objects.get(id=pk).data, status=status.HTTP_200_OK
-        )
+        data = DBTOrchestrator.objects.get(id=pk)
+        serializer = DBTOrchestratorSerializer(data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def destroy(self, request, pk=None):
         DBTOrchestrator.objects.get(id=pk).delete()
