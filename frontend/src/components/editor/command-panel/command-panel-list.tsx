@@ -18,7 +18,9 @@ export default function CommandPanelList() {
     runCommandCore,
   } = useCommandPanelContext();
 
-  const [isButtonHovered, setIsButtonHovered] = useState(false);
+  const [hoveredButtonIndex, setHoveredButtonIndex] = useState<number | null>(
+    null,
+  );
 
   useEffect(() => {
     commandHistory.forEach((command) => {
@@ -34,11 +36,13 @@ export default function CommandPanelList() {
         <div
           key={item.id}
           className={`group/item flex justify-between ${
-            index === selectedCommandIndex && !isButtonHovered
+            index === selectedCommandIndex && hoveredButtonIndex !== index
               ? "bg-zinc-200 dark:bg-zinc-700"
               : ""
           } ${
-            !isButtonHovered ? "hover:bg-zinc-200 dark:hover:bg-zinc-700" : ""
+            hoveredButtonIndex !== index
+              ? "hover:bg-zinc-200 dark:hover:bg-zinc-700"
+              : ""
           } cursor-pointer p-2`}
           onClick={() => setSelectedCommandIndex(index)}
         >
@@ -69,8 +73,8 @@ export default function CommandPanelList() {
               <button
                 type="button"
                 className="group/run flex items-center gap-1 rounded hover:bg-gray-200 dark:hover:bg-zinc-700 text-sm px-2"
-                onMouseEnter={() => setIsButtonHovered(true)}
-                onMouseLeave={() => setIsButtonHovered(false)}
+                onMouseEnter={() => setHoveredButtonIndex(index)}
+                onMouseLeave={() => setHoveredButtonIndex(null)}
                 onClick={(e) => {
                   e.stopPropagation();
                   runCommandCore(item.command);
