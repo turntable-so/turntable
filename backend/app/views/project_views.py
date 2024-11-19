@@ -382,10 +382,7 @@ class ProjectViewSet(viewsets.ViewSet):
                             except GitCommandError:
                                 pass
                             return Response(
-                                {
-                                    "error": "MERGE_HEAD_EXISTS",
-                                    "details": str(e),
-                                },
+                                {"error": "MERGE_HEAD_EXISTS"},
                                 status=status.HTTP_400_BAD_REQUEST,
                             )
                         elif "merge conflict" in error_string:
@@ -394,15 +391,12 @@ class ProjectViewSet(viewsets.ViewSet):
                             except GitCommandError:
                                 pass
                             return Response(
-                                {
-                                    "error": "MERGE_CONFLICT",
-                                    "details": str(e),
-                                },
+                                {"error": "MERGE_CONFLICT"},
                                 status=status.HTTP_400_BAD_REQUEST,
                             )
                         else:
                             return Response(
-                                {"error": str(e)},
+                                {"error": "INTERNAL_SERVER_ERROR"},
                                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             )
                     finally:
