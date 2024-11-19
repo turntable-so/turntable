@@ -48,13 +48,14 @@ def process_metadata(self, workspace_id: str, resource_id: str):
 @task
 def sync_metadata(self, workspace_id: str, resource_id: str):
     # check if artifacts exist and were produced by orchestration run
-    task1 = prepare_dbt_repos.si(workspace_id=workspace_id, resource_id=resource_id)
-    task2 = ingest_metadata.si(
-        workspace_id=workspace_id,
-        resource_id=resource_id,
-        task_id=self.request.id,
-    )
-    task3 = process_metadata.si(workspace_id=workspace_id, resource_id=resource_id)
-    task1.apply_async().get()
-    task2.apply_async().get()
-    task3.apply_async().get()
+    tasks = [
+        prepare_dbt_repos.si(workspace_id=workspace_id, resource_id=resource_id),
+        ingest_metadata.si(
+            workspace_id=workspace_id,
+            resource_id=resource_id,
+            task_id=self.request.id,
+        ),
+        process_metadata.si(workspace_id=workspace_id, resource_id=resource_id),
+    ]
+    for t in tasks:
+        t.apply_async().get()
