@@ -60,10 +60,15 @@ export function FilterPanel() {
           <RadioGroup
             defaultValue={lineageOptions.lineageType}
             onValueChange={(t: "all" | "direct_only") =>
-              setLineageOptionsAndRefetch({
-                ...lineageOptions,
-                lineageType: t,
-              })
+              setLineageOptionsAndRefetch(
+                {
+                  ...lineageOptions,
+                  lineageType: t,
+                },
+                {
+                  shouldCheckLineageData: false,
+                },
+              )
             }
             className="p-1 text-muted-foreground text-xs space-y-2"
           >

@@ -304,6 +304,7 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
       shouldCheckLineageData = true,
     }: { shouldCheckLineageData?: boolean } = {},
   ) => {
+    console.log("setLineageOptionsAndRefetch", options);
     setLineageOptions((prev) => ({
       ...prev,
       ...options,
@@ -327,8 +328,11 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
         (shouldCheckLineageData &&
           lineageData[lineageFetchType.data.filePath]?.data)
       ) {
+        console.log("not refetching");
         return;
       }
+
+      console.log("refetching");
 
       setLineageData((prev) => ({
         ...prev,
@@ -348,6 +352,8 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
         predecessor_depth: options.predecessor_depth,
         asset_only: options.asset_only,
       });
+
+      console.log({ data });
 
       setLineage(data.lineage);
       setRootAsset(data.root_asset);
