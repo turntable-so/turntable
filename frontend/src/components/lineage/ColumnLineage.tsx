@@ -37,6 +37,7 @@ import { LineageControls } from "./LineageControls";
 import LineageOptionsPanel from "./LineageOptionsPanel";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
+import { useFiles } from "@/app/contexts/FilesContext";
 
 const nodeTypes = {
   custom: ColumnLineageNode,
@@ -71,7 +72,7 @@ const ColumnLineageFlow = () => {
   const nodesInitialized = useNodesInitialized();
 
   const { resolvedTheme } = useTheme();
-
+  const { lineageData, branchId, activeFile } = useFiles();
   const {
     error,
     lineage,
@@ -88,6 +89,11 @@ const ColumnLineageFlow = () => {
   } = useContext(LineageViewContext);
 
   const { isLineageLoading, setIsLineageLoading } = useAppContext();
+
+  const showFilterPanel =
+    branchId && activeFile
+      ? !lineageData[activeFile.node.path]?.showColumns
+      : false;
 
   const onReactFlowInit = (reactFlowInstance: ReactFlowInstance) => {
     setReactFlowInstance(reactFlowInstance);
@@ -239,7 +245,7 @@ const ColumnLineageFlow = () => {
     >
       <LineageOptionsPanel />
       <LineageControls />
-      <FilterPanel />
+      {showFilterPanel && <FilterPanel />}
       {isLineageLoading && (
         <Panel
           className="flex flex-col w-full h-full items-center justify-center"
