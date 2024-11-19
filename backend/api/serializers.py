@@ -152,7 +152,6 @@ class ColumnSerializer(serializers.ModelSerializer):
 
 # minified asset serializers for listing in the asset tree
 class AssetIndexSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Asset
         fields = [
@@ -452,6 +451,7 @@ class ProjectSerializer(serializers.ModelSerializer):
             "read_only",
             "is_cloned",
             "pull_request_url",
+            "source_branch",
         ]
 
     def get_is_cloned(self, obj):

@@ -289,7 +289,6 @@ class ProjectViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=["GET"])
     def changes(self, request, pk=None):
-        print(f"changes for {pk}")
         project = Project.objects.get(id=pk)
         if not project.is_cloned:
             return Response(
@@ -359,47 +358,56 @@ class ProjectViewSet(viewsets.ViewSet):
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
-                try:
-                    base_branch = project.source_branch or "main"
-                    repo.git.fetch("origin", base_branch, env=env)
-                    repo.git.merge(f"origin/{base_branch}", env=env)
-                    return Response(
-                        {"detail": "success"},
-                        status=status.HTTP_200_OK,
-                    )
-                except GitCommandError as e:
-                    error_string = str(e).lower()
-                    if "merge_head exists" in error_string:
-                        print("merging aborted")
-                        try:
-                            repo.git.merge("--abort", env=env)
-                        except GitCommandError:
-                            pass
+                with repo.config_writer() as git_config:
+                    # Configure the user name and email
+                    # github doesn't actually use this, but it's required by git
+                    git_config.set_value("user", "name", "NAME")
+                    # github uses the email for commit authorship
+                    git_config.set_value("user", "email", request.user.email)
 
-                    if "permission denied" in error_string:
-                        print("permission denied")
+                    try:
+                        base_branch = project.source_branch or "main"
+                        repo.git.fetch("origin", base_branch, env=env)
+                        repo.git.merge(f"origin/{base_branch}", env=env)
+
                         return Response(
-                            {
-                                "error": "Authentication failed. Please check your Git credentials.",
-                                "details": str(e),
-                            },
-                            status=status.HTTP_401_UNAUTHORIZED,
+                            {"detail": "success"},
+                            status=status.HTTP_200_OK,
                         )
-                    elif "merge conflict" in error_string:
-                        print("merge conflict")
-                        return Response(
-                            {
-                                "error": "Merge conflict occurred. Merge aborted.",
-                                "details": str(e),
-                            },
-                            status=status.HTTP_400_BAD_REQUEST,
-                        )
-                    else:
-                        print("other error: ", e)
-                        return Response(
-                            {"error": str(e)},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                        )
+                    except GitCommandError as e:
+                        error_string = str(e).lower()
+                        if "merge_head exists" in error_string:
+                            try:
+                                repo.git.merge("--abort", env=env)
+                            except GitCommandError:
+                                pass
+                            return Response(
+                                {
+                                    "error": "MERGE_HEAD_EXISTS",
+                                    "details": str(e),
+                                },
+                                status=status.HTTP_400_BAD_REQUEST,
+                            )
+                        elif "merge conflict" in error_string:
+                            try:
+                                repo.git.merge("--abort", env=env)
+                            except GitCommandError:
+                                pass
+                            return Response(
+                                {
+                                    "error": "MERGE_CONFLICT",
+                                    "details": str(e),
+                                },
+                                status=status.HTTP_400_BAD_REQUEST,
+                            )
+                        else:
+                            return Response(
+                                {"error": str(e)},
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            )
+                    finally:
+                        git_config.set_value("user", "name", "")
+                        git_config.set_value("user", "email", "")
 
     @action(detail=False, methods=["GET", "POST", "PATCH"])
     def branches(self, request):

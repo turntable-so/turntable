@@ -83,6 +83,7 @@ export default function BranchReviewDialog({
     branchName,
     discardChanges,
     fetchFiles,
+    sourceBranch,
   } = useFiles();
   const { user } = useSession();
 
@@ -122,7 +123,7 @@ export default function BranchReviewDialog({
     setIsSubmitting(false);
   };
 
-  const handleSyncWithRemote = async () => {
+  const handleSync = async () => {
     if (isSyncing) {
       return;
     }
@@ -130,7 +131,13 @@ export default function BranchReviewDialog({
     setIsSyncing(true);
     const response = await sync(branchId);
     if (response.error) {
-      toast.error("Failed to sync with remote.");
+      if (response.error === "MERGE_CONFLICT") {
+        toast.error(
+          "Merge conflict detected. Please resolve the conflict before syncing with remote.",
+        );
+      } else {
+        toast.error("Something went wrong while syncing.");
+      }
     } else {
       toast.success("Changes synced with remote successfully.");
       fetchFiles();
@@ -148,15 +155,15 @@ export default function BranchReviewDialog({
                 disabled={hasChanges}
                 variant="secondary"
                 className="w-full"
-                onClick={handleSyncWithRemote}
+                onClick={handleSync}
               >
                 {isSyncing ? (
                   <div className="flex items-center">
                     <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                    Syncing with remote
+                    Syncing with {sourceBranch}
                   </div>
                 ) : (
-                  "Sync with remote"
+                  `Sync with ${sourceBranch}`
                 )}
               </Button>
               <>

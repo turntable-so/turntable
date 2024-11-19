@@ -112,6 +112,7 @@ type FilesContextType = {
   fetchFiles: () => void;
   branchId: string;
   branchName: string;
+  sourceBranch: string;
   readOnly: boolean | undefined;
   isCloned: boolean | undefined;
   schema: string | undefined;
@@ -206,6 +207,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   const [branchId, setBranchId] = useState("");
   const [branchName, setBranchName] = useState("");
+  const [sourceBranch, setSourceBranch] = useState("");
   const [filesLoading, setFilesLoading] = useState(false);
   const [readOnly, setReadOnly] = useState<boolean | undefined>(undefined);
   const [isCloned, setIsCloned] = useState<boolean | undefined>(undefined);
@@ -280,6 +282,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
       setIsCloned(branch.is_cloned);
       setPullRequestUrl(branch.pull_request_url);
       setSchema(branch.schema);
+      setSourceBranch(branch.source_branch);
     }
   };
 
@@ -858,6 +861,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         recentFiles,
         branchId,
         branchName,
+        sourceBranch,
         readOnly,
         isCloned,
         fetchBranch,
