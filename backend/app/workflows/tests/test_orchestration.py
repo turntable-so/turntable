@@ -9,7 +9,7 @@ from app.models.workflows import DBTOrchestrator
 @pytest.mark.django_db(transaction=True)
 def test_orchestration(custom_celery, local_postgres):
     resource = local_postgres
-    dbt_resource = resource.dbtresource_set.filter(
+    dbtresource = resource.dbtresource_set.filter(
         environment=EnvironmentType.PROD
     ).first()
 
@@ -17,21 +17,20 @@ def test_orchestration(custom_celery, local_postgres):
     time.sleep(1)
 
     resource.refresh_from_db()
-    workflow = DBTOrchestrator.schedule_now(
+    workflow = DBTOrchestrator(
         workspace=resource.workspace,
-        dbt_resource=dbt_resource,
+        dbtresource=dbtresource,
         commands=["ls", "run"],
-        refresh_artifacts=True,
-    )
-    result = workflow.await_next_result()
+        save_artifacts=True,
+    ).schedule_now()
+    result, _ = workflow.await_next_result()
     assert result["success"]
     assert all(result["stdouts"])
     assert not any(result["stderrs"])
-    assert not result["run_results"][0]
-    assert result["run_results"][1]
+    assert result["run_results"]
 
-    dbt_resource.refresh_from_db()
-    assert dbt_resource.manifest_json
-    assert dbt_resource.catalog_json
+    dbtresource.refresh_from_db()
+    assert dbtresource.manifest
+    assert dbtresource.catalog
     # ensure the workflow is marked completed (used by the UI)
     assert workflow.most_recent(successes_only=True)[0]

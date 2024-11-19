@@ -314,8 +314,7 @@ class ResourceService:
         }
 
     def sync_resource(self, resource_id: int):
-        workspace = Resource.objects.get(id=resource_id, workspace=self.workspace)
-        workflow = MetadataSyncWorkflow.schedule_now(
-            workspace=workspace, resource_id=resource_id
-        )
+        workflow = MetadataSyncWorkflow(
+            workspace=self.workspace, resource_id=resource_id
+        ).schedule_now()
         return workflow.await_next_id(timeout=20)

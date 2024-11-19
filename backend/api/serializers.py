@@ -1,4 +1,9 @@
+import ast
+import json
+
 from django.contrib.auth.models import Group, User
+from django_celery_beat.models import CrontabSchedule
+from django_celery_results.models import TaskResult
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from invitations.utils import get_invitation_model
 from rest_framework import serializers
@@ -30,6 +35,7 @@ from app.models import (
 )
 from app.models.project import Project
 from app.models.resources import MetabaseDetails
+from app.models.workflows import DBTOrchestrator, ScheduledWorkflow, TaskArtifact
 from vinyl.lib.dbt_methods import DBTVersion
 
 Invitation = get_invitation_model()
@@ -458,3 +464,118 @@ class ProjectSerializer(serializers.ModelSerializer):
 
     def get_pull_request_url(self, obj):
         return obj.pull_request_url
+
+
+class CrontabWorkflowSerializer(serializers.ModelSerializer):
+    cron_str = serializers.CharField(required=False)
+    workspace_id = serializers.PrimaryKeyRelatedField(
+        queryset=Workspace.objects.all(), source="workspace"
+    )
+
+    class Meta:
+        model = ScheduledWorkflow
+        fields = ["id", "workspace_id", "cron_str"]
+
+    def schedule_helper(self, cron_str):
+        split_cron = cron_str.split(" ")
+        crontab, _ = CrontabSchedule.objects.get_or_create(
+            minute=split_cron[0],
+            hour=split_cron[1],
+            day_of_week=split_cron[2],
+            day_of_month=split_cron[3],
+            month_of_year=split_cron[4],
+        )
+        return crontab
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.crontab:
+            data["cron_str"] = (
+                f"{instance.crontab.minute} {instance.crontab.hour} {instance.crontab.day_of_week} {instance.crontab.day_of_month} {instance.crontab.month_of_year}"
+            )
+        return data
+
+    def create(self, validated_data):
+        if "cron_str" in validated_data:
+            cron_str = validated_data.pop("cron_str")
+            crontab = self.schedule_helper(cron_str)
+            validated_data["crontab"] = crontab
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        # Update the crontab schedule if cron_str is provided
+        if "cron_str" in validated_data:
+            cron_str = validated_data.pop("cron_str")
+            crontab = self.schedule_helper(cron_str)
+            instance.crontab = crontab
+            instance.save()
+
+        return super().update(instance, validated_data)
+
+
+class DBTOrchestratorSerializer(CrontabWorkflowSerializer):
+    dbtresource_id = serializers.PrimaryKeyRelatedField(
+        queryset=DBTCoreDetails.objects.all(), source="dbtresource"
+    )
+    commands = serializers.ListField(child=serializers.CharField())
+
+    class Meta:
+        model = DBTOrchestrator
+        fields = [
+            "id",
+            "workspace_id",
+            "dbtresource_id",
+            "cron_str",
+            "commands",
+        ]
+
+    def validate_commands(self, value):
+        if not all(cmd.strip().startswith("dbt") for cmd in value):
+            raise serializers.ValidationError("All commands must start with 'dbt'")
+        return value
+
+    def create(self, validated_data):
+        if "cron_str" in validated_data:
+            cron_str = validated_data.pop("cron_str")
+            crontab = self.schedule_helper(cron_str)
+            validated_data["crontab"] = crontab
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        return super().update(instance, validated_data)
+
+
+class TaskArtifactSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TaskArtifact
+        fields = ["id", "artifact", "artifact_type"]
+
+
+class TaskSerializer(serializers.ModelSerializer):
+    artifacts = TaskArtifactSerializer(
+        source="taskartifact_set", many=True, read_only=True
+    )
+    result = serializers.SerializerMethodField()
+
+    def get_result(self, obj):
+        if obj.result:
+            try:
+                return ast.literal_eval(obj.result)
+            except (ValueError, SyntaxError):
+                try:
+                    return json.loads(obj.result)
+                except json.JSONDecodeError:
+                    return obj.result
+        return None
+
+    class Meta:
+        model = TaskResult
+        fields = [
+            "task_id",
+            "status",
+            "result",
+            "date_created",
+            "date_done",
+            "traceback",
+            "artifacts",
+        ]

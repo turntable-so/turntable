@@ -15,7 +15,6 @@ from datetime import timedelta
 from pathlib import Path
 
 import dj_database_url
-
 import sentry_sdk
 
 SENTRY_DSN = os.getenv("SENTRY_DSN")
@@ -311,6 +310,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 CACHE_REDIS_CHANNEL = os.getenv("CACHE_CHANNEL", "1")
 CHANNEL_REDIS_CHANNEL = os.getenv("CHANNEL_REDIS_CHANNEL", "2")
 CELERY_REDIS_CHANNEL = os.getenv("CELERY_REDIS_CHANNEL", "3")
+CELERY_REDIS_TEST_CHANNEL = os.getenv("CELERY_REDIS_TEST_CHANNEL", "4")
 
 if os.getenv("LOCAL_REDIS") == "true":
     redis_host = os.getenv("REDIS_HOST", "localhost")

@@ -5,6 +5,7 @@ from .healthcheck_views import HealthCheckViewSet
 from .invitation_views import InvitationViewSet
 from .lineage_views import LineageViewSet
 from .notebook_views import NotebookViewSet
+from .orchestration_views import JobViewSet, RunViewSet
 from .query_views import DbtQueryPreviewView, QueryFormatView, QueryPreviewView
 from .resource_views import ResourceViewSet, SyncResourceView, TestResourceView
 from .ssh_views import SSHViewSet

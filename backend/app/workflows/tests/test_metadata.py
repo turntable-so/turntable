@@ -41,10 +41,9 @@ def run_test_sync(
             periodic_task_name = None
             task_result = TaskResult.objects.get(task_id=task_id)
         else:
-            workflow = MetadataSyncWorkflow.schedule_now(
-                resource=resource,
-                workspace=resource.workspace,
-            )
+            workflow = MetadataSyncWorkflow(
+                resource=resource, workspace=resource.workspace
+            ).schedule_now()
             workflow.await_next_result()
             periodic_task_name = workflow.replacement_identifier
             task_result = (

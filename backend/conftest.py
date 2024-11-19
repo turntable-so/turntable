@@ -236,6 +236,9 @@ def custom_celery_worker(
     test_queue_name,
     max_retries: int = 10,
 ):
+    # Clear the queue before starting the worker
+    custom_celery_app.control.purge()
+
     retry_count = 0
 
     while retry_count < max_retries:
