@@ -149,7 +149,7 @@ export default function BottomPanel({
               <TooltipTrigger asChild>
                 <Button
                   size="sm"
-                  onClick={runQueryPreview}
+                  onClick={() => runQueryPreview()}
                   disabled={isQueryLoading}
                   variant="outline"
                 >
