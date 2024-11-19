@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from "react";
 import {
   CircleCheck,
   CircleSlash,
@@ -5,7 +6,6 @@ import {
   LoaderCircle,
   Play,
 } from "lucide-react";
-import { useEffect } from "react";
 import { useCommandPanelContext } from "./command-panel-context";
 
 export default function CommandPanelList() {
@@ -15,9 +15,10 @@ export default function CommandPanelList() {
     setSelectedCommandIndex,
     commandPanelState,
     updateCommandById,
-    runCommand,
     runCommandCore,
   } = useCommandPanelContext();
+
+  const [isButtonHovered, setIsButtonHovered] = useState(false);
 
   useEffect(() => {
     commandHistory.forEach((command) => {
@@ -33,8 +34,12 @@ export default function CommandPanelList() {
         <div
           key={item.id}
           className={`group/item flex justify-between ${
-            index === selectedCommandIndex ? "bg-gray-100 dark:bg-zinc-700" : ""
-          } hover:bg-gray-100 dark:hover:bg-zinc-700 cursor-pointer p-2`}
+            index === selectedCommandIndex && !isButtonHovered
+              ? "bg-zinc-200 dark:bg-zinc-700"
+              : ""
+          } ${
+            !isButtonHovered ? "hover:bg-zinc-200 dark:hover:bg-zinc-700" : ""
+          } cursor-pointer p-2`}
           onClick={() => setSelectedCommandIndex(index)}
         >
           <div
@@ -63,7 +68,9 @@ export default function CommandPanelList() {
             <div className="hidden group-hover/item:block">
               <button
                 type="button"
-                className="group/run flex items-center gap-1 rounded hover:bg-gray-200 dark:hover:bg-zinc-950 text-sm px-2"
+                className="group/run flex items-center gap-1 rounded hover:bg-gray-200 dark:hover:bg-zinc-700 text-sm px-2"
+                onMouseEnter={() => setIsButtonHovered(true)}
+                onMouseLeave={() => setIsButtonHovered(false)}
                 onClick={(e) => {
                   e.stopPropagation();
                   runCommandCore(item.command);
