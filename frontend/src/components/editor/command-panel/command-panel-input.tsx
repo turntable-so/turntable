@@ -6,8 +6,13 @@ import { useFiles } from "@/app/contexts/FilesContext";
 
 export default function CommandPanelInput() {
   const { branchId } = useFiles();
-  const { inputValue, setInputValue, commandOptions, setCommandOptions } =
-    useCommandPanelContext();
+  const {
+    inputValue,
+    setInputValue,
+    commandOptions,
+    setCommandOptions,
+    runCommand,
+  } = useCommandPanelContext();
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -21,6 +26,38 @@ export default function CommandPanelInput() {
     setInputValue(option);
     setIsDropdownOpen(false);
     setHighlightedIndex(-1);
+  };
+
+  const handleCommandExecution = () => {
+    setInputValue("");
+    setIsDropdownOpen(false);
+    setHighlightedIndex(-1);
+    runCommand();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setIsDropdownOpen(true);
+      setHighlightedIndex((prevIndex) => {
+        const nextIndex = prevIndex + 1;
+        return nextIndex < filteredOptions.length ? nextIndex : 0;
+      });
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setIsDropdownOpen(true);
+      setHighlightedIndex((prevIndex) => {
+        const nextIndex = prevIndex - 1;
+        return nextIndex >= 0 ? nextIndex : filteredOptions.length - 1;
+      });
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (highlightedIndex >= 0 && highlightedIndex < filteredOptions.length) {
+        handleOptionClick(filteredOptions[highlightedIndex]);
+      } else {
+        handleCommandExecution();
+      }
+    }
   };
 
   const fuzzyMatch = (input: string, option: string) => {
@@ -47,15 +84,14 @@ export default function CommandPanelInput() {
     fuzzyMatch(inputValue, option),
   );
 
-  const focusInputOnMount = () => {
+  useEffect(() => {
     const timer = setTimeout(() => {
       inputRef.current?.focus();
     }, 0);
     return () => clearTimeout(timer);
-  };
-  useEffect(focusInputOnMount, []);
+  }, []);
 
-  const setListenerOnClickOutside = () => {
+  useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
         dropdownRef.current &&
@@ -70,13 +106,11 @@ export default function CommandPanelInput() {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  };
-  useEffect(setListenerOnClickOutside, []);
+  }, []);
 
-  const resetHighlightedIndexOnInputChange = () => {
+  useEffect(() => {
     setHighlightedIndex(-1);
-  };
-  useEffect(resetHighlightedIndexOnInputChange, [inputValue]);
+  }, [inputValue]);
 
   useEffect(() => {
     setCommandOptions(getCommandOptions(branchId));
@@ -94,31 +128,7 @@ export default function CommandPanelInput() {
           }
         }}
         onClick={handleInputClick}
-        onKeyDown={(e) => {
-          if (e.key === "ArrowDown") {
-            e.preventDefault();
-            setIsDropdownOpen(true);
-            setHighlightedIndex((prevIndex) => {
-              const nextIndex = prevIndex + 1;
-              return nextIndex < filteredOptions.length ? nextIndex : 0;
-            });
-          } else if (e.key === "ArrowUp") {
-            e.preventDefault();
-            setIsDropdownOpen(true);
-            setHighlightedIndex((prevIndex) => {
-              const nextIndex = prevIndex - 1;
-              return nextIndex >= 0 ? nextIndex : filteredOptions.length - 1;
-            });
-          } else if (e.key === "Enter") {
-            e.preventDefault();
-            if (
-              highlightedIndex >= 0 &&
-              highlightedIndex < filteredOptions.length
-            ) {
-              handleOptionClick(filteredOptions[highlightedIndex]);
-            }
-          }
-        }}
+        onKeyDown={handleKeyDown}
       />
       {isDropdownOpen && (
         <div
