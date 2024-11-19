@@ -349,56 +349,57 @@ class ProjectViewSet(viewsets.ViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        with project.repo_context() as (repo, env):
-            if repo.is_dirty(untracked_files=True):
-                return Response(
-                    {
-                        "error": "UNCOMMITTED_CHANGES",
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            try:
-                base_branch = project.source_branch or "main"
-                repo.git.fetch("origin", base_branch, env=env)
-                repo.git.merge(f"origin/{base_branch}", env=env)
-                return Response(
-                    {"detail": "success"},
-                    status=status.HTTP_200_OK,
-                )
-            except GitCommandError as e:
-                error_string = str(e).lower()
-                if "merge_head exists" in error_string:
-                    print("merging aborted")
-                    try:
-                        repo.git.merge("--abort", env=env)
-                    except GitCommandError:
-                        pass
-
-                if "permission denied" in error_string:
-                    print("permission denied")
+        with project.repo_context() as (repo, _):
+            with project.repository.with_ssh_env() as env:
+                if repo.is_dirty(untracked_files=True):
                     return Response(
                         {
-                            "error": "Authentication failed. Please check your Git credentials.",
-                            "details": str(e),
-                        },
-                        status=status.HTTP_401_UNAUTHORIZED,
-                    )
-                elif "merge conflict" in error_string:
-                    print("merge conflict")
-                    return Response(
-                        {
-                            "error": "Merge conflict occurred. Merge aborted.",
-                            "details": str(e),
+                            "error": "UNCOMMITTED_CHANGES",
                         },
                         status=status.HTTP_400_BAD_REQUEST,
                     )
-                else:
-                    print("other error: ", e)
+
+                try:
+                    base_branch = project.source_branch or "main"
+                    repo.git.fetch("origin", base_branch, env=env)
+                    repo.git.merge(f"origin/{base_branch}", env=env)
                     return Response(
-                        {"error": str(e)},
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        {"detail": "success"},
+                        status=status.HTTP_200_OK,
                     )
+                except GitCommandError as e:
+                    error_string = str(e).lower()
+                    if "merge_head exists" in error_string:
+                        print("merging aborted")
+                        try:
+                            repo.git.merge("--abort", env=env)
+                        except GitCommandError:
+                            pass
+
+                    if "permission denied" in error_string:
+                        print("permission denied")
+                        return Response(
+                            {
+                                "error": "Authentication failed. Please check your Git credentials.",
+                                "details": str(e),
+                            },
+                            status=status.HTTP_401_UNAUTHORIZED,
+                        )
+                    elif "merge conflict" in error_string:
+                        print("merge conflict")
+                        return Response(
+                            {
+                                "error": "Merge conflict occurred. Merge aborted.",
+                                "details": str(e),
+                            },
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+                    else:
+                        print("other error: ", e)
+                        return Response(
+                            {"error": str(e)},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        )
 
     @action(detail=False, methods=["GET", "POST", "PATCH"])
     def branches(self, request):
