@@ -1,25 +1,22 @@
 "use client";
 
 import { useFiles } from "@/app/contexts/FilesContext";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DiffEditor } from "@monaco-editor/react";
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
-import { Switch } from "../ui/switch";
-import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import { toast } from "sonner";
 import { Loader2, Undo2 } from "lucide-react";
 import useSession from "@/app/hooks/use-session";
 import { sync } from "@/app/actions/actions";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  TooltipProvider,
+} from "../ui/tooltip";
 interface BranchReviewDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -74,6 +71,7 @@ export default function BranchReviewDialog({
   const [selectedFilePaths, setSelectedFilePaths] = useState<string[]>([]);
   const [commitMessage, setCommitMessage] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const {
     changes,
@@ -125,15 +123,19 @@ export default function BranchReviewDialog({
   };
 
   const handleSyncWithRemote = async () => {
+    if (isSyncing) {
+      return;
+    }
+
+    setIsSyncing(true);
     const response = await sync(branchId);
-    console.log({ response });
     if (response.error) {
-      console.error({ error: response.error, details: response.details });
       toast.error("Failed to sync with remote.");
     } else {
       toast.success("Changes synced with remote successfully.");
       fetchFiles();
     }
+    setIsSyncing(false);
   };
 
   return (
@@ -148,7 +150,14 @@ export default function BranchReviewDialog({
                 className="w-full"
                 onClick={handleSyncWithRemote}
               >
-                Sync with remote
+                {isSyncing ? (
+                  <div className="flex items-center">
+                    <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                    Syncing with remote
+                  </div>
+                ) : (
+                  "Sync with remote"
+                )}
               </Button>
               <>
                 <div className="mt-4">
@@ -214,7 +223,7 @@ export default function BranchReviewDialog({
                             }
                           />
                           <div onClick={() => setSelectedChangeIndex(index)}>
-                            {change.path}
+                            {change.path.split("/").pop()}
                           </div>
                         </div>
                         {change.type === "untracked" && (
@@ -287,11 +296,17 @@ export default function BranchReviewDialog({
           <div className="pl-1 w-3/4">
             {selectedChangeIndex !== undefined &&
             changes?.[selectedChangeIndex] ? (
-              <DiffView
-                key={selectedChangeIndex}
-                original={changes?.[selectedChangeIndex].before}
-                modified={changes?.[selectedChangeIndex].after}
-              />
+              <div className="h-[98%]">
+                <div className="text-sm text-muted-foreground font-medium mb-2 text-center items-center">
+                  {changes[selectedChangeIndex].path}
+                </div>
+
+                <DiffView
+                  key={selectedChangeIndex}
+                  original={changes?.[selectedChangeIndex].before}
+                  modified={changes?.[selectedChangeIndex].after}
+                />
+              </div>
             ) : (
               <div className="m-2 text-xs text-muted-foreground bg-muted h-full flex-col flex-grow flex items-center justify-center">
                 Select a file to see the diff
