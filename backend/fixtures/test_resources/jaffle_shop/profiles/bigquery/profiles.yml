@@ -6,4 +6,4 @@ jaffle_shop:
       project: turntable-test
       dataset: dbt_sl_test
       method: oauth
-      
+      threads: 6

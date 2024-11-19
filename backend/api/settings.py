@@ -11,12 +11,21 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 import os
-import sys
 from datetime import timedelta
 from pathlib import Path
-from urllib.parse import urlparse
 
 import dj_database_url
+
+import sentry_sdk
+
+SENTRY_DSN = os.getenv("SENTRY_DSN")
+
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        traces_sample_rate=1.0,
+        profiles_sample_rate=1.0,
+    )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -67,6 +76,8 @@ INSTALLED_APPS = [
     "health_check",
     "health_check.db",
     "health_check.contrib.migrations",
+    "django_celery_results",
+    "django_celery_beat",
     "app",
 ]
 
@@ -270,16 +281,12 @@ elif "AWS_S3_ENDPOINT_HOST" in os.environ and "AWS_S3_ENDPOINT_PORT" in os.envir
 else:
     AWS_S3_ENDPOINT_URL = None
 
+AWS_S3_PUBLIC_URL = os.getenv("AWS_S3_PUBLIC_URL") or AWS_S3_ENDPOINT_URL
+
 
 AWS_DEFAULT_ACL = None
 AWS_QUERYSTRING_AUTH = True
 AWS_QUERYSTRING_EXPIRE = 60
-
-AWS_S3_PUBLIC_URL = (
-    os.getenv("AWS_S3_PUBLIC_URL")
-    if os.getenv("AWS_S3_PUBLIC_URL")
-    else "http://localhost:9000"
-)
 AWS_S3_SIGNATURE_VERSION = "s3v4"
 
 if region := os.getenv("AWS_S3_REGION_NAME"):
@@ -296,30 +303,46 @@ if querystring_auth := os.getenv("AWS_QUERYSTRING_AUTH"):
 if overwrite := os.getenv("AWS_S3_FILE_OVERWRITE"):
     AWS_S3_FILE_OVERWRITE = True if overwrite == "true" else False
 
+# static site settings
+STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
+# redis settings
+CACHE_REDIS_CHANNEL = os.getenv("CACHE_CHANNEL", "1")
+CHANNEL_REDIS_CHANNEL = os.getenv("CHANNEL_REDIS_CHANNEL", "2")
+CELERY_REDIS_CHANNEL = os.getenv("CELERY_REDIS_CHANNEL", "3")
 
 if os.getenv("LOCAL_REDIS") == "true":
-    redis_hosts = [
-        (
-            os.getenv("REDIS_HOST", "localhost"),
-            int(os.getenv("REDIS_PORT", 6379)),
-        )
-    ]
+    redis_host = os.getenv("REDIS_HOST", "localhost")
+    redis_port = int(os.getenv("REDIS_PORT", 6379))
+    redis_url = f"redis://{redis_host}:{redis_port}/"
+elif "REDIS_URL" not in os.environ:
+    raise ValueError("REDIS_URL is required if LOCAL_REDIS is not set to true")
 else:
-    redis_url = os.getenv("REDIS_URL")
-    if not redis_url and os.getenv("LOCAL_REDIS") != "true":
-        raise ValueError("REDIS_URL is required if LOCAL_REDIS is not set to true")
-    parsed_url = urlparse(redis_url)
-    redis_hosts = [(redis_url)]
+    redis_url = f"{os.getenv('REDIS_URL')}/"  # we add a / cause Render injects the url without a /
 
-
-IS_TEST_MODE = "test" in sys.argv or "pytest" in sys.modules
 CHANNEL_LAYERS = {
     "default": {
-        "BACKEND": (
-            "channels_redis.core.RedisChannelLayer"
-            if not IS_TEST_MODE
-            else "channels.layers.InMemoryChannelLayer"
-        ),
-        "CONFIG": {"hosts": redis_hosts} if not IS_TEST_MODE else {},
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {"hosts": [(redis_url) + CHANNEL_REDIS_CHANNEL]},
     }
 }
+
+## django cache settings
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": redis_url + CACHE_REDIS_CHANNEL,
+    }
+}
+
+## Celery settings
+CELERY_BROKER_URL = redis_url + CELERY_REDIS_CHANNEL
+# CELERY_CACHE_BACKEND = "django-cache"
+CELERY_RESULT_BACKEND = "django-db"
+CELERY_ACCEPT_CONTENT = ["application/json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "UTC"  # Adjust to your timezone
+CELERY_TASK_TRACK_STARTED = True
+CELERY_RESULT_EXTENDED = True

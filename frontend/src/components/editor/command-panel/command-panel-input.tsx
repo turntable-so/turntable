@@ -1,19 +1,17 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useCommandPanelContext } from "@/components/editor/command-panel/command-panel-context";
+import React, { useEffect, useRef, useState } from "react";
 import CommandInput from "./command-input";
-import CommandPanelActionBtn from "./command-panel-action-btn";
-import { addRecentCommand, getCommandOptions } from "./command-panel-options";
+import { getCommandOptions } from "./command-panel-options";
+import { useFiles } from "@/app/contexts/FilesContext";
 
 export default function CommandPanelInput() {
-  const [inputValue, setInputValue] = useState<string>("");
+  const { branchId } = useFiles();
+  const { inputValue, setInputValue, commandOptions, setCommandOptions } =
+    useCommandPanelContext();
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [commandOptions, setCommandOptions] = useState<string[]>([]);
-
-  useEffect(() => {
-    setCommandOptions(getCommandOptions());
-  }, []);
 
   const handleInputClick = () => {
     setIsDropdownOpen(true);
@@ -29,17 +27,20 @@ export default function CommandPanelInput() {
     let inputIndex = 0;
     let optionIndex = 0;
 
-    input = input.toLowerCase();
-    option = option.toLowerCase();
+    const cleanedInput = input.toLowerCase();
+    const cleanedOption = option.toLowerCase();
 
-    while (inputIndex < input.length && optionIndex < option.length) {
-      if (input[inputIndex] === option[optionIndex]) {
+    while (
+      inputIndex < cleanedInput.length &&
+      optionIndex < cleanedOption.length
+    ) {
+      if (cleanedInput[inputIndex] === cleanedOption[optionIndex]) {
         inputIndex++;
       }
       optionIndex++;
     }
 
-    return inputIndex === input.length;
+    return inputIndex === cleanedInput.length;
   };
 
   const filteredOptions = commandOptions.filter((option) =>
@@ -77,13 +78,9 @@ export default function CommandPanelInput() {
   };
   useEffect(resetHighlightedIndexOnInputChange, [inputValue]);
 
-  const handleRunCommand = () => {
-    const trimmedInputValue = inputValue.trim();
-    if (trimmedInputValue) {
-      addRecentCommand(trimmedInputValue);
-      setCommandOptions(getCommandOptions());
-    }
-  };
+  useEffect(() => {
+    setCommandOptions(getCommandOptions(branchId));
+  }, []);
 
   return (
     <div className="flex flex-row gap-2 relative items-center">
@@ -126,13 +123,15 @@ export default function CommandPanelInput() {
       {isDropdownOpen && (
         <div
           ref={dropdownRef}
-          className="absolute top-full left-0 w-1/3 bg-white border border-gray-300 rounded-md mt-1 z-10"
+          className="absolute top-full left-0 w-1/3 bg-white dark:bg-zinc-950 border border-gray-300 dark:border-zinc-700 rounded-md mt-1 z-10"
         >
           {filteredOptions.map((option, index) => (
             <div
-              key={index}
+              key={option}
               className={`py-2 px-4 cursor-pointer text-sm ${
-                index === highlightedIndex ? "bg-gray-100" : "hover:bg-gray-100"
+                index === highlightedIndex
+                  ? "bg-gray-100 dark:bg-zinc-700"
+                  : "hover:bg-gray-100 dark:hover:bg-zinc-700"
               }`}
               onMouseDown={(e) => {
                 e.preventDefault();
@@ -145,11 +144,6 @@ export default function CommandPanelInput() {
           ))}
         </div>
       )}
-      <CommandPanelActionBtn
-        inputValue={inputValue}
-        setInputValue={setInputValue}
-        onRunCommand={handleRunCommand}
-      />
     </div>
   );
 }

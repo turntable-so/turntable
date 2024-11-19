@@ -11,7 +11,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Fragment, useEffect, useRef, useState } from "react";
 import useResizeObserver from "use-resize-observer";
-import { getAssetIndex, getNotebooks } from "../app/actions/actions";
+import { getAssetIndex } from "../app/actions/actions";
 import ModelPreviewer from "./ModelPreviewer";
 import {
   ResizableHandle,
@@ -106,7 +106,6 @@ export default function ActionBar({
   const [lowHeight, setLowheight] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const pathName = usePathname();
-  const router = useRouter();
   const isNotebook = pathName.includes("/notebooks/");
 
   useEffect(() => {
@@ -117,14 +116,6 @@ export default function ActionBar({
       setResourceAssets(data);
     };
     fetchAssetIndex();
-  }, []);
-
-  useEffect(() => {
-    const fetchAndSetNotebooks = async () => {
-      const data = await getNotebooks();
-      setNotebooks(data);
-    };
-    fetchAndSetNotebooks();
   }, []);
 
   useEffect(() => {
@@ -278,23 +269,20 @@ export default function ActionBar({
             ref={searchRef}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="focus:outline-none bg-gray-100 w-full text-sm rounded-md py-2 px-2 border"
+            className="focus:outline-none bg-gray-100 dark:bg-zinc-900 w-full text-sm rounded-md py-2 px-2 border"
             placeholder="Filter assets"
           />
         </div>
         <div className="flex justify-between">
-          {/* <div className="text-xs mt-2 px-1 invisible">
-            {filteredAssets.length} Assets
-          </div> */}
           {selectedTagFilters.length + selectedTypeFilters.length > 0 && (
-            <div className="text-xs mt-2 px-1 bg-gray-100">
+            <div className="text-xs mt-2 px-1 bg-gray-100 dark:bg-zinc-900">
               {selectedTagFilters.length + selectedTypeFilters.length} Filters
             </div>
           )}
         </div>
       </div>
       <div
-        className={`flex-grow border-t mt-0 h-500 ${
+        className={`flex-grow border-t dark:border-zinc-900 mt-0 h-500 ${
           isFilterPopoverOpen ? "z-[-1]" : ""
         }`}
       >
@@ -380,7 +368,10 @@ export default function ActionBar({
                   </ResizablePanel>
                   {context !== "EDITOR" && (
                     <>
-                      <ResizableHandle withHandle className="bg-gray-300" />
+                      <ResizableHandle
+                        withHandle
+                        className="bg-gray-300 dark:bg-zinc-700"
+                      />
                       <ResizablePanel
                         defaultSize={75}
                         className="p-0"

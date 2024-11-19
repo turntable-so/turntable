@@ -98,7 +98,7 @@ export default function ConnectionLayout({
     <div className="max-w-7xl w-full px-16 py-4">
       <Button
         variant="ghost"
-        className="my-4 text-lg  flex items-center space-x-4"
+        className="my-4 text-lg flex items-center space-x-4"
         onClick={() => {
           router.push("/connections");
         }}
@@ -132,7 +132,7 @@ export default function ConnectionLayout({
             </div>
             <div className="flex justify-end items-center space-x-2">
               <div>
-                {realStatus === "RUNNING" && (
+                {realStatus === "STARTED" && (
                   <Badge
                     variant="secondary"
                     className="flex space-x-2 items-center font-medium text-sm"
@@ -147,7 +147,7 @@ export default function ConnectionLayout({
                       variant="secondary"
                       className="flex space-x-2 items-center font-medium text-sm mr-2"
                     >
-                      <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                      <div className="w-2 h-2 rounded-full bg-red-500" />
                       <div>Failed to sync </div>
                     </Badge>
                   </div>
@@ -158,20 +158,22 @@ export default function ConnectionLayout({
                       variant="secondary"
                       className="flex space-x-2 items-center font-medium text-sm mr-2"
                     >
-                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      <div className="w-2 h-2 rounded-full bg-green-500" />
                       <div>Connected </div>
                     </Badge>
                   </div>
                 )}
               </div>
               <Button
-                disabled={realStatus === "RUNNING"}
-                className={`${realStatus === "RUNNING" ? "opacity-50" : ""}`}
+                disabled={realStatus === "STARTED"}
+                className={`${realStatus === "STARTED" ? "opacity-50" : ""}`}
                 onClick={() => {
                   const syncResourceAndRefresh = async () => {
+                    // very optimistic
+                    setRealStatus("STARTED");
                     const res = await syncResource(resource.id);
                     if (res.success) {
-                      router.replace("/connections/" + resource.id);
+                      router.replace(`/connections/${resource.id}`);
                     }
                   };
                   syncResourceAndRefresh();
@@ -230,7 +232,7 @@ export default function ConnectionLayout({
             <DbtProjectForm resource={resource} details={dbtDetails} />
           )}
           <div className="h-4" />
-          <Card className="flex justify-between px-3 py-6 border-red-300">
+          <Card className="flex justify-between px-3 py-6 border-red-300 dark:border-red-700">
             <div>
               <CardTitle>Delete Connection</CardTitle>
               <CardDescription className="py-1">

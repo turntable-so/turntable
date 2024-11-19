@@ -16,6 +16,7 @@ Including another URLconf
 """
 
 from django.contrib import admin
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.urls import include, path, re_path
 from app.views.settings_view import SettingsView
 from app.views.project_views import ProjectViewSet
@@ -23,19 +24,16 @@ from app.views.query_views import DbtQueryPreviewView
 from app.consumers.ai_chat_consumer import AIChatConsumer
 from rest_framework import routers
 
-from app.consumers import (
-    WorkflowRunConsumer,
-)
-from app.consumers import DBTCommandConsumer, WorkflowRunConsumer
+from app.consumers import DBTCommandConsumer, TaskResultConsumer
 from app.views import (
     AssetViewSet,
     BlockViewSet,
+    EmbeddingViewSet,
     HealthCheckViewSet,
     InvitationViewSet,
     LineageViewSet,
     NotebookViewSet,
     ResourceViewSet,
-    EmbeddingViewSet,
     SSHViewSet,
     SyncResourceView,
     TestResourceView,
@@ -46,7 +44,10 @@ from app.views import (
 from app.views.project_views import ProjectViewSet
 from app.views.query_views import (
     DbtQueryPreviewView,
+    DbtQueryValidateView,
+    QueryFormatView,
     QueryPreviewView,
+    QueryValidateView,
 )
 from app.views.settings_view import SettingsView
 
@@ -74,9 +75,20 @@ urlpatterns = [
         name="dbt_query_preview",
     ),
     path(
+        "validate/dbt/",
+        DbtQueryValidateView.as_view(),
+        name="dbt_query_validate",
+    ),
+    path(
         "query/sql/",
         QueryPreviewView.as_view(),
         name="query_preview",
+    ),
+    path("query/format/", QueryFormatView.as_view(), name="query_format"),
+    path(
+        "validate/sql/",
+        QueryValidateView.as_view(),
+        name="query_validate",
     ),
     path(
         "resources/<str:resource_id>/sync/",
@@ -89,7 +101,7 @@ urlpatterns = [
         name="test_resource",
     ),
     path(
-        "workflows/<str:workflow_run_id>/",
+        "workflows/<str:task_id>/",
         WorkflowViews.as_view(),
         name="get_workflow_status",
     ),
@@ -113,9 +125,11 @@ urlpatterns = [
         AssetViewSet.as_view({"get": "retrieve"}),
         name="asset-detail",
     ),
-    path("ws/subscribe/<str:workspace_id>/", WorkflowRunConsumer.as_asgi()),
+    path("ws/subscribe/<str:workspace_id>/", TaskResultConsumer.as_asgi()),
     path("ws/dbt_command/<str:workspace_id>/", DBTCommandConsumer.as_asgi()),
     path("ws/infer/ ", AIChatConsumer.as_asgi()),
     path("settings/", SettingsView.as_view(), name="settings"),
     path("", include(router.urls)),
 ]
+
+urlpatterns += staticfiles_urlpatterns()

@@ -19,44 +19,21 @@ x-storage-credentials: &storage-credentials
   MINIO_ENDPOINT: *s3-url
   MINIO_BROWSER_REDIRECT_URL: http://localhost:9001
 
-x-hatchet-credentials: &hatchet-credentials
-  DATABASE_POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
-  DATABASE_POSTGRES_PORT: ${POSTGRES_PORT:-5432}
-  DATABASE_POSTGRES_USERNAME: ${POSTGRES_USER:-myuser}
-  DATABASE_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mypassword}
-  DATABASE_POSTGRES_DB_NAME: hatchet
-  DATABASE_POSTGRES_SSL_MODE: disable
-  DATABASE_URL: postgresql://${POSTGRES_USER:-myuser}:${POSTGRES_PASSWORD:-mypassword}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/hatchet?sslmode=disable
-  RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-user}
-  RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-password}
-  SERVER_TASKQUEUE_RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER:-user}:${RABBITMQ_DEFAULT_PASS:-password}@localhost:5672/
-  SERVER_AUTH_COOKIE_DOMAIN: localhost
-  SERVER_AUTH_COOKIE_INSECURE: "t"
-  SERVER_GRPC_BIND_ADDRESS: "0.0.0.0"
-  SERVER_GRPC_INSECURE: "t"
-  SERVER_GRPC_BROADCAST_ADDRESS: "hatchet-lite:7077"
-  SERVER_GRPC_PORT: "7077"
-  SERVER_URL: http://hatchet-lite:8888
-  SERVER_AUTH_SET_EMAIL_VERIFIED: "t"
-  SERVER_LOGGER_LEVEL: error
-  SERVER_LOGGER_FORMAT: console
-  DATABASE_LOGGER_LEVEL: error
-  DATABASE_LOGGER_FORMAT: console
-  HATCHET_ENV_PATH: /.hatchetconfig/.hatchetenv
-  HATCHET_CLIENT_NAMESPACE: "docker"
-  HATCHET_CLIENT_TLS_STRATEGY: none
-
 x-ai-credentials: &ai-credentials
   OPENAI_API_KEY: ${OPENAI_API_KEY}
   ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
 
 x-dev-credentials: &dev-credentials
   DEV: "false"
-  ENCRYPTION_KEY: ${ENCRYPTION_KEY}
   DJANGO_SETTINGS_MODULE: api.settings
   LOCAL_DB: "true"
   LOCAL_HOST: "true"
   LOCAL_REDIS: "true"
+  LOCAL_S3: "true"
+  CLI_MODE: "false"
+  ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+  SUPERUSER_EMAIL: ${SUPERUSER_EMAIL}
+  SUPERUSER_PASSWORD: ${SUPERUSER_PASSWORD}
 
 x-redis-credentials: &redis-credentials
   REDIS_HOST: "redis"
@@ -82,7 +59,6 @@ x-common-backend: &common-backend
       [
         *postgres-credentials,
         *storage-credentials,
-        *hatchet-credentials,
         *ai-credentials,
         *redis-credentials,
         *dev-credentials,
@@ -90,18 +66,8 @@ x-common-backend: &common-backend
   depends_on:
     postgres:
       condition: service_healthy
-    setup-hatchet:
-      condition: service_completed_successfully
-    createbuckets:
-      condition: service_completed_successfully
-    create_hatchet_db:
-      condition: service_completed_successfully
     redis:
       condition: service_healthy
-  volumes:
-    - .hatchetconfig:/.hatchetconfig
-    - ./backend/cache:/cache
-    - code_repos:/data/code
 
 name: turntable
 
@@ -111,10 +77,7 @@ services:
     <<: *common-backend
     ports:
       - "8000:8000"
-    command: >
-      /bin/sh -c "
-      python manage.py migrate &&
-      uvicorn api.asgi:application --host 0.0.0.0 --port 8000"
+    command: ["django-admin", "start_server"]
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/healthcheck/health/"]
       interval: 30s
@@ -133,7 +96,7 @@ services:
       api:
         condition: service_healthy
       worker:
-        condition: service_started
+        condition: service_healthy
     environment:
       <<: [*next-credentials, *telemetry-credentials]
 
@@ -155,18 +118,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
-
-  create_hatchet_db:
-    build:
-      context: backend
-      dockerfile: hatchet_initialization/Dockerfile
-    command: ["python", "hatchet_initialization/create_db.py"]
-    restart: no
-    environment:
-      <<: [*postgres-credentials, *hatchet-credentials, *dev-credentials]
-    depends_on:
-      postgres:
-        condition: service_healthy
 
   redis:
     image: "redis:latest"
@@ -205,46 +156,41 @@ services:
       "
     restart: no
 
-  hatchet-lite:
-    image: ghcr.io/hatchet-dev/hatchet/hatchet-lite:latest
-    ports:
-      - "8888:8888"
-      - "7077:7077"
-    depends_on:
-      create_hatchet_db:
-        condition: service_completed_successfully
-    environment:
-      <<: [*postgres-credentials, *hatchet-credentials]
-      DEV: "true"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://hatchet-lite:8733/ready"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-    volumes:
-      - "hatchet_lite_rabbitmq_data:/var/lib/rabbitmq"
-      - ".hatchetconfig:/config"
-
-  setup-hatchet:
-    image: ghcr.io/hatchet-dev/hatchet/hatchet-lite:latest
-    command: /bin/sh -c 'printf "HATCHET_CLIENT_TOKEN=" > /config/.hatchetenv && /hatchet-admin token create --config /config --tenant-id 707d0855-80ab-4e1f-a156-f1c4546cbf52 >> /config/.hatchetenv'
-    depends_on:
-      hatchet-lite:
-        condition: service_healthy
-    environment:
-      <<: [*postgres-credentials, *hatchet-credentials]
-    volumes:
-      - "hatchet_lite_rabbitmq_data:/var/lib/rabbitmq"
-      - ".hatchetconfig:/config"
-    restart: no
-
   worker:
     <<: *common-backend
-    command: ["python", "workflows/main.py"]
+    command: ["django-admin", "start_worker"]
     depends_on:
       api:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "celery", "-A", "api", "status"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+
+  scheduler:
+    <<: *common-backend
+    command: ["django-admin", "start_beat"]
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      worker:
+        condition: service_healthy
+
+  flower:
+    <<: *common-backend
+    command: ["django-admin", "flower"]
+    depends_on:
+      worker:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "5555:5555"
 
   ready:
     image: busybox:latest
@@ -256,14 +202,13 @@ services:
       web:
         condition: service_started
       worker:
-        condition: service_started
+        condition: service_healthy
+      scheduler:
+        condition: service_healthy
 
 volumes:
   postgres_data:
   minio_data:
-  hatchet_lite_rabbitmq_data:
-  hatchet_lite_config:
-  hatchet_credentials_handoff:
   postgres_test_db_data:
   frontend_data:
   code_repos:

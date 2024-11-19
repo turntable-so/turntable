@@ -6,6 +6,7 @@ from django.db import transaction
 from app.models import (
     Asset,
 )
+from app.workflows.metadata import sync_metadata
 from fixtures.local_env import (
     create_local_metabase,
     create_local_postgres,
@@ -14,8 +15,6 @@ from fixtures.local_env import (
     create_repository_n,
     create_ssh_key_n,
 )
-from workflows.metadata_sync import MetadataSyncWorkflow
-from workflows.utils.debug import WorkflowDebugger
 
 
 class Command(BaseCommand):
@@ -37,6 +36,6 @@ class Command(BaseCommand):
         ):
             self.stdout.write(self.style.SUCCESS("Database already seeded"))
             return
-        WorkflowDebugger(MetadataSyncWorkflow, {"resource_id": postgres.id}).run()
-        WorkflowDebugger(MetadataSyncWorkflow, {"resource_id": metabase.id}).run()
+        sync_metadata(resource_id=postgres.id, workspace_id=workspace.id)
+        sync_metadata(resource_id=metabase.id, workspace_id=workspace.id)
         self.stdout.write(self.style.SUCCESS("Successfully seeded the database"))

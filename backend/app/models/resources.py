@@ -9,12 +9,14 @@ from typing import Any, Generator
 
 import yaml
 from django.contrib.postgres.fields import ArrayField
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import models
+from django_celery_results.models import TaskResult
 from polymorphic.models import PolymorphicModel
 
-from app.models.git_connections import Repository
+from app.models.project import Project
+from app.models.repository import Repository
 from app.models.workspace import Workspace
 from app.utils.fields import encrypt
 from vinyl.lib.connect import (
@@ -29,12 +31,6 @@ from vinyl.lib.dbt import DBTProject, DBTTransition
 from vinyl.lib.dbt_methods import DBTDialect, DBTVersion
 from vinyl.lib.utils.files import save_orjson
 from vinyl.lib.utils.process import run_and_capture_subprocess
-
-
-class WorkflowStatus(models.TextChoices):
-    RUNNING = "RUNNING", "Running"
-    FAILED = "FAILED", "Failed"
-    SUCCESS = "SUCCESS", "Success"
 
 
 # Helper classes
@@ -72,7 +68,7 @@ def get_sync_config(db_path):
 
 @contextmanager
 def repo_path(
-    obj, isolate: bool = False, branch_id: str | None = None
+    obj, isolate: bool = False, project_id: str | None = None
 ) -> Generator[tuple[str, Repository | None], None, None]:
     repo: Repository | None = getattr(obj, "repository")
     project_path = getattr(obj, "project_path")
@@ -82,14 +78,14 @@ def repo_path(
                 temp_project_path = os.path.join(
                     temp_dir, os.path.basename(project_path)
                 )
-                shutil.copytree(project_path, temp_project_path)
+                shutil.copytree(project_path, temp_project_path, dirs_exist_ok=True)
                 yield temp_project_path, None
                 return
 
         yield project_path, None
         return
-    branch = repo.main_branch if branch_id is None else repo.get_branch(branch_id)
-    with branch.repo_context(isolate=isolate) as (git_repo, _):
+    project = repo.main_project if project_id is None else repo.get_project(project_id)
+    with project.repo_context(isolate=isolate) as (git_repo, _):
         project_path = os.path.join(git_repo.working_tree_dir, project_path)
         yield project_path, git_repo
 
@@ -113,12 +109,13 @@ class Resource(models.Model):
             models.Index(fields=["workspace_id"]),
         ]
 
-    def _get_latest_sync_run(self):
-        try:
-            workflow_run = self.workflow_runs.order_by("-created_at").first()
-            return workflow_run
-        except ObjectDoesNotExist:
-            return None
+    def _get_latest_sync_run(self, successes_only: bool = False):
+        from app.models.workflows import MetadataSyncWorkflow
+
+        most_recent = MetadataSyncWorkflow(
+            resource_id=self.id, workspace_id=self.workspace.id
+        ).most_recent(1, successes_only)
+        return most_recent[0] if most_recent else None
 
     @property
     def status(self):
@@ -127,8 +124,8 @@ class Resource(models.Model):
 
     @property
     def last_synced(self):
-        run = self._get_latest_sync_run()
-        return run.updated_at if run else None
+        run = self._get_latest_sync_run(successes_only=True)
+        return run.date_done if run else None
 
     @property
     def subtype(self):
@@ -138,40 +135,16 @@ class Resource(models.Model):
     def has_dbt(self):
         return self.dbtresource_set.exists()
 
-    def get_dbt_resource(self, dbt_resource_id=None):
-        if dbt_resource_id is None:
-            dbt_resource_count = self.dbtresource_set.count()
-            assert (
-                dbt_resource_count == 1
-            ), f"Expected 1 dbt resource, found {dbt_resource_count}"
-            dbt_resource = self.dbtresource_set.first()
-        else:
-            dbt_resource = self.dbtresource_set.get(id=dbt_resource_id)
-            assert (
-                dbt_resource.resource.id == self.id
-            ), f"Specified DBT resource does not belong to the resource {self.id}"
-        assert (
-            dbt_resource.subtype == ResourceSubtype.DBT
-        ), "Expected DBT core resource. Currently, running dbt cloud resources is not supported."
-
-        return dbt_resource
-
-
-class WorkflowRun(models.Model):
-    id = models.UUIDField(primary_key=True)
-    status = models.TextField(choices=WorkflowStatus.choices, null=False)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True, null=True)
-    resource = models.ForeignKey(
-        "Resource", on_delete=models.CASCADE, null=True, related_name="workflow_runs"
-    )
-
 
 class IngestError(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    workflow_run = models.ForeignKey(
-        "WorkflowRun", on_delete=models.CASCADE, null=True, related_name="ingest_errors"
+    task = models.ForeignKey(
+        TaskResult,
+        to_field="task_id",
+        db_column="task_id",
+        on_delete=models.CASCADE,
+        null=True,
+        related_name="ingest_errors",
     )
     command = models.TextField(null=True)
     error = models.JSONField(null=True)
@@ -289,7 +262,7 @@ class ResourceDetails(PolymorphicModel):
 
     def run_datahub_ingest(
         self,
-        workflow_run_id: str,
+        task_id: str,
         workunits: int | None = None,
         tolerate_errors: bool = True,
     ):
@@ -299,7 +272,7 @@ class ResourceDetails(PolymorphicModel):
         if not result["success"]:
             ingest_errors = [
                 IngestError(
-                    workflow_run_id=workflow_run_id,
+                    task_id=task_id,
                     command=result["command"],
                     error=error,
                 )
@@ -349,8 +322,35 @@ class ResourceDetails(PolymorphicModel):
             yield [config_path], db_path
 
 
+class EnvironmentType(models.TextChoices):
+    DEV = "dev"
+    STAGING = "staging"
+    PROD = "prod"
+    COMBINED = "combined"
+
+    @classmethod
+    def jobs_allowed_environments(cls):
+        # order of preference
+        return [EnvironmentType.PROD, EnvironmentType.COMBINED, EnvironmentType.STAGING]
+
+    @classmethod
+    def metadata_sync_allowed_environments(cls):
+        return [EnvironmentType.PROD, EnvironmentType.COMBINED]
+
+    @classmethod
+    def development_allowed_environments(cls):
+        # order of preference
+        return [EnvironmentType.DEV, EnvironmentType.COMBINED]
+
+
 class DBTResource(PolymorphicModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    environment = models.CharField(
+        choices=EnvironmentType.choices,
+        default=EnvironmentType.COMBINED,
+        max_length=255,
+        blank=False,
+    )
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True)
     name = models.TextField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -361,6 +361,11 @@ class DBTResource(PolymorphicModel):
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE, null=True)
     manifest_json = models.JSONField(null=True)
     catalog_json = models.JSONField(null=True)
+
+    def save(self, *args, **kwargs):
+        if self.resource and not self.workspace:
+            self.workspace = self.resource.workspace
+        super().save(*args, **kwargs)
 
     @classmethod
     def get_default_subtype(cls):
@@ -551,16 +556,74 @@ class DBTCoreDetails(DBTResource):
     database = encrypt(models.CharField(max_length=255, blank=False))
     schema = encrypt(models.CharField(max_length=255, blank=False))
     other_schemas = encrypt(models.JSONField(null=True))
-    threads = models.IntegerField(null=True, default=1)
+    target_name = models.CharField(max_length=255, blank=True, null=True)
+    threads = models.IntegerField(null=False, default=1)
     version = models.CharField(
         choices=[(v, v.value) for v in DBTVersion], max_length=255, blank=False
     )
     env_vars = encrypt(models.JSONField(null=True))
+    compile_exclusions = ArrayField(models.TextField(), null=True)
 
     # relationships
     repository = models.ForeignKey(
         Repository, on_delete=models.CASCADE, null=True, default=None
     )
+
+    @property
+    def development_allowed(self):
+        return self.environment in EnvironmentType.development_allowed_environments()
+
+    @property
+    def jobs_allowed(self):
+        return self.environment in EnvironmentType.jobs_allowed_environments()
+
+    @property
+    def metadata_sync_allowed(self):
+        return self.environment in EnvironmentType.metadata_sync_allowed_environments()
+
+    @classmethod
+    def get_job_dbtresource(cls, workspace_id: str, resource_id: str = None):
+        prod_env_options = EnvironmentType.jobs_allowed_environments()
+
+        dbtresource_options = cls.objects.filter(
+            workspace_id=workspace_id,
+            environment__in=prod_env_options,
+        )
+        if resource_id is not None:
+            dbtresource_options = dbtresource_options.filter(resource_id=resource_id)
+        for env in prod_env_options:
+            for dbtresource in dbtresource_options:
+                if dbtresource.environment == env:
+                    return dbtresource
+        return None
+
+    @classmethod
+    def get_development_dbtresource(cls, workspace_id: str, resource_id: str = None):
+        dev_env_options = EnvironmentType.development_allowed_environments()
+
+        dbtresource_options = cls.objects.filter(
+            workspace_id=workspace_id,
+            environment__in=dev_env_options,
+        )
+        if resource_id is not None:
+            dbtresource_options = dbtresource_options.filter(resource_id=resource_id)
+        for env in dev_env_options:
+            for dbtresource in dbtresource_options:
+                if dbtresource.environment == env:
+                    return dbtresource
+        return None
+
+    def clean(self, *args, **kwargs):
+        if (
+            self.environment == EnvironmentType.PROD
+            and self.repository.dbtresource_set.filter(
+                environment=EnvironmentType.PROD
+            ).exists()
+        ):
+            raise ValidationError(
+                "Cannot have more than one production resource in a repository"
+            )
+        super().clean(*args, **kwargs)
 
     def save(self, *args, **kwargs):
         if isinstance(self.version, DBTVersion):
@@ -568,10 +631,15 @@ class DBTCoreDetails(DBTResource):
         super().save(*args, **kwargs)
 
     @contextmanager
-    def dbt_repo_context(self, isolate: bool = False, branch_id: str | None = None):
+    def dbt_repo_context(self, isolate: bool = False, project_id: str | None = None):
         env_vars = self.env_vars or {}
         dialect_str = self.resource.details.subtype
-        with repo_path(self, isolate=isolate, branch_id=branch_id) as (
+        if project_id is not None:
+            project = Project.objects.get(id=project_id)
+            schema = project.schema
+        else:
+            schema = None
+        with repo_path(self, isolate=isolate, project_id=project_id) as (
             project_path,
             git_repo,
         ):
@@ -583,7 +651,8 @@ class DBTCoreDetails(DBTResource):
                 dbt_profiles_path = os.path.join(dbt_profiles_dir, "profiles.yml")
                 with open(dbt_profiles_path, "w") as f:
                     profile_contents = self.resource.details.get_dbt_profile_contents(
-                        self
+                        self,
+                        schema=schema,
                     )
                     adj_profile_contents = {profile_name: profile_contents}
                     yaml.dump(adj_profile_contents, f)
@@ -594,6 +663,7 @@ class DBTCoreDetails(DBTResource):
                         self.version,
                         dbt_profiles_dir=dbt_profiles_dir,
                         env_vars={} if env_vars is None else env_vars,
+                        compile_exclusions=self.compile_exclusions,
                     ),
                     project_path,
                     git_repo,
@@ -601,14 +671,37 @@ class DBTCoreDetails(DBTResource):
 
     @contextmanager
     def dbt_transition_context(
-        self, isolate: bool = False, branch_id: str | None = None
+        self,
+        isolate: bool = False,
+        project_id: str | None = None,
+        override_manifest: bool = False,
+        override_catalog: bool = False,
+        override_job_resource: DBTResource | None = None,
     ):
-        with self.dbt_repo_context(isolate=isolate) as (
+        prod_environment = override_job_resource or self.get_job_dbtresource(
+            self.workspace.id, self.resource.id
+        )
+        if prod_environment is None:
+            raise Exception("No production environment found for this repository")
+        with prod_environment.dbt_repo_context(isolate=isolate) as (
             before,
             _,
             _,
         ):
-            with self.dbt_repo_context(isolate=isolate, branch_id=branch_id) as (
+            to_update = [
+                (
+                    before.manifest_path,
+                    prod_environment.manifest_json,
+                    override_manifest,
+                ),
+                (before.catalog_path, prod_environment.catalog_json, override_catalog),
+            ]
+            for path, artifact_json, override in to_update:
+                if artifact_json is not None:
+                    if override or not os.path.exists(path):
+                        with open(path, "w") as f:
+                            save_orjson(artifact_json, f)
+            with self.dbt_repo_context(isolate=isolate, project_id=project_id) as (
                 after,
                 project_path,
                 git_repo,
@@ -619,14 +712,18 @@ class DBTCoreDetails(DBTResource):
                     git_repo,
                 )
 
-    def upload_artifacts(self, branch_id: str | None = None):
-        with self.dbt_repo_context(isolate=True, branch_id=branch_id) as (
+    def upload_artifacts(
+        self, project_id: str | None = None, exclude_introspective: bool = True
+    ):
+        with self.dbt_repo_context(isolate=True, project_id=project_id) as (
             dbtproj,
             project_path,
             _,
         ):
             stdout, stderr, success = dbtproj.dbt_compile(
-                models_only=True, update_manifest=True
+                models_only=True,
+                update_manifest=True,
+                exclude_introspective=exclude_introspective,
             )
             if not success:
                 raise Exception(
@@ -637,6 +734,7 @@ class DBTCoreDetails(DBTResource):
                 raise Exception(
                     f"Error generating docs. Stderr: {stderr}. Stdout: {stdout}"
                 )
+
             dbtproj.mount_manifest()
             dbtproj.mount_catalog()
             self.manifest_json = dbtproj.manifest
@@ -700,7 +798,9 @@ class DBDetails(ResourceDetails):
     def schema_terminology(self):
         return "schema"
 
-    def get_dbt_profile_contents(self, dbt_core_resource: DBTCoreDetails):
+    def get_dbt_profile_contents(
+        self, dbt_core_resource: DBTCoreDetails, schema: str | None = None
+    ):
         pass
 
     @contextmanager
@@ -749,8 +849,11 @@ class DBDetails(ResourceDetails):
         with tempfile.TemporaryDirectory() as temp_dir:
             db_path, config_path = self.db_config_paths(temp_dir)
             # add in dbt configs to same ingest, only supports dbt core for now
+            # don't pull in development environments
             dbt_resources: list[DBTCoreDetails] = list(
-                self.resource.dbtresource_set.all()
+                self.resource.dbtresource_set.filter(
+                    environment__in=EnvironmentType.metadata_sync_allowed_environments()
+                )
             )
             with self.dbt_datahub_yml_paths(dbt_resources, db_path) as dbt_yaml_paths:
                 config = self.get_datahub_config(db_path)
@@ -821,22 +924,26 @@ class PostgresDetails(DBDetails):
             "sink": get_sync_config(db_path),
         }
 
-    def get_dbt_profile_contents(self, dbt_core_resource: DBTCoreDetails):
+    def get_dbt_profile_contents(
+        self, dbt_core_resource: DBTCoreDetails, schema: str | None = None
+    ):
         if dbt_core_resource.database != self.database:
             raise Exception(
                 f"DBT database {dbt_core_resource.database} does not match Postgres database {self.database}"
             )
+        target_name = dbt_core_resource.target_name or "prod"
         return {
-            "target": "prod",
+            "target": target_name,
             "outputs": {
-                "prod": {
+                target_name: {
                     "type": "postgres",
                     "host": self.host,
                     "port": self.port,
                     "dbname": self.database,
-                    "schema": dbt_core_resource.schema,
+                    "schema": schema or dbt_core_resource.schema,
                     "user": self.username,
                     "password": self.password,
+                    "threads": dbt_core_resource.threads,
                 }
             },
         }
@@ -890,22 +997,26 @@ class RedshiftDetails(DBDetails):
             "sink": get_sync_config(db_path),
         }
 
-    def get_dbt_profile_contents(self, dbt_core_resource: DBTCoreDetails):
+    def get_dbt_profile_contents(
+        self, dbt_core_resource: DBTCoreDetails, schema: str | None = None
+    ):
         if dbt_core_resource.database != self.database:
             raise Exception(
                 f"DBT database {dbt_core_resource.database} does not match Postgres database {self.database}"
             )
+        target_name = dbt_core_resource.target_name or "prod"
         return {
-            "target": "prod",
+            "target": target_name,
             "outputs": {
-                "prod": {
+                target_name: {
                     "type": "redshift",
                     "host": self.host,
                     "port": self.port,
                     "dbname": self.database,
-                    "schema": dbt_core_resource.schema,
+                    "schema": schema or dbt_core_resource.schema,
                     "user": self.username,
                     "password": self.password,
+                    "threads": dbt_core_resource.threads,
                 }
             },
         }
@@ -913,7 +1024,24 @@ class RedshiftDetails(DBDetails):
 
 class BigqueryDetails(DBDetails):
     subtype = models.CharField(max_length=255, default=ResourceSubtype.BIGQUERY)
+    bq_project_id = encrypt(models.CharField(max_length=255, blank=False))
+    location = models.CharField(max_length=255, null=True, default="US")
     service_account = encrypt(models.JSONField())
+
+    def clean(self):
+        if self.bq_project_id:
+            return
+
+        project_id = self.service_account_dict.get("project_id")
+        if project_id is None:
+            raise ValidationError(
+                "project_id is required in service_account if bq_project_id is not set"
+            )
+        self.bq_project_id = project_id
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
 
     @property
     def service_account_dict(self):
@@ -933,11 +1061,10 @@ class BigqueryDetails(DBDetails):
         return ["bigquery", "dbt"]
 
     def get_connector(self):
-        project_id = self.service_account_dict.get("project_id")
-        assert project_id, "project_id is required in service_account"
         return BigQueryConnector(
             service_account_info=self.service_account_dict,
-            tables=[f"{self.service_account_dict['project_id']}.*.*"],
+            tables=[f"{self.bq_project_id}.*.*"],
+            project_id=self.bq_project_id,
         )
 
     def get_datahub_config(self, db_path):
@@ -949,7 +1076,7 @@ class BigqueryDetails(DBDetails):
                 "config": {
                     "start_time": f"-{self.lookback_days}d",
                     "credential": service_account,
-                    "project_ids": [service_account["project_id"]],
+                    "project_ids": [self.bq_project_id],
                     "include_table_lineage": False,
                     "include_table_location_lineage": False,
                     "include_view_lineage": False,
@@ -961,18 +1088,24 @@ class BigqueryDetails(DBDetails):
             "sink": get_sync_config(db_path),
         }
 
-    def get_dbt_profile_contents(self, dbt_core_resource: DBTCoreDetails):
+    def get_dbt_profile_contents(
+        self, dbt_core_resource: DBTCoreDetails, schema: str | None = None
+    ):
+        target_name = dbt_core_resource.target_name or "prod"
+        core_target_info = {
+            "type": "bigquery",
+            "method": "service-account-json",
+            "project": dbt_core_resource.database or self.bq_project_id,
+            "schema": schema or dbt_core_resource.schema,
+            "keyfile_json": self.service_account_dict,
+            "threads": dbt_core_resource.threads,
+        }
+        if self.location:
+            core_target_info["location"] = self.location
         return {
-            "target": "prod",
+            "target": target_name,
             "outputs": {
-                "prod": {
-                    "type": "bigquery",
-                    "method": "service-account-json",
-                    "project": dbt_core_resource.database,
-                    "schema": dbt_core_resource.schema,
-                    "keyfile_json": self.service_account_dict,
-                    "threads": dbt_core_resource.threads,
-                }
+                target_name: core_target_info,
             },
         }
 
@@ -1022,15 +1155,18 @@ class SnowflakeDetails(DBDetails):
             config["source"]["config"]["role"] = self.role
         return config
 
-    def get_dbt_profile_contents(self, dbt_core_resource: DBTCoreDetails):
+    def get_dbt_profile_contents(
+        self, dbt_core_resource: DBTCoreDetails, schema: str | None = None
+    ):
+        target_name = dbt_core_resource.target_name or "prod"
         return {
-            "target": "prod",
+            "target": target_name,
             "outputs": {
-                "prod": {
+                target_name: {
                     "type": "snowflake",
                     "account": self.account,
                     "database": dbt_core_resource.database,
-                    "schema": dbt_core_resource.schema,
+                    "schema": schema or dbt_core_resource.schema,
                     "user": self.username,
                     "password": self.password,
                     "threads": dbt_core_resource.threads,
@@ -1080,17 +1216,21 @@ class DatabricksDetails(DBDetails):
             "sink": get_sync_config(db_path),
         }
 
-    def get_dbt_profile_contents(self, dbt_core_resource: DBTCoreDetails):
+    def get_dbt_profile_contents(
+        self, dbt_core_resource: DBTCoreDetails, schema: str | None = None
+    ):
+        target_name = dbt_core_resource.target_name or "prod"
         return {
-            "target": "prod",
+            "target": target_name,
             "outputs": {
-                "prod": {
+                target_name: {
                     "type": "databricks",
                     "token": self.token,
                     "host": self.host,
                     "http_path": self.http_path,
                     "catalog": dbt_core_resource.database,
-                    "schema": dbt_core_resource.schema,
+                    "schema": schema or dbt_core_resource.schema,
+                    "threads": dbt_core_resource.threads,
                 }
             },
         }
@@ -1124,10 +1264,13 @@ class DuckDBDetails(DBDetails):
             "sink": get_sync_config(db_path),
         }
 
-    def get_dbt_profile_contents(self, dbt_core_resource: DBTCoreDetails):
+    def get_dbt_profile_contents(
+        self, dbt_core_resource: DBTCoreDetails, schema: str | None = None
+    ):
+        target_name = dbt_core_resource.target_name or "prod"
         return {
-            "target": "dev",
-            "outputs": {"dev": {"type": "duckdb", "path": self.path}},
+            "target": target_name,
+            "outputs": {target_name: {"type": "duckdb", "path": self.path}},
         }
 
 

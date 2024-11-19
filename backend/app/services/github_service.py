@@ -10,7 +10,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from githubkit import AppInstallationAuthStrategy, GitHub
 from githubkit.rest import Repository as GitHubRepository
 
-from workflows.utils.encoding import decode_base64
+from app.utils.encoding import decode_base64
 
 
 class GithubService:

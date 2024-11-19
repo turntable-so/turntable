@@ -34,7 +34,7 @@ class AssetContainer(models.Model):
         return Asset.objects.filter(containermembership__container_id=self.id)
 
     def adjust_urns(self):
-        adjuster = UrnAdjuster(self.workspace.id)
+        adjuster = UrnAdjuster(self.workspace_id)
         self.id = adjuster.adjust(self.id)
 
         return self
@@ -147,7 +147,7 @@ class Asset(models.Model):
         return ""
 
     def adjust_urns(self):
-        adjuster = UrnAdjuster(self.workspace.id)
+        adjuster = UrnAdjuster(self.workspace_id)
         self.id = adjuster.adjust(self.id)
 
         return self
@@ -180,7 +180,7 @@ class ContainerMembership(models.Model):
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
 
     def adjust_urns(self):
-        adjuster = UrnAdjuster(self.workspace.id)
+        adjuster = UrnAdjuster(self.workspace_id)
         self.asset_id = adjuster.adjust(self.asset_id)
         self.container_id = adjuster.adjust(self.container_id)
 
@@ -215,7 +215,7 @@ class Column(models.Model):
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="columns")
 
     def adjust_urns(self):
-        adjuster = UrnAdjuster(self.workspace.id)
+        adjuster = UrnAdjuster(self.workspace_id)
         self.id = adjuster.adjust(self.id)
         self.asset_id = adjuster.adjust(self.asset_id)
 
@@ -309,7 +309,7 @@ FROM traversed
     )
 
     def adjust_urns(self):
-        adjuster = UrnAdjuster(self.workspace.id)
+        adjuster = UrnAdjuster(self.workspace_id)
         self.id = adjuster.adjust(self.id)
         self.source_id = adjuster.adjust(self.source_id)
         self.target_id = adjuster.adjust(self.target_id)
@@ -433,7 +433,7 @@ class ColumnLink(models.Model):
     )
 
     def adjust_urns(self):
-        adjuster = UrnAdjuster(self.workspace.id)
+        adjuster = UrnAdjuster(self.workspace_id)
         self.id = adjuster.adjust(self.id)
         self.source_id = adjuster.adjust(self.source_id)
         self.target_id = adjuster.adjust(self.target_id)
@@ -472,7 +472,7 @@ class AssetError(models.Model):
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
 
     def adjust_urns(self):
-        adjuster = UrnAdjuster(self.workspace.id)
+        adjuster = UrnAdjuster(self.workspace_id)
         self.asset_id = adjuster.adjust(self.asset_id)
 
         return self
@@ -501,7 +501,7 @@ class AssetEmbedding(models.Model):
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
 
     def adjust_urns(self):
-        adjuster = UrnAdjuster(self.workspace.id)
+        adjuster = UrnAdjuster(self.workspace_id)
         self.asset_id = adjuster.adjust(self.asset_id)
 
         return self

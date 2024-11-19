@@ -26,7 +26,6 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 
 import { AgGridReact } from "ag-grid-react"; // React Data Grid Component
-import "./ag-grid-custom-theme.css"; // Custom CSS Theme for Data Grid
 
 // import 'codemirror/keymap/sublime';
 // import 'codemirror/theme/quietlight.css';
@@ -624,7 +623,7 @@ export default function QueryBlock(props: QueryBlockProps) {
   useEffect(() => {
     const fetchWorkflowState = async (id: string) => {
       const data = await getWorkflow(
-        { workflow_run_id: id },
+        { task_id: id },
         abortControllerRef.current?.signal,
       );
       if (data.execute_query.status === "failed") {
@@ -693,7 +692,7 @@ export default function QueryBlock(props: QueryBlockProps) {
       setError(e?.toString() || "");
     }
     if (data) {
-      setWorkflowId(data.workflow_run);
+      setWorkflowId(data.task);
     }
   }
 

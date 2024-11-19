@@ -124,15 +124,9 @@ services:
     extends:
       file: docker-compose.dev.yml
       service: api
-    build:
-      args:
-        - ENV=dev-internal
-    command: >
-      /bin/sh -c "
-      python manage.py migrate &&
-      python manage.py seed_data &&
-      python manage.py seed_data_staging &&
-      uvicorn api.asgi:application --host 0.0.0.0 --port 8000 --reload --reload-exclude /code/media/ws/"
+    command: ["django-admin", "start_server", "--mode", "dev-internal"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     environment:
       <<: [*internal-credentials, *storage-credentials]
 
@@ -151,11 +145,6 @@ services:
       file: docker-compose.dev.yml
       service: postgres
 
-  create_hatchet_db:
-    extends:
-      file: docker-compose.dev.yml
-      service: create_hatchet_db
-
   minio:
     extends:
       file: docker-compose.dev.yml
@@ -170,26 +159,27 @@ services:
     environment:
       <<: *storage-credentials
 
-  hatchet-lite:
-    extends:
-      file: docker-compose.dev.yml
-      service: hatchet-lite
-
-  setup-hatchet:
-    extends:
-      file: docker-compose.dev.yml
-      service: setup-hatchet
-
   worker:
     extends:
       file: docker-compose.dev.yml
       service: worker
-    build:
-      args:
-        - ENV=dev-internal
+    command: ["django-admin", "start_worker", "--mode", "dev-internal"]
     environment:
       <<: [*internal-credentials, *storage-credentials]
-      
+
+  scheduler:
+    extends:
+      file: docker-compose.dev.yml
+      service: worker
+    command: ["django-admin", "start_beat", "--mode", "dev-internal"]
+    environment:
+      <<: [*internal-credentials, *storage-credentials]
+
+  flower:
+    extends:
+      file: docker-compose.dev.yml
+      service: flower
+
   ## Test resources
   postgres_test_db:
     extends:
@@ -219,9 +209,6 @@ services:
 volumes:
   postgres_data:
   minio_data:
-  hatchet_lite_rabbitmq_data:
-  hatchet_lite_config:
-  hatchet_credentials_handoff:
   postgres_test_db_data:
   frontend_data:
   code_repos:

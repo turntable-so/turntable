@@ -92,6 +92,19 @@ const DbtCoreConfig = ({
       />
       <FormField
         control={form.control}
+        name="targetName"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Target Name</FormLabel>
+            <FormControl>
+              <Input {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
         name="version"
         render={({ field }) => (
           <FormItem>
@@ -155,10 +168,11 @@ export default function DbtProjectForm({
 }: { resource?: any; details?: any }) {
   const router = useRouter();
   const { resources, fetchResources } = useAppContext();
+
   const { user } = useSession();
   const [connectionCheckStatus, setConnectionCheckStatus] = useState<
-    "IDLE" | "RUNNING" | "FAIL" | "SUCCESS"
-  >("IDLE");
+    "PENDING" | "STARTED" | "FAILURE" | "SUCCESS"
+  >("PENDING");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [selectedTab, setSelectedTab] = useState<"remote" | "local">("remote");
 
@@ -182,7 +196,11 @@ export default function DbtProjectForm({
     schema: z.string().min(1, {
       message: "Schema can't be empty",
     }),
+    targetName: z.string().optional(),
     deployKey: z.string({
+      required_error: "Please enter a Deploy Key",
+    }),
+    sshKeyId: z.string({
       required_error: "Please enter a Deploy Key",
     }),
     dbtGitRepoUrl: z.string().min(5, {
@@ -221,14 +239,16 @@ export default function DbtProjectForm({
     resolver: zodResolver(RemoteFormSchema),
     defaultValues: {
       database_resource_id: resource?.id || "",
-      deployKey: details?.deploy_key || "",
-      dbtGitRepoUrl: details?.git_repo_url || "",
-      mainGitBranch: details?.main_git_branch || "main",
+      deployKey: details?.repository?.ssh_key?.public_key || "",
+      sshKeyId: details?.repository?.ssh_key?.id || "",
+      dbtGitRepoUrl: details?.repository?.git_repo_url || "",
+      mainGitBranch: details?.repository?.main_branch_name || "main",
       subdirectory: details?.project_path || ".",
       threads: details?.threads || 1,
       version: details?.version || "",
       database: details?.database || "",
       schema: details?.schema || "",
+      targetName: details?.target_name || "",
     },
   });
 
@@ -240,7 +260,7 @@ export default function DbtProjectForm({
       threads: details?.threads || 1,
       version: details?.version || "",
       database: details?.database || "",
-      schema: details?.schema || "",
+      schema: details?.schema || "f",
     },
   });
 
@@ -249,6 +269,7 @@ export default function DbtProjectForm({
       const data = await getSshKey(workspace_id);
       if (data) {
         remoteForm.setValue("deployKey", data.public_key);
+        remoteForm.setValue("sshKeyId", data.id);
       }
     };
 
@@ -258,7 +279,7 @@ export default function DbtProjectForm({
   }, [user, user.current_workspace]);
 
   async function testConnection() {
-    setConnectionCheckStatus("RUNNING");
+    setConnectionCheckStatus("STARTED");
     const data = await testGitConnection(
       remoteForm.getValues().deployKey,
       remoteForm.getValues().dbtGitRepoUrl,
@@ -266,7 +287,7 @@ export default function DbtProjectForm({
     if (data.success === true) {
       setConnectionCheckStatus("SUCCESS");
     } else {
-      setConnectionCheckStatus("FAIL");
+      setConnectionCheckStatus("FAILURE");
     }
   }
 
@@ -282,15 +303,19 @@ export default function DbtProjectForm({
       subtype: "dbt",
       config: {
         resource_id: data.database_resource_id,
-        ...(selectedTab === "remote" && {
+        repository: {
           git_repo_url: (data as z.infer<typeof RemoteFormSchema>)
             .dbtGitRepoUrl,
-          main_git_branch: (data as z.infer<typeof RemoteFormSchema>)
+          main_branch_name: (data as z.infer<typeof RemoteFormSchema>)
             .mainGitBranch,
-          deploy_key: (data as z.infer<typeof RemoteFormSchema>).deployKey,
-        }),
+          ssh_key: {
+            id: (data as z.infer<typeof RemoteFormSchema>).sshKeyId,
+            public_key: (data as z.infer<typeof RemoteFormSchema>).deployKey,
+          },
+        },
         project_path: data.subdirectory,
         threads: data.threads,
+        target_name: (data as z.infer<typeof RemoteFormSchema>).targetName,
         version: data.version,
         database: data.database,
         schema: data.schema,
@@ -299,9 +324,10 @@ export default function DbtProjectForm({
     const res = isUpdate
       ? await updateResource(resource.id, payload)
       : await createResource(payload as any);
-    if (res.id) {
+    if (res.name !== undefined) {
       if (isUpdate) {
         toast.success("Connection updated");
+        return;
       } else {
         toast.success("Connection created");
       }
@@ -340,13 +366,12 @@ export default function DbtProjectForm({
         >
           <TabsList>
             <TabsTrigger value="remote">Remote Repository</TabsTrigger>
-            <TabsTrigger value="local">Local Directory</TabsTrigger>
           </TabsList>
           <TabsContent value="remote">
             <Form {...remoteForm}>
               <form
                 onSubmit={remoteForm.handleSubmit(onSubmit)}
-                className="space-y-6 text-black"
+                className="space-y-6 text-black dark:text-white"
               >
                 <Card className="w-full rounded-sm">
                   <CardHeader>
@@ -444,15 +469,15 @@ export default function DbtProjectForm({
                           Connection successful
                         </div>
                       )}
-                      {connectionCheckStatus === "FAIL" && (
+                      {connectionCheckStatus === "FAILURE" && (
                         <div className="text-red-500  mt-2 mr-2">
                           Connection failed
                         </div>
                       )}
                       <LoaderButton
                         variant="secondary"
-                        isLoading={connectionCheckStatus === "RUNNING"}
-                        isDisabled={connectionCheckStatus === "RUNNING"}
+                        isLoading={connectionCheckStatus === "STARTED"}
+                        isDisabled={connectionCheckStatus === "STARTED"}
                         onClick={(event) => {
                           event.preventDefault();
                           testConnection();
@@ -476,7 +501,7 @@ export default function DbtProjectForm({
             <Form {...localForm}>
               <form
                 onSubmit={localForm.handleSubmit(onSubmit)}
-                className="space-y-6 text-black"
+                className="space-y-6 text-black dark:text-white"
               >
                 <Card className="w-full rounded-sm">
                   <CardHeader>

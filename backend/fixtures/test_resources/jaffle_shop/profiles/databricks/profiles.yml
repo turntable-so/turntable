@@ -8,3 +8,4 @@ jaffle_shop:
       http_path: "{{ env_var('DATABRICKS_0_HTTP_PATH') }}"
       catalog: mydb # or database instead of dbname
       schema: dbt_sl_test
+      threads: 6

@@ -90,6 +90,7 @@ def create_bigquery_n(workspace, n):
     ):
         BigqueryDetails(
             name=resource_name,
+            workspace=workspace,
             resource=resource,
             lookback_days=1,
             schema_include=schema_include,
@@ -122,6 +123,7 @@ def create_snowflake_n(workspace, n):
     ):
         SnowflakeDetails(
             resource=resource,
+            workspace=workspace,
             username=username,
             password=password,
             account=account,
@@ -151,6 +153,7 @@ def create_databricks_n(workspace, n):
     ):
         DatabricksDetails(
             resource=resource,
+            workspace=workspace,
             host=host,
             token=token,
             http_path=http_path,
@@ -185,6 +188,7 @@ def create_redshift_n(workspace: Workspace, n):
     ):
         RedshiftDetails(
             resource=resource,
+            workspace=workspace,
             host=host,
             port=port,
             database=database,
@@ -221,6 +225,7 @@ def create_dbt_n(
 
     DBTCoreDetails(
         resource=resource,
+        workspace=resource.workspace,
         repository=repository,
         project_path=project_path,
         threads=os.getenv(f"DBT_{n}_THREADS", 6),
@@ -250,6 +255,7 @@ def create_looker_n(workspace, n, git_repo: Repository | None = None):
     if not hasattr(looker, "details") or not isinstance(looker.details, LookerDetails):
         LookerDetails(
             resource=looker,
+            workspace=workspace,
             base_url=looker_url,
             client_id=looker_secret_json["client_id"],
             client_secret=looker_secret_json["client_secret"],
@@ -280,6 +286,7 @@ def create_tableau_n(workspace, n):
     ):
         TableauDetails(
             resource=resource,
+            workspace=workspace,
             connect_uri=connect_uri,
             site=os.getenv(f"TABLEAU_{n}_SITE", ""),
             username=username,
@@ -310,6 +317,7 @@ def create_powerbi_n(workspace, n):
     ):
         PowerBIDetails(
             resource=resource,
+            workspace=workspace,
             client_id=client_id,
             client_secret=client_secret,
             powerbi_tenant_id=tenant_id,
@@ -327,8 +335,8 @@ def group_1(user):
     repository1 = create_repository_n(workspace, 1, sshkey1)
     sshkey2 = create_ssh_key_n(workspace, 2)
     repository2 = create_repository_n(workspace, 2, sshkey2)
-    create_dbt_n(bigquery, 1, repository=repository1)
-    create_dbt_n(bigquery, 2, repository=repository2)
+    create_dbt_n(bigquery, 1, force_db=True, repository=repository1)
+    create_dbt_n(bigquery, 2, force_db=True, repository=repository2)
     return [bigquery]
 
 
@@ -381,5 +389,5 @@ def group_6(user):
     bigquery = create_bigquery_n(workspace, 3)
     sshkey = create_ssh_key_n(workspace, 3)
     repository = create_repository_n(workspace, 3, sshkey)
-    create_dbt_n(bigquery, 5, repository=repository)
+    create_dbt_n(bigquery, 5, force_db=True, repository=repository)
     return [bigquery]

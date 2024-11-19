@@ -49,7 +49,7 @@ export default function FileSearchCommand({
             {!file.path.endsWith(".sql") && !file.path.endsWith(".yml") && (
               <File className="mr-1 size-4" />
             )}
-            <div className="truncate font-medium text-gray-700">
+            <div className="truncate font-medium text-gray-700 dark:text-gray-400">
               {file.path.split("/").pop()}
             </div>
           </div>

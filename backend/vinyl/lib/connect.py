@@ -64,7 +64,10 @@ class _ResourceConnector(ABC):
 
     @abstractmethod
     def run_query(
-        self, query: str, limit: int | None = _QUERY_LIMIT
+        self,
+        query: str,
+        limit: int | None = _QUERY_LIMIT,
+        bypass_limit_helper: bool = False,
     ) -> tuple[pd.DataFrame, dict[str, str]]:
         pass
 
@@ -99,7 +102,10 @@ class _TableConnector(_ResourceConnector):
         return sampled
 
     def run_query(
-        self, query: str, limit: int | None = _QUERY_LIMIT
+        self,
+        query: str,
+        limit: int | None = _QUERY_LIMIT,
+        bypass_limit_helper: bool = False,
     ) -> tuple[pd.DataFrame, dict[str, str]]:
         pass
 
@@ -319,7 +325,10 @@ class _DatabaseConnector(_ResourceConnector):
         return final_table
 
     def run_query(
-        self, query: str, limit: int | None = _QUERY_LIMIT
+        self,
+        query: str,
+        limit: int | None = _QUERY_LIMIT,
+        bypass_limit_helper: bool = False,
     ) -> tuple[pd.DataFrame, dict[str, str]]:
         pass
 
@@ -485,22 +494,28 @@ class BigQueryConnector(_DatabaseConnector):
         tables: list[str],
         service_account_path: str | None = None,
         service_account_info: dict[str, str] | None = None,
+        project_id: str | None = None,
     ):
         self._service_account_path = service_account_path
         self._service_account_info = service_account_info
         self._tables = tables
+        self._project_id = project_id
 
     def _connect(self) -> BaseBackend:
-        self._conn = BigQueryConnector._connect_helper(
-            self._service_account_path,
-            json.dumps(self._service_account_info)
-            if self._service_account_info
-            else None,
-        )
+        connect_args = {}
+        if self._service_account_path is not None:
+            connect_args["service_account_path"] = self._service_account_path
+        elif self._service_account_info is not None:
+            connect_args["service_account_info_str"] = json.dumps(
+                self._service_account_info
+            )
+        if self._project_id is not None:
+            connect_args["project_id"] = self._project_id
+        self._conn = BigQueryConnector._connect_helper(**connect_args)
         return self._conn
 
     def _list_sources(self, with_schema=False) -> list[SourceInfo]:
-        conn = self._connect()
+        self._connect()
         out, errors = self._find_sources_in_db(
             with_schema=with_schema,
             databases_override=[
@@ -515,6 +530,7 @@ class BigQueryConnector(_DatabaseConnector):
     def _connect_helper(
         service_account_path: str | None = None,
         service_account_info_str: str | None = None,
+        project_id: str | None = None,
     ) -> BaseBackend:
         from google.oauth2 import service_account
 
@@ -530,7 +546,12 @@ class BigQueryConnector(_DatabaseConnector):
             )
         else:
             credentials = None
-        conn = ibis.bigquery.connect(credentials=credentials)
+        conn_args = {
+            "credentials": credentials,
+        }
+        if project_id is not None:
+            conn_args["project_id"] = project_id
+        conn = ibis.bigquery.connect(**conn_args)
 
         # fixes BQ-specific error related to caching
         if not hasattr(conn, "_session_dataset") and isinstance(
@@ -541,10 +562,14 @@ class BigQueryConnector(_DatabaseConnector):
         return conn
 
     def run_query(
-        self, query: str, limit: int | None = _QUERY_LIMIT
+        self,
+        query: str,
+        limit: int | None = _QUERY_LIMIT,
+        bypass_limit_helper: bool = False,
     ) -> tuple[pd.DataFrame, dict[str, str]]:
         conn = self._connect()
-        query = query_limit_helper(query, limit)
+        if not bypass_limit_helper:
+            query = query_limit_helper(query, limit)
         rows = conn.client.query_and_wait(query)
         columns = {field.name: field.field_type for field in rows.schema}
         if rows.total_rows < self._BQ_ITERATOR_ROW_CUTOFF:
@@ -581,6 +606,7 @@ class BigQueryConnector(_DatabaseConnector):
 
 
 class PostgresConnector(_DatabaseConnector):
+    import psycopg
     from psycopg2.extensions import binary_types, string_types
 
     _excluded_schemas = [
@@ -637,10 +663,14 @@ class PostgresConnector(_DatabaseConnector):
         return out, errors
 
     def run_query(
-        self, query: str, limit: int | None = _QUERY_LIMIT
+        self,
+        query: str,
+        limit: int | None = _QUERY_LIMIT,
+        bypass_limit_helper: bool = False,
     ) -> tuple[pd.DataFrame, dict[str, str]]:
         conn = self._connect()
-        query = query_limit_helper(query, limit)
+        if not bypass_limit_helper:
+            query = query_limit_helper(query, limit)
         with closing(conn.raw_sql(query)) as cursor:
             types_dict = {
                 **self._raw_types_dict,
@@ -654,6 +684,29 @@ class PostgresConnector(_DatabaseConnector):
             df = pd.DataFrame(cursor.fetchall(), columns=[col for col in columns])
 
         return df, columns
+
+    def validate_sql(self, query: str) -> ValidationOutput:
+        import psycopg2
+
+        try:
+            query = f"EXPLAIN (BUFFERS, FORMAT JSON) {query}"
+            df, _ = self.run_query(query, bypass_limit_helper=True)
+            plan = json.loads(df.iloc[0][0])
+            bytes_processed = sum(
+                plan[i]["Planning"]["Shared Hit Blocks"] * 8192
+                for i in range(len(plan))
+            )
+            return ValidationOutput(
+                errors=None, bytes_processed=bytes_processed, cost=None
+            )
+        except psycopg2.Error as e:
+            error = VinylError(
+                "NA",
+                VinylErrorType.DATABASE_ERROR,
+                str(e),
+                dialect=self._get_name(),
+            )
+            return ValidationOutput(errors=[error], bytes_processed=None, cost=None)
 
     # caching ensures we create one bq connection per set of credentials across instances of the class
     @staticmethod
@@ -669,6 +722,22 @@ class PostgresConnector(_DatabaseConnector):
 class RedshiftConnector(PostgresConnector):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+    def validate_sql(self, query: str) -> ValidationOutput:
+        import psycopg2
+
+        try:
+            query = f"EXPLAIN {query}"
+            self.run_query(query, bypass_limit_helper=True)
+            return ValidationOutput(errors=None, bytes_processed=None, cost=None)
+        except psycopg2.Error as e:
+            error = VinylError(
+                "NA",
+                VinylErrorType.DATABASE_ERROR,
+                str(e),
+                dialect=self._get_name(),
+            )
+            return ValidationOutput(errors=[error], bytes_processed=None, cost=None)
 
 
 class SnowflakeConnector(_DatabaseConnector):
@@ -719,10 +788,14 @@ class SnowflakeConnector(_DatabaseConnector):
             return ibis.snowflake.connect(account=account, user=user, password=password)
 
     def run_query(
-        self, query: str, limit: int | None = _QUERY_LIMIT
+        self,
+        query: str,
+        limit: int | None = _QUERY_LIMIT,
+        bypass_limit_helper: bool = False,
     ) -> tuple[pd.DataFrame, dict[str, str]]:
         conn = self._connect()
-        query = query_limit_helper(query, limit)
+        if not bypass_limit_helper:
+            query = query_limit_helper(query, limit)
         with closing(conn.raw_sql(query)) as cursor:
             df = cursor.fetch_arrow_all().to_pandas()
             columns = {
@@ -731,20 +804,35 @@ class SnowflakeConnector(_DatabaseConnector):
             }
         return df, columns
 
-    def validate_sql(self, query: str) -> ValidationOutput:
+    def run_query_no_arrow(
+        self,
+        query: str,
+        limit: int | None = _QUERY_LIMIT,
+        bypass_limit_helper: bool = False,
+    ) -> tuple[pd.DataFrame, dict[str, str]]:
         conn = self._connect()
+        if not bypass_limit_helper:
+            query = query_limit_helper(query, limit)
+        with closing(conn.raw_sql(query)) as cursor:
+            out = cursor.fetchall()
+            columns = {d[0]: d[1] for d in cursor.description}
+        return out, columns
+
+    def validate_sql(self, query: str) -> ValidationOutput:
+        import snowflake.connector.errors
+
         query = f"EXPLAIN USING JSON ({query})"
         try:
-            cursor = conn.sql(query)
-            out = json.loads(cursor.fetchall()[0][0])
-            bytes_processed = out["GlobalStats"]["bytesAssigned"]
+            out, _ = self.run_query_no_arrow(query, bypass_limit_helper=True)
+            plan = json.loads(out[0][0])
+            bytes_processed = plan["GlobalStats"]["bytesAssigned"]
             cost = (
                 bytes_processed * 5 * 1e-12
             )  # guess based on BQ pricing, need to update
             return ValidationOutput(
                 errors=None, bytes_processed=bytes_processed, cost=cost
             )
-        except Exception as e:
+        except snowflake.connector.errors.ProgrammingError as e:
             error = VinylError(
                 "NA",
                 VinylErrorType.DATABASE_ERROR,
@@ -810,16 +898,34 @@ class DatabricksConnector(_DatabaseConnector):
             )
 
     def run_query(
-        self, query: str, limit: int | None = _QUERY_LIMIT
+        self,
+        query: str,
+        limit: int | None = _QUERY_LIMIT,
+        bypass_limit_helper: bool = False,
     ) -> tuple[pd.DataFrame, dict[str, str]]:
         conn = self._connect(use_spark=False)
-        query = query_limit_helper(query, limit)
+        if not bypass_limit_helper:
+            query = query_limit_helper(query, limit)
         with closing(conn.cursor()) as cursor:
             cursor.execute(query)
             columns = {d[0]: d[1] for d in cursor.description}
             df = cursor.fetchall_arrow().to_pandas()
 
         return df, columns
+
+    def validate_sql(self, query: str) -> ValidationOutput:
+        from databricks.sql.exc import ServerOperationError
+
+        try:
+            query = f"EXPLAIN({query})"
+            df, _ = self.run_query(query, bypass_limit_helper=True)
+            return ValidationOutput(errors=None, bytes_processed=None, cost=None)
+        except ServerOperationError as e:
+            msg = str(e).split("== SQL ==")[0]
+            error = VinylError(
+                "NA", VinylErrorType.DATABASE_ERROR, msg, dialect=self._get_name()
+            )
+            return ValidationOutput(errors=[error], bytes_processed=None, cost=None)
 
 
 @dataclass(frozen=True)

@@ -1,22 +1,29 @@
-import { useFiles } from "@/app/contexts/FilesContext";
-import { Button } from "@/components/ui/button";
+import { duplicateFileOrFolder } from "@/app/actions/actions";
+import { type OpenedFile, useFiles } from "@/app/contexts/FilesContext";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+  ContextMenuSeparator,
+} from "@/components/ui/context-menu";
 import {
-  ChevronDown,
-  ChevronRight,
+  Copy,
+  Download,
   Ellipsis,
   File,
+  FilePlus2,
   FileText,
   Folder,
   FolderOpen,
-  Plus,
+  FolderPlus,
+  Layers2,
+  Pencil,
   Trash,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { useCopyToClipboard } from "usehooks-ts";
+import { toast } from "sonner";
 
 const DbtLogo = () => (
   <svg
@@ -40,16 +47,28 @@ export default function Node({
   style,
   dragHandle,
 }: { node: any; style: any; dragHandle: any }) {
-  const { openFile, createFileAndRefresh, deleteFileAndRefresh, closeFile } =
-    useFiles();
-  const [showOptions, setShowOptions] = useState(false);
+  const {
+    branchId,
+    activeFile,
+    openFile,
+    createFileAndRefresh,
+    deleteFileAndRefresh,
+    duplicateFileOrFolderAndRefresh,
+    closeFile,
+    renameFile,
+    createDirectoryAndRefresh,
+    downloadFile,
+  } = useFiles();
+  const [copiedText, copy] = useCopyToClipboard();
+  const [contextMenuOpen, setContextMenuOpen] = useState(false);
+  const contextMenuRef = useRef<HTMLDivElement>(null);
 
   const handleCreateFile = async (e: React.MouseEvent) => {
     e.stopPropagation();
     const newFileName = prompt("Enter new file name:");
     if (newFileName) {
       const newPath = `${node.data.path}/${newFileName}`;
-      await createFileAndRefresh(newPath, ""); // Call your backend API to create the file
+      await createFileAndRefresh(newPath, "", false); // Call your backend API to create the file
       openFile({
         name: newFileName,
         path: newPath,
@@ -62,135 +81,227 @@ export default function Node({
     e.stopPropagation();
     if (confirm(`Are you sure you want to delete ${node.data.name}?`)) {
       await deleteFileAndRefresh(node.data.path);
-      closeFile(node.data.path);
+      closeFile({
+        node: {
+          name: node.data.name,
+          path: node.data.path,
+          type: "file",
+        },
+        content: "",
+        isDirty: false,
+        view: "new",
+      });
     }
   };
 
-  // const handleRename = async (e: React.MouseEvent) => {
-  //     e.stopPropagation();
-  //     const newName = prompt("Enter new name:", node.data.name);
-  //     if (newName && newName !== node.data.name) {
-  //         const newPath = node.data.path.replace(node.data.name, newName);
-  //         await renameFile(node.data.path, newPath);
-  //         node.submit(newName);
-  //     }
-  // };
+  const handleRename = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newName = prompt("Enter new name:", node.data.name);
+    if (newName && newName !== node.data.name) {
+      const success = await renameFile(
+        node.data.path,
+        node.data.path.substring(0, node.data.path.lastIndexOf("/") + 1) +
+          newName,
+      );
+      if (success) {
+        closeFile({
+          node: {
+            name: node.data.name,
+            path: node.data.path,
+            type: "file",
+          },
+        } as OpenedFile);
+        openFile({
+          name: newName,
+          path:
+            node.data.path.substring(0, node.data.path.lastIndexOf("/") + 1) +
+            newName,
+          type: "file",
+        });
+      }
+    }
+  };
 
-  // const handleCreateFolder = async (e: React.MouseEvent) => {
-  //     e.stopPropagation();
-  //     const newFolderName = prompt("Enter new folder name:");
-  //     if (newFolderName) {
-  //         const newPath = `${node.data.path}/${newFolderName}`;
-  //         await createFile(newPath, '', true); // Call your backend API to create the folder
-  //         tree.create({
-  //             parentId: node.id,
-  //             type: 'directory',
-  //             data: { name: newFolderName, path: newPath }
-  //         });
-  //     }
-  // };
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    await downloadFile(node.data.path);
+  };
+
+  const handleCreateDirectory = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newDirName = prompt("Enter new directory name:");
+    if (newDirName) {
+      const newPath = `${node.data.path}/${newDirName}`;
+      await createDirectoryAndRefresh(newPath);
+    }
+  };
+
+  const openContextMenu = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Simulate a right click at the element's position
+    const rect = contextMenuRef.current?.getBoundingClientRect();
+    if (rect) {
+      const event = new MouseEvent("contextmenu", {
+        bubbles: true,
+        clientX: rect.right,
+        clientY: rect.top,
+      });
+      contextMenuRef.current?.dispatchEvent(event);
+    }
+  };
+
+  const handleDuplicate = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    await duplicateFileOrFolderAndRefresh(node.data.path);
+  };
+
+  const handleCopyName = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    copy(node.data.name);
+  };
+
+  const handleCopyPath = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    copy(node.data.path);
+  };
+
+  const handleCopyRef = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const filenameWithoutExtension = node.data.name.split(".")[0];
+    copy(`{{ ref('${filenameWithoutExtension}') }}`);
+  };
 
   return (
-    <div
-      style={style}
-      onClick={() => {
-        if (node.isLeaf) {
-          openFile(node.data);
-        } else {
-          node.toggle();
-        }
-      }}
-      ref={dragHandle}
-      className={`${node.isSelected ? "rounded font-medium bg-accent text-accent-foreground" : ""} hover:bg-white hover:cursor-pointer flex items-center rounded`}
-    >
-      {!node.isLeaf &&
-        (node.isOpen ? (
-          <FolderOpen className="mr-1 size-4" />
-        ) : (
-          <Folder className="mr-1 size-4" />
-        ))}
-      {node.isLeaf && node.data.name.endsWith(".sql") && (
+    <ContextMenu onOpenChange={setContextMenuOpen}>
+      <ContextMenuTrigger ref={contextMenuRef} asChild>
         <div
-          className={`mr-1 ${node.isSelected ? "opacity-100" : "opacity-70"}`}
-        >
-          <DbtLogo />
-        </div>
-      )}
-      {node.isLeaf && node.data.name.endsWith(".yml") && (
-        <FileText className="mr-1 h-4 w-4" />
-      )}
-      {node.isLeaf &&
-        !node.data.name.endsWith(".sql") &&
-        !node.data.name.endsWith(".yml") && <File className="mr-1 size-4" />}
-      {node.isEditing ? (
-        <input
-          type="text"
-          defaultValue={node.data.name}
-          onFocus={(e) => e.currentTarget.select()}
-          onBlur={() => node.reset()}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") node.reset();
-            if (e.key === "Enter") node.submit(e.currentTarget.value);
+          style={style}
+          onClick={() => {
+            if (node.isLeaf) {
+              openFile(node.data);
+            } else {
+              node.toggle();
+            }
           }}
-          autoFocus
-        />
-      ) : (
-        <div className="w-full flex items-center justify-between group">
-          <div className="truncate">{node.data.name}</div>
-          <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-            <Popover open={showOptions} onOpenChange={setShowOptions}>
-              <PopoverTrigger asChild>
-                <div
-                  className="text-muted-foreground text-xs hover:cursor-pointer hover:text-foreground relative"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowOptions(!showOptions);
-                  }}
-                >
-                  <Ellipsis className="mr-1 size-4" />
-                </div>
-              </PopoverTrigger>
-              <PopoverContent
-                className="w-40 p-0"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="w-full">
-                  {/* <Button className='w-full' variant="ghost" size="sm" onClick={handleRename}>
-                                        <Pencil className="mr-2 h-3 w-3" />
-                                        Rename
-                                    </Button> */}
-                  <Button
-                    className="w-full"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleDelete}
-                  >
-                    <Trash className="mr-2 h-3 w-3" />
-                    Delete
-                  </Button>
-                </div>
-              </PopoverContent>
-            </Popover>
-            {!node.isLeaf && (
-              <>
-                <div
-                  className="text-muted-foreground text-xs hover:cursor-pointer hover:text-foreground relative"
-                  onClick={handleCreateFile}
-                >
-                  <Plus className="mr-1 size-4" />
-                </div>
-                {/* <div
-                                    className='text-muted-foreground text-xs hover:cursor-pointer hover:text-foreground relative'
-                                    onClick={handleCreateFolder}
-                                >
-                                    <Folder className='mr-1 size-4' />
-                                    <span>New Folder</span>
-                                </div> */}
-              </>
+          ref={dragHandle}
+          className={`${
+            node.isSelected
+              ? "rounded font-medium bg-accent text-accent-foreground"
+              : ""
+          } ${activeFile?.node.path === node.data.path ? "bg-card" : ""} hover:bg-card hover:cursor-pointer ${
+            contextMenuOpen ? "bg-card" : ""
+          } flex items-center rounded`}
+        >
+          {!node.isLeaf &&
+            (node.isOpen ? (
+              <FolderOpen className="mr-1 size-4 flex-shrink-0 dark:text-zinc-100" />
+            ) : (
+              <Folder className="mr-1 size-4 flex-shrink-0 dark:text-zinc-100" />
+            ))}
+          {node.isLeaf && node.data.name.endsWith(".sql") && (
+            <div
+              className={`mr-1 ${node.isSelected ? "opacity-100" : "opacity-70"}`}
+            >
+              <DbtLogo />
+            </div>
+          )}
+          {node.isLeaf && node.data.name.endsWith(".yml") && (
+            <FileText className="mr-1 size-4 flex-shrink-0 dark:text-zinc-100" />
+          )}
+          {node.isLeaf &&
+            !node.data.name.endsWith(".sql") &&
+            !node.data.name.endsWith(".yml") && (
+              <File className="mr-1 size-4 flex-shrink-0 dark:text-zinc-100" />
             )}
-          </div>
+          {node.isEditing ? (
+            <input
+              type="text"
+              defaultValue={node.data.name}
+              onFocus={(e) => e.currentTarget.select()}
+              onBlur={() => node.reset()}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") node.reset();
+                if (e.key === "Enter") node.submit(e.currentTarget.value);
+              }}
+              autoFocus
+            />
+          ) : (
+            <div className="w-full flex items-center justify-between group">
+              <div className="truncate text-muted-foreground">
+                {node.data.name}
+              </div>
+              <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <Ellipsis
+                  className="mr-1 size-4 dark:text-zinc-100"
+                  onClick={openContextMenu}
+                />
+              </div>
+            </div>
+          )}
         </div>
-      )}
-    </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent align="end" alignOffset={-5}>
+        <ContextMenuItem onClick={handleCreateFile}>
+          <div className="flex items-center text-xs">
+            <FilePlus2 className="mr-2 h-3 w-3" />
+            Add File
+          </div>
+        </ContextMenuItem>
+        <ContextMenuItem onClick={handleCreateDirectory}>
+          <div className="flex items-center text-xs">
+            <FolderPlus className="mr-2 h-3 w-3" />
+            Add Folder
+          </div>
+        </ContextMenuItem>
+        <ContextMenuItem onClick={handleDuplicate}>
+          <div className="flex items-center text-xs">
+            <Layers2 className="mr-2 h-3 w-3" />
+            Duplicate
+          </div>
+        </ContextMenuItem>
+        <ContextMenuItem onClick={handleRename}>
+          <div className="flex items-center text-xs">
+            <Pencil className="mr-2 h-3 w-3" />
+            Rename
+          </div>
+        </ContextMenuItem>
+
+        <ContextMenuSeparator />
+
+        <ContextMenuItem onClick={handleCopyName}>
+          <div className="flex items-center text-xs">
+            <Copy className="mr-2 h-3 w-3" />
+            Copy name
+          </div>
+        </ContextMenuItem>
+        <ContextMenuItem onClick={handleCopyPath}>
+          <div className="flex items-center text-xs">
+            <Copy className="mr-2 h-3 w-3" />
+            Copy relative path
+          </div>
+        </ContextMenuItem>
+        <ContextMenuItem onClick={handleCopyRef}>
+          <div className="flex items-center text-xs">
+            <Copy className="mr-2 h-3 w-3" />
+            Copy as ref
+          </div>
+        </ContextMenuItem>
+
+        <ContextMenuSeparator />
+
+        <ContextMenuItem onClick={handleDownload}>
+          <div className="flex items-center text-xs">
+            <Download className="mr-2 h-3 w-3" />
+            Download
+          </div>
+        </ContextMenuItem>
+        <ContextMenuItem onClick={handleDelete}>
+          <div className="flex items-center text-xs">
+            <Trash className="mr-2 h-3 w-3" />
+            Delete
+          </div>
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 }

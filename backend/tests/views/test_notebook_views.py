@@ -76,7 +76,7 @@ class NotebookViewSetTestCase(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertIn("workflow_run", response.json())
+        self.assertIn("task", response.json())
         mock_run_workflow.assert_called_once_with(
             "ExecuteQueryWorkflow",
             {

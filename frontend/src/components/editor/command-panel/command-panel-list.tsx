@@ -25,8 +25,8 @@ export default function CommandPanelList() {
         <div
           key={item.id}
           className={`flex justify-between ${
-            index === selectedCommandIndex ? "bg-gray-100" : ""
-          } hover:bg-gray-100 cursor-pointer p-2`}
+            index === selectedCommandIndex ? "bg-gray-100 dark:bg-zinc-700" : ""
+          } hover:bg-gray-100 dark:hover:bg-zinc-700 cursor-pointer p-2`}
           onClick={() => setSelectedCommandIndex(index)}
         >
           <div
@@ -35,16 +35,21 @@ export default function CommandPanelList() {
             }`}
           >
             {item.status === "running" && (
-              <LoaderCircle className="h-4 w-4 animate-spin" />
+              <LoaderCircle className="h-4 w-4 flex-shrink-0 animate-spin" />
             )}
-            {item.status === "success" && <CircleCheck className="h-4 w-4" />}
-            {item.status === "failed" && <CircleX className="h-4 w-4" />}
-            {item.status === "cancelled" && <CircleSlash className="h-4 w-4" />}
+            {item.status === "success" && (
+              <CircleCheck className="h-4 w-4 flex-shrink-0" />
+            )}
+            {item.status === "failed" && (
+              <CircleX className="h-4 w-4 flex-shrink-0" />
+            )}
+            {item.status === "cancelled" && (
+              <CircleSlash className="h-4 w-4 flex-shrink-0" />
+            )}
             <p>dbt {item.command}</p>
           </div>
           <div className="flex flex-row gap-2 items-center">
             {item.duration && <p>{item.duration}</p>}
-            <p>{item.time}</p>
           </div>
         </div>
       ))}

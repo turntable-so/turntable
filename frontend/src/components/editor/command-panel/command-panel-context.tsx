@@ -1,19 +1,35 @@
-import type React from "react";
-import { type ReactNode, createContext, useContext, useState } from "react";
+import { LocalStorageKeys } from "@/app/constants/local-storage-keys";
+import { useWebSocket } from "@/app/hooks/use-websocket";
+import getUrl from "@/app/url";
+import {
+  addRecentCommand,
+  getCommandOptions,
+} from "@/components/editor/command-panel/command-panel-options";
+import { useBottomPanelTabs } from "@/components/editor/use-bottom-panel-tabs";
+import { AuthActions } from "@/lib/auth";
+import {
+  createContext,
+  type Dispatch,
+  type FC,
+  type ReactNode,
+  type SetStateAction,
+  useContext,
+  useRef,
+  useState,
+} from "react";
 import { useLocalStorage } from "usehooks-ts";
 import type {
   Command,
   CommandPanelState,
   CommandStatus,
 } from "./command-panel-types";
+import { useFiles } from "@/app/contexts/FilesContext";
 
 interface CommandPanelContextType {
   commandPanelState: CommandPanelState;
-  setCommandPanelState: React.Dispatch<React.SetStateAction<CommandPanelState>>;
   selectedCommandIndex: number;
-  setSelectedCommandIndex: React.Dispatch<React.SetStateAction<number>>;
+  setSelectedCommandIndex: Dispatch<SetStateAction<number>>;
   commandHistory: Command[];
-  addCommandToHistory: (newCommand: Command) => void;
   updateCommandLogById: (id: string, newLog: string) => void;
   updateCommandById: (
     id: string,
@@ -25,17 +41,27 @@ interface CommandPanelContextType {
       duration?: string;
     },
   ) => void;
+  runCommand: () => void;
+  runCommandFromSearchBar: (command: string) => void;
+  inputValue: string;
+  setInputValue: Dispatch<SetStateAction<string>>;
+  commandOptions: string[];
+  setCommandOptions: Dispatch<SetStateAction<string[]>>;
 }
 
 const defaultContextValue: CommandPanelContextType = {
   commandPanelState: "idling",
-  setCommandPanelState: () => {},
   selectedCommandIndex: 0,
   setSelectedCommandIndex: () => {},
   commandHistory: [],
-  addCommandToHistory: () => {},
   updateCommandLogById: () => {},
   updateCommandById: () => {},
+  runCommand: () => {},
+  runCommandFromSearchBar: () => {},
+  inputValue: "",
+  setInputValue: () => {},
+  commandOptions: [],
+  setCommandOptions: () => {},
 };
 
 const CommandPanelContext =
@@ -53,16 +79,21 @@ interface CommandPanelProviderProps {
   children: ReactNode;
 }
 
-export const CommandPanelProvider: React.FC<CommandPanelProviderProps> = ({
+export const CommandPanelProvider: FC<CommandPanelProviderProps> = ({
   children,
 }) => {
+  const { branchId, fetchFiles } = useFiles();
+
+  const [inputValue, setInputValue] = useState<string>("");
+  const [commandOptions, setCommandOptions] = useState<string[]>([]);
   const [commandPanelState, setCommandPanelState] =
     useState<CommandPanelState>("idling");
   const [selectedCommandIndex, setSelectedCommandIndex] = useState<number>(0);
   const [commandHistory, setCommandHistory] = useLocalStorage<Command[]>(
-    "command-history",
+    LocalStorageKeys.commandHistory(branchId || ""),
     [],
   );
+  const [_, setActiveTab] = useBottomPanelTabs({ branchId: branchId || "" });
   const MAX_COMMAND_HISTORY_SIZE = 20;
 
   const addCommandToHistory = (newCommand: Command) => {
@@ -111,17 +142,123 @@ export const CommandPanelProvider: React.FC<CommandPanelProviderProps> = ({
     });
   };
 
+  /*********************************************************
+   * WEBSOCKETS *
+   *********************************************************/
+  const newCommandIdRef = useRef<string>("");
+  const { getToken } = AuthActions();
+  const accessToken = getToken("access");
+
+  const baseUrl = getUrl();
+  const base = new URL(baseUrl).host;
+  const protocol = process.env.NODE_ENV === "development" ? "ws" : "wss";
+
+  const { startWebSocket, sendMessage, stopWebSocket } = useWebSocket<{
+    command: string;
+  }>(`${protocol}://${base}/ws/dbt_command/?token=${accessToken}`, {
+    onOpen: ({ payload }) => {
+      sendMessage(
+        JSON.stringify({
+          action: "start",
+          command: payload.command,
+          project_id: branchId,
+        }),
+      );
+      setInputValue("");
+    },
+    onMessage: ({ event }) => {
+      if (event.data.error) {
+        setCommandPanelState("idling");
+        updateCommandById(newCommandIdRef.current, { status: "failed" });
+      } else if (event.data === "PROCESS_STREAM_SUCCESS") {
+        setCommandPanelState("idling");
+        updateCommandById(newCommandIdRef.current, {
+          status: "success",
+          duration: `${Math.round((Date.now() - Number.parseInt(newCommandIdRef.current)) / 1000)}s`,
+        });
+      } else if (event.data === "PROCESS_STREAM_ERROR") {
+        setCommandPanelState("idling");
+        updateCommandById(newCommandIdRef.current, { status: "failed" });
+      } else if (event.data === "WORKFLOW_STARTED") {
+        return;
+      } else if (event.data === "WORKFLOW_CANCELLED") {
+        setCommandPanelState("idling");
+        updateCommandById(newCommandIdRef.current, { status: "cancelled" });
+        stopWebSocket();
+      } else {
+        updateCommandLogById(newCommandIdRef.current, event.data);
+      }
+    },
+    onError: ({ event }) => {
+      updateCommandLogById(
+        newCommandIdRef.current,
+        `WebSocket error: ${event}`,
+      );
+      setCommandPanelState("idling");
+      updateCommandById(newCommandIdRef.current, { status: "failed" });
+    },
+    onClose: () => {
+      setCommandPanelState("idling");
+      fetchFiles();
+    },
+  });
+
+  const _runCommandCore = (command?: string) => {
+    const payloadCommand = command ?? inputValue;
+    startWebSocket({ command: payloadCommand });
+    setCommandPanelState("running");
+
+    const commandId = Date.now().toString();
+    newCommandIdRef.current = commandId;
+    addCommandToHistory({
+      id: commandId,
+      command: payloadCommand,
+      status: "running",
+      time: new Date().toLocaleTimeString(),
+    });
+
+    setSelectedCommandIndex(0);
+    const trimmedInputValue = inputValue.trim();
+    if (trimmedInputValue) {
+      addRecentCommand(trimmedInputValue, branchId);
+      setCommandOptions(getCommandOptions(branchId));
+    }
+  };
+
+  const runCommand = () => {
+    if (commandPanelState === "running") {
+      sendMessage(JSON.stringify({ action: "cancel" }));
+      setCommandPanelState("cancelling");
+      return;
+    }
+
+    if (!inputValue || commandPanelState === "cancelling") {
+      return;
+    }
+
+    _runCommandCore();
+  };
+
+  const runCommandFromSearchBar = (command: string) => {
+    setActiveTab("command");
+    _runCommandCore(command);
+  };
+
   return (
     <CommandPanelContext.Provider
       value={{
         commandPanelState,
-        setCommandPanelState,
         selectedCommandIndex,
         setSelectedCommandIndex,
         commandHistory,
-        addCommandToHistory,
         updateCommandLogById,
         updateCommandById,
+        runCommand,
+        runCommandFromSearchBar,
+        inputValue,
+        setInputValue,
+        commandOptions,
+        setCommandOptions,
       }}
     >
       {children}

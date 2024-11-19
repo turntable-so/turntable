@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useContext, useMemo } from "react";
 import {
   BaseEdge,
@@ -7,9 +6,9 @@ import {
   getBezierPath,
   useEdges,
   useStoreApi,
-} from "reactflow";
+} from "@xyflow/react";
 import * as colors from "tailwindcss/colors";
-import { LineageViewContext } from "./LineageView";
+import { LineageViewContext } from "../../app/contexts/LineageView";
 
 function getStrokeColorForConnectionType(type: string) {
   switch (type) {
@@ -165,15 +164,15 @@ export function CustomEdge({
     const isColumnInNodeHovered =
       hoveredColumn &&
       selectedColumn &&
-      selectedColumn !== hoveredColumn.columnName;
+      selectedColumn !== hoveredColumn.columnId;
     return {
       opacity: !selectedColumn ? 0.5 : 1,
       ...style,
       strokeWidth: isSelected || isHovered || isColumnInNodeHovered ? 4 : 2,
       stroke:
-        data.ntype.length === 1
+        data?.ntype.length === 1
           ? getStrokeColorForConnectionType(data.ntype[0])
-          : `url(#multiColorGradient-${data.sourceColumnName}-${data.targetColumnName})`,
+          : `url(#multiColorGradient-${data?.sourceColumnName}-${data?.targetColumnName})`,
 
       strokeDasharray: edges.length > 100 ? "5,5" : "",
       zIndex: 10000,
@@ -202,14 +201,14 @@ export function CustomEdge({
         <defs>
           <linearGradient
             gradientUnits="userSpaceOnUse"
-            id={`multiColorGradient-${data.sourceColumnName}-${data.targetColumnName}`}
+            id={`multiColorGradient-${data?.sourceColumnName}-${data?.targetColumnName}`}
             x1="0%"
             y1="0%"
             x2="100%"
             y2="0%"
           >
-            {data.ntype.map((type, index) => {
-              const offset = (index / (data.ntype.length - 1)) * 100;
+            {data?.ntype.map((type, index) => {
+              const offset = (index / (data?.ntype.length - 1)) * 100;
               const color = getStrokeColorForConnectionType(type);
               return (
                 <stop
@@ -254,9 +253,9 @@ export function CustomEdge({
           >
             <div
               style={{ fontSize: "10px" }}
-              className="z-100 min-w-[100px rounded-lg pt-1 pb-2 px-2
-                  bg-white
-                  border border-blue-400 border-solid
+              className="z-100 min-w-[100px] rounded-lg pt-1 pb-2 px-2
+                  bg-white dark:bg-zinc-800
+                  border border-blue-400 dark:border-blue-600 border-solid
                   shadow-md
                 "
             >

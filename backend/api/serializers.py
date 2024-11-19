@@ -22,11 +22,13 @@ from app.models import (
     Resource,
     ResourceDetails,
     SnowflakeDetails,
+    SSHKey,
     TableauDetails,
     User,
     Workspace,
     WorkspaceGroup,
 )
+from app.models.project import Project
 from app.models.resources import MetabaseDetails
 from vinyl.lib.dbt_methods import DBTVersion
 
@@ -150,8 +152,6 @@ class ColumnSerializer(serializers.ModelSerializer):
 
 # minified asset serializers for listing in the asset tree
 class AssetIndexSerializer(serializers.ModelSerializer):
-    column_count = serializers.IntegerField(read_only=True)
-    unused_columns_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Asset
@@ -161,8 +161,6 @@ class AssetIndexSerializer(serializers.ModelSerializer):
             "unique_name",
             "type",
             "resource_id",
-            "column_count",
-            "unused_columns_count",
         ]
 
 
@@ -175,6 +173,9 @@ class AssetSerializer(serializers.ModelSerializer):
     resource_id = serializers.PrimaryKeyRelatedField(
         source="resource.id", read_only=True
     )
+
+    column_count = serializers.IntegerField(read_only=True)
+    unused_columns_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Asset
@@ -200,6 +201,8 @@ class AssetSerializer(serializers.ModelSerializer):
             "resource_has_dbt",
             "resource_name",
             "resource_id",
+            "column_count",
+            "unused_columns_count",
         ]
 
     def get_dataset(self, obj):
@@ -284,9 +287,11 @@ class LookerDetailsSerializer(ResourceDetailsSerializer):
 
 
 class BigQueryDetailsSerializer(ResourceDetailsSerializer):
+    bq_project_id = serializers.CharField(allow_null=True, required=False)
+
     class Meta:
         model = BigqueryDetails
-        fields = ["service_account", "schema_include"]
+        fields = ["service_account", "schema_include", "location", "bq_project_id"]
 
 
 class SnowflakeDetailsSerializer(ResourceDetailsSerializer):
@@ -351,19 +356,52 @@ class DBTVersionField(serializers.ChoiceField):
             self.fail("invalid_choice", input=data)
 
 
+class SSHKeySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SSHKey
+        fields = ["id", "public_key"]
+
+
+class RepositorySerializer(serializers.ModelSerializer):
+    ssh_key = SSHKeySerializer()
+
+    class Meta:
+        model = Repository
+        fields = ["id", "main_branch_name", "git_repo_url", "ssh_key"]
+
+
 class DBTCoreDetailsSerializer(ResourceDetailsSerializer):
     version = DBTVersionField([(v, v.value) for v in DBTVersion])
+    repository = RepositorySerializer()
 
     class Meta:
         model = DBTCoreDetails
         fields = [
-            "repository_id",
+            "repository",
             "project_path",
+            "target_name",
             "threads",
             "version",
             "database",
             "schema",
         ]
+
+    def update(self, instance, validated_data):
+        repository_data = validated_data.pop("repository")
+        instance.repository.git_repo_url = repository_data.get("git_repo_url")
+        instance.repository.main_branch_name = repository_data.get("main_branch_name")
+        instance.repository.save()
+
+        instance.project_path = validated_data.get(
+            "project_path", instance.project_path
+        )
+        instance.threads = validated_data.get("threads")
+        instance.target_name = validated_data.get("target_name")
+        instance.version = validated_data.get("version")
+        instance.database = validated_data.get("database")
+        instance.schema = validated_data.get("schema")
+        instance.save()
+        return instance
 
 
 class BlockSerializer(serializers.ModelSerializer):
@@ -400,7 +438,24 @@ class ResourceSerializer(serializers.HyperlinkedModelSerializer):
         return obj.has_dbt
 
 
-class RepositorySerializer(serializers.ModelSerializer):
+class ProjectSerializer(serializers.ModelSerializer):
+    is_cloned = serializers.SerializerMethodField()
+    pull_request_url = serializers.SerializerMethodField()
+
     class Meta:
-        model = Repository
-        fields = ["id", "main_branch_name", "git_repo_url"]
+        model = Project
+        fields = [
+            "id",
+            "name",
+            "branch_name",
+            "schema",
+            "read_only",
+            "is_cloned",
+            "pull_request_url",
+        ]
+
+    def get_is_cloned(self, obj):
+        return obj.is_cloned
+
+    def get_pull_request_url(self, obj):
+        return obj.pull_request_url

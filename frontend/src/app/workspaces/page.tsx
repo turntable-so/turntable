@@ -51,7 +51,7 @@ export default function WorkspacePage() {
           ) : (
             workspaces.map((workspace: Workspace) => (
               <div
-                className=" flex justify-between  items-center hover:bg-gray-50 p-4 rounded-md cursor-pointer"
+                className=" flex justify-between  items-center hover:bg-secondary dark:hover:bg-secondary p-4 rounded-md cursor-pointer"
                 key={workspace.id}
                 onClick={() => handleSwitchWorkspace(workspace.id)}
               >

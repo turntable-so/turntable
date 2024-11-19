@@ -1,5 +1,3 @@
-from .editor import DBTQuery
-from .git_connections import Branch, Repository, SSHKey
 from .metadata import (
     Asset,
     AssetContainer,
@@ -11,12 +9,16 @@ from .metadata import (
     ContainerMembership,
 )
 from .notebook import Block, Notebook
+from .project import Project
+from .query import DBTQuery, Query
+from .repository import Repository
 from .resources import (
     BigqueryDetails,
     DatabricksDetails,
     DataFileDetails,
     DBTCloudDetails,
     DBTCoreDetails,
+    DBTResource,
     LookerDetails,
     MetabaseDetails,
     PostgresDetails,
@@ -28,10 +30,11 @@ from .resources import (
     ResourceType,
     SnowflakeDetails,
     TableauDetails,
-    WorkflowRun,
 )
+from .ssh_key import SSHKey
 from .user import (
     User,
     UserManager,
 )
+from .workflows import DBTOrchestrator, MetadataSyncWorkflow, ScheduledWorkflow
 from .workspace import Workspace, WorkspaceGroup

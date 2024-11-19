@@ -75,7 +75,8 @@ export function DataTableViewOptions<TData>({
                 checked={column.getIsVisible()}
                 onCheckedChange={(value) => column.toggleVisibility(!!value)}
               >
-                {column.id}
+                {/* TODO: Implement a better way to have "friendly names" for the dropdown options */}
+                {column.id.replaceAll("_", " ")}
               </DropdownMenuCheckboxItem>
             );
           })}
@@ -112,7 +113,7 @@ export function DataTableToolbar<TData>({
           <div className="space-y-4 w-full">
             <div className="flex items-center">
               <div className="relative w-full">
-                <Search className="size-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Search className="size-4 absolute left-3 top-1/2 transform -translate-y-1/2" />
                 <Input
                   autoFocus
                   placeholder="Search assets"

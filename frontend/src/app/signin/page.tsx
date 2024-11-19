@@ -2,7 +2,6 @@
 
 import LoginForm from "@/components/auth/login-form";
 import TurntableNamemark from "@/components/logos/turntable-namemark";
-import { Carter_One } from "next/font/google";
 import { useEffect, useState } from "react";
 
 export default function SignInPage() {

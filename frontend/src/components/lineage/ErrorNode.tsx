@@ -1,12 +1,12 @@
 import React, { memo, useContext } from "react";
-import { LineageViewContext } from "./LineageView";
+import { LineageViewContext } from "../../app/contexts/LineageView";
 
 const ErrorIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     fill="none"
     viewBox="0 0 24 24"
-    stroke-width="1.5"
+    strokeWidth="1.5"
     stroke="currentColor"
     className="w-6 h-6"
   >
@@ -27,7 +27,7 @@ function ErrorNode() {
         <div className="mr-1">
           <ErrorIcon />
         </div>
-        <p className="font-semibold">{error || "something went wrong"}</p>
+        <p className="font-semibold">{error || "Something went wrong"}</p>
       </div>
     </div>
   );

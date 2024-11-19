@@ -3,27 +3,12 @@ x-postgres-credentials: &postgres-credentials
   LOCAL_DB: "false"
 
 x-storage-credentials: &storage-credentials
-  AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-  AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-  AWS_STORAGE_BUCKET_NAME: ${AWS_STORAGE_BUCKET_NAME}
-  AWS_S3_ENDPOINT_URL: ${AWS_S3_ENDPOINT_URL}
-  AWS_S3_REGION_NAME: ${AWS_S3_REGION_NAME}
-
-x-hatchet-credentials: &hatchet-credentials
-  SERVER_TASKQUEUE_RABBITMQ_URL: null
-  SERVER_AUTH_COOKIE_DOMAIN: null
-  SERVER_AUTH_COOKIE_INSECURE: null
-  SERVER_GRPC_BIND_ADDRESS: null
-  SERVER_GRPC_INSECURE: null
-  SERVER_GRPC_BROADCAST_ADDRESS: null
-  SERVER_GRPC_PORT: null
-  SERVER_URL: null
-  SERVER_AUTH_SET_EMAIL_VERIFIED: null
-  SERVER_LOGGER_LEVEL: null
-  SERVER_LOGGER_FORMAT: null
-  HATCHET_CLIENT_NAMESPACE: null
-  HATCHET_CLIENT_TLS_STRATEGY: null
-  HATCHET_CLIENT_TOKEN: ${HATCHET_CLIENT_TOKEN}
+  AWS_S3_ACCESS_KEY_ID: ${STAGING_AWS_S3_ACCESS_KEY_ID}
+  AWS_S3_SECRET_ACCESS_KEY: ${STAGING_AWS_S3_SECRET_ACCESS_KEY}
+  AWS_STORAGE_BUCKET_NAME: ${STAGING_AWS_STORAGE_BUCKET_NAME}
+  AWS_S3_ENDPOINT_URL: ${STAGING_AWS_S3_ENDPOINT_URL}
+  AWS_S3_REGION_NAME: ${STAGING_AWS_S3_REGION_NAME}
+  LOCAL_S3: "false"
 
 name: turntable-staging
 
@@ -33,37 +18,42 @@ services:
     extends:
       file: docker-compose.dev-internal.yml
       service: api
-    build:
-      args:
-        - ENV=staging
-    command: >
-      /bin/sh -c "
-      python manage.py migrate &&
-      python manage.py seed_data_staging &&
-      uvicorn api.asgi:application --host 0.0.0.0 --port 8000 --reload --reload-exclude /code/media/ws/"
+    command: ["django-admin", "start_server", "--mode", "staging"]
     environment:
-      <<: [*postgres-credentials, *storage-credentials, *hatchet-credentials]
+      <<: [*postgres-credentials, *storage-credentials]
 
   web:
     extends:
       file: docker-compose.dev-internal.yml
       service: web
 
-  worker:
-    extends:
-      file: docker-compose.dev-internal.yml
-      service: worker
-    environment:
-      <<: [*postgres-credentials, *storage-credentials, *hatchet-credentials]
-    depends_on:
-      api:
-        condition: service_healthy
 
   # use internal redis due to issues connecting to external redis
   redis:
     extends:
       file: docker-compose.dev-internal.yml
       service: redis
+
+  worker:
+    extends:
+      file: docker-compose.dev-internal.yml
+      service: worker
+    command: ["django-admin", "start_worker", "--mode", "staging"]
+    environment:
+      <<: [*postgres-credentials, *storage-credentials]
+
+  scheduler:
+    extends:
+      file: docker-compose.dev-internal.yml
+      service: worker
+    command: ["django-admin", "start_beat", "--mode", "staging"]
+    environment:
+      <<: [*postgres-credentials, *storage-credentials]
+
+  flower:
+    extends:
+      file: docker-compose.dev-internal.yml
+      service: flower
 
   # Test resources
   postgres_test_db:
@@ -113,38 +103,9 @@ services:
     entrypoint: ["echo", "Service minio disabled"]
     restart: no
 
-  hatchet-lite:
-    extends:
-      file: docker-compose.dev-internal.yml
-      service: hatchet-lite
-    command: /bin/sh -c "echo 'Service hatchet-lite disabled' && sleep 240"
-    healthcheck:
-      test: ["CMD", "true"]
-      interval: 10s
-      start_period: 20s
-      timeout: 5s
-      retries: 10
-
-  setup-hatchet:
-    extends:
-      file: docker-compose.dev-internal.yml
-      service: setup-hatchet
-    entrypoint: ["echo", "Service setup-hatchet disabled"]
-    restart: no
-
-  create_hatchet_db:
-    extends:
-      file: docker-compose.dev-internal.yml
-      service: create_hatchet_db
-    entrypoint: ["echo", "Service create_hatchet_db disabled"]
-    restart: no
-
 volumes:
   postgres_data:
   minio_data:
-  hatchet_lite_rabbitmq_data:
-  hatchet_lite_config:
-  hatchet_credentials_handoff:
   postgres_test_db_data:
   frontend_data:
   code_repos:

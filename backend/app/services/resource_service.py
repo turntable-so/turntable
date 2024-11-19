@@ -15,6 +15,7 @@ from api.serializers import (
     TableauDetailsSerializer,
 )
 from app.models import DBTCoreDetails, Resource, Workspace
+from app.models.repository import Repository
 from app.models.resources import (
     BigqueryDetails,
     DatabricksDetails,
@@ -28,6 +29,7 @@ from app.models.resources import (
     SnowflakeDetails,
     TableauDetails,
 )
+from app.models.workflows import MetadataSyncWorkflow
 
 
 class CreateResourceSerializer(serializers.Serializer):
@@ -98,12 +100,10 @@ class ResourceServiceHelper:
         return response
 
     @classmethod
-    def partial_update_helper(cls, resource: Resource, data: dict) -> Resource:
+    def update_helper(cls, resource: Resource, data: dict) -> Resource:
         if data.get("config") is not None:
             config_data = data.get("config")
-            detail_serializer = cls.serializer(
-                resource.details, data=config_data, partial=True
-            )
+            detail_serializer = cls.serializer(resource.details, data=config_data)
             detail_serializer.is_valid(raise_exception=True)
             detail_serializer.save()
 
@@ -166,9 +166,9 @@ class DBTResourceService(ResourceServiceHelper):
         subtype = cls.subtype
         resource = payload.data.get("resource")
         config = payload.data.get("config")
-
         resource_data = ResourceSerializer(data=resource)
         resource_data.is_valid(raise_exception=True)
+
         resource_id = config.get("resource_id")
         if not resource_id:
             raise ValidationError("Resource ID is required for DBT resources.")
@@ -179,13 +179,25 @@ class DBTResourceService(ResourceServiceHelper):
                 **config,
             }
         )
-
         detail_serializer.is_valid(raise_exception=True)
         with transaction.atomic():
             resource = Resource.objects.get(id=resource_id, workspace=workspace)
+            repository = Repository.objects.create(
+                workspace=workspace,
+                ssh_key_id=config.get("repository").get("ssh_key").get("id"),
+                git_repo_url=detail_serializer.data.get("repository").get(
+                    "git_repo_url"
+                ),
+            )
             detail = DBTCoreDetails(
                 resource=resource,
-                **detail_serializer.data,
+                repository=repository,
+                project_path=detail_serializer.data.get("project_path"),
+                threads=detail_serializer.data.get("threads"),
+                target_name=detail_serializer.data.get("target_name"),
+                version=detail_serializer.data.get("version"),
+                database=detail_serializer.data.get("database"),
+                schema=detail_serializer.data.get("schema"),
             )
             resource.save()
             detail.save()
@@ -241,7 +253,7 @@ class ResourceService:
         ).data
         return response
 
-    def partial_update(self, resource_id: str, data: dict) -> Resource:
+    def update(self, resource_id: str, data: dict) -> Resource:
         resource = Resource.objects.get(id=resource_id, workspace=self.workspace)
         if resource is None:
             raise ValidationError("Resource not found.")
@@ -249,7 +261,8 @@ class ResourceService:
         with transaction.atomic():
             if data.get("resource") is not None:
                 payload = ResourceSerializer(
-                    resource, data=data.get("resource"), partial=True
+                    resource,
+                    data=data.get("resource"),
                 )
                 payload.is_valid(raise_exception=True)
                 resource = payload.save()  # This calls the update method
@@ -258,10 +271,9 @@ class ResourceService:
                 if resource.dbtresource_set.exists():
                     dbt_resource = resource.dbtresource_set.first()
                     dbt_payload = DBTCoreDetailsSerializer(
-                        dbt_resource, data=data.get("config"), partial=True
+                        dbt_resource,
+                        data=data.get("config"),
                     )
-                    dbt_payload.is_valid()
-                    print(dbt_payload.errors, flush=True)
                     dbt_payload.is_valid(raise_exception=True)
                     dbt_payload.save()
                     return
@@ -276,7 +288,7 @@ class ResourceService:
             if data.get("config") is not None:
                 for cls in ResourceServiceHelper.__subclasses__():
                     if cls.subtype == resource.details.subtype:
-                        cls.partial_update_helper(resource, data)
+                        cls.update_helper(resource, data)
                         return resource
                 raise ValidationError(
                     f"Config update not supported for subtype {resource.details.subtype}"
@@ -301,21 +313,9 @@ class ResourceService:
             "test_datahub": test_datahub,
         }
 
-    async def sync_resource(self, resource_id: int):
-        from workflows.hatchet import hatchet
-
-        resource = await Resource.objects.aget(id=resource_id, workspace=self.workspace)
-        if resource is None:
-            raise ValidationError("Resource not found.")
-
-        workflow_run = hatchet.client.admin.run_workflow(
-            "MetadataSyncWorkflow",
-            {
-                "workspace_id": self.workspace.id,
-                "resource_id": resource_id,
-            },
+    def sync_resource(self, resource_id: int):
+        workspace = Resource.objects.get(id=resource_id, workspace=self.workspace)
+        workflow = MetadataSyncWorkflow.schedule_now(
+            workspace=workspace, resource_id=resource_id
         )
-
-        return {
-            "workflow_run_id": workflow_run.workflow_run_id,
-        }
+        return workflow.await_next_id(timeout=20)

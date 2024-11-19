@@ -1,6 +1,7 @@
 "use client";
 import { createResource, updateResource } from "@/app/actions/actions";
 import { LoaderButton } from "@/components/ui/LoadingSpinner";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -38,12 +39,62 @@ const FormSchema = z.object({
   name: z.string().min(2, {
     message: "Name can't be empty",
   }),
+  bq_project_id: z.string().optional(),
+  location: z.string().optional(),
   service_account: z.string().min(1, {
     message: "Service account can't be empty",
   }),
   should_filter_schema: z.boolean(),
   include_schemas: z.string().optional(),
 });
+
+type ConnectionCardDefaultProps = {
+  variant: "default";
+  title: string;
+  description?: never;
+  children: React.ReactNode;
+};
+
+type ConnectionCardSideBySideWithDescriptionProps = {
+  variant: "sideBySideWithDescription";
+  title: string;
+  description: string;
+  children: React.ReactNode;
+};
+
+type NewConnectionCardProps =
+  | ConnectionCardDefaultProps
+  | ConnectionCardSideBySideWithDescriptionProps;
+
+function NewConnectionCard({
+  variant,
+  description,
+  title,
+  children,
+}: NewConnectionCardProps) {
+  return (
+    <FormItem>
+      <Card className="rounded-md">
+        <CardHeader>
+          <FormLabel>{title}</FormLabel>
+        </CardHeader>
+        <CardContent
+          className={
+            variant === "sideBySideWithDescription"
+              ? "gap-y-0.5 flex flex-row justify-between"
+              : ""
+          }
+        >
+          {variant === "sideBySideWithDescription" && (
+            <FormDescription>{description}</FormDescription>
+          )}
+          <FormControl>{children}</FormControl>
+        </CardContent>
+      </Card>
+      <FormMessage />
+    </FormItem>
+  );
+}
 
 export default function BigqueryForm({
   resource,
@@ -65,6 +116,8 @@ export default function BigqueryForm({
     defaultValues: {
       name: resource?.name || "",
       service_account: details?.service_account || "",
+      location: details?.location || "",
+      bq_project_id: details?.bq_project_id || "",
       should_filter_schema: details?.schema_include?.length > 0 || false,
       include_schemas: details?.schema_include?.join("\n") || "",
     },
@@ -90,6 +143,8 @@ export default function BigqueryForm({
       config: {
         service_account: data.service_account,
         ...(schemas ? { schema_include: schemas } : {}),
+        ...(data.bq_project_id ? { bq_project_id: data.bq_project_id } : {}),
+        ...(data.location ? { location: data.location } : {}),
       },
     };
     const res = isUpdate
@@ -103,7 +158,7 @@ export default function BigqueryForm({
       }
       router.push(`/connections/${res.id}`);
     } else {
-      toast.error("Failed to save connection: " + res[0]);
+      toast.error(`Failed to save connection: ${res[0]}`);
     }
   }
 
@@ -114,84 +169,87 @@ export default function BigqueryForm({
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-6 text-black"
+          className="space-y-6 text-black dark:text-white"
         >
           <FormField
             control={form.control}
             name="name"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Connection name</FormLabel>
-                <FormControl>
-                  <Input placeholder="my awesome connection" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+              <NewConnectionCard variant="default" title="Connection name">
+                <Input placeholder="my awesome connection" {...field} />
+              </NewConnectionCard>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="bq_project_id"
+            render={({ field }) => (
+              <NewConnectionCard variant="default" title="Project">
+                <Input placeholder="..." {...field} />
+              </NewConnectionCard>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="location"
+            render={({ field }) => (
+              <NewConnectionCard variant="default" title="Location">
+                <Input placeholder="US" {...field} />
+              </NewConnectionCard>
             )}
           />
           <FormField
             control={form.control}
             name="service_account"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Service account</FormLabel>
-                <FormControl>
-                  <Textarea
-                    className="h-[250px]"
-                    placeholder={serviceAccountPlaceholder}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+              <NewConnectionCard variant="default" title="Service account">
+                <Textarea
+                  className="h-[250px]"
+                  placeholder={serviceAccountPlaceholder}
+                  {...field}
+                />
+              </NewConnectionCard>
             )}
           />
-          <div className="space-y-2">
+          <FormField
+            control={form.control}
+            name="should_filter_schema"
+            render={({ field }) => (
+              <NewConnectionCard
+                variant="sideBySideWithDescription"
+                title="Filter schemas (advanced)"
+                description={
+                  shouldFilterSchema
+                    ? "Include only the following schemas:"
+                    : "Including all schemas"
+                }
+              >
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </NewConnectionCard>
+            )}
+          />
+          {shouldFilterSchema && (
             <FormField
               control={form.control}
-              name="should_filter_schema"
+              name="include_schemas"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                  <div className="space-y-0.5">
-                    <FormLabel>Filter schemas (advanced)</FormLabel>
-                    <FormDescription>
-                      {shouldFilterSchema
-                        ? "Include only the following schemas:"
-                        : "Including all schemas"}
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
+                <NewConnectionCard
+                  variant="default"
+                  title="Add a line for each schema"
+                >
+                  <Textarea
+                    className="h-[150px]"
+                    placeholder={"Eg.\nschema1\nschema2"}
+                    {...field}
+                  />
+                </NewConnectionCard>
               )}
             />
-            {shouldFilterSchema && (
-              <FormField
-                control={form.control}
-                name="include_schemas"
-                render={({ field }) => (
-                  <FormItem className="bg-muted p-4">
-                    <div className="text-xs text-muted-foreground font-medium">
-                      Add a line for each schema
-                    </div>
-                    <FormControl>
-                      <Textarea
-                        className="h-[150px]"
-                        placeholder={"Eg.\nschema1\nschema2"}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-          </div>
-          <div className="flex justify-end">
+          )}
+          <div className="flex justify-end pb-4">
             {tested &&
               (connectionCheck ? (
                 <div className="text-green-500 mt-2 mr-2">
