@@ -12,7 +12,6 @@ import {
 } from "react";
 import { useDebounceValue, useLocalStorage } from "usehooks-ts";
 import {
-  type ProjectChanges,
   cloneBranchAndMount,
   commit,
   createFile,
@@ -107,12 +106,13 @@ type FilesContextType = {
   deleteFileAndRefresh: (path: string) => void;
   duplicateFileOrFolderAndRefresh: (filePath: string) => void;
   createNewFileTab: () => void;
-  changes: ProjectChanges | null;
+  changes: Changes | null;
   fetchChanges: (branchId: string) => void;
   recentFiles: FileNode[]; // New state added here
   fetchFiles: () => void;
   branchId: string;
   branchName: string;
+  sourceBranch: string;
   readOnly: boolean | undefined;
   isCloned: boolean | undefined;
   schema: string | undefined;
@@ -186,7 +186,7 @@ const FilesContext = createContext<FilesContextType | undefined>(undefined);
 
 const defaultFileTab = {
   node: {
-    name: "new_tab",
+    name: "New tab",
     path: `Untitled-${crypto.randomUUID()}`,
     type: "file",
   },
@@ -207,6 +207,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   const [branchId, setBranchId] = useState("");
   const [branchName, setBranchName] = useState("");
+  const [sourceBranch, setSourceBranch] = useState("");
   const [filesLoading, setFilesLoading] = useState(false);
   const [readOnly, setReadOnly] = useState<boolean | undefined>(undefined);
   const [isCloned, setIsCloned] = useState<boolean | undefined>(undefined);
@@ -281,6 +282,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
       setIsCloned(branch.is_cloned);
       setPullRequestUrl(branch.pull_request_url);
       setSchema(branch.schema);
+      setSourceBranch(branch.source_branch);
     }
   };
 
@@ -623,7 +625,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   const createNewFileTab = () => {
     const newTab: OpenedFile = {
       node: {
-        name: "new_tab",
+        name: "New tab",
         path: `Untitled-${crypto.randomUUID()}`,
         type: "file",
       },
@@ -858,6 +860,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         recentFiles,
         branchId,
         branchName,
+        sourceBranch,
         readOnly,
         isCloned,
         fetchBranch,

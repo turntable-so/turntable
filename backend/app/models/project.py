@@ -18,6 +18,7 @@ class Project(models.Model):
     branch_name = models.CharField(max_length=255, null=False)
     read_only = models.BooleanField(default=False)
     schema = models.CharField(max_length=255, null=False)
+    source_branch = models.CharField(max_length=255, null=True)
 
     # relationships
     repository = models.ForeignKey(

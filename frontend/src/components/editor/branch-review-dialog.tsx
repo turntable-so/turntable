@@ -1,24 +1,22 @@
 "use client";
 
 import { useFiles } from "@/app/contexts/FilesContext";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DiffEditor } from "@monaco-editor/react";
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
-import { Switch } from "../ui/switch";
-import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import { toast } from "sonner";
 import { Loader2, Undo2 } from "lucide-react";
 import useSession from "@/app/hooks/use-session";
+import { sync } from "@/app/actions/actions";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  TooltipProvider,
+} from "../ui/tooltip";
 interface BranchReviewDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -73,6 +71,7 @@ export default function BranchReviewDialog({
   const [selectedFilePaths, setSelectedFilePaths] = useState<string[]>([]);
   const [commitMessage, setCommitMessage] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const {
     changes,
@@ -82,10 +81,13 @@ export default function BranchReviewDialog({
     commitChanges,
     pullRequestUrl,
     branchName,
-    isCloned,
     discardChanges,
+    fetchFiles,
+    sourceBranch,
   } = useFiles();
   const { user } = useSession();
+
+  const hasChanges = !!(changes && changes.length > 0);
 
   useEffect(() => {
     if (branchId) {
@@ -94,7 +96,7 @@ export default function BranchReviewDialog({
   }, [open]);
 
   useEffect(() => {
-    if (changes?.length > 0) {
+    if (hasChanges) {
       setSelectedChangeIndex(0);
     }
   }, [changes]);
@@ -121,12 +123,49 @@ export default function BranchReviewDialog({
     setIsSubmitting(false);
   };
 
+  const handleSync = async () => {
+    if (isSyncing) {
+      return;
+    }
+
+    setIsSyncing(true);
+    const response = await sync(branchId);
+    if (response.error) {
+      if (response.error === "MERGE_CONFLICT") {
+        toast.error(
+          "Merge conflict detected. Please resolve the conflict before syncing with remote.",
+        );
+      } else {
+        toast.error("Something went wrong while syncing.");
+      }
+    } else {
+      toast.success("Changes synced with remote successfully.");
+      fetchFiles();
+    }
+    setIsSyncing(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="w-full max-w-[1700px] min-h-[900px]">
+      <DialogContent className="w-[96vw] h-[96vh] max-w-[96vw] max-h-[96vh]">
         <div className="flex gap-4  h-full">
           <div className="w-1/4  h-full justify-between flex-col flex">
             <div>
+              <Button
+                disabled={hasChanges}
+                variant="secondary"
+                className="w-full"
+                onClick={handleSync}
+              >
+                {isSyncing ? (
+                  <div className="flex items-center">
+                    <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                    Syncing with {sourceBranch}
+                  </div>
+                ) : (
+                  `Sync with ${sourceBranch || "main"}`
+                )}
+              </Button>
               <>
                 <div className="mt-4">
                   <label className="text-sm font-medium">Branch</label>
@@ -191,7 +230,7 @@ export default function BranchReviewDialog({
                             }
                           />
                           <div onClick={() => setSelectedChangeIndex(index)}>
-                            {change.path}
+                            {change.path.split("/").pop()}
                           </div>
                         </div>
                         {change.type === "untracked" && (
@@ -264,11 +303,17 @@ export default function BranchReviewDialog({
           <div className="pl-1 w-3/4">
             {selectedChangeIndex !== undefined &&
             changes?.[selectedChangeIndex] ? (
-              <DiffView
-                key={selectedChangeIndex}
-                original={changes?.[selectedChangeIndex].before}
-                modified={changes?.[selectedChangeIndex].after}
-              />
+              <div className="h-[98%]">
+                <div className="text-sm text-muted-foreground font-medium mb-2 text-center items-center">
+                  {changes[selectedChangeIndex].path}
+                </div>
+
+                <DiffView
+                  key={selectedChangeIndex}
+                  original={changes?.[selectedChangeIndex].before}
+                  modified={changes?.[selectedChangeIndex].after}
+                />
+              </div>
             ) : (
               <div className="m-2 text-xs text-muted-foreground bg-muted h-full flex-col flex-grow flex items-center justify-center">
                 Select a file to see the diff

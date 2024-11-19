@@ -802,3 +802,11 @@ export async function compileDbtQuery(
   });
   return await response.json();
 }
+
+export async function sync(projectId: string) {
+  const response = await fetcher(`/project/${projectId}/sync/`, {
+    cookies,
+    method: "POST",
+  });
+  return await response.json();
+}
