@@ -193,7 +193,9 @@ export default function BottomPanel({
               <div className="flex items-center space-x-2">
                 <Switch
                   id="asset-only"
-                  checked={!lineageOptions.asset_only}
+                  checked={
+                    !lineageData[activeFile?.node.path || ""]?.showColumns
+                  }
                   onCheckedChange={(checked) => {
                     setLineageOptionsAndRefetch(
                       {

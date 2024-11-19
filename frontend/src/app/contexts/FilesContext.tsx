@@ -155,13 +155,23 @@ type FilesContextType = {
   setIsQueryPreviewLoading: Dispatch<SetStateAction<boolean>>;
   lineageData: Record<
     string,
-    { isLoading: boolean; data: Lineage | null; error: string | null }
+    {
+      isLoading: boolean;
+      data: Lineage | null;
+      error: string | null;
+      showColumns: boolean;
+    }
   >;
   setLineageData: Dispatch<
     SetStateAction<
       Record<
         string,
-        { isLoading: boolean; data: Lineage | null; error: string | null }
+        {
+          isLoading: boolean;
+          data: Lineage | null;
+          error: string | null;
+          showColumns: boolean;
+        }
       >
     >
   >;
@@ -253,7 +263,12 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   const [lineageData, setLineageData] = useState<
     Record<
       string,
-      { isLoading: boolean; data: Lineage | null; error: string | null }
+      {
+        isLoading: boolean;
+        data: Lineage | null;
+        error: string | null;
+        showColumns: boolean;
+      }
     >
   >({});
 

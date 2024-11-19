@@ -304,7 +304,11 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
       shouldCheckLineageData = true,
     }: { shouldCheckLineageData?: boolean } = {},
   ) => {
-    setLineageOptions(options);
+    setLineageOptions((prev) => ({
+      ...prev,
+      ...options,
+    }));
+    resetSelections();
 
     if (lineageFetchType?.type === "asset") {
       const data = await getLineage({
@@ -316,8 +320,6 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
       setLineage(data.lineage);
       setRootAsset(data.root_asset);
     } else if (lineageFetchType?.type === "project") {
-      setLineageOptions(options);
-
       if (
         // don't refetch if the file is a sql file
         !lineageFetchType.data.filePath.includes(".sql") ||
@@ -334,6 +336,7 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
           isLoading: true,
           data: null,
           error: null,
+          showColumns: options.asset_only,
         },
       }));
 
@@ -354,6 +357,7 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
           isLoading: false,
           data: data.lineage,
           error: null,
+          showColumns: options.asset_only,
         },
       }));
     }
