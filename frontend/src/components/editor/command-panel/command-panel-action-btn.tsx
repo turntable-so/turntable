@@ -10,8 +10,7 @@ import { Button } from "../../ui/button";
 import { useCommandPanelContext } from "./command-panel-context";
 
 export default function CommandPanelActionBtn() {
-  const { commandPanelState, runCommand, inputValue } =
-    useCommandPanelContext();
+  const { commandPanelState, runCommand } = useCommandPanelContext();
 
   const componentMap = {
     idling: (
@@ -35,7 +34,6 @@ export default function CommandPanelActionBtn() {
   };
 
   const isDisabled = commandPanelState === "cancelling";
-
 
   return (
     <Button
