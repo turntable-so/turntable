@@ -60,6 +60,7 @@ export default function PreviewPanel({
     default:
       return (
         <AgGridReact
+          key={resolvedTheme} // Add this line to force remount on theme change
           className={
             resolvedTheme === "dark"
               ? "ag-theme-balham-dark"

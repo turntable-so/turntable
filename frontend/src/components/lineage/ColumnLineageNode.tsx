@@ -19,7 +19,7 @@ import { useAppContext } from "../../contexts/AppContext";
 import { getAssetIcon } from "../../lib/utils";
 import { ColumnTypeIcon } from "../ColumnTypeIcon";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { LineageViewContext } from "./LineageView";
+import { LineageViewContext } from "../../app/contexts/LineageView";
 import { usePathname } from "next/navigation";
 // import { useHotkeys } from 'react-hotkeys-hook';
 
@@ -257,8 +257,7 @@ function LineageNode({ id, data, yPos }: any) {
 
   const isWindows = navigator.userAgent.includes("Windows");
 
-  const pathname = usePathname()
-  console.log({ pathname })
+  const pathname = usePathname();
 
   const fileName = data.originalFilePath?.split(isWindows ? `\\` : "/").pop();
 
@@ -273,20 +272,23 @@ function LineageNode({ id, data, yPos }: any) {
         border-solid ${isActiveResource ? "border-blue-400" : "border-gray-300 dark:border-zinc-700"}
         bg-muted w-72 max-h-72 overflow-y-scroll overflow-x-hidden relative
         ${columnsToDisplay.length > 10 ? "nowheel" : ""}
-        ${selectedColumn != null &&
-            data.filteredColumns?.length === 0 &&
-            hoveredNode?.nodeId !== id
+        ${
+          selectedColumn != null &&
+          data.filteredColumns?.length === 0 &&
+          hoveredNode?.nodeId !== id
             ? "opacity-40"
             : ""
-          }
-        ${selectedColumn?.startsWith(`${id}.`)
+        }
+        ${
+          selectedColumn?.startsWith(`${id}.`)
             ? "border-blue-400"
             : "hover:border-[color:var(--vscode-button-secondaryHoverBackground)]"
-          }
-        ${hasErrors
+        }
+        ${
+          hasErrors
             ? "border-red-400 hover:border-[color:var(--vscode-inputValidation-errorBorder)]"
             : ""
-          }
+        }
         `}
         onScroll={() => {
           updateNode(id);
@@ -312,8 +314,9 @@ function LineageNode({ id, data, yPos }: any) {
           }}
           className={`sticky top-0 left-0 right-0
           bg-muted z-50
-          py-3 px-2 border-t-0 border-l-0 border-r-0 ${columnsToDisplay.length > 0 ? "border-b-2 border-solid" : ""
-            } font-bold text-title uppercase text-xs group`}
+          py-3 px-2 border-t-0 border-l-0 border-r-0 ${
+            columnsToDisplay.length > 0 ? "border-b-2 border-solid" : ""
+          } font-bold text-title uppercase text-xs group`}
         >
           <Header
             tableId={id}
@@ -345,18 +348,20 @@ function LineageNode({ id, data, yPos }: any) {
                   <div
                     className={`
                     ${column.hasEdges ? "cursor-pointer" : "cursor-not-allowed"}
-                    px-2 rounded-md ${selectedColumn === column.columnId
+                    px-2 rounded-md ${
+                      selectedColumn === column.columnId
                         ? "bg-card"
                         : "hover:bg-card"
-                      } ${selectedColumn != null &&
-                        !data.collapsed &&
-                        !column.hasFilteredEdges &&
-                        hoveredNode?.nodeId !== id
+                    } ${
+                      selectedColumn != null &&
+                      !data.collapsed &&
+                      !column.hasFilteredEdges &&
+                      hoveredNode?.nodeId !== id
                         ? "opacity-40"
                         : column.hasEdges
                           ? "opacity-100"
                           : "opacity-40"
-                      }
+                    }
                   `}
                   >
                     <Column

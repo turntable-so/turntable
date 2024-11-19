@@ -106,7 +106,6 @@ export default function ActionBar({
   const [lowHeight, setLowheight] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const pathName = usePathname();
-  const router = useRouter();
   const isNotebook = pathName.includes("/notebooks/");
 
   useEffect(() => {
@@ -275,9 +274,6 @@ export default function ActionBar({
           />
         </div>
         <div className="flex justify-between">
-          {/* <div className="text-xs mt-2 px-1 invisible">
-            {filteredAssets.length} Assets
-          </div> */}
           {selectedTagFilters.length + selectedTypeFilters.length > 0 && (
             <div className="text-xs mt-2 px-1 bg-gray-100 dark:bg-zinc-900">
               {selectedTagFilters.length + selectedTypeFilters.length} Filters

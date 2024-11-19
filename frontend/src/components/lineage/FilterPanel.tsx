@@ -4,7 +4,7 @@ import { Panel } from "@xyflow/react";
 import { Label } from "../ui/label";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { ConnectionTypeLabel, getLabelName } from "./ColumnConnectionEdge";
-import { LineageViewContext } from "./LineageView";
+import { LineageViewContext } from "../../app/contexts/LineageView";
 import { CONNECTION_TYPES } from "./constants";
 
 export function FilterPanel() {
@@ -60,10 +60,15 @@ export function FilterPanel() {
           <RadioGroup
             defaultValue={lineageOptions.lineageType}
             onValueChange={(t: "all" | "direct_only") =>
-              setLineageOptionsAndRefetch({
-                ...lineageOptions,
-                lineageType: t,
-              })
+              setLineageOptionsAndRefetch(
+                {
+                  ...lineageOptions,
+                  lineageType: t,
+                },
+                {
+                  shouldCheckLineageData: false,
+                },
+              )
             }
             className="p-1 text-muted-foreground text-xs space-y-2"
           >

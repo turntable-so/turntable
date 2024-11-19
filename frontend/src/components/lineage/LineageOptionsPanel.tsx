@@ -2,7 +2,7 @@ import { Minus, Plus } from "lucide-react";
 import { useContext } from "react";
 import { Panel } from "@xyflow/react";
 import { Button } from "../ui/button";
-import { LineageViewContext } from "./LineageView";
+import { LineageViewContext } from "../../app/contexts/LineageView";
 
 export default function LineageOptions() {
   const {
@@ -18,18 +18,28 @@ export default function LineageOptions() {
   const incrementPredecessorDepth = (delta: number) => {
     if (lineageOptions.predecessor_depth + delta < 1) return;
     if (lineageOptions.predecessor_depth + delta > 5) return;
-    setLineageOptionsAndRefetch({
-      ...lineageOptions,
-      predecessor_depth: lineageOptions.predecessor_depth + delta,
-    });
+    setLineageOptionsAndRefetch(
+      {
+        ...lineageOptions,
+        predecessor_depth: lineageOptions.predecessor_depth + delta,
+      },
+      {
+        shouldCheckLineageData: false,
+      },
+    );
   };
   const incrementSuccessorDepth = (delta: number) => {
     if (lineageOptions.successor_depth + delta < 1) return;
     if (lineageOptions.successor_depth + delta > 5) return;
-    setLineageOptionsAndRefetch({
-      ...lineageOptions,
-      successor_depth: lineageOptions.successor_depth + delta,
-    });
+    setLineageOptionsAndRefetch(
+      {
+        ...lineageOptions,
+        successor_depth: lineageOptions.successor_depth + delta,
+      },
+      {
+        shouldCheckLineageData: false,
+      },
+    );
   };
 
   return (

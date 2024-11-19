@@ -3,7 +3,6 @@ import "ag-grid-community/styles/ag-theme-balham.css";
 import "./ag-grid-custom-theme.css";
 
 import { useFiles } from "@/app/contexts/FilesContext";
-import { useLineage } from "@/app/contexts/LineageContext";
 import { useBottomPanelTabs } from "@/components/editor/use-bottom-panel-tabs";
 import {
   CircleAlertIcon,
@@ -19,29 +18,22 @@ import { Fragment, useContext, useEffect } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { Panel, PanelResizeHandle } from "react-resizable-panels";
 import useResizeObserver from "use-resize-observer";
-import { LineageView, LineageViewContext } from "../lineage/LineageView";
+import {
+  LineageView,
+  LineageViewContext,
+} from "../../app/contexts/LineageView";
 import { Button } from "../ui/button";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import CommandPanel from "./command-panel";
 import ProblemsPanel from "./problems-panel/problems-panel";
 import { Badge } from "../ui/badge";
 import CommandPanelActionBtn from "./command-panel/command-panel-action-btn";
-import { Switch } from "../ui/switch";
 import PreviewPanel from "./preview-panel/preview-panel";
 import ErrorMessage from "./error-message";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import CustomEditor from "./CustomEditor";
-
-// Define your custom theme
-const customTheme = {
-  base: "vs",
-  inherit: true,
-  rules: [],
-  colors: {
-    "editor.foreground": "#000000",
-    "editorLineNumber.foreground": "#A1A1AA",
-  },
-};
+import { Switch } from "../ui/switch";
+import { Label } from "../ui/label";
 
 export default function BottomPanel({
   rowData,
@@ -58,7 +50,16 @@ export default function BottomPanel({
   isLoading: boolean;
   queryPreviewError: string | null;
 }) {
-  const { fetchFileBasedLineage, lineageData } = useLineage();
+  const { setLineageOptionsAndRefetch, lineageOptions } =
+    useContext(LineageViewContext);
+  const { lineageData } = useFiles();
+
+  const fetchFileBasedLineage = () => {
+    setLineageOptionsAndRefetch(lineageOptions, {
+      shouldCheckLineageData: false,
+    });
+  };
+
   const {
     activeFile,
     branchId,
@@ -70,11 +71,6 @@ export default function BottomPanel({
     isQueryPreviewLoading,
   } = useFiles();
 
-  const {
-    lineageOptions,
-    setLineageOptionsAndRefetch,
-  } = useContext(LineageViewContext);
-
   const [activeTab, setActiveTab] = useBottomPanelTabs({
     branchId: branchId || "",
   });
@@ -84,16 +80,6 @@ export default function BottomPanel({
     height: bottomPanelHeight,
     width: bottomPanelWidth,
   } = useResizeObserver();
-
-
-  useEffect(() => {
-    if (activeFile) {
-      fetchFileBasedLineage({
-        filePath: activeFile.node.path,
-        branchId,
-      });
-    }
-  }, [activeFile?.node.path]);
 
   const showPreviewQueryButton =
     activeTab === "results" &&
@@ -204,18 +190,29 @@ export default function BottomPanel({
           )}
           {activeTab === "lineage" && (
             <div className="flex items-center justify-center gap-2">
-
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="asset-only"
+                  checked={
+                    !lineageData[activeFile?.node.path || ""]?.showColumns
+                  }
+                  onCheckedChange={(checked) => {
+                    setLineageOptionsAndRefetch(
+                      {
+                        ...lineageOptions,
+                        asset_only: !checked,
+                      },
+                      { shouldCheckLineageData: false },
+                    );
+                  }}
+                />
+                <Label htmlFor="asset-only" className="text-muted-foreground">
+                  Show Columns
+                </Label>
+              </div>
               <Button
                 size="sm"
-                onClick={() =>
-                  fetchFileBasedLineage({
-                    filePath: activeFile?.node.path || "",
-                    branchId,
-                    // TODO: we need to get the selected type from the LineageView,
-                    // but right now that would take too much effort to refactor that
-                    lineage_type: "all",
-                  })
-                }
+                onClick={fetchFileBasedLineage}
                 disabled={lineageData[activeFile?.node.path || ""]?.isLoading}
                 variant="outline"
               >
@@ -268,22 +265,14 @@ export default function BottomPanel({
                     lineageData[activeFile?.node.path || ""].data && (
                       <LineageView
                         key={activeFile?.node.path}
-                        lineage={
-                          lineageData[activeFile?.node.path || ""].data.lineage
-                        }
-                        rootAsset={
-                          lineageData[activeFile?.node.path || ""].data
-                            .root_asset
-                        }
-                        style={{ height: bottomPanelHeight }}
-                        page="editor"
-                        filePath={activeFile?.node.path || ""}
-                        branchId={branchId}
+                        style={{ height: (bottomPanelHeight ?? 0) - 28 }}
                       />
                     )}
                   {lineageData?.[activeFile?.node.path || ""] &&
                     lineageData[activeFile?.node.path || ""].error && (
-                      <ErrorMessage error={lineageData[activeFile?.node.path || ""].error} />
+                      <ErrorMessage
+                        error={lineageData[activeFile?.node.path || ""].error}
+                      />
                     )}
                 </>
               </ErrorBoundary>

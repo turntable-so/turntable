@@ -32,6 +32,7 @@ import {
 import { validateDbtQuery } from "../actions/client-actions";
 import { getDownloadableFile } from "../actions/client-actions";
 import { toast } from "sonner";
+import type { Lineage } from "./LineageView";
 
 export const MAX_RECENT_COMMANDS = 5;
 
@@ -152,6 +153,28 @@ type FilesContextType = {
   queryPreviewError: string | null;
   isQueryPreviewLoading: boolean;
   setIsQueryPreviewLoading: Dispatch<SetStateAction<boolean>>;
+  lineageData: Record<
+    string,
+    {
+      isLoading: boolean;
+      data: Lineage | null;
+      error: string | null;
+      showColumns: boolean;
+    }
+  >;
+  setLineageData: Dispatch<
+    SetStateAction<
+      Record<
+        string,
+        {
+          isLoading: boolean;
+          data: Lineage | null;
+          error: string | null;
+          showColumns: boolean;
+        }
+      >
+    >
+  >;
 };
 
 type QueryPreview = {
@@ -237,6 +260,17 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   }, [formatOnSave]);
   const [showConfirmSaveDialog, setShowConfirmSaveDialog] = useState(false);
   const [fileToClose, setFileToClose] = useState<OpenedFile | null>(null);
+  const [lineageData, setLineageData] = useState<
+    Record<
+      string,
+      {
+        isLoading: boolean;
+        data: Lineage | null;
+        error: string | null;
+        showColumns: boolean;
+      }
+    >
+  >({});
 
   const fetchBranch = async (id: string) => {
     if (id) {
@@ -863,6 +897,8 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         queryPreviewError,
         isQueryPreviewLoading,
         setIsQueryPreviewLoading,
+        lineageData,
+        setLineageData,
       }}
     >
       {children}

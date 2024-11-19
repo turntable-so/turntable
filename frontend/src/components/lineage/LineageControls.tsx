@@ -2,7 +2,7 @@ import { Maximize, ZoomIn, ZoomOut } from "lucide-react";
 import React, { useCallback, useContext } from "react";
 import { Panel, useReactFlow, useViewport } from "@xyflow/react";
 import { Button } from "../ui/button";
-import { LineageViewContext } from "./LineageView";
+import { LineageViewContext } from "../../app/contexts/LineageView";
 
 const buttonTailwindClasses = `p-1.5
   rounded-lg
