@@ -1,4 +1,10 @@
-import { CircleCheck, CircleSlash, CircleX, LoaderCircle } from "lucide-react";
+import {
+  CircleCheck,
+  CircleSlash,
+  CircleX,
+  LoaderCircle,
+  Play,
+} from "lucide-react";
 import { useEffect } from "react";
 import { useCommandPanelContext } from "./command-panel-context";
 
@@ -9,6 +15,8 @@ export default function CommandPanelList() {
     setSelectedCommandIndex,
     commandPanelState,
     updateCommandById,
+    runCommand,
+    runCommandCore,
   } = useCommandPanelContext();
 
   useEffect(() => {
@@ -24,7 +32,7 @@ export default function CommandPanelList() {
       {commandHistory.map((item, index) => (
         <div
           key={item.id}
-          className={`flex justify-between ${
+          className={`group/item flex justify-between ${
             index === selectedCommandIndex ? "bg-gray-100 dark:bg-zinc-700" : ""
           } hover:bg-gray-100 dark:hover:bg-zinc-700 cursor-pointer p-2`}
           onClick={() => setSelectedCommandIndex(index)}
@@ -48,8 +56,23 @@ export default function CommandPanelList() {
             )}
             <p>dbt {item.command}</p>
           </div>
-          <div className="flex flex-row gap-2 items-center">
-            {item.duration && <p>{item.duration}</p>}
+          <div className="flex items-center">
+            {item.duration && (
+              <p className="group-hover/item:hidden">{item.duration}</p>
+            )}
+            <div className="hidden group-hover/item:block">
+              <button
+                type="button"
+                className="group/run flex items-center gap-1 rounded hover:bg-gray-200 dark:hover:bg-zinc-950 text-sm px-2"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  runCommandCore(item.command);
+                }}
+              >
+                <Play className="h-3 w-3" />
+                <span>Run</span>
+              </button>
+            </div>
           </div>
         </div>
       ))}
