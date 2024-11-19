@@ -23,7 +23,7 @@ def ingest_metadata(
     self,
     workspace_id: str,
     resource_id: str,
-    workunits: int,
+    workunits: int | None = None,
     task_id: str | None = None,
 ):
     resource = Resource.objects.get(id=resource_id)
@@ -52,7 +52,6 @@ def sync_metadata(self, workspace_id: str, resource_id: str):
     task2 = ingest_metadata.si(
         workspace_id=workspace_id,
         resource_id=resource_id,
-        workunits=1000,
         task_id=self.request.id,
     )
     task3 = process_metadata.si(workspace_id=workspace_id, resource_id=resource_id)

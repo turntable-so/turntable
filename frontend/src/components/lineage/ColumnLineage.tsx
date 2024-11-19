@@ -1,3 +1,5 @@
+import "@xyflow/react/dist/style.css";
+
 import React, {
   useContext,
   useEffect,
@@ -5,12 +7,13 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import ReactFlow, {
+import {
+  ReactFlow,
   Background,
   Panel,
   type ReactFlowInstance,
   useNodesInitialized,
-} from "reactflow";
+} from "@xyflow/react";
 
 import { getColumnLineageForAsset } from "../../lib/lineage";
 import ColumnConnectionEdge, {
@@ -23,17 +26,18 @@ import ColumnConnectionEdge, {
 } from "./ColumnConnectionEdge";
 import ColumnLineageNode from "./ColumnLineageNode";
 import ErrorNode from "./ErrorNode";
-import { LineageViewContext } from "./LineageView";
+import { LineageViewContext } from "@/app/contexts/LineageView";
 import LoadingNode from "./LoadingNode";
 import buildLineageReactFlow from "./renderLineage";
-
-import "reactflow/dist/style.css";
 import { FilterPanel } from "./FilterPanel";
 import "./lineage.css";
-import { ArrowLeftFromLine, Loader2, Minus, Plus } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useAppContext } from "../../contexts/AppContext";
 import { LineageControls } from "./LineageControls";
 import LineageOptionsPanel from "./LineageOptionsPanel";
+import { usePathname } from "next/navigation";
+import { useTheme } from "next-themes";
+import { useFiles } from "@/app/contexts/FilesContext";
 
 const nodeTypes = {
   custom: ColumnLineageNode,
@@ -67,6 +71,8 @@ const ColumnLineageFlow = () => {
     useState<ReactFlowInstance | null>(null);
   const nodesInitialized = useNodesInitialized();
 
+  const { resolvedTheme } = useTheme();
+  const { lineageData, branchId, activeFile } = useFiles();
   const {
     error,
     lineage,
@@ -83,6 +89,11 @@ const ColumnLineageFlow = () => {
   } = useContext(LineageViewContext);
 
   const { isLineageLoading, setIsLineageLoading } = useAppContext();
+
+  const showFilterPanel =
+    branchId && activeFile
+      ? !lineageData[activeFile.node.path]?.showColumns
+      : false;
 
   const onReactFlowInit = (reactFlowInstance: ReactFlowInstance) => {
     setReactFlowInstance(reactFlowInstance);
@@ -139,15 +150,6 @@ const ColumnLineageFlow = () => {
       edges = [...filteredEdges, ...tableEdges] as any;
     }
 
-    if (nodes.length === 0 && edges.length === 0) {
-      nodes = [
-        {
-          id: "error-node",
-          type: "error",
-          position: { x: 0, y: 0 },
-        },
-      ];
-    }
     return {
       nodes,
       edges,
@@ -171,7 +173,7 @@ const ColumnLineageFlow = () => {
     <ReactFlow
       onlyRenderVisibleElements={true}
       ref={reactFlowWrapper}
-      key={lineage.asset_id}
+      key={lineage?.asset_id || ""}
       nodes={nodes}
       edges={edges}
       edgeTypes={edgeTypes}
@@ -180,15 +182,13 @@ const ColumnLineageFlow = () => {
           return;
         }
 
-        if (!reactFlowWrapper?.current || !reactFlowInstance) {
+        if (!reactFlowInstance) {
           return;
         }
 
-        const reactFlowBounds =
-          reactFlowWrapper.current.getBoundingClientRect();
-        const position = reactFlowInstance?.project({
-          x: e.clientX - reactFlowBounds.left + 8,
-          y: e.clientY - reactFlowBounds.top,
+        const position = reactFlowInstance.screenToFlowPosition({
+          x: e.clientX + 8,
+          y: e.clientY,
         });
 
         updateHoveredEdge({
@@ -205,15 +205,13 @@ const ColumnLineageFlow = () => {
           return;
         }
 
-        if (!reactFlowWrapper?.current || !reactFlowInstance) {
+        if (!reactFlowInstance) {
           return;
         }
 
-        const reactFlowBounds =
-          reactFlowWrapper.current.getBoundingClientRect();
-        const position = reactFlowInstance?.project({
-          x: e.clientX - reactFlowBounds.left + 8,
-          y: e.clientY - reactFlowBounds.top - 8,
+        const position = reactFlowInstance?.screenToFlowPosition({
+          x: e.clientX + 8,
+          y: e.clientY,
         });
 
         updateSelectedEdge({
@@ -247,7 +245,7 @@ const ColumnLineageFlow = () => {
     >
       <LineageOptionsPanel />
       <LineageControls />
-      <FilterPanel />
+      {showFilterPanel && <FilterPanel />}
       {isLineageLoading && (
         <Panel
           className="flex flex-col w-full h-full items-center justify-center"
@@ -258,7 +256,10 @@ const ColumnLineageFlow = () => {
           </div>
         </Panel>
       )}
-      <Background className="bg-zinc-200" />
+      <Background
+        bgColor={resolvedTheme === "dark" ? "black" : "white"}
+        size={1.5}
+      />
     </ReactFlow>
   );
 };

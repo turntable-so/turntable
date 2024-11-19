@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { AgGridReact } from "ag-grid-react";
 import Papa from "papaparse";
+import { useTheme } from "next-themes";
 
 type CsvPreviewProps = {
   content: string;
@@ -8,6 +9,7 @@ type CsvPreviewProps = {
 };
 
 export default function CsvPreview({ content, gridRef }: CsvPreviewProps) {
+  const { resolvedTheme } = useTheme();
   const { rowData, columnDefs } = useMemo(() => {
     const parsedData = Papa.parse(content, { header: true });
     const { data, meta } = parsedData;
@@ -26,7 +28,9 @@ export default function CsvPreview({ content, gridRef }: CsvPreviewProps) {
 
   return (
     <AgGridReact
-      className="ag-theme-custom"
+      className={
+        resolvedTheme === "dark" ? "ag-theme-balham-dark" : "ag-theme-balham"
+      }
       ref={gridRef}
       suppressRowHoverHighlight={true}
       columnHoverHighlight={true}

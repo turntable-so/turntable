@@ -1,11 +1,14 @@
+import { duplicateFileOrFolder } from "@/app/actions/actions";
 import { type OpenedFile, useFiles } from "@/app/contexts/FilesContext";
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
+  ContextMenuSeparator,
 } from "@/components/ui/context-menu";
 import {
+  Copy,
   Download,
   Ellipsis,
   File,
@@ -14,11 +17,13 @@ import {
   Folder,
   FolderOpen,
   FolderPlus,
+  Layers2,
   Pencil,
   Trash,
 } from "lucide-react";
 import { useState, useRef } from "react";
-import * as ContextMenuPrimitive from "@radix-ui/react-context-menu";
+import { useCopyToClipboard } from "usehooks-ts";
+import { toast } from "sonner";
 
 const DbtLogo = () => (
   <svg
@@ -43,17 +48,20 @@ export default function Node({
   dragHandle,
 }: { node: any; style: any; dragHandle: any }) {
   const {
+    branchId,
+    activeFile,
     openFile,
     createFileAndRefresh,
     deleteFileAndRefresh,
+    duplicateFileOrFolderAndRefresh,
     closeFile,
     renameFile,
     createDirectoryAndRefresh,
     downloadFile,
   } = useFiles();
+  const [copiedText, copy] = useCopyToClipboard();
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
-  const contextMenuRef =
-    useRef<ContextMenuPrimitive.ContextMenuTriggerElement>(null);
+  const contextMenuRef = useRef<HTMLDivElement>(null);
 
   const handleCreateFile = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -142,6 +150,27 @@ export default function Node({
     }
   };
 
+  const handleDuplicate = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    await duplicateFileOrFolderAndRefresh(node.data.path);
+  };
+
+  const handleCopyName = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    copy(node.data.name);
+  };
+
+  const handleCopyPath = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    copy(node.data.path);
+  };
+
+  const handleCopyRef = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const filenameWithoutExtension = node.data.name.split(".")[0];
+    copy(`{{ ref('${filenameWithoutExtension}') }}`);
+  };
+
   return (
     <ContextMenu onOpenChange={setContextMenuOpen}>
       <ContextMenuTrigger ref={contextMenuRef} asChild>
@@ -155,13 +184,19 @@ export default function Node({
             }
           }}
           ref={dragHandle}
-          className={`${node.isSelected ? "rounded font-medium bg-accent text-accent-foreground" : ""} hover:bg-white hover:cursor-pointer ${contextMenuOpen ? "bg-white" : ""} flex items-center rounded`}
+          className={`${
+            node.isSelected
+              ? "rounded font-medium bg-accent text-accent-foreground"
+              : ""
+          } ${activeFile?.node.path === node.data.path ? "bg-card" : ""} hover:bg-card hover:cursor-pointer ${
+            contextMenuOpen ? "bg-card" : ""
+          } flex items-center rounded`}
         >
           {!node.isLeaf &&
             (node.isOpen ? (
-              <FolderOpen className="mr-1 size-4 flex-shrink-0" />
+              <FolderOpen className="mr-1 size-4 flex-shrink-0 dark:text-zinc-100" />
             ) : (
-              <Folder className="mr-1 size-4 flex-shrink-0" />
+              <Folder className="mr-1 size-4 flex-shrink-0 dark:text-zinc-100" />
             ))}
           {node.isLeaf && node.data.name.endsWith(".sql") && (
             <div
@@ -171,12 +206,12 @@ export default function Node({
             </div>
           )}
           {node.isLeaf && node.data.name.endsWith(".yml") && (
-            <FileText className="mr-1 size-4 flex-shrink-0" />
+            <FileText className="mr-1 size-4 flex-shrink-0 dark:text-zinc-100" />
           )}
           {node.isLeaf &&
             !node.data.name.endsWith(".sql") &&
             !node.data.name.endsWith(".yml") && (
-              <File className="mr-1 size-4 flex-shrink-0" />
+              <File className="mr-1 size-4 flex-shrink-0 dark:text-zinc-100" />
             )}
           {node.isEditing ? (
             <input
@@ -192,9 +227,14 @@ export default function Node({
             />
           ) : (
             <div className="w-full flex items-center justify-between group">
-              <div className="truncate">{node.data.name}</div>
+              <div className="truncate text-muted-foreground">
+                {node.data.name}
+              </div>
               <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <Ellipsis className="mr-1 size-4" onClick={openContextMenu} />
+                <Ellipsis
+                  className="mr-1 size-4 dark:text-zinc-100"
+                  onClick={openContextMenu}
+                />
               </div>
             </div>
           )}
@@ -213,12 +253,42 @@ export default function Node({
             Add Folder
           </div>
         </ContextMenuItem>
+        <ContextMenuItem onClick={handleDuplicate}>
+          <div className="flex items-center text-xs">
+            <Layers2 className="mr-2 h-3 w-3" />
+            Duplicate
+          </div>
+        </ContextMenuItem>
         <ContextMenuItem onClick={handleRename}>
           <div className="flex items-center text-xs">
             <Pencil className="mr-2 h-3 w-3" />
             Rename
           </div>
         </ContextMenuItem>
+
+        <ContextMenuSeparator />
+
+        <ContextMenuItem onClick={handleCopyName}>
+          <div className="flex items-center text-xs">
+            <Copy className="mr-2 h-3 w-3" />
+            Copy name
+          </div>
+        </ContextMenuItem>
+        <ContextMenuItem onClick={handleCopyPath}>
+          <div className="flex items-center text-xs">
+            <Copy className="mr-2 h-3 w-3" />
+            Copy relative path
+          </div>
+        </ContextMenuItem>
+        <ContextMenuItem onClick={handleCopyRef}>
+          <div className="flex items-center text-xs">
+            <Copy className="mr-2 h-3 w-3" />
+            Copy as ref
+          </div>
+        </ContextMenuItem>
+
+        <ContextMenuSeparator />
+
         <ContextMenuItem onClick={handleDownload}>
           <div className="flex items-center text-xs">
             <Download className="mr-2 h-3 w-3" />

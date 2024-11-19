@@ -3,17 +3,15 @@ import shutil
 from urllib.parse import unquote
 
 from django.db import transaction
-from django.http import HttpResponse, JsonResponse
-from rest_framework import status, viewsets
+from django.http import JsonResponse
+from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from api.serializers import AssetSerializer, LineageSerializer, ProjectSerializer
-from app.core.dbt import LiveDBTParser
+from app.core.lineage import get_lineage_helper
 from app.models.project import Project
-from app.models.resources import Resource
 from app.views.query_views import format_query
-from vinyl.lib.dbt import DBTProject, DBTTransition
 
 
 def _build_file_tree(user_id: str, path: str, base_path: str):
@@ -44,66 +42,6 @@ def get_file_tree(user_id: str, path: str, base_path: str):
         "id": relative_path,
         "children": file_tree,
     }
-
-
-def get_lineage_helper(
-    proj: DBTProject,
-    before_proj: DBTProject | None,
-    resource: Resource,
-    filepath: str,
-    predecessor_depth: int,
-    successor_depth: int,
-    lineage_type: str,
-    defer: bool,
-):
-    if defer:
-        transition = DBTTransition(before_project=before_proj, after_project=proj)
-        transition.mount_manifest(defer=defer)
-        transition.mount_catalog(defer=defer)
-    else:
-        proj.mount_manifest()
-        proj.mount_catalog()
-
-    node_id = LiveDBTParser.get_node_id_from_filepath(proj, filepath, defer)
-    if not node_id:
-        raise ValueError(f"Node at filepath{filepath} not found in manifest")
-
-    dbtparser = LiveDBTParser.parse_project(
-        proj=proj,
-        before_proj=before_proj,
-        node_id=node_id,
-        resource=resource,
-        predecessor_depth=predecessor_depth,
-        successor_depth=successor_depth,
-        defer=defer,
-    )
-    lineage, _ = dbtparser.get_lineage(lineage_type=lineage_type)
-    root_asset = None
-    column_lookup = {}
-    for asset in lineage.assets:
-        column_lookup[asset.id] = []
-    for column in lineage.columns:
-        column_lookup[column.asset_id].append(column)
-
-    for asset in lineage.assets:
-        if asset.id == lineage.asset_id:
-            root_asset = asset
-
-        asset.temp_columns = column_lookup[asset.id]
-
-    if not root_asset:
-        raise ValueError(f"Root asset not found for {lineage.asset_id}")
-
-    return root_asset, lineage
-
-    asset_serializer = AssetSerializer(root_asset, context={"request": request})
-    lineage_serializer = LineageSerializer(lineage, context={"request": request})
-    return Response(
-        {
-            "root_asset": asset_serializer.data,
-            "lineage": lineage_serializer.data,
-        }
-    )
 
 
 class ProjectViewSet(viewsets.ViewSet):
@@ -309,6 +247,48 @@ class ProjectViewSet(viewsets.ViewSet):
             }
         )
 
+    @action(detail=True, methods=["POST"], url_path="files/duplicate")
+    def duplicate(self, request, pk=None):
+        filepath = request.data.get("filepath")
+        if not filepath:
+            return Response(
+                {"success": False, "error": "filepath is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        project = Project.objects.get(id=pk)
+        try:
+            with project.repo_context() as (repo, env):
+                filepath = os.path.join(repo.working_tree_dir, unquote(filepath))
+                if not os.path.exists(filepath):
+                    return Response(
+                        {"success": False, "error": "File or directory not found"},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+
+                base_dir = os.path.dirname(filepath)
+                base_name = os.path.basename(filepath)
+                name, ext = os.path.splitext(base_name)
+
+                if os.path.isfile(filepath):
+                    print(f"copying file {filepath} to {base_dir}")
+                    new_name = f"{name} copy{ext}"
+                    print(f"new name: {new_name}")
+                    new_path = os.path.join(base_dir, new_name)
+                    print(f"new path: {new_path}")
+                    shutil.copy2(filepath, new_path)
+                else:
+                    new_name = f"{base_name} copy"
+                    new_path = os.path.join(base_dir, new_name)
+                    shutil.copytree(filepath, new_path)
+
+            return Response({"success": True}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"success": False, "error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
     @action(detail=True, methods=["GET"])
     def changes(self, request, pk=None):
         project = Project.objects.get(id=pk)
@@ -432,49 +412,37 @@ class ProjectViewSet(viewsets.ViewSet):
 
         return Response(status=status.HTTP_501_NOT_IMPLEMENTED)
 
+    class ProjectLineageSerializer(serializers.Serializer):
+        asset_only = serializers.BooleanField(required=False, default=False)
+        filepath = serializers.CharField(required=True)
+        predecessor_depth = serializers.IntegerField(required=True)
+        successor_depth = serializers.IntegerField(required=True)
+        lineage_type = serializers.ChoiceField(
+            choices=["all", "direct_only"], required=False, default="all"
+        )
+
     @action(detail=True, methods=["GET"])
     def lineage(self, request, pk=None):
         workspace = request.user.current_workspace()
+        dbt_details = workspace.get_dbt_dev_details()
+
         project = Project.objects.get(id=pk)
 
-        dbt_details = workspace.get_dbt_dev_details()
-        filepath = unquote(request.query_params.get("filepath"))
-        predecessor_depth = int(request.query_params.get("predecessor_depth"))
-        successor_depth = int(request.query_params.get("successor_depth"))
-        lineage_type = request.query_params.get("lineage_type", "all")
-        defer = request.query_params.get("defer", False)
-        if lineage_type not in ["all", "direct_only"]:
-            return Response(
-                {
-                    "error": "lineage_type query parameter must be either 'all' or 'direct_only'."
-                },
-                status=400,
-            )
+        serializer = self.ProjectLineageSerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
 
-        if defer:
-            with dbt_details.dbt_transition_context(
-                project_id=project.id, isolate=False
-            ) as (
-                transition,
-                _,
-                repo,
-            ):
-                root_asset, lineage = get_lineage_helper(
-                    proj=transition.after,
-                    before_proj=transition.before,
-                    resource=dbt_details.resource,
-                    filepath=filepath,
-                    predecessor_depth=predecessor_depth,
-                    successor_depth=successor_depth,
-                    lineage_type=lineage_type,
-                    defer=defer,
-                )
-        else:
-            with dbt_details.dbt_repo_context(project_id=project.id, isolate=False) as (
-                proj,
-                _,
-                _,
-            ):
+        asset_only = bool(serializer.validated_data.get("asset_only"))
+        filepath = unquote(serializer.validated_data.get("filepath"))
+        predecessor_depth = serializer.validated_data.get("predecessor_depth")
+        successor_depth = serializer.validated_data.get("successor_depth")
+        lineage_type = serializer.validated_data.get("lineage_type")
+
+        with dbt_details.dbt_repo_context(project_id=project.id, isolate=False) as (
+            proj,
+            _,
+            _,
+        ):
+            try:
                 root_asset, lineage = get_lineage_helper(
                     proj=proj,
                     before_proj=None,
@@ -483,7 +451,18 @@ class ProjectViewSet(viewsets.ViewSet):
                     predecessor_depth=predecessor_depth,
                     successor_depth=successor_depth,
                     lineage_type=lineage_type,
-                    defer=defer,
+                    defer=False,
+                    asset_only=asset_only,
+                )
+            except KeyError as e:
+                return Response(
+                    {"error": f"Node {str(e)} does not exist in graph"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            except ValueError as e:
+                return Response(
+                    {"error": str(e)},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
         asset_serializer = AssetSerializer(root_asset, context={"request": request})
@@ -494,3 +473,51 @@ class ProjectViewSet(viewsets.ViewSet):
                 "lineage": lineage_serializer.data,
             }
         )
+
+    class CompileQueryPayloadSerializer(serializers.Serializer):
+        filepath = serializers.CharField(required=True)
+
+        def validate_filepath(self, value):
+            return unquote(value)
+
+    @action(detail=True, methods=["POST"])
+    def compile(self, request, pk=None):
+        project = Project.objects.get(id=pk)
+        workspace = request.user.current_workspace()
+        dbt_resource = workspace.get_dbt_dev_details()
+
+        serializer = self.CompileQueryPayloadSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        filepath = serializer.validated_data.get("filepath")
+
+        with dbt_resource.dbt_repo_context(project_id=project.id, isolate=False) as (
+            project,
+            project_path,
+            _,
+        ):
+            project_filepath = os.path.join(project_path, filepath)
+            if not os.path.exists(project_filepath):
+                return Response(
+                    {"error": "File not found"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            with open(project_filepath, "r") as file:
+                dbt_sql = file.read()
+
+            try:
+                sql = project.fast_compile(dbt_sql)
+                if not sql:
+                    sql = project.preview(dbt_sql, data=False)
+
+            except Exception as e:
+                ## TODO: this is hacky, we'll eventually want a more robust error handling solution
+                if "Compilation Error" in str(e):
+                    error_message = str(e).split("Compilation Error")[1].strip()
+                    return Response(
+                        {"error": error_message},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                else:
+                    raise e
+
+            return Response(sql, status=status.HTTP_200_OK)

@@ -158,8 +158,6 @@ class ColumnSerializer(serializers.ModelSerializer):
 
 # minified asset serializers for listing in the asset tree
 class AssetIndexSerializer(serializers.ModelSerializer):
-    column_count = serializers.IntegerField(read_only=True)
-    unused_columns_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Asset
@@ -169,8 +167,6 @@ class AssetIndexSerializer(serializers.ModelSerializer):
             "unique_name",
             "type",
             "resource_id",
-            "column_count",
-            "unused_columns_count",
         ]
 
 
@@ -183,6 +179,9 @@ class AssetSerializer(serializers.ModelSerializer):
     resource_id = serializers.PrimaryKeyRelatedField(
         source="resource.id", read_only=True
     )
+
+    column_count = serializers.IntegerField(read_only=True)
+    unused_columns_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Asset
@@ -208,6 +207,8 @@ class AssetSerializer(serializers.ModelSerializer):
             "resource_has_dbt",
             "resource_name",
             "resource_id",
+            "column_count",
+            "unused_columns_count",
         ]
 
     def get_dataset(self, obj):

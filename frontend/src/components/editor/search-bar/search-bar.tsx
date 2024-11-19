@@ -24,7 +24,7 @@ export default function SearchBar() {
   /*
    * File logic
    */
-  const { searchFileIndex, openFile, recentFiles } = useFiles();
+  const { searchFileIndex, openFile, recentFiles, activeFile } = useFiles();
   const allFiles: Array<Item<FileValue>> = searchFileIndex.map((file) => ({
     value: {
       path: file.path,
@@ -44,16 +44,58 @@ export default function SearchBar() {
    * Command logic
    */
   const { commandHistory, runCommandFromSearchBar } = useCommandPanelContext();
-  const topCommands: Array<Item<CommandValue>> = getTopNCommands({
-    commandHistory,
-    N: 5,
-  });
-  const allCommands = commandHistory.reduce((uniqueCommands, { command }) => {
-    if (!uniqueCommands.some((item) => item.value === command)) {
-      uniqueCommands.push({ value: command, display: command });
+  const [topCommands, setTopCommands] = useState<Array<Item<CommandValue>>>([]);
+
+  useEffect(() => {
+    if (!activeFile) {
+      return;
     }
-    return uniqueCommands;
-  }, [] as Item<CommandValue>[]);
+
+    const modelSplit = activeFile.node.name.split(".");
+    const modelName = modelSplit[0];
+    const modelFileType = modelSplit[1];
+    if (modelFileType !== "sql") {
+      setTopCommands(
+        getTopNCommands({
+          commandHistory,
+          N: 5,
+        }),
+      );
+      return;
+    }
+
+    const commandTypes = ["build", "run", "test"];
+    const selectPatterns = [
+      { pattern: `${modelName}`, label: "model" },
+      { pattern: `${modelName}+`, label: "model+ (Downstream)" },
+      { pattern: `+${modelName}`, label: "+model (Upstream)" },
+      { pattern: `+${modelName}+`, label: "+model+ (Up/downstream)" },
+    ];
+
+    const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+    setTopCommands(
+      commandTypes.flatMap((commandType) =>
+        selectPatterns.map(({ pattern, label }) => ({
+          value: `${commandType} --select ${pattern}`,
+          display: `${capitalize(commandType)} ${label}`,
+        })),
+      ),
+    );
+  }, [activeFile]);
+
+  const allCommands = [
+    ...topCommands,
+    ...commandHistory.reduce((uniqueCommands, { command }) => {
+      if (
+        !uniqueCommands.some((item) => item.value === command) &&
+        !topCommands.some((topItem) => topItem.value === command)
+      ) {
+        uniqueCommands.push({ value: command, display: command });
+      }
+      return uniqueCommands;
+    }, [] as Item<CommandValue>[]),
+  ];
 
   /*
    * Define the sections
@@ -79,9 +121,20 @@ export default function SearchBar() {
   const filteredSections: FilteredSection[] = sections
     .map((section) => {
       const items = searchTerm
-        ? section.allItems.filter((item) =>
-            item.display.toLowerCase().includes(searchTerm.toLowerCase()),
-          )
+        ? section.allItems.filter((item) => {
+            const itemDisplay = item.display.toLowerCase();
+            const search = searchTerm.toLowerCase();
+
+            // For commands, also check if the full command (e.g. "dbt run") matches
+            if (section.type === "command" && typeof item.value === "string") {
+              return (
+                itemDisplay.includes(search) ||
+                item.value.toLowerCase().includes(search)
+              );
+            }
+
+            return itemDisplay.includes(search);
+          })
         : section.topLevelItems;
 
       return {
@@ -207,7 +260,7 @@ export default function SearchBar() {
         ref={inputRef}
         type="text"
         placeholder="Search & Commands (⌘P)"
-        className="w-full bg-white"
+        className="w-full bg-white dark:bg-zinc-900"
         value={searchTerm}
         onChange={(e) => {
           setSearchTerm(e.target.value);
@@ -222,7 +275,7 @@ export default function SearchBar() {
       {showDropDown && (
         <div
           ref={dropdownRef}
-          className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg overflow-hidden"
+          className="absolute z-10 w-full mt-1 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-lg overflow-hidden"
         >
           {flatItems.map((flatItem, index) => {
             const isFirstInSection =
@@ -241,8 +294,8 @@ export default function SearchBar() {
                 <div
                   className={`px-4 py-2 cursor-pointer ${
                     index === selectedIndex
-                      ? "bg-gray-100"
-                      : "hover:bg-gray-100"
+                      ? "bg-gray-100 dark:bg-zinc-800"
+                      : "hover:bg-gray-100 dark:hover:bg-zinc-800"
                   }`}
                   onMouseDown={() => {
                     setSearchTerm(flatItem.item.display);
@@ -258,7 +311,6 @@ export default function SearchBar() {
                   <span
                     className={"text-sm font-medium flex gap-2 items-center"}
                   >
-                    {flatItem.type === "command" ? "dbt " : null}
                     {flatItem.type === "file" && getIcon(flatItem.item.value)}
                     {flatItem.item.display}
                   </span>

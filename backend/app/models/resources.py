@@ -599,6 +599,7 @@ class DBTCoreDetails(DBTResource):
         choices=[(v, v.value) for v in DBTVersion], max_length=255, blank=False
     )
     env_vars = encrypt(models.JSONField(null=True))
+    compile_exclusions = ArrayField(models.TextField(), null=True)
 
     # relationships
     repository = models.ForeignKey(
@@ -711,6 +712,7 @@ class DBTCoreDetails(DBTResource):
                         self.version,
                         dbt_profiles_dir=dbt_profiles_dir,
                         env_vars={} if env_vars is None else env_vars,
+                        compile_exclusions=self.compile_exclusions,
                     ),
                     project_path,
                     git_repo,
@@ -774,7 +776,9 @@ class DBTCoreDetails(DBTResource):
             _,
         ):
             stdout, stderr, success = dbtproj.dbt_compile(
-                models_only=True, update_manifest=True
+                models_only=True,
+                update_manifest=True,
+                exclude_introspective=exclude_introspective,
             )
             if not success:
                 if raise_exception:

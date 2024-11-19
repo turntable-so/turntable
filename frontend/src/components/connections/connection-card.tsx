@@ -45,7 +45,7 @@ export default function ConnectionCard({
 
   return (
     <Card
-      className="rounded-md hover:border-black hover:cursor-pointer"
+      className="rounded-md hover:border-black dark:hover:border-gray-200 hover:cursor-pointer"
       onClick={() => {
         router.push(`/connections/${resource.id}`);
       }}
@@ -62,7 +62,7 @@ export default function ConnectionCard({
               {resource.last_synced ? (
                 <CardDescription>{`Synced ${dayjs(resource.last_synced).fromNow()} `}</CardDescription>
               ) : (
-                <CardDescription>{`Not synced`}</CardDescription>
+                <CardDescription>{"Not synced"}</CardDescription>
               )}
             </div>
 
@@ -83,7 +83,7 @@ export default function ConnectionCard({
                       variant="secondary"
                       className="flex space-x-2 items-center font-medium text-sm"
                     >
-                      <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                      <div className="w-2 h-2 rounded-full bg-red-500" />
                       <div>Failed to sync </div>
                     </Badge>
                   )}
@@ -92,7 +92,7 @@ export default function ConnectionCard({
                       variant="secondary"
                       className="flex space-x-2 items-center font-medium text-sm"
                     >
-                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      <div className="w-2 h-2 rounded-full bg-green-500" />
                       <div>Connected </div>
                     </Badge>
                   )}

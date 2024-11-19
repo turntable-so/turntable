@@ -2,6 +2,9 @@ import { AgGridReact } from "ag-grid-react";
 import SkeletonLoadingTable from "./skeleton-loading-table";
 import { useFiles } from "@/app/contexts/FilesContext";
 import CsvPreview from "./csv-preview";
+import MarkdownPreview from "./markdown-preview";
+import { useTheme } from "next-themes";
+import ErrorMessage from "../error-message";
 
 interface PreviewPanelProps {
   isQueryLoading: boolean;
@@ -20,6 +23,7 @@ export default function PreviewPanel({
   rowData,
   colDefs,
 }: PreviewPanelProps) {
+  const { resolvedTheme } = useTheme();
   const { activeFile } = useFiles();
 
   const activeFileContent = activeFile?.content;
@@ -27,6 +31,12 @@ export default function PreviewPanel({
     activeFileContent &&
     typeof activeFileContent === "string" &&
     activeFile.node.name.endsWith(".csv") &&
+    activeFile.node.type === "file";
+
+  const isMarkdownPreviewable =
+    activeFileContent &&
+    typeof activeFileContent === "string" &&
+    activeFile.node.name.endsWith(".md") &&
     activeFile.node.type === "file";
 
   switch (true) {
@@ -40,16 +50,22 @@ export default function PreviewPanel({
           }}
           className="overflow-y-scroll p-6"
         >
-          <div className="text-red-500 text-sm">{queryPreviewError}</div>
-          <div className="h-24" />
+          <ErrorMessage error={queryPreviewError} />
         </div>
       );
     case isCsvPreviewable:
       return <CsvPreview content={activeFileContent} gridRef={gridRef} />;
+    case isMarkdownPreviewable:
+      return <MarkdownPreview content={activeFileContent} />;
     default:
       return (
         <AgGridReact
-          className="ag-theme-custom"
+          key={resolvedTheme} // Add this line to force remount on theme change
+          className={
+            resolvedTheme === "dark"
+              ? "ag-theme-balham-dark"
+              : "ag-theme-balham"
+          }
           ref={gridRef}
           suppressRowHoverHighlight={true}
           columnHoverHighlight={true}

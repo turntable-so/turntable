@@ -4,12 +4,12 @@ import {
   getAssets,
   getResources,
 } from "@/app/actions/actions";
-import type { Asset } from "@/components/lineage/LineageView";
 // contexts/GlobalContext.js
 import type React from "react";
 import { createContext, useContext, useEffect, useState } from "react";
 
 import { v4 as uuidv4 } from "uuid";
+import type { Asset } from "@/app/contexts/LineageView";
 
 // Create a context
 const GlobalContext = createContext({});

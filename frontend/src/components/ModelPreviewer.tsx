@@ -64,23 +64,25 @@ export default function ModelPreviewer({
               <div className="border-none p-4 space-y-4">
                 <div>
                   <div>Model Name</div>
-                  <div className="font-medium text-gray-700">{asset.name}</div>
+                  <div className="font-medium text-gray-700 dark:text-gray-400">
+                    {asset.name}
+                  </div>
                 </div>
                 <div>
                   <div>Dataset</div>
-                  <div className="font-medium text-gray-700">
+                  <div className="font-medium text-gray-700 dark:text-gray-400">
                     {asset.dataset}
                   </div>
                 </div>
                 <div>
                   <div>Schema</div>
-                  <div className="font-medium text-gray-700">
+                  <div className="font-medium text-gray-700 dark:text-gray-400">
                     {asset.schema}
                   </div>
                 </div>
                 <div>
                   <div>Table</div>
-                  <div className="font-medium text-gray-700">
+                  <div className="font-medium text-gray-700 dark:text-gray-400">
                     {asset.table_name}
                   </div>
                 </div>

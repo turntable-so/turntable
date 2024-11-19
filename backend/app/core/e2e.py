@@ -878,7 +878,6 @@ class DataHubDBParser:
 
         return nodes
 
-    # @pyprofile(save_html=True)
     def get_db_cll(self, ignore_ids: list[str] = []):
         self.get_asset_column_dict()
         asset_dict_items = self.asset_dict.items()
