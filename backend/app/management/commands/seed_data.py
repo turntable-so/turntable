@@ -1,7 +1,6 @@
 import os
 
 from django.core.management.base import BaseCommand
-from django.db import transaction
 
 from app.models import (
     Asset,
@@ -20,7 +19,7 @@ from fixtures.local_env import (
 class Command(BaseCommand):
     help = "Seed data with inital user and workspace"
 
-    @transaction.atomic
+    # @transaction.atomic
     def handle(self, *args, **kwargs):
         user = create_local_user()
         workspace = create_local_workspace(user)
