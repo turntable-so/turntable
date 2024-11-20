@@ -56,16 +56,16 @@ def task(*args, **kwargs):
 
 
 class chain(celery_chain):
-    def apply_async_and_get_all(self, *args, **kwargs):
-        task = self.apply_async(*args, **kwargs)
+    def do(self, *args, **kwargs):
+        res = self.apply_async(*args, **kwargs)
 
-        def recurse_results(task):
-            res = task
+        def recurse_results(res):
+            out = res.get(disable_sync_subtasks=False)
             if res.parent is None:
-                return [res.get()]
-            return recurse_results(res.parent) + [res.get()]
+                return [out]
+            return recurse_results(res.parent) + [out]
 
-        return recurse_results(task)
+        return recurse_results(res)
 
     def apply_async(self, *args, **kwargs):
         if os.getenv("CUSTOM_CELERY_EAGER") == "true":

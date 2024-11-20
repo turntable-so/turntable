@@ -56,9 +56,9 @@ class SyncResourceView(APIView):
     def post(self, request, resource_id):
         workspace = self.get_current_workspace(request.user)
 
-        workflow = MetadataSyncWorkflow.schedule_now(
+        workflow = MetadataSyncWorkflow(
             workspace_id=workspace.id, resource_id=resource_id
-        )
+        ).schedule_now()
 
         # wait up to 5 seconds for the task to start
         task_id = workflow.await_next_id(timeout=TASK_START_TIMEOUT)
