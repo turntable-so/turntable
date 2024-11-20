@@ -124,6 +124,7 @@ urlpatterns = [
     ),
     path("ws/subscribe/<str:workspace_id>/", TaskResultConsumer.as_asgi()),
     path("ws/dbt_command/<str:workspace_id>/", DBTCommandConsumer.as_asgi()),
+    # path("ws/infer/ ", AIChatConsumer.as_asgi()),
     path("settings/", SettingsView.as_view(), name="settings"),
     path("infer/", InferenceView.as_view(), name="inference"),
     path("", include(router.urls)),

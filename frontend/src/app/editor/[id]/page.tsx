@@ -21,6 +21,7 @@ import ConfirmSaveDialog from "@/components/editor/dialogs/confirm-save-dialog";
 import CustomEditor from "@/components/editor/CustomEditor";
 import CustomDiffEditor from "@/components/editor/CustomDiffEditor";
 import InlineTabSearch from "@/components/editor/search-bar/inline-tab-search";
+import AiSidebarChat from "@/components/editor/ai-sidebar-chat";
 
 const PromptBox = ({
   setPromptBoxOpen,
@@ -671,8 +672,8 @@ function EditorPageContent() {
               maxSize={60}
               onResize={setRightWidth}
             >
-              <div className="bg-muted h-full p-4 flex items-center justify-center">
-                Coming soon...
+              <div className="bg-muted h-full p-4 flex justify-center">
+                <AiSidebarChat />
               </div>
             </Panel>
           </Fragment>

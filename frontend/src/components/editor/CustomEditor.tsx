@@ -34,7 +34,6 @@ export default function CustomEditor(props: CustomEditorProps) {
 
   return (
     <Editor
-      {...props}
       beforeMount={(monaco) => {
         monacoRef.current = monaco;
         monaco.editor.defineTheme("mutedTheme", customTheme);
@@ -43,6 +42,7 @@ export default function CustomEditor(props: CustomEditorProps) {
         editor.updateOptions({ theme: "mutedTheme" });
       })}
       theme="mutedTheme"
+      {...props}
     />
   );
 }
