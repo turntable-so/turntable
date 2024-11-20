@@ -12,8 +12,10 @@ from app.models import (
     User,
     Workspace,
 )
-from app.models.resources import EnvironmentType
+from app.models.resources import DBTResource, EnvironmentType
+from app.models.workflows import DBTOrchestrator, WorkflowType
 from vinyl.lib.dbt_methods import DBTVersion
+from django_celery_beat.models import CrontabSchedule
 
 
 def create_local_user():
@@ -135,3 +137,25 @@ def create_local_metabase(workspace):
             ).save()
 
     return resource
+
+
+def create_local_orchestration(workspace):
+    # 12pm every day
+    crontab_schedule = CrontabSchedule.objects.create(
+        minute="0",
+        hour="12",
+        day_of_week="*",
+        day_of_month="*",
+        month_of_year="*",
+    )
+
+    dbt_resource = DBTResource.objects.filter(workspace=workspace).first()
+    if not dbt_resource:
+        raise Exception("No DBT resource found for workspace")
+
+    DBTOrchestrator.objects.create(
+        workspace=workspace,
+        dbtresource=dbt_resource,
+        crontab=crontab_schedule,
+        commands=["dbt ls", "dbt run"],
+    )

@@ -810,3 +810,41 @@ export async function sync(projectId: string) {
   });
   return await response.json();
 }
+
+export type Job = {
+  id: string;
+  workspace_id: string;
+  dbtresource_id: string;
+  commands: Array<string>;
+  cron_str: string;
+};
+
+export async function getJobs(): Promise<Array<Job>> {
+  const response = await fetcher("/jobs/", {
+    cookies,
+    method: "GET",
+  });
+  return await response.json();
+}
+
+export async function getJob(id: string): Promise<Job> {
+  const response = await fetcher(`/jobs/${id}/`, {
+    cookies,
+    method: "GET",
+  });
+  return await response.json();
+}
+
+export type Run = {
+  id: string;
+  job_id: string;
+  status: string;
+};
+
+export async function getRuns(): Promise<Array<Run>> {
+  const response = await fetcher("/runs/", {
+    cookies,
+    method: "GET",
+  });
+  return await response.json();
+}
