@@ -6,11 +6,6 @@ from channels.generic.websocket import WebsocketConsumer
 from litellm import completion
 
 
-os.environ["ANTHROPIC_API_KEY"] = (
-    "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"
-)
-
-
 class AIChatConsumer(WebsocketConsumer):
     def connect(self):
         print("AI Chat WebSocket Connected")
