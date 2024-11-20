@@ -38,6 +38,9 @@ def pytest_addoption(parser):
     parser.addoption(
         "--use_cache", action="store_true", default=False, help="Use cached fixtures"
     )
+    parser.addoption(
+        "--eager", action="store_true", default=False, help="Run tasks eagerly"
+    )
 
 
 def pytest_configure(config):
@@ -67,6 +70,24 @@ def pytest_collection_modifyitems(config, items):
         for item in items:
             if "internal" in item.keywords:
                 item.add_marker(skip_internal)
+
+
+@pytest.fixture
+def eager(request):
+    if request.config.getoption("--eager"):
+        os.environ["CUSTOM_CELERY_EAGER"] = "true"
+        return True
+    return False
+
+
+@pytest.fixture
+def recache(request):
+    return request.config.getoption("--recache")
+
+
+@pytest.fixture
+def use_cache(request):
+    return request.config.getoption("--use_cache")
 
 
 @pytest.fixture()
@@ -169,16 +190,6 @@ def prepopulated_dev_db(local_metabase, local_postgres):
 
 
 @pytest.fixture
-def recache(request):
-    return request.config.getoption("--recache")
-
-
-@pytest.fixture
-def use_cache(request):
-    return request.config.getoption("--use_cache")
-
-
-@pytest.fixture
 def force_isolate(monkeypatch):
     monkeypatch.setenv("FORCE_ISOLATE", "true")
 
@@ -217,7 +228,9 @@ def test_queue_name():
 
 
 @pytest.fixture(scope="session")
-def custom_celery_app(test_queue_name):
+def custom_celery_app(test_queue_name, eager):
+    if eager:
+        return None
     app = Celery("api")
 
     # Load configuration from Django settings
@@ -234,8 +247,12 @@ def custom_celery_app(test_queue_name):
 def custom_celery_worker(
     custom_celery_app,
     test_queue_name,
+    eager,
     max_retries: int = 10,
 ):
+    if eager:
+        return
+
     # Clear the queue before starting the worker
     custom_celery_app.control.purge()
 
@@ -265,11 +282,14 @@ def custom_celery_worker(
 
 
 @pytest.fixture(scope="session")
-def suppress_celery_errors():
+def suppress_celery_errors(eager):
     """
     Suppress error logs from celery.worker.control and kombu.pidbox
     by setting their log levels to CRITICAL.
     """
+    if eager:
+        return
+
     loggers_to_suppress = [
         "celery.worker.control",
         "kombu.pidbox",
@@ -292,4 +312,6 @@ def suppress_celery_errors():
 
 @pytest.fixture(scope="session")
 def custom_celery(custom_celery_worker, bypass_celery_beat, suppress_celery_errors):
+    if eager:
+        return None
     return custom_celery_worker
