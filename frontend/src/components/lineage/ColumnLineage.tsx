@@ -154,6 +154,9 @@ const ColumnLineageFlow = () => {
   }, [nodesInitialized, reactFlowInstance]);
 
   const handleCtrlClickOnNode = (node: any) => {
+    if (!files || !files[0]?.children || !branchId) {
+      return;
+    }
     const nodeNameParts = node.name.split(".");
     const targetFileName = nodeNameParts[nodeNameParts.length - 1];
 
