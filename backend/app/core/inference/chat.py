@@ -166,13 +166,14 @@ def get_asset_eda(asset: Asset, resource: Resource, topk: int = 5):
 
 
 def asset_md(asset: Asset, resource: Resource, contents: str):
-    # column_table = get_asset_eda(asset, resource, 10).to_csv(index=False)
+    column_table = get_asset_eda(asset, resource, 10).to_csv(index=False)
     description = asset.description or ""
     return f"""
 ## {asset.name}
 {description}
 
 ## Schema and profiling info
+{column_table}
 
 ## Contents
 ```sql
