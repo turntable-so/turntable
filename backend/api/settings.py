@@ -15,7 +15,6 @@ from datetime import timedelta
 from pathlib import Path
 
 import dj_database_url
-
 import sentry_sdk
 
 SENTRY_DSN = os.getenv("SENTRY_DSN")

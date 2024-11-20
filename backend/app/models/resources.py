@@ -18,6 +18,7 @@ from polymorphic.models import PolymorphicModel
 from app.models.project import Project
 from app.models.repository import Repository
 from app.models.workspace import Workspace
+from app.services.storage_backends import CustomS3Boto3Storage
 from app.utils.fields import encrypt
 from vinyl.lib.connect import (
     BigQueryConnector,
@@ -68,11 +69,18 @@ def get_sync_config(db_path):
 
 @contextmanager
 def repo_path(
-    obj, isolate: bool = False, project_id: str | None = None
+    obj,
+    isolate: bool = False,
+    project_id: str | None = None,
+    repo_override: Repository | None = None,
 ) -> Generator[tuple[str, Repository | None], None, None]:
     repo: Repository | None = getattr(obj, "repository")
     project_path = getattr(obj, "project_path")
     if repo is None:
+        if repo_override is not None:
+            raise ValueError(
+                "Cannot override repository for resources without repository"
+            )
         if isolate or os.getenv("FORCE_ISOLATE") == "true":
             with tempfile.TemporaryDirectory() as temp_dir:
                 temp_project_path = os.path.join(
@@ -84,8 +92,11 @@ def repo_path(
 
         yield project_path, None
         return
-    project = repo.main_project if project_id is None else repo.get_project(project_id)
-    with project.repo_context(isolate=isolate) as (git_repo, _):
+    project = repo.get_project(project_id)
+    with project.repo_context(isolate=isolate, repo_override=repo_override) as (
+        git_repo,
+        _,
+    ):
         project_path = os.path.join(git_repo.working_tree_dir, project_path)
         yield project_path, git_repo
 
@@ -102,7 +113,9 @@ class Resource(models.Model):
     creator = models.ForeignKey(
         "User", on_delete=models.SET_NULL, null=True, default=None
     )
-    datahub_db = models.FileField(upload_to="datahub_dbs/", null=True)
+    datahub_db = models.FileField(
+        upload_to="datahub_dbs/", null=True, storage=CustomS3Boto3Storage()
+    )
 
     class Meta:
         indexes = [
@@ -343,6 +356,19 @@ class EnvironmentType(models.TextChoices):
         return [EnvironmentType.DEV, EnvironmentType.COMBINED]
 
 
+def custom_dbtresource_upload_to(instance, filename):
+    """
+    Determine the custom folder path based on the instance's id.cc
+    """
+    folder_name = f"dbt_artifacts/{instance.workspace_id}/{instance.id}/"
+    return os.path.join(folder_name, filename)
+
+
+class ArtifactSource(models.TextChoices):
+    METADATA_SYNC = "metadata"
+    ORCHESTRATION = "orchestration"
+
+
 class DBTResource(PolymorphicModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     environment = models.CharField(
@@ -359,8 +385,19 @@ class DBTResource(PolymorphicModel):
         "User", on_delete=models.SET_NULL, null=True, default=None
     )
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE, null=True)
-    manifest_json = models.JSONField(null=True)
-    catalog_json = models.JSONField(null=True)
+    manifest = models.FileField(
+        null=True,
+        upload_to=custom_dbtresource_upload_to,
+        storage=CustomS3Boto3Storage(),
+    )
+    catalog = models.FileField(
+        null=True,
+        upload_to=custom_dbtresource_upload_to,
+        storage=CustomS3Boto3Storage(),
+    )
+    artifact_source = models.CharField(
+        choices=ArtifactSource.choices, max_length=255, null=True
+    )
 
     def save(self, *args, **kwargs):
         if self.resource and not self.workspace:
@@ -581,6 +618,14 @@ class DBTCoreDetails(DBTResource):
     def metadata_sync_allowed(self):
         return self.environment in EnvironmentType.metadata_sync_allowed_environments()
 
+    @property
+    def manifest_filename(self):
+        return "manifest.json"
+
+    @property
+    def catalog_filename(self):
+        return "catalog.json"
+
     @classmethod
     def get_job_dbtresource(cls, workspace_id: str, resource_id: str = None):
         prod_env_options = EnvironmentType.jobs_allowed_environments()
@@ -631,7 +676,12 @@ class DBTCoreDetails(DBTResource):
         super().save(*args, **kwargs)
 
     @contextmanager
-    def dbt_repo_context(self, isolate: bool = False, project_id: str | None = None):
+    def dbt_repo_context(
+        self,
+        isolate: bool = False,
+        project_id: str | None = None,
+        repo_override: Repository | None = None,
+    ):
         env_vars = self.env_vars or {}
         dialect_str = self.resource.details.subtype
         if project_id is not None:
@@ -639,10 +689,9 @@ class DBTCoreDetails(DBTResource):
             schema = project.schema
         else:
             schema = None
-        with repo_path(self, isolate=isolate, project_id=project_id) as (
-            project_path,
-            git_repo,
-        ):
+        with repo_path(
+            self, isolate=isolate, project_id=project_id, repo_override=repo_override
+        ) as (project_path, git_repo):
             dbt_project_yml_path = os.path.join(project_path, "dbt_project.yml")
             with open(dbt_project_yml_path, "r") as f:
                 contents = yaml.load(f, Loader=yaml.FullLoader)
@@ -677,17 +726,17 @@ class DBTCoreDetails(DBTResource):
         override_manifest: bool = False,
         override_catalog: bool = False,
         override_job_resource: DBTResource | None = None,
+        before_repo_override: Repository | None = None,
+        after_repo_override: Repository | None = None,
     ):
         prod_environment = override_job_resource or self.get_job_dbtresource(
             self.workspace.id, self.resource.id
         )
         if prod_environment is None:
             raise Exception("No production environment found for this repository")
-        with prod_environment.dbt_repo_context(isolate=isolate) as (
-            before,
-            _,
-            _,
-        ):
+        with prod_environment.dbt_repo_context(
+            isolate=isolate, repo_override=before_repo_override
+        ) as (before, _, _):
             to_update = [
                 (
                     before.manifest_path,
@@ -701,11 +750,11 @@ class DBTCoreDetails(DBTResource):
                     if override or not os.path.exists(path):
                         with open(path, "w") as f:
                             save_orjson(artifact_json, f)
-            with self.dbt_repo_context(isolate=isolate, project_id=project_id) as (
-                after,
-                project_path,
-                git_repo,
-            ):
+            with self.dbt_repo_context(
+                isolate=isolate,
+                project_id=project_id,
+                repo_override=after_repo_override,
+            ) as (after, project_path, git_repo):
                 yield (
                     DBTTransition(before_project=before, after_project=after),
                     project_path,
@@ -713,9 +762,16 @@ class DBTCoreDetails(DBTResource):
                 )
 
     def upload_artifacts(
-        self, project_id: str | None = None, exclude_introspective: bool = True
+        self,
+        project_id: str | None = None,
+        raise_exception: bool = True,
+        repo_override: Repository | None = None,
+        artifact_source: ArtifactSource = ArtifactSource.ORCHESTRATION,
+        exclude_introspective: bool = True,
     ):
-        with self.dbt_repo_context(isolate=True, project_id=project_id) as (
+        with self.dbt_repo_context(
+            isolate=True, project_id=project_id, repo_override=repo_override
+        ) as (
             dbtproj,
             project_path,
             _,
@@ -726,28 +782,44 @@ class DBTCoreDetails(DBTResource):
                 exclude_introspective=exclude_introspective,
             )
             if not success:
-                raise Exception(
-                    f"Error compiling dbt code. Stderr: {stderr}. Stdout: {stdout}"
-                )
+                if raise_exception:
+                    raise Exception(
+                        f"Error compiling dbt code. Stderr: {stderr}. Stdout: {stdout}"
+                    )
+                else:
+                    return stdout, stderr, False
             stdout, stderr, success = dbtproj.dbt_docs_generate()
             if not success:
-                raise Exception(
-                    f"Error generating docs. Stderr: {stderr}. Stdout: {stdout}"
-                )
+                if raise_exception:
+                    raise Exception(
+                        f"Error generating docs. Stderr: {stderr}. Stdout: {stdout}"
+                    )
+                else:
+                    return stdout, stderr, False
 
-            dbtproj.mount_manifest()
-            dbtproj.mount_catalog()
-            self.manifest_json = dbtproj.manifest
-            self.catalog_json = dbtproj.catalog
+            # save artifacts to file
+            with open(dbtproj.manifest_path, "r") as f:
+                self.manifest.save(self.manifest_filename, f)
+            with open(dbtproj.catalog_path, "r") as f:
+                self.catalog.save(self.catalog_filename, f)
+            self.artifact_source = artifact_source
             self.save()
+            return stdout, stderr, success
 
     @contextmanager
     def datahub_yaml_path(self, db_path):
         with tempfile.TemporaryDirectory() as artifact_dir:
+            # download artifacts
             manifest_path = os.path.join(artifact_dir, "manifest.json")
             catalog_path = os.path.join(artifact_dir, "catalog.json")
-            save_orjson(manifest_path, self.manifest_json)
-            save_orjson(catalog_path, self.catalog_json)
+            if self.manifest:
+                with open(manifest_path, "w") as f:
+                    with self.manifest.open("r") as f2:
+                        f.write(f2.read())
+            if self.catalog:
+                with open(catalog_path, "w") as f:
+                    with self.catalog.open("r") as f2:
+                        f.write(f2.read())
             with tempfile.TemporaryDirectory() as temp_dir:
                 config_path = os.path.join(temp_dir, "dbt.yml")
                 config = {

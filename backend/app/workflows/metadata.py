@@ -1,20 +1,24 @@
 import tempfile
 
-from celery import shared_task
-
 from app.core.e2e import DataHubDBParser
-from app.models import Resource, ResourceSubtype
+from app.models import Resource
+from app.models.resources import ArtifactSource
+from app.workflows.utils import chain, task
 
 
-@shared_task
-def prepare_dbt_repos(workspace_id: str, resource_id: str):
+@task
+def prepare_dbt_repos(self, workspace_id: str, resource_id: str):
     resource = Resource.objects.get(id=resource_id)
     for dbt_repo in resource.dbtresource_set.all():
-        if dbt_repo.subtype == ResourceSubtype.DBT:
-            dbt_repo.upload_artifacts()
+        # only generate artifacts if not already generated from orchestration
+        if (
+            dbt_repo.artifact_source is None
+            or dbt_repo.artifact_source == ArtifactSource.ORCHESTRATION
+        ):
+            dbt_repo.upload_artifacts(artifact_source=ArtifactSource.METADATA_SYNC)
 
 
-@shared_task(bind=True)
+@task
 def ingest_metadata(
     self,
     workspace_id: str,
@@ -29,8 +33,8 @@ def ingest_metadata(
     )
 
 
-@shared_task
-def process_metadata(workspace_id: str, resource_id: str):
+@task
+def process_metadata(self, workspace_id: str, resource_id: str):
     resource = Resource.objects.get(id=resource_id)
     with resource.datahub_db.open("rb") as f:
         with tempfile.NamedTemporaryFile("wb", delete=False, suffix=".duckdb") as f2:
@@ -41,12 +45,16 @@ def process_metadata(workspace_id: str, resource_id: str):
     DataHubDBParser.combine_and_upload([parser], resource)
 
 
-@shared_task(bind=True)
+@task
 def sync_metadata(self, workspace_id: str, resource_id: str):
-    prepare_dbt_repos(workspace_id=workspace_id, resource_id=resource_id)
-    ingest_metadata(
-        workspace_id=workspace_id,
-        resource_id=resource_id,
-        task_id=self.request.id,
-    )
-    process_metadata(workspace_id=workspace_id, resource_id=resource_id)
+    # check if artifacts exist and were produced by orchestration run
+    tasks = [
+        prepare_dbt_repos.si(workspace_id=workspace_id, resource_id=resource_id),
+        ingest_metadata.si(
+            workspace_id=workspace_id,
+            resource_id=resource_id,
+            task_id=self.request.id,
+        ),
+        process_metadata.si(workspace_id=workspace_id, resource_id=resource_id),
+    ]
+    chain(*tasks).apply_async().get()
