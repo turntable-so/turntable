@@ -1,6 +1,7 @@
 import "@xyflow/react/dist/style.css";
 
-import React, {
+import type React from "react";
+import {
   useContext,
   useEffect,
   useLayoutEffect,
@@ -16,14 +17,7 @@ import {
 } from "@xyflow/react";
 
 import { getColumnLineageForAsset } from "../../lib/lineage";
-import ColumnConnectionEdge, {
-  AsIsLabel,
-  E2ELabel,
-  FilterLabel,
-  GroupByLabel,
-  JoinKeyLabel,
-  TransformLabel,
-} from "./ColumnConnectionEdge";
+import ColumnConnectionEdge from "./ColumnConnectionEdge";
 import ColumnLineageNode from "./ColumnLineageNode";
 import ErrorNode from "./ErrorNode";
 import { LineageViewContext } from "@/app/contexts/LineageView";
@@ -35,7 +29,6 @@ import { Loader2 } from "lucide-react";
 import { useAppContext } from "../../contexts/AppContext";
 import { LineageControls } from "./LineageControls";
 import LineageOptionsPanel from "./LineageOptionsPanel";
-import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useFiles } from "@/app/contexts/FilesContext";
 
@@ -53,15 +46,6 @@ export type LineageEdgeType =
   | "as_is"
   | "transform";
 
-const allEdgeTypes = [
-  { type: "filter", label: "Filter", labelComponent: FilterLabel },
-  { type: "group_by", label: "Group by", labelComponent: GroupByLabel },
-  { type: "join_key", label: "Join key", labelComponent: JoinKeyLabel },
-  { type: "transform", label: "Modify", labelComponent: TransformLabel },
-  { type: "as_is", label: "Select as is", labelComponent: AsIsLabel },
-  { type: "e2e", label: "End-to-end", labelComponent: E2ELabel },
-];
-
 const edgeTypes = {
   column_connection_edge: ColumnConnectionEdge,
 };
@@ -72,7 +56,7 @@ const ColumnLineageFlow = () => {
   const nodesInitialized = useNodesInitialized();
 
   const { resolvedTheme } = useTheme();
-  const { lineageData, branchId, activeFile } = useFiles();
+  const { lineageData, branchId, activeFile, files, openFile } = useFiles();
   const {
     error,
     lineage,
@@ -169,6 +153,50 @@ const ColumnLineageFlow = () => {
     });
   }, [nodesInitialized, reactFlowInstance]);
 
+  interface FileItem {
+    name: string;
+    type: "file" | "directory";
+    path: string;
+    children?: FileItem[];
+  }
+
+  const handleCtrlClickOnNode = (node: any) => {
+    const nodeNameParts = node.name.split(".");
+    const targetFileName = nodeNameParts[nodeNameParts.length - 1];
+
+    const modelsFolder = files[0]?.children.find(
+      (child) => child.path === "models",
+    );
+
+    const findFileByName = (items: FileItem[]): FileItem | null => {
+      for (const item of items) {
+        const itemBaseName = item.name.split(".")[0];
+        if (item.type === "file" && itemBaseName === targetFileName) {
+          return item;
+        }
+        if (item.children) {
+          const found = findFileByName(item.children);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
+    const targetFile = modelsFolder?.children
+      ? findFileByName(modelsFolder.children)
+      : null;
+
+    if (targetFile) {
+      openFile(targetFile);
+    }
+  };
+
+  const onNodeClick = (event: React.MouseEvent, node: any) => {
+    if (event.ctrlKey || event.metaKey) {
+      handleCtrlClickOnNode(node);
+    }
+  };
+
   return (
     <ReactFlow
       onlyRenderVisibleElements={true}
@@ -219,6 +247,7 @@ const ColumnLineageFlow = () => {
           mousePosition: position,
         });
       }}
+      onNodeClick={onNodeClick}
       onPaneClick={() => {
         updateHoveredEdge(null);
         updateSelectedEdge(null);
