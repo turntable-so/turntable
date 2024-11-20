@@ -153,13 +153,6 @@ const ColumnLineageFlow = () => {
     });
   }, [nodesInitialized, reactFlowInstance]);
 
-  interface FileItem {
-    name: string;
-    type: "file" | "directory";
-    path: string;
-    children?: FileItem[];
-  }
-
   const handleCtrlClickOnNode = (node: any) => {
     const nodeNameParts = node.name.split(".");
     const targetFileName = nodeNameParts[nodeNameParts.length - 1];
@@ -168,7 +161,7 @@ const ColumnLineageFlow = () => {
       (child) => child.path === "models",
     );
 
-    const findFileByName = (items: FileItem[]): FileItem | null => {
+    const findFileByName = (items: any[]): any => {
       for (const item of items) {
         const itemBaseName = item.name.split(".")[0];
         if (item.type === "file" && itemBaseName === targetFileName) {
