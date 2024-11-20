@@ -20,9 +20,11 @@ class Command(BaseCommand):
         parser.add_argument(
             "--mode", choices=["demo", "dev", "dev-internal", "staging"]
         )
-        parser.add_argument("--concurrency", type=int, default=1)
+        parser.add_argument("--concurrency", type=int, default=4)
 
     def handle(self, *args, **options):
+        if options["concurrency"] < 2:
+            raise ValueError("Concurrency must be at least 2")
         celery_command = (
             BASE_CELERY_COMMAND + f" --concurrency={options['concurrency']}"
         )

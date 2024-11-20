@@ -46,15 +46,26 @@ def process_metadata(self, workspace_id: str, resource_id: str):
 
 
 @task
-def sync_metadata(self, workspace_id: str, resource_id: str):
+def sync_metadata(self, workspace_id: str, resource_id: str, worker: bool = True):
     # check if artifacts exist and were produced by orchestration run
-    tasks = [
-        prepare_dbt_repos.si(workspace_id=workspace_id, resource_id=resource_id),
-        ingest_metadata.si(
-            workspace_id=workspace_id,
-            resource_id=resource_id,
-            task_id=self.request.id,
-        ),
-        process_metadata.si(workspace_id=workspace_id, resource_id=resource_id),
-    ]
-    chain(*tasks).apply_async().get()
+    task_dict = {
+        prepare_dbt_repos: {
+            "workspace_id": workspace_id,
+            "resource_id": resource_id,
+        },
+        ingest_metadata: {
+            "workspace_id": workspace_id,
+            "resource_id": resource_id,
+            "task_id": self.request.id,
+        },
+        process_metadata: {
+            "workspace_id": workspace_id,
+            "resource_id": resource_id,
+        },
+    }
+    if worker:
+        tasks = [t.si(**kwargs) for t, kwargs in task_dict.items()]
+        chain(*tasks).apply_async().get()
+    else:
+        for t, kwargs in task_dict.items():
+            t(**kwargs)
