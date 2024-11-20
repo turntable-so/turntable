@@ -72,7 +72,7 @@ def pytest_collection_modifyitems(config, items):
                 item.add_marker(skip_internal)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def eager(request):
     if request.config.getoption("--eager"):
         os.environ["CUSTOM_CELERY_EAGER"] = "true"
@@ -251,6 +251,7 @@ def custom_celery_worker(
     max_retries: int = 10,
 ):
     if eager:
+        yield
         return
 
     # Clear the queue before starting the worker
@@ -288,6 +289,7 @@ def suppress_celery_errors(eager):
     by setting their log levels to CRITICAL.
     """
     if eager:
+        yield
         return
 
     loggers_to_suppress = [

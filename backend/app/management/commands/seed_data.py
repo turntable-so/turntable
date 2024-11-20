@@ -38,7 +38,6 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS("Database already seeded"))
             return
         with set_env(CUSTOM_CELERY_EAGER="true"):
-            print(os.getenv("CUSTOM_CELERY_EAGER"))
             sync_metadata(resource_id=postgres.id, workspace_id=workspace.id)
             sync_metadata(resource_id=metabase.id, workspace_id=workspace.id)
         self.stdout.write(self.style.SUCCESS("Successfully seeded the database"))

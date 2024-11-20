@@ -26,7 +26,6 @@ class CustomTask(Task):
         task_kwargs_json = (
             json.dumps(make_values_serializable(args[1])) if args[1] else None
         )
-
         tr = TaskResult.objects.create(
             task_id=task_id,
             status=states.PENDING,
@@ -34,8 +33,7 @@ class CustomTask(Task):
             task_kwargs=task_kwargs_json,
         )
         try:
-            print(args[0], args[1])
-            res = self(*args[0], **args[1])
+            res = Task.apply(self, *args, **kwargs)
             tr.result = res.get()
             tr.status = res.status
             tr.save()
@@ -71,5 +69,5 @@ class chain(celery_chain):
 
     def apply_async(self, *args, **kwargs):
         if os.getenv("CUSTOM_CELERY_EAGER") == "true":
-            return self.apply(*args, **kwargs)
+            return celery_chain.apply(self, *args, **kwargs)
         return celery_chain.apply_async(self, *args, **kwargs)
