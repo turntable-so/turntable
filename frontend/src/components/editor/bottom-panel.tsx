@@ -69,6 +69,7 @@ export default function BottomPanel({
     isCompiling,
     compileError,
     isQueryPreviewLoading,
+    isSqlFile,
   } = useFiles();
 
   const [activeTab, setActiveTab] = useBottomPanelTabs({
@@ -131,15 +132,17 @@ export default function BottomPanel({
             <TabsTrigger value="problems">
               <CircleAlertIcon className="h-4 w-4 mr-2" />
               Problems
-              {problems.loading ? (
-                <Loader2 className="h-4 w-4 ml-2 animate-spin" />
-              ) : (
-                problems.data.length > 0 && (
-                  <Badge className="ml-2 font-mono" variant={"outline"}>
-                    {problems.data.length}
-                  </Badge>
+              {isSqlFile ? (
+                problems.loading ? (
+                  <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                ) : (
+                  problems.data.length > 0 && (
+                    <Badge className="ml-2 font-mono" variant={"outline"}>
+                      {problems.data.length}
+                    </Badge>
+                  )
                 )
-              )}
+              ) : null}
             </TabsTrigger>
           </TabsList>
         </Tabs>
