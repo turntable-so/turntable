@@ -1,8 +1,20 @@
 import { useFiles } from "@/app/contexts/FilesContext";
 import { Loader2 } from "lucide-react";
 
-export default function ProblemsPanel() {
+type ProblemsPanelProps = {
+  isSqlFile: boolean;
+};
+
+export default function ProblemsPanel({ isSqlFile }: ProblemsPanelProps) {
   const { problems, checkForProblemsOnEdit } = useFiles();
+
+  if (!isSqlFile) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <p>Validation only runs on SQL files.</p>
+      </div>
+    );
+  }
 
   return checkForProblemsOnEdit ? (
     problems.loading ? (
