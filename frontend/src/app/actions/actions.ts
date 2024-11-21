@@ -822,8 +822,14 @@ export type Job = {
   next_run: string | null;
 };
 
-export async function getPaginatedJobs(): Promise<PaginatedResponse<Job>> {
-  const response = await fetcher("/jobs/", {
+export async function getPaginatedJobs({
+  page,
+  pageSize,
+}: {
+  page: number;
+  pageSize: number;
+}): Promise<PaginatedResponse<Job>> {
+  const response = await fetcher(`/jobs/?page=${page}&page_size=${pageSize}`, {
     cookies,
     method: "GET",
   });
@@ -848,8 +854,14 @@ export type Run = {
   artifacts: Array<any>;
 };
 
-export async function getPaginatedRuns(): Promise<PaginatedResponse<Run>> {
-  const response = await fetcher("/runs/", {
+export async function getPaginatedRuns({
+  page,
+  pageSize,
+}: {
+  page: number;
+  pageSize: number;
+}): Promise<PaginatedResponse<Run>> {
+  const response = await fetcher(`/runs/?page=${page}&page_size=${pageSize}`, {
     cookies,
     method: "GET",
   });

@@ -8,6 +8,7 @@ type RunsListProps = {
   page: number;
   pageSize: number;
   count: number;
+  jobId: string;
 };
 
 export default function RunsList({

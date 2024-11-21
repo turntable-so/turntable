@@ -17,7 +17,8 @@ export default function RunCard({ run }: RunCardProps) {
   const dateDone = run.date_done ? dayjs(run.date_done).fromNow() : null;
 
   return (
-    <Link href={`/runs/${run.task_id}`}>
+    // TODO: get jobId from run (backend change)
+    <Link href={`/jobs/1/run/${run.task_id}`}>
       <Card className="rounded-md hover:border-black hover:dark:border-white">
         <CardHeader>
           <div className="flex items-center space-x-4">

@@ -23,7 +23,14 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
   const page = Number(searchParams.page || 1);
   const pageSize = Number(searchParams.pageSize || 10);
 
-  const promise = type === "jobs" ? getPaginatedJobs() : getPaginatedRuns();
+  const paginationParams = {
+    page,
+    pageSize,
+  };
+  const promise =
+    type === "jobs"
+      ? getPaginatedJobs(paginationParams)
+      : getPaginatedRuns(paginationParams);
   const result = await promise;
 
   const TabNames = { jobs: "Jobs", runs: "Runs" };
