@@ -1,7 +1,7 @@
 "use client";
 
 import { getLineage } from "@/app/actions/actions";
-import LineageView from "@/components/lineage/LineagePreview";
+import { LineageView } from "../../app/contexts/LineageView";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
@@ -41,15 +41,7 @@ export default function LineagePreview({ nodeId }: { nodeId: string }) {
             <Loader2 className="h-6 w-6 animate-spin" />
           </div>
         ) : (
-          lineage &&
-          rootAsset && (
-            <LineageView
-              lineage={lineage}
-              rootAsset={rootAsset}
-              style={{ height: "600px" }}
-              page={"lineage"}
-            />
-          )
+          lineage && rootAsset && <LineageView style={{ height: "600px" }} />
         )}
       </ErrorBoundary>
     </div>

@@ -267,7 +267,6 @@ export default function BottomPanel({
                   {lineageData?.[activeFile?.node.path || ""] &&
                     lineageData[activeFile?.node.path || ""].data && (
                       <LineageView
-                        key={activeFile?.node.path}
                         style={{ height: (bottomPanelHeight ?? 0) - 28 }}
                       />
                     )}
