@@ -42,6 +42,7 @@ export default function CustomEditor(props: CustomEditorProps) {
         editor.updateOptions({ theme: "mutedTheme" });
       })}
       theme="mutedTheme"
+      loading={null}
       {...props}
     />
   );

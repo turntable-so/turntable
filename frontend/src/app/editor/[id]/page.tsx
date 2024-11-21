@@ -22,162 +22,8 @@ import CustomEditor from "@/components/editor/CustomEditor";
 import CustomDiffEditor from "@/components/editor/CustomDiffEditor";
 import InlineTabSearch from "@/components/editor/search-bar/inline-tab-search";
 import AiSidebarChat from "@/components/editor/ai-sidebar-chat";
+import SingleFileEditPromptPopover from "@/components/editor/command-panel/single-file-prompt-popover";
 
-const PromptBox = ({
-  setPromptBoxOpen,
-}: { setPromptBoxOpen: (open: boolean) => void }) => {
-  const { activeFile, setActiveFile, updateFileContent } = useFiles();
-  const [prompt, setPrompt] = useState("");
-  const [model, setModel] = useState<"PROMPT" | "CONFIRM">("PROMPT");
-  const [isLoading, setIsLoading] = useState(false);
-
-  const callInference = async () => {
-    const content = activeFile?.content;
-    if (typeof content !== "string") {
-      console.error("Content is not a string", { content });
-      return;
-    }
-
-    if (activeFile) {
-      setIsLoading(true);
-      const response = await infer({
-        filepath: activeFile.node.path,
-        content,
-        instructions: prompt,
-      });
-      if (response.content) {
-        setActiveFile({
-          ...activeFile,
-          view: "diff",
-          diff: {
-            original:
-              typeof activeFile.content === "string" ? activeFile.content : "",
-            modified: response.content,
-          },
-        });
-        setModel("CONFIRM");
-      }
-      setIsLoading(false);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-      e.preventDefault();
-      callInference();
-    }
-  };
-
-  const handleEscape = (e: KeyboardEvent) => {
-    if (e.key === "Escape") {
-      setPromptBoxOpen(false);
-    }
-  };
-
-  useEffect(() => {
-    document.addEventListener("keydown", handleEscape);
-    return () => {
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, []);
-
-  useEffect(() => {
-    const textarea = document.querySelector("textarea");
-    if (textarea) {
-      textarea.addEventListener("keydown", handleKeyDown as any);
-      return () => {
-        textarea.removeEventListener("keydown", handleKeyDown as any);
-      };
-    }
-  }, []);
-
-  return (
-    <div className="border-b py-2 mb-2">
-      <div className="flex flex-col items-center w-full px-4">
-        <Textarea
-          className="w-full my-2 z-100"
-          autoFocus
-          placeholder="Add materialization to this model"
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          disabled={isLoading}
-        />
-        <div className="flex space-x-2 justify-end w-full">
-          {model === "PROMPT" ? (
-            <>
-              <Button
-                size="sm"
-                variant="outline"
-                className="rounded-sm"
-                onClick={() => setPromptBoxOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                size="sm"
-                disabled={!prompt || isLoading}
-                variant="default"
-                className="rounded-sm"
-                onClick={() => {
-                  callInference();
-                }}
-              >
-                {isLoading ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  "Generate"
-                )}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                size="sm"
-                variant="destructive"
-                className="rounded-sm"
-                onClick={() => {
-                  if (activeFile) {
-                    setActiveFile({
-                      ...activeFile,
-                      view: "edit",
-                    });
-                  }
-                  setPromptBoxOpen(false);
-                }}
-              >
-                <X className="mr-2 size-4" />
-                Reject
-              </Button>
-              <Button
-                size="sm"
-                disabled={!prompt || isLoading}
-                variant="default"
-                className="rounded-sm"
-                onClick={() => {
-                  updateFileContent(
-                    activeFile?.node.path || "",
-                    activeFile?.diff?.modified || "",
-                  );
-                  setActiveFile({
-                    ...activeFile,
-                    isDirty: true,
-                    content: activeFile?.diff?.modified || "",
-                    view: "edit",
-                    diff: undefined,
-                  } as OpenedFile);
-                  setPromptBoxOpen(false);
-                }}
-              >
-                <Check className="mr-2 size-4" />
-                Accept
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 function EditorContent({
   setPromptBoxOpen,
@@ -414,6 +260,7 @@ function EditorPageContent() {
   } = useLayoutContext();
 
   const [promptBoxOpen, setPromptBoxOpen] = useState(false);
+  console.log({ promptBoxOpen })
   const [colDefs, setColDefs] = useState([]);
   const [rowData, setRowData] = useState([]);
   const gridRef = useRef<AgGridReact>(null);
@@ -488,6 +335,11 @@ function EditorPageContent() {
           case "j":
             event.preventDefault();
             setBottomPanelShown(!bottomPanelShown);
+            break;
+          case 'k':
+            console.log("k")
+            event.preventDefault();
+            setPromptBoxOpen(true);
             break;
           case "enter":
             event.preventDefault();
@@ -641,7 +493,7 @@ function EditorPageContent() {
             <div className="w-full h-full">
               <PanelGroup direction="vertical" className="h-fit">
                 {promptBoxOpen && (
-                  <PromptBox setPromptBoxOpen={setPromptBoxOpen} />
+                  <SingleFileEditPromptPopover setPromptBoxOpen={setPromptBoxOpen} />
                 )}
                 <Panel className="h-full relative z-0">
                   <EditorContent

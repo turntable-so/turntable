@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
-import { Loader2 } from 'lucide-react';
+import { Copy, Loader2, RedoDot } from 'lucide-react';
 import Markdown from 'react-markdown'
 import { useFiles } from '@/app/contexts/FilesContext';
 import { Badge } from '../ui/badge';
@@ -103,6 +103,7 @@ export default function AiSidebarChat() {
                 />
                 <Button
                     className='float-right'
+                    size='sm'
                     onClick={handleSubmit}
                     disabled={isLoading || !input.trim()}
                 >
@@ -125,8 +126,26 @@ export default function AiSidebarChat() {
                             const editorRef = useRef<any>(null);
 
                             return match ? (
-                                <div style={{ height, overflow: 'hidden', border: 'none' }} className="pointer-events-none select-none">
+                                <div style={{ height, overflow: 'hidden', border: 'none' }} >
+                                    <div className='flex justify-end'>
+                                        <Button size='sm' variant='ghost' className='items-center flex space-x-2' onClick={() => {
+                                            navigator.clipboard.writeText(String(children))
+                                        }}>
+
+                                            <Copy className='w-3 h-3' />
+                                            <div>
+                                                Copy
+                                            </div>
+                                        </Button>
+                                        <Button size='sm' variant='ghost' className='items-center flex space-x-2'>
+                                            <RedoDot className='w-3 h-3' />
+                                            <div>
+                                                Apply
+                                            </div>
+                                        </Button>
+                                    </div>
                                     <CustomEditor
+                                        className='pointer-events-none select-none'
                                         key={'fixed'}
                                         value={String(children).replace(/\n$/, '')}
                                         language={match[1]}
