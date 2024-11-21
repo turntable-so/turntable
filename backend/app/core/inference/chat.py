@@ -24,7 +24,6 @@ from app.core.dbt import LiveDBTParser
 from app.models import Asset, AssetLink, Column, ColumnLink, Resource, User
 from app.services.lineage_service import Lineage
 from app.utils.df import get_first_n_values, truncate_values
-from scripts.debug.pyinstrument import pyprofile
 from vinyl.lib.table import VinylTable
 
 cache = FanoutCache(directory="/cache", shards=10, timeout=300)
@@ -130,6 +129,7 @@ def get_asset_eda(asset: Asset, resource: Resource, topk: int = 5):
     with WorkerPool(n_jobs=10, start_method="threading", use_dill=True) as pool:
         dfs = pool.imap_unordered(run_query, [(sql, resource.id) for sql in sqls])
     df = pd.concat(dfs)
+
     df["distinct_frac"] = df["distinct_frac"].round(3)
 
     # Truncate max/min values that are too long
@@ -152,11 +152,11 @@ def get_asset_eda(asset: Asset, resource: Resource, topk: int = 5):
         transform_row,
         axis=1,
     )
-
     # for non-json columns, truncate the values
     filter = df["type"] != "json"
     for col in ["min", "max"]:
         df.loc[filter, col] = df.loc[filter, col].apply(truncate_values())
+    breakpoint()
     df.loc[filter, "top_values"] = df.loc[filter, col].apply(
         lambda x: [truncate_values()(v) for v in x]
     )
@@ -226,7 +226,6 @@ def lineage_ascii(edges):
     return ascii_graph
 
 
-@pyprofile()
 def build_context(
     user: User,
     lineage: Lineage,
@@ -302,6 +301,7 @@ Current File:
 {current_file}
 ```
 """
+        print("output", output)
         return output
 
 
