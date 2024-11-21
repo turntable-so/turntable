@@ -146,8 +146,8 @@ def get_asset_eda(asset: Asset, resource: Resource, topk: int = 5):
             }
         )
 
-    filter = (df["n_distinct"] > 1000) | (df["distinct_frac"] < 0.001)
-
+    # filter = (df["n_distinct"] > 1000) & (df["distinct_frac"] < 0.001)
+    filter = df["type"] == "json"
     df.loc[filter, ["top_values", "top_value_counts"]] = df[filter].apply(
         transform_row,
         axis=1,
@@ -156,8 +156,7 @@ def get_asset_eda(asset: Asset, resource: Resource, topk: int = 5):
     filter = df["type"] != "json"
     for col in ["min", "max"]:
         df.loc[filter, col] = df.loc[filter, col].apply(truncate_values())
-    breakpoint()
-    df.loc[filter, "top_values"] = df.loc[filter, col].apply(
+    df.loc[filter, "top_values"] = df.loc[filter, "top_values"].apply(
         lambda x: [truncate_values()(v) for v in x]
     )
     df.reset_index(drop=True)
@@ -166,7 +165,7 @@ def get_asset_eda(asset: Asset, resource: Resource, topk: int = 5):
 
 
 def asset_md(asset: Asset, resource: Resource, contents: str):
-    column_table = get_asset_eda(asset, resource, 10).to_csv(index=False)
+    column_table = get_asset_eda(asset, resource, 30).to_csv(index=False)
     description = asset.description or ""
     return f"""
 ## {asset.name}
