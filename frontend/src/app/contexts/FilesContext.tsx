@@ -175,6 +175,7 @@ type FilesContextType = {
       >
     >
   >;
+  isSqlFile: boolean;
 };
 
 type QueryPreview = {
@@ -272,6 +273,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
       }
     >
   >({});
+  const isSqlFile = activeFile?.node.name.endsWith(".sql") ?? false;
 
   const fetchBranch = async (id: string) => {
     if (id) {
@@ -564,10 +566,10 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         prev.map((f) =>
           f.node.path === path
             ? {
-              ...f,
-              content,
-              node: { ...f.node, type: newNodeType },
-            }
+                ...f,
+                content,
+                node: { ...f.node, type: newNodeType },
+              }
             : f,
         ),
       );
@@ -693,6 +695,11 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   useEffect(() => {
+    if (!isSqlFile) {
+      setProblems((prev) => ({ ...prev, data: [] }));
+      return;
+    }
+
     if (
       debouncedActiveFileContent &&
       typeof debouncedActiveFileContent === "string" &&
@@ -707,7 +714,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         abortController.abort();
       };
     }
-  }, [debouncedActiveFileContent, checkForProblemsOnEdit]);
+  }, [debouncedActiveFileContent, checkForProblemsOnEdit, isSqlFile]);
 
   useEffect(() => {
     if (!checkForProblemsOnEdit) {
@@ -816,24 +823,27 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     }
   }, [openedFiles, activeFile]);
 
-  const runQueryPreview = useCallback(async (content?: string) => {
-    setIsQueryPreviewLoading(true);
-    setQueryPreview(null);
-    setQueryPreviewError(null);
-    if (
-      content ||
-      (activeFile?.content && typeof activeFile.content === "string")
-    ) {
-      const dbtSql = content || activeFile?.content;
-      const preview = await executeQueryPreview({ dbtSql, branchId });
-      if (preview.error) {
-        setQueryPreviewError(preview.error);
-      } else {
-        setQueryPreview(preview);
+  const runQueryPreview = useCallback(
+    async (content?: string) => {
+      setIsQueryPreviewLoading(true);
+      setQueryPreview(null);
+      setQueryPreviewError(null);
+      if (
+        content ||
+        (activeFile?.content && typeof activeFile.content === "string")
+      ) {
+        const dbtSql = content || activeFile?.content;
+        const preview = await executeQueryPreview({ dbtSql, branchId });
+        if (preview.error) {
+          setQueryPreviewError(preview.error);
+        } else {
+          setQueryPreview(preview);
+        }
       }
-    }
-    setIsQueryPreviewLoading(false);
-  }, [activeFile]);
+      setIsQueryPreviewLoading(false);
+    },
+    [activeFile],
+  );
 
   return (
     <FilesContext.Provider
@@ -901,6 +911,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         setIsQueryPreviewLoading,
         lineageData,
         setLineageData,
+        isSqlFile,
       }}
     >
       {children}

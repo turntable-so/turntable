@@ -167,7 +167,10 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
   const pathname = usePathname();
   const params = useParams<{ id: string }>();
 
-  const isAssetLineage = !!(pathname.includes("lineage") && params.id);
+  const isAssetLineage = !!(
+    (pathname.includes("lineage") || pathname.includes("asset")) &&
+    params.id
+  );
   const isProjectLineage = pathname.includes("editor");
 
   const [isLoading, setIsLoading] = useState(true);
