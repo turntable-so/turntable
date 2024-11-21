@@ -1,12 +1,8 @@
 import { useFiles } from "@/app/contexts/FilesContext";
 import { Loader2 } from "lucide-react";
 
-type ProblemsPanelProps = {
-  isSqlFile: boolean;
-};
-
-export default function ProblemsPanel({ isSqlFile }: ProblemsPanelProps) {
-  const { problems, checkForProblemsOnEdit } = useFiles();
+export default function ProblemsPanel() {
+  const { problems, checkForProblemsOnEdit, isSqlFile } = useFiles();
 
   if (!isSqlFile) {
     return (

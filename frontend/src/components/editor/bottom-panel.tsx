@@ -69,13 +69,12 @@ export default function BottomPanel({
     isCompiling,
     compileError,
     isQueryPreviewLoading,
+    isSqlFile,
   } = useFiles();
 
   const [activeTab, setActiveTab] = useBottomPanelTabs({
     branchId: branchId || "",
   });
-
-  const isSqlFile = activeFile?.node.name.endsWith(".sql");
 
   const {
     ref: bottomPanelRef,
@@ -285,7 +284,7 @@ export default function BottomPanel({
           {activeTab === "command" && (
             <CommandPanel bottomPanelHeight={bottomPanelHeight} />
           )}
-          {activeTab === "problems" && <ProblemsPanel isSqlFile={isSqlFile} />}
+          {activeTab === "problems" && <ProblemsPanel />}
           {activeTab === "compile" && (
             <div className="h-full w-full">
               {compileError ? (
