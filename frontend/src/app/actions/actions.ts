@@ -858,13 +858,18 @@ export type Run = {
   artifacts: Array<any>;
 };
 
+export type RunWithJob = Run & {
+  job_id: string;
+  job_name: string;
+};
+
 export async function getPaginatedRuns({
   page,
   pageSize,
 }: {
   page: number;
   pageSize: number;
-}): Promise<PaginatedResponse<Run>> {
+}): Promise<PaginatedResponse<RunWithJob>> {
   const response = await fetcher(`/runs/?page=${page}&page_size=${pageSize}`, {
     cookies,
     method: "GET",
@@ -900,7 +905,7 @@ export async function getRunsForJob({
   return await response.json();
 }
 
-type JobAnalytics = {
+export type JobAnalytics = {
   success_rate: number;
   completed: number;
   succeeded: number;
@@ -909,6 +914,14 @@ type JobAnalytics = {
 
 export async function getJobAnalytics(jobId: string): Promise<JobAnalytics> {
   const response = await fetcher(`/jobs/${jobId}/analytics/`, {
+    cookies,
+    method: "GET",
+  });
+  return await response.json();
+}
+
+export async function getRun(runId: string): Promise<RunWithJob> {
+  const response = await fetcher(`/runs/${runId}/`, {
     cookies,
     method: "GET",
   });

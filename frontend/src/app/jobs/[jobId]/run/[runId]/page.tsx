@@ -1,12 +1,15 @@
+import { getJob, getRun } from "@/app/actions/actions";
+import JobRunIdPage from "@/components/jobs/runs/job-run-id-page";
+
 type JobRunPageProps = {
   params: { jobId: string; runId: string };
 };
 
-export default function JobRunPage({ params }: JobRunPageProps) {
-  return (
-    <div>
-      <h1>Job: {params.jobId}</h1>
-      <h2>Run: {params.runId}</h2>
-    </div>
-  );
+export default async function JobRunPage({ params }: JobRunPageProps) {
+  const runPromise = getRun(params.runId);
+  const jobPromise = getJob(params.jobId);
+
+  const [run, job] = await Promise.all([runPromise, jobPromise]);
+
+  return <JobRunIdPage run={run} job={job} />;
 }

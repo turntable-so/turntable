@@ -8,11 +8,11 @@ import {
   getPaginatedRuns,
   type PaginatedResponse,
   type Job,
-  type Run,
+  type RunWithJob,
 } from "../actions/actions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import JobsList from "@/components/jobs/jobs-list";
-import RunsList from "@/components/jobs/runs-list";
+import RunsList from "@/components/jobs/runs/runs-list";
 
 type JobsPageProps = {
   searchParams: { type?: "jobs" | "runs"; page?: number; pageSize?: number };
@@ -69,10 +69,10 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
         <TabsContent value={TabNames.runs}>
           {type === "runs" ? (
             <RunsList
-              runs={(result as PaginatedResponse<Run>).results}
+              runs={(result as PaginatedResponse<RunWithJob>).results}
               page={page}
               pageSize={pageSize}
-              count={(result as PaginatedResponse<Run>).count}
+              count={(result as PaginatedResponse<RunWithJob>).count}
             />
           ) : null}
         </TabsContent>

@@ -581,6 +581,12 @@ class TaskResultSerializer(serializers.ModelSerializer):
                     return obj.result
         return None
 
+    def get_job_id(self, obj):
+        return obj.job_id
+
+    def get_job_name(self, obj):
+        return obj.job_name
+
     class Meta:
         model = TaskResult
         fields = [
@@ -592,3 +598,17 @@ class TaskResultSerializer(serializers.ModelSerializer):
             "traceback",
             "artifacts",
         ]
+
+
+class TaskResultWithJobSerializer(TaskResultSerializer):
+    job_id = serializers.SerializerMethodField()
+    job_name = serializers.SerializerMethodField()
+
+    def get_job_id(self, obj):
+        return obj.job_id
+
+    def get_job_name(self, obj):
+        return obj.job_name
+
+    class Meta(TaskResultSerializer.Meta):
+        fields = TaskResultSerializer.Meta.fields + ["job_id", "job_name"]

@@ -1,7 +1,12 @@
 "use client";
 
 import FullWidthPageLayout from "@/components/layout/FullWidthPageLayout";
-import type { Job, PaginatedResponse, Run } from "@/app/actions/actions";
+import type {
+  Job,
+  JobAnalytics,
+  PaginatedResponse,
+  Run,
+} from "@/app/actions/actions";
 import { Button } from "@/components/ui/button";
 import { AlarmClock, CircleHelp, Play } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import dayjs from "dayjs";
-import RunsList from "../runs-list";
+import RunsList from "../runs/runs-list";
 
 type JobIdPageProps = {
   job: Job;
@@ -30,6 +35,12 @@ export default function JobIdPage({
   pageSize,
   jobAnalytics,
 }: JobIdPageProps) {
+  const runsWithJob = paginatedRuns.results.map((run) => ({
+    ...run,
+    job_name: job.name,
+    job_id: job.id,
+  }));
+
   const RunNowButton = () => {
     return (
       <Button
@@ -59,6 +70,7 @@ export default function JobIdPage({
 
         <Card>
           <CardContent className="p-6">
+            <p className="text-xs text-muted-foreground mb-4">Last 100 runs</p>
             <div className="grid grid-cols-4 gap-4">
               <div className="flex flex-col">
                 <p className="text-sm font-medium text-muted-foreground">
@@ -108,9 +120,9 @@ export default function JobIdPage({
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-center">
-              {paginatedRuns.results.length > 0 ? (
+              {runsWithJob.length > 0 ? (
                 <RunsList
-                  runs={paginatedRuns.results}
+                  runs={runsWithJob}
                   page={page}
                   pageSize={pageSize}
                   count={paginatedRuns.count}

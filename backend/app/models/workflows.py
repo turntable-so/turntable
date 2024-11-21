@@ -15,6 +15,7 @@ from django.db.models import QuerySet
 from django_celery_beat.models import ClockedSchedule, CrontabSchedule, PeriodicTask
 from django_celery_results.models import TaskResult
 from polymorphic.models import PolymorphicModel
+from django.db.models import OuterRef, Subquery
 
 from app.models.project import Project
 from app.models.resources import DBTResource, Resource
@@ -323,6 +324,13 @@ class ScheduledWorkflow(PolymorphicModel):
             periodic_task_name__in=cls.objects.filter(**filters).values_list(
                 "replacement_identifier", flat=True
             )
+        )
+        dbt_orchestrators = cls.objects.filter(
+            replacement_identifier=OuterRef("periodic_task_name")
+        )
+        tasks = tasks.annotate(
+            job_id=Subquery(dbt_orchestrators.values("id")[:1]),
+            job_name=Subquery(dbt_orchestrators.values("name")[:1]),
         )
         tasks = tasks.order_by("-date_done")
         return tasks

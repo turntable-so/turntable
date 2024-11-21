@@ -4,7 +4,11 @@ from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
-from api.serializers import DBTOrchestratorSerializer, TaskResultSerializer
+from api.serializers import (
+    DBTOrchestratorSerializer,
+    TaskResultSerializer,
+    TaskResultWithJobSerializer,
+)
 from app.models.workflows import DBTOrchestrator
 
 
@@ -96,7 +100,7 @@ class RunViewSet(viewsets.ModelViewSet):
         )
         paginator = Pagination()
         paginated_data = paginator.paginate_queryset(data, request)
-        serializer = TaskResultSerializer(paginated_data, many=True)
+        serializer = TaskResultWithJobSerializer(paginated_data, many=True)
         return paginator.get_paginated_response(serializer.data)
 
     def retrieve(self, request, pk=None):

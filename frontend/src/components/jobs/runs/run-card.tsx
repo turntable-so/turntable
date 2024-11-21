@@ -1,15 +1,14 @@
-import type { Run } from "@/app/actions/actions";
-import { Card, CardHeader, CardTitle, CardDescription } from "../ui/card";
+import type { RunWithJob } from "@/app/actions/actions";
+import { Card, CardHeader, CardTitle, CardDescription } from "../../ui/card";
 import { CheckCircle2, CircleX } from "lucide-react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import Link from "next/link";
-import { Fragment } from "react";
 
 dayjs.extend(relativeTime);
 
 type RunCardProps = {
-  run: Run;
+  run: RunWithJob;
 };
 
 export default function RunCard({ run }: RunCardProps) {
@@ -17,8 +16,7 @@ export default function RunCard({ run }: RunCardProps) {
   const dateDone = run.date_done ? dayjs(run.date_done).fromNow() : null;
 
   return (
-    // TODO: get jobId from run (backend change)
-    <Link href={`/jobs/1/run/${run.task_id}`}>
+    <Link href={`/jobs/${run.job_id}/run/${run.task_id}`}>
       <Card className="rounded-md hover:border-black hover:dark:border-white">
         <CardHeader>
           <div className="flex items-center space-x-4">
@@ -33,7 +31,7 @@ export default function RunCard({ run }: RunCardProps) {
               <div className="flex justify-between items-center">
                 <div className="flex flex-col gap-1">
                   <CardTitle>Run {run.task_id}</CardTitle>
-                  <CardDescription>(H) Project</CardDescription>
+                  <CardDescription>{run.job_name}</CardDescription>
                 </div>
 
                 <div className="text-sm text-muted-foreground">
