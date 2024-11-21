@@ -1,7 +1,7 @@
 "use client";
 
 import FullWidthPageLayout from "@/components/layout/FullWidthPageLayout";
-import type { Job } from "@/app/actions/actions";
+import type { Job, PaginatedResponse, Run } from "@/app/actions/actions";
 import { Button } from "@/components/ui/button";
 import { AlarmClock, CircleHelp, Play } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,12 +13,23 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import dayjs from "dayjs";
+import RunsList from "../runs-list";
 
 type JobIdPageProps = {
   job: Job;
+  paginatedRuns: PaginatedResponse<Run>;
+  page: number;
+  pageSize: number;
+  jobAnalytics: JobAnalytics;
 };
 
-export default function JobIdPage({ job }: JobIdPageProps) {
+export default function JobIdPage({
+  job,
+  paginatedRuns,
+  page,
+  pageSize,
+  jobAnalytics,
+}: JobIdPageProps) {
   const RunNowButton = () => {
     return (
       <Button
@@ -47,40 +58,33 @@ export default function JobIdPage({ job }: JobIdPageProps) {
         </div>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Recent runs</CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
             <div className="grid grid-cols-4 gap-4">
               <div className="flex flex-col">
                 <p className="text-sm font-medium text-muted-foreground">
                   Success rate
                 </p>
-                <p className="text-xl font-bold">100%</p>
+                <p className="text-xl font-bold">
+                  {jobAnalytics.success_rate}%
+                </p>
               </div>
               <div className="flex flex-col">
                 <p className="text-sm font-medium text-muted-foreground">
                   Completed
                 </p>
-                <p className="text-xl font-bold">12</p>
+                <p className="text-xl font-bold">{jobAnalytics.completed}</p>
               </div>
               <div className="flex flex-col">
                 <p className="text-sm font-medium text-muted-foreground">
                   Succeeded
                 </p>
-                <p className="text-xl font-bold">12</p>
+                <p className="text-xl font-bold">{jobAnalytics.succeeded}</p>
               </div>
               <div className="flex flex-col">
                 <p className="text-sm font-medium text-muted-foreground">
                   Errored
                 </p>
-                <p className="text-xl font-bold">3</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-center py-8">
-              <div className="flex flex-col items-center text-muted-foreground">
-                <CircleHelp className="w-6 h-6" />
-                <p>No recent runs</p>
+                <p className="text-xl font-bold">{jobAnalytics.errored}</p>
               </div>
             </div>
           </CardContent>
@@ -88,27 +92,35 @@ export default function JobIdPage({ job }: JobIdPageProps) {
 
         <Card>
           <CardHeader>
-            <CardTitle>Run history</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-4">
+            <div className="flex items-center justify-between">
+              <CardTitle>Run history</CardTitle>
               <Select defaultValue="all">
                 <SelectTrigger className="w-32">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
                   <SelectItem value="succeeded">Succeeded</SelectItem>
                   <SelectItem value="errored">Errored</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-center justify-center py-8">
-              <div className="flex flex-col items-center text-muted-foreground">
-                <CircleHelp className="w-6 h-6" />
-                <p>No runs found</p>
-              </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center">
+              {paginatedRuns.results.length > 0 ? (
+                <RunsList
+                  runs={paginatedRuns.results}
+                  page={page}
+                  pageSize={pageSize}
+                  count={paginatedRuns.count}
+                />
+              ) : (
+                <div className="flex flex-col items-center text-muted-foreground">
+                  <CircleHelp className="w-6 h-6" />
+                  <p>No runs</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

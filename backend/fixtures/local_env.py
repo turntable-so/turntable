@@ -146,7 +146,6 @@ def create_local_metabase(workspace):
 
 
 def create_local_orchestration(workspace):
-    # 12pm every day
     crontab_schedule = CrontabSchedule.objects.create(
         minute="0",
         hour="12",
@@ -164,12 +163,13 @@ def create_local_orchestration(workspace):
         dbtresource=dbt_resource,
         crontab=crontab_schedule,
         commands=["dbt ls", "dbt run"],
+        name=f"Test Job {random.randint(1, 1000)}",
     )
 
     task_kwargs = {
         "workspace_id": str(workspace.id),
     }
-    for state in [states.SUCCESS, states.FAILURE]:
+    for state in [states.FAILURE, states.SUCCESS]:
         TaskResult.objects.create(
             task_id=str(random.randint(10, 10000)),
             id=random.randint(10, 10000),

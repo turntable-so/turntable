@@ -822,7 +822,7 @@ export type Job = {
   next_run: string | null;
 };
 
-export async function getJobs(): Promise<Array<Job>> {
+export async function getPaginatedJobs(): Promise<PaginatedResponse<Job>> {
   const response = await fetcher("/jobs/", {
     cookies,
     method: "GET",
@@ -848,8 +848,51 @@ export type Run = {
   artifacts: Array<any>;
 };
 
-export async function getRuns(): Promise<Array<Run>> {
+export async function getPaginatedRuns(): Promise<PaginatedResponse<Run>> {
   const response = await fetcher("/runs/", {
+    cookies,
+    method: "GET",
+  });
+  return await response.json();
+}
+
+type GetRunsForJobArgs = {
+  jobId: string;
+  page?: number;
+  pageSize?: number;
+};
+
+export type PaginatedResponse<T> = {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+};
+
+export async function getRunsForJob({
+  jobId,
+  page = 1,
+  pageSize = 10,
+}: GetRunsForJobArgs): Promise<PaginatedResponse<Run>> {
+  const response = await fetcher(
+    `/jobs/${jobId}/runs/?page=${page}&page_size=${pageSize}`,
+    {
+      cookies,
+      method: "GET",
+    },
+  );
+  return await response.json();
+}
+
+type JobAnalytics = {
+  success_rate: number;
+  completed: number;
+  succeeded: number;
+  errored: number;
+};
+
+export async function getJobAnalytics(jobId: string): Promise<JobAnalytics> {
+  const response = await fetcher(`/jobs/${jobId}/analytics/`, {
     cookies,
     method: "GET",
   });

@@ -38,16 +38,9 @@ export default function RunCard({ run }: RunCardProps) {
                 <div className="text-sm text-muted-foreground">
                   <div className="flex items-center justify-end gap-2">
                     {dateDone ? (
-                      <Fragment>
-                        <p>
-                          {hasSucceeded ? "Succeeded" : "Failed"} {dateDone}
-                        </p>
-                        {hasSucceeded ? (
-                          <CheckCircle2 className="w-4 h-4 text-green-500" />
-                        ) : (
-                          <CircleX className="w-4 h-4 text-red-500" />
-                        )}
-                      </Fragment>
+                      <p>
+                        {hasSucceeded ? "Succeeded" : "Failed"} {dateDone}
+                      </p>
                     ) : (
                       <p>Not completed yet</p>
                     )}

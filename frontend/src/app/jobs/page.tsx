@@ -3,21 +3,31 @@ import FullWidthPageLayout from "../../components/layout/FullWidthPageLayout";
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { getJobs, getRuns } from "../actions/actions";
+import {
+  getPaginatedJobs,
+  getPaginatedRuns,
+  PaginatedResponse,
+  type Job,
+  type Run,
+} from "../actions/actions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import JobsList from "@/components/jobs/jobs-list";
 import RunsList from "@/components/jobs/runs-list";
 
-export default async function JobsPage() {
-  const runsPromise = getRuns();
-  const jobsPromise = getJobs();
+type JobsPageProps = {
+  searchParams: { type?: "jobs" | "runs"; page?: number; pageSize?: number };
+};
 
-  const [runs, jobs] = await Promise.allSettled([runsPromise, jobsPromise]);
+export default async function JobsPage({ searchParams }: JobsPageProps) {
+  const type = searchParams.type || "jobs";
+  const page = Number(searchParams.page || 1);
+  const pageSize = Number(searchParams.pageSize || 10);
 
-  console.log("runs: ", runs);
-  console.log("jobs: ", jobs);
+  const promise = type === "jobs" ? getPaginatedJobs() : getPaginatedRuns();
+  const result = await promise;
 
   const TabNames = { jobs: "Jobs", runs: "Runs" };
+  const selectedTab = type === "jobs" ? TabNames.jobs : TabNames.runs;
 
   const NewJobButton = () => (
     <Link href="/jobs/new">
@@ -30,24 +40,34 @@ export default async function JobsPage() {
 
   return (
     <FullWidthPageLayout title="Jobs" button={<NewJobButton />}>
-      <Tabs defaultValue={TabNames.jobs}>
+      <Tabs defaultValue={selectedTab}>
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value={TabNames.jobs}>{TabNames.jobs}</TabsTrigger>
-          <TabsTrigger value={TabNames.runs}>{TabNames.runs}</TabsTrigger>
+          <TabsTrigger value={TabNames.jobs} asChild>
+            <Link href={"/jobs"}>{TabNames.jobs}</Link>
+          </TabsTrigger>
+          <TabsTrigger value={TabNames.runs} asChild>
+            <Link href={"/jobs?type=runs"}>{TabNames.runs}</Link>
+          </TabsTrigger>
         </TabsList>
         <TabsContent value={TabNames.jobs}>
-          {jobs.status === "fulfilled" ? (
-            <JobsList jobs={jobs.value} />
-          ) : (
-            <div>Something went wrong</div>
-          )}
+          {type === "jobs" ? (
+            <JobsList
+              jobs={(result as PaginatedResponse<Job>).results}
+              page={page}
+              pageSize={pageSize}
+              count={(result as PaginatedResponse<Job>).count}
+            />
+          ) : null}
         </TabsContent>
         <TabsContent value={TabNames.runs}>
-          {runs.status === "fulfilled" ? (
-            <RunsList runs={runs.value} />
-          ) : (
-            <div>Something went wrong</div>
-          )}
+          {type === "runs" ? (
+            <RunsList
+              runs={(result as PaginatedResponse<Run>).results}
+              page={page}
+              pageSize={pageSize}
+              count={(result as PaginatedResponse<Run>).count}
+            />
+          ) : null}
         </TabsContent>
       </Tabs>
     </FullWidthPageLayout>

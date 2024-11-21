@@ -29,7 +29,11 @@ export default function JobCard({ job }: JobCardProps) {
       <Card className="rounded-md hover:border-black hover:dark:border-white">
         <CardHeader>
           <div className="flex items-center space-x-4">
-            <div className="mb-1 space-y-1">{getResourceIcon("dbt")}</div>
+            {hasSucceeded ? (
+              <CheckCircle2 className="w-6 h-6 text-green-500" />
+            ) : (
+              <CircleX className="w-6 h-6 text-red-500" />
+            )}
             <div className="w-full">
               <div className="flex justify-between items-center">
                 <div className="flex flex-col gap-1">
@@ -40,17 +44,10 @@ export default function JobCard({ job }: JobCardProps) {
                 <div className="text-sm text-muted-foreground">
                   <div className="flex items-center justify-end gap-2">
                     {lastRunDate ? (
-                      <Fragment>
-                        <p>
-                          Last run {hasSucceeded ? "succeeded" : "failed"}{" "}
-                          {formattedLastRunDate}
-                        </p>
-                        {hasSucceeded ? (
-                          <CheckCircle2 className={"w-4 h-4 text-green-500"} />
-                        ) : (
-                          <CircleX className={"w-4 h-4 text-red-500"} />
-                        )}
-                      </Fragment>
+                      <p>
+                        Last run {hasSucceeded ? "succeeded" : "failed"}{" "}
+                        {formattedLastRunDate}
+                      </p>
                     ) : (
                       <p>Not ran yet</p>
                     )}

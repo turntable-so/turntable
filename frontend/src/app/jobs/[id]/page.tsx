@@ -1,20 +1,36 @@
-import { getJob } from "@/app/actions/actions";
+import { getJob, getJobAnalytics, getRunsForJob } from "@/app/actions/actions";
 import JobIdPage from "@/components/jobs/id/job-id-page";
 
 type JobPageProps = {
   params: { id: string };
+  searchParams: { page?: number; pageSize?: number };
 };
 
-export default async function JobPage({ params }: JobPageProps) {
-  const job = await getJob(params.id);
-  // const runHistory = await getRunHistoryForJob();
-  // const recentRuns = await getRecentRunsForJob();
+export default async function JobPage({ params, searchParams }: JobPageProps) {
+  const page = Number(searchParams.page || 1);
+  const pageSize = Number(searchParams.pageSize || 10);
 
-  if (!job) {
-    return <div>Job not found</div>;
-  }
+  const jobPromise = getJob(params.id);
+  const paginatedRunsPromise = getRunsForJob({
+    jobId: params.id,
+    page,
+    pageSize,
+  });
+  const jobAnalyticsPromise = getJobAnalytics(params.id);
 
-  console.log("job: ", job);
+  const [job, paginatedRuns, jobAnalytics] = await Promise.all([
+    jobPromise,
+    paginatedRunsPromise,
+    jobAnalyticsPromise,
+  ]);
 
-  return <JobIdPage job={job} />;
+  return (
+    <JobIdPage
+      job={job}
+      paginatedRuns={paginatedRuns}
+      page={page}
+      pageSize={pageSize}
+      jobAnalytics={jobAnalytics}
+    />
+  );
 }
