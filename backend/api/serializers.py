@@ -519,6 +519,8 @@ class DBTOrchestratorSerializer(CrontabWorkflowSerializer):
         queryset=DBTCoreDetails.objects.all(), source="dbtresource"
     )
     commands = serializers.ListField(child=serializers.CharField())
+    latest_run = serializers.SerializerMethodField()
+    next_run = serializers.SerializerMethodField()
 
     class Meta:
         model = DBTOrchestrator
@@ -528,6 +530,9 @@ class DBTOrchestratorSerializer(CrontabWorkflowSerializer):
             "dbtresource_id",
             "cron_str",
             "commands",
+            "name",
+            "latest_run",
+            "next_run",
         ]
 
     def validate_commands(self, value):
@@ -545,6 +550,13 @@ class DBTOrchestratorSerializer(CrontabWorkflowSerializer):
     def update(self, instance, validated_data):
         return super().update(instance, validated_data)
 
+    def get_latest_run(self, obj):
+        latest_run = obj.most_recent(n=1).first()
+        return TaskResultSerializer(latest_run).data if latest_run else None
+
+    def get_next_run(self, obj):
+        return obj.get_next_run_date()
+
 
 class TaskArtifactSerializer(serializers.ModelSerializer):
     class Meta:
@@ -552,7 +564,7 @@ class TaskArtifactSerializer(serializers.ModelSerializer):
         fields = ["id", "artifact", "artifact_type"]
 
 
-class TaskSerializer(serializers.ModelSerializer):
+class TaskResultSerializer(serializers.ModelSerializer):
     artifacts = TaskArtifactSerializer(
         source="taskartifact_set", many=True, read_only=True
     )

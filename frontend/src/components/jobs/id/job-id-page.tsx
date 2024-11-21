@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import dayjs from "dayjs";
 
 type JobIdPageProps = {
   job: Job;
@@ -21,6 +22,7 @@ export default function JobIdPage({ job }: JobIdPageProps) {
   const RunNowButton = () => {
     return (
       <Button
+        className="rounded-full"
         onClick={() => {
           console.log("Run job");
         }}
@@ -32,13 +34,15 @@ export default function JobIdPage({ job }: JobIdPageProps) {
   };
 
   return (
-    <FullWidthPageLayout title={job.id} button={<RunNowButton />}>
+    <FullWidthPageLayout title={job.name} button={<RunNowButton />}>
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <p className="text-sm font-medium">Next Run</p>
-          <p className="flex items-center gap-2 text-sm text-muted-foreground">
+          <p className="flex items-center gap-2 text-muted-foreground">
             <AlarmClock className="w-4 h-4" />
-            {job.cron_str}
+            {job.next_run
+              ? dayjs(job.next_run).format("MMM D, YYYY, h:mma")
+              : "No next run"}
           </p>
         </div>
 

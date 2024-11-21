@@ -2,7 +2,7 @@ import json
 import os
 import time
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from celery import current_app, states
 from celery.result import AsyncResult
@@ -137,6 +137,10 @@ class ScheduledWorkflow(PolymorphicModel):
             results.append(max(0, (next_time - now_timestamp)))
             now_timestamp = next_time
         return results
+
+    def get_next_run_date(self) -> datetime:
+        next_run_seconds = self.get_upcoming_tasks(1)[0]
+        return datetime.now() + timedelta(seconds=next_run_seconds)
 
     def get_periodic_task_args(self):
         return {
@@ -310,7 +314,7 @@ class ScheduledWorkflow(PolymorphicModel):
         }
 
     @classmethod
-    def get_results(
+    def get_results_with_filters(
         cls,
         **kwargs,
     ):
@@ -346,6 +350,7 @@ class DBTOrchestrator(ScheduledWorkflow):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, null=True)
     commands = ArrayField(models.TextField())
     save_artifacts = models.BooleanField(default=True)
+    name = models.CharField(max_length=255, null=False, default="Job")
 
     @property
     def workflow(self):

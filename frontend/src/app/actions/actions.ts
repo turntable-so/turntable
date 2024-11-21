@@ -817,6 +817,9 @@ export type Job = {
   dbtresource_id: string;
   commands: Array<string>;
   cron_str: string;
+  name: string;
+  latest_run: Run | null;
+  next_run: string | null;
 };
 
 export async function getJobs(): Promise<Array<Job>> {
@@ -836,9 +839,13 @@ export async function getJob(id: string): Promise<Job> {
 }
 
 export type Run = {
-  id: string;
-  job_id: string;
-  status: string;
+  task_id: string;
+  status: "FAILURE" | "SUCCESS";
+  result: any;
+  date_created: string;
+  date_done: string;
+  traceback: any;
+  artifacts: Array<any>;
 };
 
 export async function getRuns(): Promise<Array<Run>> {

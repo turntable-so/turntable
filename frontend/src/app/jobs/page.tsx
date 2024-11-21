@@ -2,19 +2,9 @@ import { Plus } from "lucide-react";
 import FullWidthPageLayout from "../../components/layout/FullWidthPageLayout";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import Link from "next/link";
 import { getJobs, getRuns } from "../actions/actions";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Label } from "@/components/ui/label";
 import JobsList from "@/components/jobs/jobs-list";
 import RunsList from "@/components/jobs/runs-list";
 

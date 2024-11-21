@@ -1,4 +1,11 @@
+import json
 import os
+import random
+from datetime import datetime
+
+from celery import states
+from django_celery_beat.models import CrontabSchedule
+from django_celery_results.models import TaskResult
 
 from app.models import (
     DBTCoreDetails,
@@ -13,9 +20,8 @@ from app.models import (
     Workspace,
 )
 from app.models.resources import DBTResource, EnvironmentType
-from app.models.workflows import DBTOrchestrator, WorkflowType
+from app.models.workflows import DBTOrchestrator
 from vinyl.lib.dbt_methods import DBTVersion
-from django_celery_beat.models import CrontabSchedule
 
 
 def create_local_user():
@@ -153,9 +159,25 @@ def create_local_orchestration(workspace):
     if not dbt_resource:
         raise Exception("No DBT resource found for workspace")
 
-    DBTOrchestrator.objects.create(
+    job = DBTOrchestrator.objects.create(
         workspace=workspace,
         dbtresource=dbt_resource,
         crontab=crontab_schedule,
         commands=["dbt ls", "dbt run"],
     )
+
+    task_kwargs = {
+        "workspace_id": str(workspace.id),
+    }
+    for state in [states.SUCCESS, states.FAILURE]:
+        TaskResult.objects.create(
+            task_id=str(random.randint(10, 10000)),
+            id=random.randint(10, 10000),
+            status=state,
+            periodic_task_name=job.replacement_identifier,
+            result=None,
+            date_created=datetime.now(),
+            date_done=datetime.now(),
+            traceback=None,
+            task_kwargs=json.dumps(task_kwargs),
+        )
