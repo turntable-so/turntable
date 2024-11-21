@@ -74,10 +74,10 @@ const ColumnLineageFlow = () => {
 
   const { isLineageLoading, setIsLineageLoading } = useAppContext();
 
-  const showFilterPanel =
-    branchId && activeFile
-      ? !lineageData[activeFile.node.path]?.showColumns
-      : false;
+  const isInEditor = branchId && activeFile;
+  const showFilterPanel = isInEditor
+    ? !lineageData[activeFile.node.path]?.showColumns
+    : true;
 
   const onReactFlowInit = (reactFlowInstance: ReactFlowInstance) => {
     setReactFlowInstance(reactFlowInstance);
