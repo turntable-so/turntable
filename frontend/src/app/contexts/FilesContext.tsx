@@ -238,7 +238,6 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     loading: false,
     data: [],
   });
-  console.log(problems);
   const [searchFileIndex, setSearchFileIndex] = useState<FileNode[]>([]);
   const [changes, setChanges] = useState<Changes | null>(null);
   const [recentFiles, setRecentFiles] = useLocalStorage<FileNode[]>(
@@ -715,11 +714,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         abortController.abort();
       };
     }
-  }, [
-    debouncedActiveFileContent,
-    checkForProblemsOnEdit,
-    activeFile?.node.name,
-  ]);
+  }, [debouncedActiveFileContent, checkForProblemsOnEdit, isSqlFile]);
 
   useEffect(() => {
     if (!checkForProblemsOnEdit) {
