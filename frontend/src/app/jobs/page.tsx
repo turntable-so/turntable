@@ -6,7 +6,7 @@ import Link from "next/link";
 import {
   getPaginatedJobs,
   getPaginatedRuns,
-  PaginatedResponse,
+  type PaginatedResponse,
   type Job,
   type Run,
 } from "../actions/actions";
@@ -21,7 +21,7 @@ type JobsPageProps = {
 export default async function JobsPage({ searchParams }: JobsPageProps) {
   const type = searchParams.type || "jobs";
   const page = Number(searchParams.page || 1);
-  const pageSize = Number(searchParams.pageSize || 10);
+  const pageSize = Number(searchParams.pageSize || 5);
 
   const paginationParams = {
     page,

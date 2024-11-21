@@ -826,10 +826,14 @@ export async function getPaginatedJobs({
   page,
   pageSize,
 }: {
-  page: number;
-  pageSize: number;
+  page?: number;
+  pageSize?: number;
 }): Promise<PaginatedResponse<Job>> {
-  const response = await fetcher(`/jobs/?page=${page}&page_size=${pageSize}`, {
+  const urlParams = new URLSearchParams();
+  if (page) urlParams.set("page", page.toString());
+  if (pageSize) urlParams.set("page_size", pageSize.toString());
+  console.log(`/jobs/?${urlParams.toString()}`);
+  const response = await fetcher(`/jobs/?${urlParams.toString()}`, {
     cookies,
     method: "GET",
   });

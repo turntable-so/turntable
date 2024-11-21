@@ -94,7 +94,7 @@ export default function JobIdPage({
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Run history</CardTitle>
-              <Select defaultValue="all">
+              {/* <Select defaultValue="all">
                 <SelectTrigger className="w-32">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
@@ -103,7 +103,7 @@ export default function JobIdPage({
                   <SelectItem value="succeeded">Succeeded</SelectItem>
                   <SelectItem value="errored">Errored</SelectItem>
                 </SelectContent>
-              </Select>
+              </Select> */}
             </div>
           </CardHeader>
           <CardContent>
