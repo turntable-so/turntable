@@ -141,7 +141,7 @@ def remote_databricks(user):
 
 @pytest.fixture
 def remote_tableau(user):
-    return group_3(user)[1]
+    return group_6(user)[1]
 
 
 @pytest.fixture

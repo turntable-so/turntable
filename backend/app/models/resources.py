@@ -490,6 +490,7 @@ class TableauDetails(ResourceDetails):
     site = encrypt(models.CharField(max_length=255, default="", blank=True))
     username = encrypt(models.CharField(max_length=255, blank=False))
     password = encrypt(models.CharField(max_length=255, blank=False))
+    is_token = models.BooleanField(default=False)
 
     @property
     def datahub_extras(self):
@@ -505,8 +506,9 @@ class TableauDetails(ResourceDetails):
                     "config": {
                         "connect_uri": self.connect_uri,
                         "site": self.site or "",
-                        "username": self.username,
-                        "password": self.password,
+                        "token_name" if self.is_token else "username": self.username,
+                        "token_value" if self.is_token else "password": self.password,
+                        "ingest_tables_external": True,
                     },
                 },
                 "sink": get_sync_config(db_path),
