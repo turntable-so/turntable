@@ -197,7 +197,7 @@ const ColumnLineageFlow = () => {
     <ReactFlow
       onlyRenderVisibleElements={true}
       ref={reactFlowWrapper}
-      key={lineage?.asset_id || ""}
+      // key={lineage?.asset_id || ""}
       nodes={nodes}
       edges={edges}
       edgeTypes={edgeTypes}
