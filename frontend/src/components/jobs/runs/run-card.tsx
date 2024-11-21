@@ -1,11 +1,8 @@
 import type { RunWithJob } from "@/app/actions/actions";
 import { Card, CardHeader, CardTitle, CardDescription } from "../../ui/card";
 import { CheckCircle2, CircleX } from "lucide-react";
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
+import dayjs from "@/lib/dayjs";
 import Link from "next/link";
-
-dayjs.extend(relativeTime);
 
 type RunCardProps = {
   run: RunWithJob;

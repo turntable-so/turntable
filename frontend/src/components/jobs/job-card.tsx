@@ -1,14 +1,9 @@
 import type { Job } from "@/app/actions/actions";
-import { getResourceIcon } from "@/lib/utils";
 import { Card, CardHeader, CardTitle, CardDescription } from "../ui/card";
 import cronstrue from "cronstrue";
 import { CheckCircle2, CircleX } from "lucide-react";
 import Link from "next/link";
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
-import { Fragment } from "react";
-
-dayjs.extend(relativeTime);
+import dayjs from "@/lib/dayjs";
 
 type JobCardProps = {
   job: Job;
