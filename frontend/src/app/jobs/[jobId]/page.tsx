@@ -12,7 +12,7 @@ import {
 import JobIdPage from "@/components/jobs/id/job-id-page";
 import FullWidthPageLayout from "@/components/layout/FullWidthPageLayout";
 import { Button } from "@/components/ui/button";
-import { Loader2, Play } from "lucide-react";
+import { Edit, Link, Loader2, Play } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -69,6 +69,17 @@ export default function JobPage({ params, searchParams }: JobPageProps) {
     );
   };
 
+  const EditJobButton = () => {
+    return (
+      <Button asChild variant="outline" className="rounded-full">
+        <Link href={`/jobs/${jobId}/edit`}>
+          <Edit className="w-4 h-4 mr-2" />
+          Edit Job
+        </Link>
+      </Button>
+    );
+  };
+
   useEffect(() => {
     isMountedRef.current = true;
 
@@ -86,7 +97,10 @@ export default function JobPage({ params, searchParams }: JobPageProps) {
 
   if (!job || !paginatedRuns || !jobAnalytics) {
     return (
-      <FullWidthPageLayout button={<RunNowButton />}>
+      <FullWidthPageLayout
+        button={<RunNowButton />}
+        secondaryButton={<EditJobButton />}
+      >
         <div className="flex justify-center items-center h-full">
           <Loader2 className="h-6 w-6 animate-spin" />
         </div>
@@ -95,7 +109,11 @@ export default function JobPage({ params, searchParams }: JobPageProps) {
   }
 
   return (
-    <FullWidthPageLayout title={job.name} button={<RunNowButton />}>
+    <FullWidthPageLayout
+      title={job.name}
+      button={<RunNowButton />}
+      secondaryButton={<EditJobButton />}
+    >
       <JobIdPage
         job={job}
         paginatedRuns={paginatedRuns}

@@ -937,3 +937,36 @@ export async function getRun(runId: string): Promise<RunWithJob> {
   });
   return await response.json();
 }
+
+type CreateJobPayload = {
+  name: string;
+  dbtresource_id: string;
+  commands: string[];
+  cron_str: string;
+};
+
+export async function createJob(payload: CreateJobPayload) {
+  const response = await fetcher(`/jobs/`, {
+    cookies,
+    method: "POST",
+    body: payload,
+  });
+  return await response.json();
+}
+
+export async function updateJob(jobId: string, payload: CreateJobPayload) {
+  const response = await fetcher(`/jobs/${jobId}/`, {
+    cookies,
+    method: "PUT",
+    body: payload,
+  });
+  return await response.json();
+}
+
+export async function getEnvironments() {
+  const response = await fetcher(`/jobs/environments/`, {
+    cookies,
+    method: "GET",
+  });
+  return await response.json();
+}
