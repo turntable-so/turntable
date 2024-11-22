@@ -1,5 +1,7 @@
 import os
 
+from django.conf import settings
+
 from app.models import (
     DBTCoreDetails,
     MetabaseDetails,
@@ -13,6 +15,7 @@ from app.models import (
     Workspace,
 )
 from app.models.resources import EnvironmentType
+from app.models.settings import StorageSettings
 from vinyl.lib.dbt_methods import DBTVersion
 
 
@@ -38,6 +41,18 @@ def create_local_workspace(user):
         workspace.add_admin(user)
         workspace.save()
         return workspace
+
+
+def create_local_alternative_storage(workspace):
+    return StorageSettings.objects.create(
+        workspace=workspace,
+        s3_access_key=settings.AWS_S3_ACCESS_KEY_ID,
+        s3_secret_key=settings.AWS_S3_SECRET_ACCESS_KEY,
+        s3_bucket_name=settings.AWS_STORAGE_BUCKET_NAME,
+        s3_endpoint_url=settings.AWS_S3_ENDPOINT_URL,
+        s3_public_url=settings.AWS_S3_PUBLIC_URL,
+        s3_region_name=getattr(settings, "AWS_S3_REGION_NAME", None),
+    )
 
 
 def create_ssh_key_n(workspace, n):

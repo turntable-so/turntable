@@ -20,6 +20,8 @@ def _validate_query_test(response, limit):
     if limit is not None:
         assert len(data) <= limit
 
+    return url
+
 
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.usefixtures("force_isolate", "custom_celery")
@@ -39,11 +41,18 @@ class TestQueryViews:
         if limit is not None:
             data["limit"] = limit
         response = client.post(endpoint, data)
-        _validate_query_test(response, limit)
+        return _validate_query_test(response, limit)
 
     @pytest.mark.parametrize("limit", [None, 100])
     def test_sql_query_postgres(self, client, user, local_postgres, limit):
         self._test(client, user, local_postgres, limit=limit)
+
+    @pytest.mark.parametrize("limit", [None, 100])
+    def test_sql_query_postgres_alternative_storage(
+        self, client, user, local_alternative_storage, local_postgres, limit
+    ):
+        url = self._test(client, user, local_postgres, limit=limit)
+        assert url.startswith(local_alternative_storage.s3_public_url)
 
     @require_env_vars("REDSHIFT_0_WORKSPACE_ID")
     def test_sql_query_redshift(self, client, user, remote_redshift):
