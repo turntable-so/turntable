@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Plus } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 type JobsPageProps = {
@@ -28,6 +29,7 @@ export default function JobsPage({ searchParams }: JobsPageProps) {
   const type = searchParams.type || "jobs";
   const page = Number(searchParams.page || 1);
   const pageSize = Number(searchParams.pageSize || 5);
+  const pathname = usePathname();
 
   const paginationParams = {
     page,
@@ -41,43 +43,40 @@ export default function JobsPage({ searchParams }: JobsPageProps) {
     useState<PaginatedResponse<RunWithJob> | null>(null);
 
   const pollingInterval = useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef<boolean>(true);
 
   const fetchData = async () => {
+    if (!isMountedRef.current) return;
+
     const [jobsData, runsData] = await Promise.all([
       getPaginatedJobs(paginationParams),
       getPaginatedRuns(paginationParams),
     ]);
 
+    if (!isMountedRef.current) return;
+
     setJobsResult(jobsData);
     setRunsResult(runsData);
-
-    const hasRunningJob = jobsData.results.some(
-      (job) => job.latest_run?.status === "STARTED",
-    );
-    const hasRunningRun = runsData.results.some(
-      (run) => run.status === "STARTED",
-    );
-
-    if (hasRunningJob || hasRunningRun) {
-      console.log("hasRunningJob || hasRunningRun");
-      pollingInterval.current = setTimeout(fetchData, 1000 * 1);
-    } else {
-      if (pollingInterval.current) {
-        clearTimeout(pollingInterval.current);
-        pollingInterval.current = null;
-      }
-    }
   };
 
   useEffect(() => {
+    isMountedRef.current = true;
+
+    // Initial fetch
     fetchData();
 
+    // Set up polling interval to fetch data every 3 seconds
+    pollingInterval.current = setInterval(fetchData, 3000);
+
     return () => {
+      // Cleanup function to prevent memory leaks
+      isMountedRef.current = false;
       if (pollingInterval.current) {
-        clearTimeout(pollingInterval.current);
+        clearInterval(pollingInterval.current);
+        pollingInterval.current = null;
       }
     };
-  }, [page, pageSize]);
+  }, [pathname, type, page, pageSize]);
 
   const TabNames = { jobs: "Jobs", runs: "Runs" };
   const selectedTab = type === "jobs" ? TabNames.jobs : TabNames.runs;

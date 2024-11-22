@@ -469,6 +469,7 @@ class ProjectSerializer(serializers.ModelSerializer):
 
 class CrontabWorkflowSerializer(serializers.ModelSerializer):
     cron_str = serializers.CharField(required=False)
+    name = serializers.CharField(required=False)
     workspace_id = serializers.PrimaryKeyRelatedField(
         queryset=Workspace.objects.all(), source="workspace"
     )

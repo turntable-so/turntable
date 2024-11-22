@@ -1,14 +1,12 @@
 import django
 from django.conf import settings
-
 from rest_framework.test import APIClient
-
 
 django.setup()
 
 if __name__ == "__main__":
+    from app.models import DBTResource, User
     from app.models.workflows import DBTOrchestrator
-    from app.models import User, DBTResource
 
     settings.ALLOWED_HOSTS = ["*"]
     client = APIClient()
@@ -21,22 +19,56 @@ if __name__ == "__main__":
         "dbtresource_id": resource.id,
     }
 
+    commands = ["dbt deps", "dbt parse", "dbt run"]
+
     BASE_DATA = {
-        "cron_str": "0 0 * * *",
-        "commands": ["dbt deps", "dbt parse", "dbt run"],
+        "commands": commands,
+        "cron_str": "*/1 * * * *",
+        "name": "test-1",
     }
 
     BASE_DATA_2 = {
-        "cron_str": "0 18 * * *",
-        "commands": ["dbt deps", "dbt parse", "dbt run"],
+        "commands": commands,
+        "cron_str": "*/2 * * * *",
+        "name": "test-2",
+    }
+
+    BASE_DATA_3 = {
+        "commands": commands,
+        "cron_str": "*/3 * * * *",
+        "name": "test-3",
+    }
+
+    BASE_DATA_4 = {
+        "commands": commands,
+        "cron_str": "*/4 * * * *",
+        "name": "test-4",
+    }
+
+    BASE_DATA_5 = {
+        "commands": commands,
+        "cron_str": "*/5 * * * *",
+        "name": "test-5",
+    }
+
+    BASE_DATA_6 = {
+        "commands": commands,
+        "cron_str": "*/6 * * * *",
+        "name": "test-6",
     }
 
     def create_job(inp_data):
         data = {**resource_data, **inp_data}
         response = client.post("/jobs/", data, format="json")
-        print(response.data, response.status_code)
         scheduled_workflow = DBTOrchestrator.objects.get(id=response.data["id"])
         response = client.post(f"/jobs/{scheduled_workflow.id}/start/")
 
-    create_job(BASE_DATA)
-    create_job(BASE_DATA_2)
+    for data in [
+        BASE_DATA,
+        BASE_DATA_2,
+        BASE_DATA_3,
+        BASE_DATA_4,
+        BASE_DATA_5,
+        BASE_DATA_6,
+    ]:
+        create_job(data)

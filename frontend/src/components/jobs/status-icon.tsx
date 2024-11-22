@@ -1,12 +1,5 @@
 import { cn } from "@/lib/utils";
-import {
-  CheckCircle2,
-  CheckCircleIcon,
-  CheckIcon,
-  CircleX,
-  Loader2,
-  XCircleIcon,
-} from "lucide-react";
+import { CheckCircle2, CircleX, Loader2 } from "lucide-react";
 
 type StatusIconProps = {
   status: "SUCCESS" | "FAILURE" | "STARTED";
