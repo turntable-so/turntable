@@ -157,7 +157,7 @@ def run_dbt_commands(
                 save_artifacts_task.si(**task_kwargs, parent_task_id=self.request.id)
             )
 
-        outs = chain(*tasks).apply_async_and_get_all()
+        outs = chain(*tasks).do()
 
     return returns_helper(outs)
 

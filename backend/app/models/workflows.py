@@ -2,7 +2,7 @@ import json
 import os
 import time
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from celery import current_app, states
 from celery.result import AsyncResult
@@ -117,9 +117,9 @@ class ScheduledWorkflow(PolymorphicModel):
         }
 
     def get_upcoming_tasks(self, n: int = 10):
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         if self.workflow_type == WorkflowType.ONE_TIME:
-            diff = self.clocked.clocked_time - datetime.now()
+            diff = self.clocked.clocked_time - now
             return [diff.total_seconds()]
         cron_expression_list = [
             str(self.crontab.minute),
@@ -292,7 +292,7 @@ class ScheduledWorkflow(PolymorphicModel):
             return QuerySet()
 
     def schedule_now(self):
-        now = datetime.now()
+        now = datetime.now(tz=timezone.utc)
         clocked = ClockedSchedule.objects.create(clocked_time=now)
         attrs = {
             k: v
