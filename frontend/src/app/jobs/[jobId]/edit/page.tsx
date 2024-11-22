@@ -20,7 +20,5 @@ export default function EditJobPage({ params }: { params: { jobId: string } }) {
     return null;
   }
 
-  console.log({ job });
-
   return <JobForm title={`Edit ${job.name}`} job={job} />;
 }

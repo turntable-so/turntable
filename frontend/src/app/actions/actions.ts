@@ -917,7 +917,7 @@ export async function getRunsForJob({
 
 export type JobAnalytics = {
   success_rate: number;
-  completed: number;
+  started: number;
   succeeded: number;
   errored: number;
 };

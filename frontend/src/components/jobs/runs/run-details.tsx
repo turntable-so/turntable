@@ -11,6 +11,7 @@ type RunDetailsProps = {
 
 export default function RunDetails({ run, job }: RunDetailsProps) {
   const trigger = job.cron_str ? "Schedule" : "Manual";
+  console.log({job, run});
 
   return (
     <Card>
@@ -39,8 +40,8 @@ export default function RunDetails({ run, job }: RunDetailsProps) {
               Duration
             </p>
             <p className="text-sm">
-              {run.date_done
-                ? `${dayjs(run.date_done).diff(run.date_created, "seconds") + 4}s`
+              {run.status !== "STARTED" && run.date_done
+                ? `${dayjs(run.date_done).diff(run.date_created, "seconds")}s`
                 : "Running..."}
             </p>
           </div>

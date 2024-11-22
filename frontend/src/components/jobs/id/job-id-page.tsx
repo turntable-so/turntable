@@ -56,15 +56,15 @@ export default function JobIdPage({
             </div>
             <div className="flex flex-col">
               <p className="text-sm font-medium text-muted-foreground">
-                Completed
-              </p>
-              <p className="text-xl font-bold">{jobAnalytics.completed}</p>
-            </div>
-            <div className="flex flex-col">
-              <p className="text-sm font-medium text-muted-foreground">
                 Succeeded
               </p>
               <p className="text-xl font-bold">{jobAnalytics.succeeded}</p>
+            </div>
+            <div className="flex flex-col">
+              <p className="text-sm font-medium text-muted-foreground">
+                Started
+              </p>
+              <p className="text-xl font-bold">{jobAnalytics.started}</p>
             </div>
             <div className="flex flex-col">
               <p className="text-sm font-medium text-muted-foreground">

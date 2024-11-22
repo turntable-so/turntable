@@ -96,21 +96,19 @@ class JobViewSet(viewsets.ModelViewSet):
         job = DBTOrchestrator.objects.get(id=pk)
 
         n = 100
-        total_runs_queryset = job.most_recent(n=n)
-        total_runs = total_runs_queryset.count()
-
-        succeeded_runs_queryset = job.most_recent(n=n, successes_only=True)
-        succeeded_runs = succeeded_runs_queryset.count()
-
-        errored_runs_queryset = job.most_recent(n=n, failures_only=True)
-        errored_runs = errored_runs_queryset.count()
+        runs_queryset = job.most_recent(n=n)
+        runs_list = list(runs_queryset)
+        total_runs = len(runs_list)
+        started_runs = sum(1 for run in runs_list if run.status == "STARTED")
+        succeeded_runs = sum(1 for run in runs_list if run.status == "SUCCESS")
+        errored_runs = sum(1 for run in runs_list if run.status == "FAILURE")
 
         success_rate = (succeeded_runs / total_runs) * 100 if total_runs > 0 else 0
         rounded_success_rate = int(success_rate)
 
         data = {
             "success_rate": rounded_success_rate,
-            "completed": total_runs,
+            "started": started_runs,
             "succeeded": succeeded_runs,
             "errored": errored_runs,
         }

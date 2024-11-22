@@ -39,9 +39,7 @@ export default function JobPage({ params, searchParams }: JobPageProps) {
   const isMountedRef = useRef<boolean>(true);
 
   const fetchData = async () => {
-    console.log("[fetchData] first log");
     if (!isMountedRef.current) return;
-    console.log("[fetchData] second log");
 
     const [jobData, runsData, analyticsData] = await Promise.all([
       getJob(jobId),
@@ -52,10 +50,8 @@ export default function JobPage({ params, searchParams }: JobPageProps) {
       }),
       getJobAnalytics(jobId),
     ]);
-    console.log("[fetchData] third log");
 
     if (!isMountedRef.current) return;
-    console.log("[fetchData] fourth log");
 
     setJob(jobData);
     setPaginatedRuns(runsData);
