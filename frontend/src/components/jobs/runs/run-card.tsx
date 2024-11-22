@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from "../../ui/card";
 import { CheckCircle2, CircleX } from "lucide-react";
 import dayjs from "@/lib/dayjs";
 import Link from "next/link";
+import StatusIcon from "../status-icon";
 
 type RunCardProps = {
   run: RunWithJob;
@@ -18,11 +19,7 @@ export default function RunCard({ run }: RunCardProps) {
         <CardHeader>
           <div className="flex items-center space-x-4">
             <div className="mb-1 space-y-1">
-              {hasSucceeded ? (
-                <CheckCircle2 className="w-6 h-6 text-green-500" />
-              ) : (
-                <CircleX className="w-6 h-6 text-red-500" />
-              )}
+              <StatusIcon status={run.status} size="lg" />
             </div>
             <div className="w-full">
               <div className="flex justify-between items-center">

@@ -1,9 +1,9 @@
 import type { Job } from "@/app/actions/actions";
 import { Card, CardHeader, CardTitle, CardDescription } from "../ui/card";
 import cronstrue from "cronstrue";
-import { CheckCircle2, CircleX } from "lucide-react";
 import Link from "next/link";
 import dayjs from "@/lib/dayjs";
+import StatusIcon from "./status-icon";
 
 type JobCardProps = {
   job: Job;
@@ -26,11 +26,10 @@ export default function JobCard({ job }: JobCardProps) {
       <Card className="rounded-md hover:border-black hover:dark:border-white">
         <CardHeader>
           <div className="flex items-center space-x-4">
-            {hasSucceeded ? (
-              <CheckCircle2 className="w-6 h-6 text-green-500" />
-            ) : (
-              <CircleX className="w-6 h-6 text-red-500" />
-            )}
+            <StatusIcon
+              status={job.latest_run?.status || "STARTED"}
+              size="lg"
+            />
             <div className="w-full">
               <div className="flex justify-between items-center">
                 <div className="flex flex-col gap-1">

@@ -2,7 +2,7 @@ import type { Run } from "@/app/actions/actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import dayjs from "dayjs";
 import { capitalize } from "lodash";
-import { CheckCircle2, CircleX } from "lucide-react";
+import StatusIcon from "../status-icon";
 
 type RunDetailsProps = {
   run: Run;
@@ -21,11 +21,7 @@ export default function RunDetails({ run }: RunDetailsProps) {
           <div>
             <p className="text-sm font-medium text-muted-foreground">Status</p>
             <div className="flex items-center gap-2">
-              {hasSucceeded ? (
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
-              ) : (
-                <CircleX className="w-4 h-4 text-red-500" />
-              )}
+              <StatusIcon status={run.status} />
               <p className="text-sm">{capitalize(run.status)}</p>
             </div>
           </div>

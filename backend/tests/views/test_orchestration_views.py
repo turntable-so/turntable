@@ -10,7 +10,7 @@ from app.models.workflows import DBTOrchestrator
 
 BASE_DATA = {
     "cron_str": "0 0 * * *",
-    "commands": ["dbt deps", "dbt run"],
+    "commands": ["dbt deps", "dbt parse", "dbt run"],
 }
 MINIMAL_BASE_DATA = {
     "cron_str": "0 0 * * *",

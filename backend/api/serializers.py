@@ -569,6 +569,7 @@ class TaskResultSerializer(serializers.ModelSerializer):
         source="taskartifact_set", many=True, read_only=True
     )
     result = serializers.SerializerMethodField()
+    task_kwargs = serializers.SerializerMethodField()
 
     def get_result(self, obj):
         if obj.result:
@@ -584,7 +585,7 @@ class TaskResultSerializer(serializers.ModelSerializer):
     def get_task_kwargs(self, obj):
         if obj.result:
             try:
-                first = ast.literal_eval(obj.result)
+                first = ast.literal_eval(obj.task_kwargs)
                 return ast.literal_eval(first)
             except (ValueError, SyntaxError):
                 return None
