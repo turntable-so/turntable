@@ -46,7 +46,7 @@ export default function JobIdPage({
 
       <Card>
         <CardContent className="p-6">
-          <p className="text-xs text-muted-foreground mb-4">Last 100 runs</p>
+          <p className="text-xs text-muted-foreground mb-4">Recent runs</p>
           <div className="grid grid-cols-4 gap-4">
             <div className="flex flex-col">
               <p className="text-sm font-medium text-muted-foreground">
