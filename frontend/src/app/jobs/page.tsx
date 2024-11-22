@@ -70,20 +70,52 @@ export default function JobsPage({ searchParams }: JobsPageProps) {
       return dayjs.utc(a.next_run).diff(dayjs.utc(b.next_run));
     });
 
+    const sortedRuns = runsData.results.sort((a, b) => {
+      if (a.status === "STARTED" && b.status !== "STARTED") return -1;
+      if (a.status !== "STARTED" && b.status === "STARTED") return 1;
+      return dayjs.utc(a.date_done).diff(dayjs.utc(b.date_done));
+    });
+
     setJobsResult({ ...jobsData, results: sortedJobs });
-    setRunsResult(runsData);
+    setRunsResult({ ...runsData, results: sortedRuns });
   };
 
   useEffect(() => {
     isMountedRef.current = true;
-    fetchData();
-    pollingInterval.current = setInterval(fetchData, 2000);
-    return () => {
-      isMountedRef.current = false;
+
+    const startPolling = () => {
+      fetchData();
+      if (!pollingInterval.current) {
+        pollingInterval.current = setInterval(fetchData, 2000);
+      }
+    };
+
+    const stopPolling = () => {
       if (pollingInterval.current) {
         clearInterval(pollingInterval.current);
         pollingInterval.current = null;
       }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        startPolling();
+      } else {
+        stopPolling();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    // Start polling if the page is visible
+    if (document.visibilityState === "visible") {
+      startPolling();
+    }
+
+    return () => {
+      isMountedRef.current = false;
+      stopPolling();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [pathname, type, page, pageSize]);
 

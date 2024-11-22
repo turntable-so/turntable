@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 
 export default function EditJobPage({ params }: { params: { jobId: string } }) {
   const [job, setJob] = useState(null);
+
   useEffect(() => {
     const fetchJob = async () => {
       const res = await getJob(params.jobId);

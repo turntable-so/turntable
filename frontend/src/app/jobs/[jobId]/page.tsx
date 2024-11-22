@@ -111,15 +111,38 @@ export default function JobPage({ params, searchParams }: JobPageProps) {
   useEffect(() => {
     isMountedRef.current = true;
 
-    fetchData();
-    pollingInterval.current = setInterval(fetchData, 2000);
+    const startPolling = () => {
+      fetchData();
+      if (!pollingInterval.current) {
+        pollingInterval.current = setInterval(fetchData, 2000);
+      }
+    };
 
-    return () => {
-      isMountedRef.current = false;
+    const stopPolling = () => {
       if (pollingInterval.current) {
         clearInterval(pollingInterval.current);
         pollingInterval.current = null;
       }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        startPolling();
+      } else {
+        stopPolling();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    if (document.visibilityState === "visible") {
+      startPolling();
+    }
+
+    return () => {
+      isMountedRef.current = false;
+      stopPolling();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [pathname, jobId, page, pageSize]);
 
