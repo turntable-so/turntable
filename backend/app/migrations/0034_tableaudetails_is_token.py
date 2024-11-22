@@ -4,6 +4,7 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
+
     dependencies = [
         ("app", "0033_rename_dbt_resource_dbtorchestrator_dbtresource_and_more"),
     ]
