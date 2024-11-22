@@ -1,24 +1,30 @@
-import { Plus } from "lucide-react";
-import FullWidthPageLayout from "../../components/layout/FullWidthPageLayout";
+"use client";
 
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import {
+  type Job,
+  type PaginatedResponse,
+  type RunWithJob,
   getPaginatedJobs,
   getPaginatedRuns,
-  type PaginatedResponse,
-  type Job,
-  type RunWithJob,
-} from "../actions/actions";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+} from "@/app/actions/actions";
 import JobsList from "@/components/jobs/jobs-list";
 import RunsList from "@/components/jobs/runs/runs-list";
+import FullWidthPageLayout from "@/components/layout/FullWidthPageLayout";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, Plus } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 
 type JobsPageProps = {
-  searchParams: { type?: "jobs" | "runs"; page?: number; pageSize?: number };
+  searchParams: {
+    type?: "jobs" | "runs";
+    page?: number;
+    pageSize?: number;
+  };
 };
 
-export default async function JobsPage({ searchParams }: JobsPageProps) {
+export default function JobsPage({ searchParams }: JobsPageProps) {
   const type = searchParams.type || "jobs";
   const page = Number(searchParams.page || 1);
   const pageSize = Number(searchParams.pageSize || 5);
@@ -27,11 +33,51 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
     page,
     pageSize,
   };
-  const promise =
-    type === "jobs"
-      ? getPaginatedJobs(paginationParams)
-      : getPaginatedRuns(paginationParams);
-  const result = await promise;
+
+  const [jobsResult, setJobsResult] = useState<PaginatedResponse<Job> | null>(
+    null,
+  );
+  const [runsResult, setRunsResult] =
+    useState<PaginatedResponse<RunWithJob> | null>(null);
+
+  const pollingInterval = useRef<NodeJS.Timeout | null>(null);
+
+  const fetchData = async () => {
+    const [jobsData, runsData] = await Promise.all([
+      getPaginatedJobs(paginationParams),
+      getPaginatedRuns(paginationParams),
+    ]);
+
+    setJobsResult(jobsData);
+    setRunsResult(runsData);
+
+    const hasRunningJob = jobsData.results.some(
+      (job) => job.latest_run?.status === "STARTED",
+    );
+    const hasRunningRun = runsData.results.some(
+      (run) => run.status === "STARTED",
+    );
+
+    if (hasRunningJob || hasRunningRun) {
+      console.log("hasRunningJob || hasRunningRun");
+      pollingInterval.current = setTimeout(fetchData, 1000 * 1);
+    } else {
+      if (pollingInterval.current) {
+        clearTimeout(pollingInterval.current);
+        pollingInterval.current = null;
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+
+    return () => {
+      if (pollingInterval.current) {
+        clearTimeout(pollingInterval.current);
+      }
+    };
+  }, [page, pageSize]);
 
   const TabNames = { jobs: "Jobs", runs: "Runs" };
   const selectedTab = type === "jobs" ? TabNames.jobs : TabNames.runs;
@@ -44,6 +90,16 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
       </Button>
     </Link>
   );
+
+  if (!jobsResult || !runsResult) {
+    return (
+      <FullWidthPageLayout title="Jobs" button={<NewJobButton />}>
+        <div className="flex justify-center items-center h-full">
+          <Loader2 className="size-4 animate-spin" />
+        </div>
+      </FullWidthPageLayout>
+    );
+  }
 
   return (
     <FullWidthPageLayout title="Jobs" button={<NewJobButton />}>
@@ -59,20 +115,20 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
         <TabsContent value={TabNames.jobs}>
           {type === "jobs" ? (
             <JobsList
-              jobs={(result as PaginatedResponse<Job>).results}
+              jobs={jobsResult.results}
               page={page}
               pageSize={pageSize}
-              count={(result as PaginatedResponse<Job>).count}
+              count={jobsResult.count}
             />
           ) : null}
         </TabsContent>
         <TabsContent value={TabNames.runs}>
           {type === "runs" ? (
             <RunsList
-              runs={(result as PaginatedResponse<RunWithJob>).results}
+              runs={runsResult.results}
               page={page}
               pageSize={pageSize}
-              count={(result as PaginatedResponse<RunWithJob>).count}
+              count={runsResult.count}
             />
           ) : null}
         </TabsContent>

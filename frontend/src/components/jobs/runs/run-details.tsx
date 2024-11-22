@@ -1,16 +1,14 @@
 import type { Run } from "@/app/actions/actions";
+import StatusIcon from "@/components/jobs/status-icon";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import dayjs from "dayjs";
 import { capitalize } from "lodash";
-import StatusIcon from "../status-icon";
 
 type RunDetailsProps = {
   run: Run;
 };
 
 export default function RunDetails({ run }: RunDetailsProps) {
-  const hasSucceeded = run.status === "SUCCESS";
-
   return (
     <Card>
       <CardHeader>

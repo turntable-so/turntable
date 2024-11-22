@@ -1,8 +1,8 @@
 import type { RunWithJob } from "@/app/actions/actions";
-import { Card, CardHeader, CardTitle, CardDescription } from "../../ui/card";
-import { CheckCircle2, CircleX } from "lucide-react";
 import dayjs from "@/lib/dayjs";
+import { truncateUuid } from "@/lib/id-utils";
 import Link from "next/link";
+import { Card, CardDescription, CardHeader, CardTitle } from "../../ui/card";
 import StatusIcon from "../status-icon";
 
 type RunCardProps = {
@@ -24,7 +24,7 @@ export default function RunCard({ run }: RunCardProps) {
             <div className="w-full">
               <div className="flex justify-between items-center">
                 <div className="flex flex-col gap-1">
-                  <CardTitle>Run {run.task_id}</CardTitle>
+                  <CardTitle>Run {truncateUuid(run.task_id)}</CardTitle>
                   <CardDescription>{run.job_name}</CardDescription>
                 </div>
 

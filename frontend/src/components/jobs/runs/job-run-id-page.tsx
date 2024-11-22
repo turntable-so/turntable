@@ -3,11 +3,12 @@
 import type { Job, Run } from "@/app/actions/actions";
 import FullWidthPageLayout from "@/components/layout/FullWidthPageLayout";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import RunSummary from "./run-summary";
+import { truncateUuid } from "@/lib/id-utils";
+import { RefreshCw } from "lucide-react";
 import RunArtifacts from "./run-artifacts";
 import RunDetails from "./run-details";
+import RunSummary from "./run-summary";
 
 type JobRunIdPageProps = {
   run: Run;
@@ -36,7 +37,7 @@ export default function JobRunIdPage({ run, job }: JobRunIdPageProps) {
 
   return (
     <FullWidthPageLayout
-      title={`${job.name} / Run ${run.task_id}`}
+      title={`${job.name} / Run ${truncateUuid(run.task_id)}`}
       button={<RunAgainButton />}
     >
       <div className="flex flex-col gap-4">
