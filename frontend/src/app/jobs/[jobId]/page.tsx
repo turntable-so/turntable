@@ -12,7 +12,8 @@ import {
 import JobIdPage from "@/components/jobs/id/job-id-page";
 import FullWidthPageLayout from "@/components/layout/FullWidthPageLayout";
 import { Button } from "@/components/ui/button";
-import { Edit, Link, Loader2, Play } from "lucide-react";
+import { Edit, Loader2, Play } from "lucide-react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -73,8 +74,10 @@ export default function JobPage({ params, searchParams }: JobPageProps) {
     return (
       <Button asChild variant="outline" className="rounded-full">
         <Link href={`/jobs/${jobId}/edit`}>
-          <Edit className="w-4 h-4 mr-2" />
-          Edit Job
+          <div className="flex items-center gap-2">
+            <Edit className="w-4 h-4" />
+            Edit Job
+          </div>
         </Link>
       </Button>
     );

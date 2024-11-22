@@ -108,7 +108,7 @@ export default function JobsPage({ searchParams }: JobsPageProps) {
         <TabsContent value={TabNames.jobs}>
           {type === "jobs" ? (
             <JobsList
-              jobs={jobsResult.results}
+              jobs={jobsResult.results || []}
               page={page}
               pageSize={pageSize}
               count={jobsResult.count}
@@ -118,7 +118,7 @@ export default function JobsPage({ searchParams }: JobsPageProps) {
         <TabsContent value={TabNames.runs}>
           {type === "runs" ? (
             <RunsList
-              runs={runsResult.results}
+              runs={runsResult.results || []}
               page={page}
               pageSize={pageSize}
               count={runsResult.count}
