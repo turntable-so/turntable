@@ -106,7 +106,7 @@ class JobViewSet(viewsets.ModelViewSet):
         errored_runs = errored_runs_queryset.count()
 
         success_rate = (succeeded_runs / total_runs) * 100 if total_runs > 0 else 0
-        rounded_success_rate = int(round(success_rate, 0))
+        rounded_success_rate = int(success_rate)
 
         data = {
             "success_rate": rounded_success_rate,

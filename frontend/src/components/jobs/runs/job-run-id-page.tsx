@@ -19,7 +19,7 @@ export default function JobRunIdPage({ run, job }: JobRunIdPageProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <RunDetails run={run} />
+      <RunDetails run={run} job={job} />
       <Tabs defaultValue={TabNames.summary}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value={TabNames.summary}>{TabNames.summary}</TabsTrigger>

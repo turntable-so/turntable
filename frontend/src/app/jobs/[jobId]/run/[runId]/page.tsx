@@ -8,9 +8,8 @@ import {
 } from "@/app/actions/actions";
 import JobRunIdPage from "@/components/jobs/runs/job-run-id-page";
 import FullWidthPageLayout from "@/components/layout/FullWidthPageLayout";
-import { Button } from "@/components/ui/button";
 import { truncateUuid } from "@/lib/id-utils";
-import { Loader2, RefreshCw } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -42,20 +41,6 @@ export default function JobRunPage({ params }: JobRunPageProps) {
     setJob(jobData);
   };
 
-  const RunAgainButton = () => {
-    return (
-      <Button
-        className="rounded-full"
-        onClick={() => {
-          console.log("Run again");
-        }}
-      >
-        <RefreshCw className="w-4 h-4 mr-2" />
-        Rerun
-      </Button>
-    );
-  };
-
   useEffect(() => {
     isMountedRef.current = true;
 
@@ -73,7 +58,7 @@ export default function JobRunPage({ params }: JobRunPageProps) {
 
   if (!run || !job) {
     return (
-      <FullWidthPageLayout title={""} button={<RunAgainButton />}>
+      <FullWidthPageLayout title={""}>
         <div className="flex justify-center items-center h-full">
           <Loader2 className="h-6 w-6 animate-spin" />
         </div>
@@ -84,7 +69,6 @@ export default function JobRunPage({ params }: JobRunPageProps) {
   return (
     <FullWidthPageLayout
       title={`${job.name} / Run ${truncateUuid(run.task_id)}`}
-      button={<RunAgainButton />}
     >
       <JobRunIdPage run={run} job={job} />
     </FullWidthPageLayout>

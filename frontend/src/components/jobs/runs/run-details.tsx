@@ -1,4 +1,4 @@
-import type { Run } from "@/app/actions/actions";
+import type { Job, Run } from "@/app/actions/actions";
 import StatusIcon from "@/components/jobs/status-icon";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import dayjs from "dayjs";
@@ -6,9 +6,12 @@ import { capitalize } from "lodash";
 
 type RunDetailsProps = {
   run: Run;
+  job: Job;
 };
 
-export default function RunDetails({ run }: RunDetailsProps) {
+export default function RunDetails({ run, job }: RunDetailsProps) {
+  const trigger = job.cron_str ? "Schedule" : "Manual";
+
   return (
     <Card>
       <CardHeader>
@@ -43,9 +46,9 @@ export default function RunDetails({ run }: RunDetailsProps) {
           </div>
           <div>
             <p className="text-sm font-medium text-muted-foreground">
-              Triggered By
+              Trigger
             </p>
-            <p className="text-sm">{"Scheduled"}</p>
+            <p className="text-sm">{trigger}</p>
           </div>
         </div>
       </CardContent>
