@@ -5,7 +5,7 @@ import FullWidthPageLayout from "@/components/layout/FullWidthPageLayout";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import RunSummary from "./run-summar";
+import RunSummary from "./run-summary";
 import RunArtifacts from "./run-artifacts";
 import RunDetails from "./run-details";
 

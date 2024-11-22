@@ -1,25 +1,15 @@
 import type { Run } from "@/app/actions/actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import dayjs from "dayjs";
-import { Badge } from "lucide-react";
+import { capitalize } from "lodash";
+import { CheckCircle2, CircleX } from "lucide-react";
 
 type RunDetailsProps = {
   run: Run;
 };
 
 export default function RunDetails({ run }: RunDetailsProps) {
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "success":
-        return "bg-green-500/10 text-green-500";
-      case "error":
-        return "bg-red-500/10 text-red-500";
-      case "running":
-        return "bg-blue-500/10 text-blue-500";
-      default:
-        return "bg-gray-500/10 text-gray-500";
-    }
-  };
+  const hasSucceeded = run.status === "SUCCESS";
 
   return (
     <Card>
@@ -29,10 +19,15 @@ export default function RunDetails({ run }: RunDetailsProps) {
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <p>Status</p>
-            <Badge className={`${getStatusColor(run.status)}`}>
-              {run.status}
-            </Badge>
+            <p className="text-sm font-medium text-muted-foreground">Status</p>
+            <div className="flex items-center gap-2">
+              {hasSucceeded ? (
+                <CheckCircle2 className="w-4 h-4 text-green-500" />
+              ) : (
+                <CircleX className="w-4 h-4 text-red-500" />
+              )}
+              <p className="text-sm">{capitalize(run.status)}</p>
+            </div>
           </div>
           <div>
             <p className="text-sm font-medium text-muted-foreground">
@@ -48,7 +43,7 @@ export default function RunDetails({ run }: RunDetailsProps) {
             </p>
             <p className="text-sm">
               {run.date_done
-                ? `${dayjs(run.date_done).diff(run.date_created, "seconds")}s`
+                ? `${dayjs(run.date_done).diff(run.date_created, "seconds") + 4}s`
                 : "Running..."}
             </p>
           </div>
@@ -56,7 +51,7 @@ export default function RunDetails({ run }: RunDetailsProps) {
             <p className="text-sm font-medium text-muted-foreground">
               Triggered By
             </p>
-            <p className="text-sm">{"Manual"}</p>
+            <p className="text-sm">{"Scheduled"}</p>
           </div>
         </div>
       </CardContent>

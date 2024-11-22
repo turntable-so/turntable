@@ -10,7 +10,9 @@ type JobCardProps = {
 };
 
 export default function JobCard({ job }: JobCardProps) {
-  const cronExpression = cronstrue.toString(job.cron_str);
+  const cronExpression = job.cron_str
+    ? cronstrue.toString(job.cron_str)
+    : "No cron expression";
 
   const hasSucceeded = job.latest_run?.status === "SUCCESS";
   const lastRunDate = job.latest_run?.date_done;

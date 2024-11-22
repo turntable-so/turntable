@@ -581,6 +581,15 @@ class TaskResultSerializer(serializers.ModelSerializer):
                     return obj.result
         return None
 
+    def get_task_kwargs(self, obj):
+        if obj.result:
+            try:
+                first = ast.literal_eval(obj.result)
+                return ast.literal_eval(first)
+            except (ValueError, SyntaxError):
+                return None
+        return None
+
     def get_job_id(self, obj):
         return obj.job_id
 
@@ -597,6 +606,7 @@ class TaskResultSerializer(serializers.ModelSerializer):
             "date_done",
             "traceback",
             "artifacts",
+            "task_kwargs",
         ]
 
 

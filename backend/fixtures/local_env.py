@@ -169,7 +169,7 @@ def create_local_orchestration(workspace):
     task_kwargs = {
         "workspace_id": str(workspace.id),
     }
-    for state in [states.FAILURE, states.SUCCESS]:
+    for state in [states.FAILURE, states.SUCCESS, states.STARTED]:
         TaskResult.objects.create(
             task_id=str(random.randint(10, 10000)),
             id=random.randint(10, 10000),

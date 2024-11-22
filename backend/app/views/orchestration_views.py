@@ -70,13 +70,14 @@ class JobViewSet(viewsets.ModelViewSet):
     def analytics(self, request, pk=None):
         job = DBTOrchestrator.objects.get(id=pk)
 
-        total_runs_queryset = job.most_recent(n=None)
+        n = 100
+        total_runs_queryset = job.most_recent(n=n)
         total_runs = total_runs_queryset.count()
 
-        succeeded_runs_queryset = job.most_recent(n=None, successes_only=True)
+        succeeded_runs_queryset = job.most_recent(n=n, successes_only=True)
         succeeded_runs = succeeded_runs_queryset.count()
 
-        errored_runs_queryset = job.most_recent(n=None, failures_only=True)
+        errored_runs_queryset = job.most_recent(n=n, failures_only=True)
         errored_runs = errored_runs_queryset.count()
 
         success_rate = (succeeded_runs / total_runs) * 100 if total_runs > 0 else 0

@@ -850,12 +850,22 @@ export async function getJob(id: string): Promise<Job> {
 
 export type Run = {
   task_id: string;
-  status: "FAILURE" | "SUCCESS";
-  result: any;
+  status: "FAILURE" | "SUCCESS" | "STARTED";
+  result: {
+    success: boolean;
+    stdouts: Array<string>;
+    stderrs: Array<string>;
+    run_results: any;
+  };
   date_created: string;
   date_done: string;
   traceback: any;
-  artifacts: Array<any>;
+  artifacts: Array<{
+    id: string;
+    artifact_type: string;
+    artifact: string;
+  }>;
+  task_kwargs: any;
 };
 
 export type RunWithJob = Run & {
