@@ -1,29 +1,26 @@
+"use client";
 
-'use client'
-
-import { getJob } from "@/app/actions/actions"
-import JobForm from "@/components/jobs/job-form"
-import { useEffect, useState } from "react"
+import { getJob } from "@/app/actions/actions";
+import JobForm from "@/components/jobs/job-form";
+import { useEffect, useState } from "react";
 
 export default function EditJobPage({ params }: { params: { jobId: string } }) {
-    const [job, setJob] = useState(null)
-    useEffect(() => {
-        const fetchJob = async () => {
-            const res = await getJob(params.jobId)
-            if (res.id) {
-                setJob(res as any)
-            }
-        }
-        fetchJob()
-    }, [])
+  const [job, setJob] = useState(null);
+  useEffect(() => {
+    const fetchJob = async () => {
+      const res = await getJob(params.jobId);
+      if (res.id) {
+        setJob(res as any);
+      }
+    };
+    fetchJob();
+  }, []);
 
-    if (!job) {
-        return null
-    }
+  if (!job) {
+    return null;
+  }
 
-    console.log({ job })
+  console.log({ job });
 
-    return (
-        <JobForm title={`Edit ${job.name}`} job={job} />
-    )
+  return <JobForm title={`Edit ${job.name}`} job={job} />;
 }

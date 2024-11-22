@@ -1,17 +1,17 @@
-from app.models.resources import DBTCoreDetails, DBTResource
-from django_celery_results.models import TaskResult
-from rest_framework import status, viewsets
-from rest_framework.decorators import action
-from rest_framework.pagination import PageNumberPagination
-from rest_framework.response import Response
-
-from django.db.models import OuterRef, Subquery
 from api.serializers import (
     DBTCoreDetailsSerializer,
     DBTOrchestratorSerializer,
     TaskResultSerializer,
     TaskResultWithJobSerializer,
 )
+from django.db.models import OuterRef, Subquery
+from django_celery_results.models import TaskResult
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
+
+from app.models.resources import DBTCoreDetails
 from app.models.workflows import DBTOrchestrator
 
 

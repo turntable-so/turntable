@@ -1,7 +1,7 @@
 import ast
 import json
 
-from django.contrib.auth.models import Group, User
+from django.contrib.auth.models import Group
 from django_celery_beat.models import CrontabSchedule
 from django_celery_results.models import TaskResult
 from djoser.serializers import UserCreateSerializer, UserSerializer

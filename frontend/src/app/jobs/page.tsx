@@ -62,7 +62,7 @@ export default function JobsPage({ searchParams }: JobsPageProps) {
   useEffect(() => {
     isMountedRef.current = true;
     fetchData();
-    pollingInterval.current = setInterval(fetchData, 3000);
+    pollingInterval.current = setInterval(fetchData, 2000);
     return () => {
       isMountedRef.current = false;
       if (pollingInterval.current) {

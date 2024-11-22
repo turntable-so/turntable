@@ -8,14 +8,16 @@ import {
   getJob,
   getJobAnalytics,
   getRunsForJob,
+  startJob,
 } from "@/app/actions/actions";
 import JobIdPage from "@/components/jobs/id/job-id-page";
 import FullWidthPageLayout from "@/components/layout/FullWidthPageLayout";
 import { Button } from "@/components/ui/button";
 import { Edit, Loader2, Play } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 type JobPageProps = {
   params: { jobId: string };
@@ -37,7 +39,9 @@ export default function JobPage({ params, searchParams }: JobPageProps) {
   const isMountedRef = useRef<boolean>(true);
 
   const fetchData = async () => {
+    console.log("[fetchData] first log");
     if (!isMountedRef.current) return;
+    console.log("[fetchData] second log");
 
     const [jobData, runsData, analyticsData] = await Promise.all([
       getJob(jobId),
@@ -48,8 +52,10 @@ export default function JobPage({ params, searchParams }: JobPageProps) {
       }),
       getJobAnalytics(jobId),
     ]);
+    console.log("[fetchData] third log");
 
     if (!isMountedRef.current) return;
+    console.log("[fetchData] fourth log");
 
     setJob(jobData);
     setPaginatedRuns(runsData);
@@ -57,14 +63,37 @@ export default function JobPage({ params, searchParams }: JobPageProps) {
   };
 
   const RunNowButton = () => {
+    const router = useRouter();
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleRunNow = async () => {
+      setIsLoading(true);
+      try {
+        const job = await startJob(jobId);
+        if (job) {
+          toast.success("Job started");
+          router.refresh();
+        } else {
+          toast.error("Failed to start job");
+        }
+      } catch (error) {
+        toast.error("Failed to start job");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     return (
       <Button
         className="rounded-full"
-        onClick={() => {
-          console.log("Run job");
-        }}
+        onClick={handleRunNow}
+        disabled={isLoading}
       >
-        <Play className="w-4 h-4 mr-2" />
+        {isLoading ? (
+          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+        ) : (
+          <Play className="w-4 h-4 mr-2" />
+        )}
         Run Now
       </Button>
     );
@@ -87,7 +116,7 @@ export default function JobPage({ params, searchParams }: JobPageProps) {
     isMountedRef.current = true;
 
     fetchData();
-    pollingInterval.current = setInterval(fetchData, 3000);
+    pollingInterval.current = setInterval(fetchData, 2000);
 
     return () => {
       isMountedRef.current = false;

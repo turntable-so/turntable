@@ -946,7 +946,7 @@ type CreateJobPayload = {
 };
 
 export async function createJob(payload: CreateJobPayload) {
-  const response = await fetcher(`/jobs/`, {
+  const response = await fetcher("/jobs/", {
     cookies,
     method: "POST",
     body: payload,
@@ -964,9 +964,21 @@ export async function updateJob(jobId: string, payload: CreateJobPayload) {
 }
 
 export async function getEnvironments() {
-  const response = await fetcher(`/jobs/environments/`, {
+  const response = await fetcher("/jobs/environments/", {
     cookies,
     method: "GET",
   });
   return await response.json();
+}
+
+export async function startJob(jobId: string): Promise<Job | null> {
+  try {
+    const response = await fetcher(`/jobs/${jobId}/start/`, {
+      cookies,
+      method: "POST",
+    });
+    return await response.json();
+  } catch (error) {
+    return null;
+  }
 }

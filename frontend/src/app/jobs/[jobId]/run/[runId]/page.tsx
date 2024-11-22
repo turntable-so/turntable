@@ -1,9 +1,5 @@
 "use client";
 
-import { Loader2, RefreshCw } from "lucide-react";
-import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-
 import {
   type Job,
   type RunWithJob,
@@ -14,6 +10,9 @@ import JobRunIdPage from "@/components/jobs/runs/job-run-id-page";
 import FullWidthPageLayout from "@/components/layout/FullWidthPageLayout";
 import { Button } from "@/components/ui/button";
 import { truncateUuid } from "@/lib/id-utils";
+import { Loader2, RefreshCw } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 type JobRunPageProps = {
   params: { jobId: string; runId: string };
@@ -60,14 +59,10 @@ export default function JobRunPage({ params }: JobRunPageProps) {
   useEffect(() => {
     isMountedRef.current = true;
 
-    // Initial fetch
     fetchData();
-
-    // Set up polling interval to fetch data every 3 seconds
-    pollingInterval.current = setInterval(fetchData, 3000);
+    pollingInterval.current = setInterval(fetchData, 2000);
 
     return () => {
-      // Cleanup function to prevent memory leaks
       isMountedRef.current = false;
       if (pollingInterval.current) {
         clearInterval(pollingInterval.current);
@@ -77,7 +72,6 @@ export default function JobRunPage({ params }: JobRunPageProps) {
   }, [pathname, jobId, runId]);
 
   if (!run || !job) {
-    // Return a loading indicator or skeleton
     return (
       <FullWidthPageLayout title={""} button={<RunAgainButton />}>
         <div className="flex justify-center items-center h-full">
