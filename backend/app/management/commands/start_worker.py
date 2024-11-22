@@ -20,11 +20,11 @@ class Command(BaseCommand):
         parser.add_argument(
             "--mode", choices=["demo", "dev", "dev-internal", "staging"]
         )
-        parser.add_argument("--concurrency", type=int, default=100)
+        parser.add_argument("--concurrency", type=int, default=8)
         parser.add_argument(
             "--pool",
             choices=["solo", "threads", "processes", "gevent", "eventlet"],
-            default="gevent",
+            default="threads",
         )
 
     def handle(self, *args, **options):
