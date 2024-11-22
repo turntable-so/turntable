@@ -1,14 +1,13 @@
 import type { Run } from "@/app/actions/actions";
-import { Card, CardContent } from "@/components/ui/card";
-import Convert from "ansi-to-html";
-import * as React from "react";
-import { ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import Convert from "ansi-to-html";
+import { ChevronsUpDown } from "lucide-react";
 
 type RunSummaryProps = {
   run: Run;
@@ -57,10 +56,6 @@ export default function RunSummary({ run }: RunSummaryProps) {
         ))}
       </div>
     );
-  };
-
-  const StartedContent = () => {
-    return <p>Started</p>;
   };
 
   const StatusComponentMap = {

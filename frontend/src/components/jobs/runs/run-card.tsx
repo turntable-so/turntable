@@ -1,17 +1,21 @@
 import type { RunWithJob } from "@/app/actions/actions";
-import { Card, CardHeader, CardTitle, CardDescription } from "../../ui/card";
-import { CheckCircle2, CircleX } from "lucide-react";
 import dayjs from "@/lib/dayjs";
+import { truncateUuid } from "@/lib/id-utils";
+import { capitalize } from "lodash";
 import Link from "next/link";
+import { Card, CardDescription, CardHeader, CardTitle } from "../../ui/card";
 import StatusIcon from "../status-icon";
+import { StatusToVerbMap } from "../utils";
 
 type RunCardProps = {
   run: RunWithJob;
 };
 
 export default function RunCard({ run }: RunCardProps) {
-  const hasSucceeded = run.status === "SUCCESS";
-  const dateDone = run.date_done ? dayjs(run.date_done).fromNow() : null;
+  const dateDone = run.date_done ? dayjs.utc(run.date_done).fromNow() : null;
+  const duration = run.date_done
+    ? dayjs(run.date_done).diff(run.date_created, "seconds")
+    : null;
 
   return (
     <Link href={`/jobs/${run.job_id}/run/${run.task_id}`}>
@@ -24,7 +28,7 @@ export default function RunCard({ run }: RunCardProps) {
             <div className="w-full">
               <div className="flex justify-between items-center">
                 <div className="flex flex-col gap-1">
-                  <CardTitle>Run {run.task_id}</CardTitle>
+                  <CardTitle>Run {truncateUuid(run.task_id)}</CardTitle>
                   <CardDescription>{run.job_name}</CardDescription>
                 </div>
 
@@ -32,15 +36,18 @@ export default function RunCard({ run }: RunCardProps) {
                   <div className="flex items-center justify-end gap-2">
                     {dateDone ? (
                       <p>
-                        {hasSucceeded ? "Succeeded" : "Failed"} {dateDone}
+                        {capitalize(StatusToVerbMap[run.status || "UNKNOWN"])}{" "}
+                        {dateDone}
                       </p>
                     ) : (
                       <p>Not completed yet</p>
                     )}
                   </div>
-                  <div className="flex items-center justify-end gap-2">
-                    <p>(H) Took 25s</p>
-                  </div>
+                  {duration && duration !== 0 ? (
+                    <div className="flex items-center justify-end gap-2">
+                      <p>Took {duration}s</p>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>

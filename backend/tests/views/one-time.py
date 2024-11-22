@@ -1,14 +1,11 @@
 import django
 from django.conf import settings
-
 from rest_framework.test import APIClient
-
 
 django.setup()
 
 if __name__ == "__main__":
-    from app.models.workflows import DBTOrchestrator
-    from app.models import User, DBTResource
+    from app.models import DBTResource, User
 
     settings.ALLOWED_HOSTS = ["*"]
     client = APIClient()
@@ -21,16 +18,51 @@ if __name__ == "__main__":
         "dbtresource_id": resource.id,
     }
 
+    commands = ["dbt deps", "dbt parse", "dbt run"]
+
     BASE_DATA = {
-        "cron_str": "0 0 * * *",
-        "commands": ["dbt deps", "dbt parse", "dbt run"],
+        "commands": commands,
+        "cron_str": "*/1 * * * *",
+        "name": "test-1",
     }
 
-    data = {**resource_data, **BASE_DATA}
-    response = client.post("/jobs/", data, format="json")
-    print(response.data, response.status_code)
-    scheduled_workflow = DBTOrchestrator.objects.get(id=response.data["id"])
-    response = client.post(f"/jobs/{scheduled_workflow.id}/start/")
-    workflow = DBTOrchestrator.objects.get(id=response.data["id"])
-    # _, task_id = workflow.await_next_result()
-    # response = client.get(f"/runs/{task_id}/")
+    BASE_DATA_2 = {
+        "commands": commands,
+        "cron_str": "*/2 * * * *",
+        "name": "test-2",
+    }
+
+    BASE_DATA_3 = {
+        "commands": commands,
+        "cron_str": "*/3 * * * *",
+        "name": "test-3",
+    }
+
+    BASE_DATA_4 = {
+        "commands": commands,
+        "cron_str": "*/4 * * * *",
+        "name": "test-4",
+    }
+
+    BASE_DATA_5 = {
+        "commands": commands,
+        "cron_str": "*/5 * * * *",
+        "name": "test-5",
+    }
+
+    BASE_DATA_6 = {
+        "commands": commands,
+        "cron_str": "*/6 * * * *",
+        "name": "test-6",
+    }
+
+    for data in [
+        BASE_DATA,
+        BASE_DATA_2,
+        BASE_DATA_3,
+        BASE_DATA_4,
+        BASE_DATA_5,
+        BASE_DATA_6,
+    ]:
+        data = {**resource_data, **data}
+        client.post("/jobs/", data, format="json")

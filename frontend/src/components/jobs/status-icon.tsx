@@ -1,15 +1,8 @@
 import { cn } from "@/lib/utils";
-import {
-  CheckCircle2,
-  CheckCircleIcon,
-  CheckIcon,
-  CircleX,
-  Loader2,
-  XCircleIcon,
-} from "lucide-react";
+import { CheckCircle2, CircleDashed, CircleX, Loader2 } from "lucide-react";
 
 type StatusIconProps = {
-  status: "SUCCESS" | "FAILURE" | "STARTED";
+  status: "SUCCESS" | "FAILURE" | "STARTED" | "NOT_RAN_YET";
   size?: "sm" | "lg";
 };
 
@@ -24,11 +17,15 @@ export default function StatusIcon({ status, size = "sm" }: StatusIconProps) {
   const StartedIcon = () => (
     <Loader2 className={cn(sizeClass, "animate-spin text-orange-500")} />
   );
+  const NotRanYetIcon = () => (
+    <CircleDashed className={cn(sizeClass, "text-gray-500")} />
+  );
 
   const StatusComponentMap = {
     SUCCESS: SuccessIcon,
     FAILURE: FailureIcon,
     STARTED: StartedIcon,
+    NOT_RAN_YET: NotRanYetIcon,
   };
 
   return StatusComponentMap[status]();

@@ -5,6 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
+from django.db.models import OuterRef, Subquery
 from api.serializers import (
     DBTCoreDetailsSerializer,
     DBTOrchestratorSerializer,
@@ -40,7 +41,20 @@ class JobViewSet(viewsets.ModelViewSet):
 
     def list(self, request):
         workspace = request.user.current_workspace()
-        queryset = DBTOrchestrator.objects.filter(workspace=workspace)
+
+        latest_task_subquery = (
+            TaskResult.objects.filter(
+                periodic_task_name=OuterRef("replacement_identifier")
+            )
+            .order_by("-date_done")
+            .values("date_done")[:1]
+        )
+        queryset = (
+            DBTOrchestrator.objects.filter(workspace=workspace, crontab__isnull=False)
+            .annotate(latest_date_done=Subquery(latest_task_subquery))
+            .order_by("-latest_date_done")
+        )
+
         paginator = Pagination()
         paginated_queryset = paginator.paginate_queryset(queryset, request)
         serializer = DBTOrchestratorSerializer(paginated_queryset, many=True)
