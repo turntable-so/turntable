@@ -39,7 +39,7 @@ export default function JobIdPage({
         <p className="flex items-center gap-2 text-muted-foreground">
           <AlarmClock className="w-4 h-4" />
           {job.next_run
-            ? dayjs(job.next_run).format("MMM D, YYYY, h:mma")
+            ? dayjs.utc(job.next_run).local().format("MMM D, YYYY, h:mma")
             : "No next run"}
         </p>
       </div>
