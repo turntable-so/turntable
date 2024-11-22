@@ -41,23 +41,10 @@ class JobViewSet(viewsets.ModelViewSet):
 
     def list(self, request):
         workspace = request.user.current_workspace()
-
-        latest_task_subquery = (
-            TaskResult.objects.filter(
-                periodic_task_name=OuterRef("replacement_identifier")
-            )
-            .order_by("-date_done")
-            .values("date_done")[:1]
-        )
-        queryset = (
-            DBTOrchestrator.objects.filter(workspace=workspace, crontab__isnull=False)
-            .annotate(latest_date_done=Subquery(latest_task_subquery))
-            .order_by("-latest_date_done")
-        )
-
+        data = DBTOrchestrator.objects.filter(workspace=workspace)
         paginator = Pagination()
-        paginated_queryset = paginator.paginate_queryset(queryset, request)
-        serializer = DBTOrchestratorSerializer(paginated_queryset, many=True)
+        paginated_data = paginator.paginate_queryset(data, request)
+        serializer = DBTOrchestratorSerializer(paginated_data, many=True)
         return paginator.get_paginated_response(serializer.data)
 
     @action(detail=False, methods=["get"])

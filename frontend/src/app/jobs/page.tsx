@@ -12,6 +12,7 @@ import RunsList from "@/components/jobs/runs/runs-list";
 import FullWidthPageLayout from "@/components/layout/FullWidthPageLayout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import dayjs from "dayjs";
 import { Loader2, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -55,7 +56,11 @@ export default function JobsPage({ searchParams }: JobsPageProps) {
 
     if (!isMountedRef.current) return;
 
-    setJobsResult(jobsData);
+    const sortedJobs = jobsData.results.sort((a, b) => {
+      return dayjs.utc(a.next_run).diff(dayjs.utc(b.next_run));
+    });
+
+    setJobsResult({ ...jobsData, results: sortedJobs });
     setRunsResult(runsData);
   };
 
