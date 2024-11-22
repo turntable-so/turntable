@@ -6,7 +6,6 @@ django.setup()
 
 if __name__ == "__main__":
     from app.models import DBTResource, User
-    from app.models.workflows import DBTOrchestrator
 
     settings.ALLOWED_HOSTS = ["*"]
     client = APIClient()
@@ -57,12 +56,6 @@ if __name__ == "__main__":
         "name": "test-6",
     }
 
-    def create_job(inp_data):
-        data = {**resource_data, **inp_data}
-        response = client.post("/jobs/", data, format="json")
-        scheduled_workflow = DBTOrchestrator.objects.get(id=response.data["id"])
-        response = client.post(f"/jobs/{scheduled_workflow.id}/start/")
-
     for data in [
         BASE_DATA,
         BASE_DATA_2,
@@ -71,4 +64,5 @@ if __name__ == "__main__":
         BASE_DATA_5,
         BASE_DATA_6,
     ]:
-        create_job(data)
+        data = {**resource_data, **data}
+        client.post("/jobs/", data, format="json")

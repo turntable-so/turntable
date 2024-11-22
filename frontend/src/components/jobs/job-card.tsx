@@ -25,7 +25,7 @@ export default function JobCard({ job }: JobCardProps) {
         <CardHeader>
           <div className="flex items-center space-x-4">
             <StatusIcon
-              status={job.latest_run?.status || "STARTED"}
+              status={lastRunDate ? job.latest_run?.status : "NOT_RAN_YET"}
               size="lg"
             />
             <div className="w-full">

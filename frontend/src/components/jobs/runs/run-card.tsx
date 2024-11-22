@@ -14,7 +14,7 @@ type RunCardProps = {
 export default function RunCard({ run }: RunCardProps) {
   const dateDone = run.date_done ? dayjs.utc(run.date_done).fromNow() : null;
   const duration = run.date_done
-    ? `${dayjs(run.date_done).diff(run.date_created, "seconds")}s`
+    ? dayjs(run.date_done).diff(run.date_created, "seconds")
     : null;
 
   return (
@@ -43,9 +43,11 @@ export default function RunCard({ run }: RunCardProps) {
                       <p>Not completed yet</p>
                     )}
                   </div>
-                  <div className="flex items-center justify-end gap-2">
-                    <p>Took {duration}</p>
-                  </div>
+                  {duration && duration !== 0 ? (
+                    <div className="flex items-center justify-end gap-2">
+                      <p>Took {duration}s</p>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>
