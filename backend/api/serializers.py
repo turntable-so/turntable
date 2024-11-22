@@ -382,6 +382,7 @@ class DBTCoreDetailsSerializer(ResourceDetailsSerializer):
     class Meta:
         model = DBTCoreDetails
         fields = [
+            "id",
             "repository",
             "project_path",
             "target_name",
@@ -389,6 +390,7 @@ class DBTCoreDetailsSerializer(ResourceDetailsSerializer):
             "version",
             "database",
             "schema",
+            "environment",
         ]
 
     def update(self, instance, validated_data):
@@ -526,7 +528,6 @@ class DBTOrchestratorSerializer(CrontabWorkflowSerializer):
         model = DBTOrchestrator
         fields = [
             "id",
-            "workspace_id",
             "dbtresource_id",
             "cron_str",
             "commands",

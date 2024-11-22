@@ -1,3 +1,4 @@
+from app.models.resources import DBTCoreDetails, DBTResource
 from django_celery_results.models import TaskResult
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -5,6 +6,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
 from api.serializers import (
+    DBTCoreDetailsSerializer,
     DBTOrchestratorSerializer,
     TaskResultSerializer,
     TaskResultWithJobSerializer,
@@ -13,25 +15,27 @@ from app.models.workflows import DBTOrchestrator
 
 
 class Pagination(PageNumberPagination):
-    page_size = 5
+    page_size = 25
     page_size_query_param = "page_size"
     max_page_size = 100
 
 
 class JobViewSet(viewsets.ModelViewSet):
     def create(self, request):
+        workspace = request.user.current_workspace()
         serializer = DBTOrchestratorSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        serializer.save(workspace=workspace)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def update(self, request, pk=None):
+        workspace = request.user.current_workspace()
         current_orchestrator = DBTOrchestrator.objects.get(id=pk)
         serializer = DBTOrchestratorSerializer(
             instance=current_orchestrator, data=request.data
         )
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        serializer.save(workspace=workspace)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def list(self, request):
@@ -41,6 +45,13 @@ class JobViewSet(viewsets.ModelViewSet):
         paginated_queryset = paginator.paginate_queryset(queryset, request)
         serializer = DBTOrchestratorSerializer(paginated_queryset, many=True)
         return paginator.get_paginated_response(serializer.data)
+
+    @action(detail=False, methods=["get"])
+    def environments(self, request):
+        workspace = request.user.current_workspace()
+        environments = DBTCoreDetails.objects.filter(workspace=workspace)
+        serializer = DBTCoreDetailsSerializer(environments, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def retrieve(self, request, pk=None):
         data = DBTOrchestrator.objects.get(id=pk)

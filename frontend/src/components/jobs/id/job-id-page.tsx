@@ -8,7 +8,7 @@ import type {
   Run,
 } from "@/app/actions/actions";
 import { Button } from "@/components/ui/button";
-import { AlarmClock, CircleHelp, Play } from "lucide-react";
+import { AlarmClock, CircleHelp, Edit, Play } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import dayjs from "dayjs";
 import RunsList from "../runs/runs-list";
+import { useRouter } from "next/navigation";
 
 type JobIdPageProps = {
   job: Job;
@@ -55,8 +56,24 @@ export default function JobIdPage({
     );
   };
 
+  const EditJobButton = () => {
+    const router = useRouter()
+    return (
+      <Button
+        variant='outline'
+        className="rounded-full"
+        onClick={() => {
+          router.push(`/jobs/${job.id}/edit`);
+        }}
+      >
+        <Edit className="w-4 h-4 mr-2" />
+        Edit Job
+      </Button>
+    );
+  };
+
   return (
-    <FullWidthPageLayout title={job.name} button={<RunNowButton />}>
+    <FullWidthPageLayout title={job.name} button={<RunNowButton />} secondaryButton={<EditJobButton />}>
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <p className="text-sm font-medium">Next Run</p>
