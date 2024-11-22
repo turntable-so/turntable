@@ -4,6 +4,7 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GripVertical, Trash2, Plus } from "lucide-react";
+import { useEffect } from "react";
 import { cn } from "@/lib/utils";
 import {
     Form,
@@ -76,6 +77,12 @@ export const CommandList = ({ form }: { form: any }) => {
         name: "commands",
     });
 
+    useEffect(() => {
+        if (fields.length === 0) {
+            append("dbt build");
+        }
+    }, [fields.length, append]);
+
     const handleAddCommand = () => {
         append("");
     };
@@ -93,7 +100,7 @@ export const CommandList = ({ form }: { form: any }) => {
                                 {fields.map((field, index) => (
                                     <CommandItem
                                         key={field.id}
-                                        command={field.value}
+                                        command={form.watch(`commands.${index}`)}
                                         index={index}
                                         moveCommand={move}
                                         onDelete={() => remove(index)}

@@ -24,6 +24,6 @@ export default function EditJobPage({ params }: { params: { jobId: string } }) {
     console.log({ job })
 
     return (
-        <JobForm title={`Edit ${job.name}`} job={job} job={job} />
+        <JobForm title={`Edit ${job.name}`} job={job} />
     )
 }

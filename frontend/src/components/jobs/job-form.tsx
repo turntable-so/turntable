@@ -15,6 +15,7 @@ import { CommandList } from "./command-list"
 import {
     Form,
     FormControl,
+    FormDescription,
     FormField,
     FormItem,
     FormLabel,
@@ -23,7 +24,8 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { toast } from "sonner"
-import { createJob, getEnvironments } from "@/app/actions/actions"
+import { createJob, getEnvironments, updateJob } from "@/app/actions/actions"
+import Link from "next/link"
 
 const FormSchema = z.object({
     name: z.string().min(2, {
@@ -43,14 +45,15 @@ const FormSchema = z.object({
         .optional(),
 });
 
-export default function NewJob() {
+export default function JobForm({ title, job }: { title: string, job?: any }) {
     const [environments, setEnvironments] = React.useState<[]>([])
     const form = useForm<z.infer<typeof FormSchema>>({
         resolver: zodResolver(FormSchema),
         defaultValues: {
-            name: "",
-            commands: ["dbt build"],
-            cron_str: "",
+            name: job?.name || "",
+            dbtresource_id: job?.dbtresource_id || "",
+            commands: Array.isArray(job?.commands) ? job.commands : ["dbt build"],
+            cron_str: job?.cron_str || "",
         },
     });
     const router = useRouter()
@@ -64,20 +67,32 @@ export default function NewJob() {
     }, [])
 
     async function onSubmit(data: z.infer<typeof FormSchema>) {
-        const result = await createJob(data);
-        if (result.id) {
-            toast.success("Job created successfully");
-            router.push(`/jobs/${result.id}`);
+        if (job) {
+            const result = await updateJob(job.id, data);
+            if (result.id) {
+                toast.success("Job updated successfully");
+                router.push(`/jobs/${result.id}`);
+            } else {
+                console.error(result)
+                toast.error("Failed to update job");
+            }
         } else {
-            console.error(result)
-            toast.error("Failed to create job");
+            const result = await createJob(data);
+            if (result.id) {
+                toast.success("Job created successfully");
+                router.push(`/jobs/${result.id}`);
+            } else {
+                console.error(result)
+                toast.error("Failed to create job");
+            }
         }
+
     }
 
     return (
         <div className="container mx-auto p-4">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">Create new job</h1>
+                <h1 className="text-2xl font-medium">{title}</h1>
             </div>
 
             <Form {...form}>
@@ -151,6 +166,13 @@ export default function NewJob() {
                                         <FormControl>
                                             <Input id="cron-schedule" placeholder="Cron schedule (0 0 * * *)" {...field} />
                                         </FormControl>
+                                        <FormDescription>
+                                            We recommend using
+                                            <Link href="https://crontab.guru/" target="_blank" className="px-1 text-blue-500 underline">
+                                                crontab.guru
+                                            </Link>
+                                            to help create your cron schedule.
+                                        </FormDescription>
                                         <FormMessage />
                                     </FormItem>
                                 )}

@@ -954,6 +954,15 @@ export async function createJob(payload: CreateJobPayload) {
   return await response.json();
 }
 
+export async function updateJob(jobId: string, payload: CreateJobPayload) {
+  const response = await fetcher(`/jobs/${jobId}/`, {
+    cookies,
+    method: "PUT",
+    body: payload,
+  });
+  return await response.json();
+}
+
 export async function getEnvironments() {
   const response = await fetcher(`/jobs/environments/`, {
     cookies,
