@@ -1,7 +1,7 @@
 import type { RunWithJob } from "@/app/actions/actions";
-import RunCard from "./run-card";
 import { Fragment } from "react";
 import JobRunPagination from "../job-run-pagination";
+import RunCard from "./run-card";
 
 type RunsListProps = {
   runs: Array<RunWithJob>;
