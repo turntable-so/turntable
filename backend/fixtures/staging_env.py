@@ -291,6 +291,7 @@ def create_tableau_n(workspace, n):
             site=os.getenv(f"TABLEAU_{n}_SITE", ""),
             username=username,
             password=password,
+            is_token=os.getenv(f"TABLEAU_{n}_IS_TOKEN") == "true",
         ).save()
 
     return resource
@@ -353,12 +354,11 @@ def group_2(user):
 def group_3(user):
     workspace = create_workspace_n(user, "databricks", 0)
     databricks = create_databricks_n(workspace, 0)
-    tableau = create_tableau_n(workspace, 0)
     sshkey = create_ssh_key_n(workspace, 0)
     repository = create_repository_n(workspace, 0, sshkey)
     create_dbt_n(databricks, 0, repository=repository)
 
-    return [databricks, tableau]
+    return [databricks]
 
 
 def group_4(user):
@@ -388,6 +388,7 @@ def group_6(user):
     workspace = create_workspace_n(user, "bigquery", 3)
     bigquery = create_bigquery_n(workspace, 3)
     sshkey = create_ssh_key_n(workspace, 3)
+    tableau = create_tableau_n(workspace, 0)
     repository = create_repository_n(workspace, 3, sshkey)
     create_dbt_n(bigquery, 5, force_db=True, repository=repository)
-    return [bigquery]
+    return [bigquery, tableau]

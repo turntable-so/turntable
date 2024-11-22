@@ -37,10 +37,10 @@ def create_local_user():
 def create_local_workspace(user):
     # create turntable full
     try:
-        return Workspace.objects.get(id=0)
+        return Workspace.objects.get(id="0")
     except Workspace.DoesNotExist:
         workspace = Workspace.objects.create(
-            id=0,
+            id="0",
             name="Parkers Vinyl Shop",
         )
         workspace.add_admin(user)

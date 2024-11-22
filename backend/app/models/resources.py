@@ -30,7 +30,6 @@ from vinyl.lib.connect import (
 )
 from vinyl.lib.dbt import DBTProject, DBTTransition
 from vinyl.lib.dbt_methods import DBTDialect, DBTVersion
-from vinyl.lib.utils.files import save_orjson
 from vinyl.lib.utils.process import run_and_capture_subprocess
 
 
@@ -491,6 +490,7 @@ class TableauDetails(ResourceDetails):
     site = encrypt(models.CharField(max_length=255, default="", blank=True))
     username = encrypt(models.CharField(max_length=255, blank=False))
     password = encrypt(models.CharField(max_length=255, blank=False))
+    is_token = models.BooleanField(default=False)
 
     @property
     def datahub_extras(self):
@@ -506,8 +506,9 @@ class TableauDetails(ResourceDetails):
                     "config": {
                         "connect_uri": self.connect_uri,
                         "site": self.site or "",
-                        "username": self.username,
-                        "password": self.password,
+                        "token_name" if self.is_token else "username": self.username,
+                        "token_value" if self.is_token else "password": self.password,
+                        "ingest_tables_external": True,
                     },
                 },
                 "sink": get_sync_config(db_path),
@@ -740,16 +741,16 @@ class DBTCoreDetails(DBTResource):
             to_update = [
                 (
                     before.manifest_path,
-                    prod_environment.manifest_json,
+                    prod_environment.manifest,
                     override_manifest,
                 ),
-                (before.catalog_path, prod_environment.catalog_json, override_catalog),
+                (before.catalog_path, prod_environment.catalog, override_catalog),
             ]
-            for path, artifact_json, override in to_update:
-                if artifact_json is not None:
-                    if override or not os.path.exists(path):
-                        with open(path, "w") as f:
-                            save_orjson(artifact_json, f)
+            for path, artifact, override in to_update:
+                if artifact and (override or not os.path.exists(path)):
+                    with open(path, "w") as f:
+                        with artifact.open("r") as f2:
+                            f.write(f2.read())
             with self.dbt_repo_context(
                 isolate=isolate,
                 project_id=project_id,
