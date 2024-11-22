@@ -120,9 +120,7 @@ class ScheduledWorkflow(PolymorphicModel):
     def get_upcoming_tasks(self, n: int = 10):
         now = datetime.now(timezone.utc)
         if self.workflow_type == WorkflowType.ONE_TIME:
-            diff = self.clocked.clocked_time - datetime.now(
-                tz=self.clocked.clocked_time.tzinfo
-            )
+            diff = self.clocked.clocked_time - now
             return [diff.total_seconds()]
         cron_expression_list = [
             str(self.crontab.minute),

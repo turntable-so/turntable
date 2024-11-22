@@ -26,11 +26,17 @@ if __name__ == "__main__":
         "commands": ["dbt deps", "dbt parse", "dbt run"],
     }
 
-    data = {**resource_data, **BASE_DATA}
-    response = client.post("/jobs/", data, format="json")
-    print(response.data, response.status_code)
-    scheduled_workflow = DBTOrchestrator.objects.get(id=response.data["id"])
-    response = client.post(f"/jobs/{scheduled_workflow.id}/start/")
-    workflow = DBTOrchestrator.objects.get(id=response.data["id"])
-    # _, task_id = workflow.await_next_result()
-    # response = client.get(f"/runs/{task_id}/")
+    BASE_DATA_2 = {
+        "cron_str": "0 18 * * *",
+        "commands": ["dbt deps", "dbt parse", "dbt run"],
+    }
+
+    def create_job(inp_data):
+        data = {**resource_data, **inp_data}
+        response = client.post("/jobs/", data, format="json")
+        print(response.data, response.status_code)
+        scheduled_workflow = DBTOrchestrator.objects.get(id=response.data["id"])
+        response = client.post(f"/jobs/{scheduled_workflow.id}/start/")
+
+    create_job(BASE_DATA)
+    create_job(BASE_DATA_2)

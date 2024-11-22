@@ -59,10 +59,6 @@ export default function RunSummary({ run }: RunSummaryProps) {
     );
   };
 
-  const StartedContent = () => {
-    return <p>Started</p>;
-  };
-
   const StatusComponentMap = {
     SUCCESS: () => <SuccessContent />,
     FAILURE: () => <ErrorContent traceback={run.traceback} />,
