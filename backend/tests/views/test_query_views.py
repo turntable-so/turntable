@@ -53,6 +53,7 @@ class TestQueryViews:
     ):
         url = self._test(client, user, local_postgres, limit=limit)
         assert url.startswith(local_alternative_storage.s3_public_url)
+        assert local_alternative_storage.s3_bucket_name in url
 
     @require_env_vars("REDSHIFT_0_WORKSPACE_ID")
     def test_sql_query_redshift(self, client, user, remote_redshift):
