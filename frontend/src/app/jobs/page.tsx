@@ -61,15 +61,9 @@ export default function JobsPage({ searchParams }: JobsPageProps) {
 
   useEffect(() => {
     isMountedRef.current = true;
-
-    // Initial fetch
     fetchData();
-
-    // Set up polling interval to fetch data every 3 seconds
     pollingInterval.current = setInterval(fetchData, 3000);
-
     return () => {
-      // Cleanup function to prevent memory leaks
       isMountedRef.current = false;
       if (pollingInterval.current) {
         clearInterval(pollingInterval.current);
@@ -94,7 +88,7 @@ export default function JobsPage({ searchParams }: JobsPageProps) {
     return (
       <FullWidthPageLayout title="Jobs" button={<NewJobButton />}>
         <div className="flex justify-center items-center h-full">
-          <Loader2 className="size-4 animate-spin" />
+          <Loader2 className="h-6 w-6 animate-spin" />
         </div>
       </FullWidthPageLayout>
     );

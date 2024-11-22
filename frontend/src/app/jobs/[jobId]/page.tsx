@@ -88,7 +88,7 @@ export default function JobPage({ params, searchParams }: JobPageProps) {
     return (
       <FullWidthPageLayout button={<RunNowButton />}>
         <div className="flex justify-center items-center h-full">
-          <Loader2 className="size-4 animate-spin" />
+          <Loader2 className="h-6 w-6 animate-spin" />
         </div>
       </FullWidthPageLayout>
     );
