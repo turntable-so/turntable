@@ -7,7 +7,7 @@ authors = [
     { name = "Ian Tracey", email = "ian@turntable.so" },
     { name = "Justin Leder", email = "justin@turntable.so" },
 ]
-requires-python = ">=3.11, <3.12"
+requires-python = ">=3.12, <3.13"
 dependencies = [
     "fastapi>=0.111.0",
     "sse-starlette>=2.1.0",
