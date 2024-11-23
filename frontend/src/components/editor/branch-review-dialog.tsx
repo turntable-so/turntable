@@ -8,7 +8,7 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
 import { toast } from "sonner";
-import { Loader2, Undo2 } from "lucide-react";
+import { GitMerge, Loader2, Undo2 } from "lucide-react";
 import useSession from "@/app/hooks/use-session";
 import { sync } from "@/app/actions/actions";
 import {
@@ -155,6 +155,7 @@ export default function BranchReviewDialog({
                 disabled={hasChanges}
                 variant="secondary"
                 className="w-full"
+                size="sm"
                 onClick={handleSync}
               >
                 {isSyncing ? (
@@ -163,7 +164,10 @@ export default function BranchReviewDialog({
                     Syncing with {sourceBranch}
                   </div>
                 ) : (
-                  `Sync with ${sourceBranch || "main"}`
+                  <div className="flex items-center">
+                    <GitMerge className="h-4 w-4 mr-1" />
+                    <div>{`Sync with ${sourceBranch || "main"}`}</div>
+                  </div>
                 )}
               </Button>
               <>
@@ -302,7 +306,7 @@ export default function BranchReviewDialog({
 
           <div className="pl-1 w-3/4">
             {selectedChangeIndex !== undefined &&
-            changes?.[selectedChangeIndex] ? (
+              changes?.[selectedChangeIndex] ? (
               <div className="h-[98%]">
                 <div className="text-sm text-muted-foreground font-medium mb-2 text-center items-center">
                   {changes[selectedChangeIndex].path}

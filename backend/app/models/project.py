@@ -47,7 +47,7 @@ class Project(models.Model):
 
         if url.endswith(".git"):
             url = url[:-4]
-        return f"{url}/pull/new/{self.branch_name}"
+        return f"{url}/compare/{self.source_branch}...{self.branch_name}"
 
     def clone(self, isolate: bool = False):
         with self._code_repo_path(isolate) as path:
