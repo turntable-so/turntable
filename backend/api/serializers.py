@@ -1,6 +1,7 @@
 import ast
 import json
 
+import orjson
 from django.contrib.auth.models import Group, User
 from django_celery_beat.models import CrontabSchedule
 from django_celery_results.models import TaskResult
@@ -565,68 +566,99 @@ class TaskSerializer(serializers.ModelSerializer):
     result = serializers.SerializerMethodField()
     subtasks = serializers.SerializerMethodField()
 
+    def _ensure_task_cached(self, task_ids: list[str]) -> None:
+        """Fetch and cache any uncached tasks"""
+        uncached_ids = set(task_ids) - set(self.context["task_cache"])
+        if uncached_ids:
+            new_tasks = TaskResult.objects.filter(task_id__in=uncached_ids)
+            self.context["task_cache"].update(
+                {task.task_id: task for task in new_tasks}
+            )
+
+    def _parse_meta(self, instance) -> dict | None:
+        """Parse instance metadata, returning None if invalid"""
+        if not hasattr(instance, "meta"):
+            return None
+
+        if isinstance(instance.meta, dict):
+            return instance.meta
+
+        try:
+            return orjson.loads(instance.meta)
+        except (json.JSONDecodeError, AttributeError):
+            return None
+
+    def _process_subtasks(self, children: list) -> list:
+        """Process and serialize subtasks from children data"""
+        # Extract valid task entries
+        task_entries = [
+            (child[0][0], child[1])  # (task_id, metadata)
+            for child in children
+            if isinstance(child[0], list)
+        ]
+        if not task_entries:
+            return []
+
+        # Ensure all tasks are cached
+        task_ids = [task_id for task_id, _ in task_entries]
+        self._ensure_task_cached(task_ids)
+
+        # Serialize available tasks
+        tasks = TaskSerializer(
+            [self.context["task_cache"].get(task_id) for task_id in task_ids],
+            many=True,
+            context=self.context,
+        ).data
+
+        # Apply additional metadata
+        for task_data, (_, metadata) in zip(tasks, task_entries):
+            if metadata:
+                task_data.update(metadata)
+
+        return tasks
+
+    def _convert_result_strings(self, data):
+        if isinstance(data, dict):
+            return {k: self._convert_result_strings(v) for k, v in data.items()}
+        elif isinstance(data, list):
+            return [self._convert_result_strings(v) for v in data]
+        elif isinstance(data, str):
+            if data == "True":
+                return True
+            elif data == "False":
+                return False
+            elif data == "None":
+                return None
+        return data
+
     def get_result(self, obj):
         if obj.result:
             try:
-                return ast.literal_eval(obj.result)
-            except (ValueError, SyntaxError):
+                result = json.loads(obj.result)
+                return self._convert_result_strings(result)
+            except json.JSONDecodeError:
                 try:
-                    return json.loads(obj.result)
-                except json.JSONDecodeError:
+                    return ast.literal_eval(obj.result)
+                except (ValueError, SyntaxError):
                     return obj.result
         return None
 
+    def to_representation(self, instance):
+        # Initialize cache if needed
+        self.context.setdefault("task_cache", {})
+        self.context["task_cache"][instance.task_id] = instance
+
+        data = super().to_representation(instance)
+
+        # Process subtasks if present
+        meta = self._parse_meta(instance)
+        if meta and "children" in meta:
+            data["subtasks"] = self._process_subtasks(meta["children"])
+
+        return data
+
     def get_subtasks(self, obj):
-        try:
-            meta = obj.meta if isinstance(obj.meta, dict) else json.loads(obj.meta)
-        except (json.JSONDecodeError, AttributeError):
-            return []
-
-        if not meta or "children" not in meta:
-            return []
-
-        # Collect all task IDs first
-        task_ids = []
-        for subtask in meta["children"]:
-            if isinstance(subtask[0], list):
-                task_ids.append(subtask[0][0])
-
-        # Batch fetch all TaskResult objects
-        if hasattr(self.parent, "_instance_cache"):
-            # First get all tasks from cache that exist
-            task_objects = {}
-            missing_task_ids = []
-            for task_id in task_ids:
-                task_obj = self.parent._instance_cache.get(task_id)
-                if task_obj:
-                    task_objects[task_id] = task_obj
-                else:
-                    missing_task_ids.append(task_id)
-
-            # Fetch missing tasks from database
-            if missing_task_ids:
-                missing_tasks = TaskResult.objects.filter(task_id__in=missing_task_ids)
-                task_objects.update({task.task_id: task for task in missing_tasks})
-        else:
-            task_objects = {
-                task.task_id: task
-                for task in TaskResult.objects.filter(task_id__in=task_ids)
-            }
-
-        # Process results
-        serialized_tasks = []
-        for subtask in meta["children"]:
-            if isinstance(subtask[0], list):
-                task_id = subtask[0][0]
-                task_obj = task_objects.get(task_id)
-
-                if task_obj:
-                    task_data = TaskSerializer(task_obj).data
-                    if subtask[1]:
-                        task_data.update(subtask[1])
-                    serialized_tasks.append(task_data)
-
-        return serialized_tasks
+        return []
 
     class Meta:
         model = TaskResult

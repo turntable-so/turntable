@@ -23,7 +23,6 @@ def _validate_query_test(response, limit):
     return url
 
 
-@pytest.mark.django_db(transaction=True)
 @pytest.mark.usefixtures("force_isolate", "custom_celery")
 class TestQueryViews:
     def _test(
@@ -74,7 +73,6 @@ class TestQueryViews:
         self._test(client, user, remote_databricks)
 
 
-@pytest.mark.django_db(transaction=True)
 @pytest.mark.usefixtures("force_isolate", "custom_celery")
 class TestDBTQueryViews:
     @classmethod

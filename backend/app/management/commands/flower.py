@@ -1,7 +1,6 @@
 import os
 import subprocess
 
-from django.conf import settings
 from django.core.management.base import BaseCommand
 
 
@@ -14,7 +13,8 @@ class Command(BaseCommand):
 
         command = [
             "celery",
-            f"--broker={settings.CELERY_BROKER_URL}",
+            "-A",
+            "api",
             "flower",
             f"--basic-auth={superuser_email}:{superuser_password}",
             "--loglevel=none",

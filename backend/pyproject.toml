@@ -154,6 +154,7 @@ testpaths = [
 ]
 addopts = "--color=yes -v"
 DJANGO_SETTINGS_MODULE = "api.settings"
+asyncio_default_fixture_loop_scope = "function"
 timeout = 120
 
 [tool.ruff.lint]

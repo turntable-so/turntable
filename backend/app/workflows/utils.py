@@ -9,18 +9,30 @@ from celery.local import Proxy
 class CustomTask(Task):
     """
     Custom base class for tasks to override the `apply` method.
+
+    Argsrepr and kwargsrepr are used to ensure correct serialization of task_args and task_kwargs in the Result backend
+
     """
 
     def apply(self, *args, **kwargs):
         if os.getenv("CUSTOM_CELERY_EAGER") != "true":
-            return super().apply(*args, **kwargs)
+            return super().apply(
+                *args,
+                **kwargs,
+                argsrepr=args[0],
+                kwargsrepr=args[1],
+            )
         return self.apply_async(*args, **kwargs)
 
     def apply_async(self, *args, **kwargs):
-        if os.getenv("CUSTOM_CELERY_EAGER") != "true":
-            return super().apply_async(*args, **kwargs)
-        res = super().apply_async(*args, **kwargs)
-        res.get()
+        res = super().apply_async(
+            *args,
+            **kwargs,
+            argsrepr=args[0],
+            kwargsrepr=args[1],
+        )
+        if os.getenv("CUSTOM_CELERY_EAGER") == "true":
+            res.get(disable_sync_subtasks=False)
         return res
 
     def run_subtasks(self, *tasks):
@@ -78,6 +90,7 @@ def task(*args, **kwargs):
 
 class ChainResult(list):
     def get(self, *args, **kwargs):
+        kwargs["disable_sync_subtasks"] = False
         return [res.get(*args, **kwargs) for res in self]
 
 
