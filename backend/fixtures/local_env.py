@@ -1,11 +1,6 @@
-import json
 import os
-import random
-from datetime import datetime
 
-from celery import states
-from django_celery_beat.models import CrontabSchedule
-from django_celery_results.models import TaskResult
+from django.conf import settings
 
 from app.models import (
     DBTCoreDetails,
@@ -19,8 +14,8 @@ from app.models import (
     User,
     Workspace,
 )
-from app.models.resources import DBTResource, EnvironmentType
-from app.models.workflows import DBTOrchestrator
+from app.models.resources import EnvironmentType
+from app.models.settings import StorageSettings
 from vinyl.lib.dbt_methods import DBTVersion
 
 
@@ -46,6 +41,20 @@ def create_local_workspace(user):
         workspace.add_admin(user)
         workspace.save()
         return workspace
+
+
+def create_local_alternative_storage(workspace):
+    return StorageSettings.objects.create(
+        workspace=workspace,
+        s3_access_key=settings.AWS_S3_ACCESS_KEY_ID,
+        s3_secret_key=settings.AWS_S3_SECRET_ACCESS_KEY,
+        s3_bucket_name=os.getenv(
+            "MINIO_TEST_BUCKET_NAME", settings.AWS_STORAGE_BUCKET_NAME
+        ),
+        s3_endpoint_url=settings.AWS_S3_ENDPOINT_URL,
+        s3_public_url=settings.AWS_S3_PUBLIC_URL,
+        s3_region_name=getattr(settings, "AWS_S3_REGION_NAME", None),
+    )
 
 
 def create_ssh_key_n(workspace, n):
@@ -143,41 +152,3 @@ def create_local_metabase(workspace):
             ).save()
 
     return resource
-
-
-def create_local_orchestration(workspace):
-    crontab_schedule = CrontabSchedule.objects.create(
-        minute="0",
-        hour="12",
-        day_of_week="*",
-        day_of_month="*",
-        month_of_year="*",
-    )
-
-    dbt_resource = DBTResource.objects.filter(workspace=workspace).first()
-    if not dbt_resource:
-        raise Exception("No DBT resource found for workspace")
-
-    job = DBTOrchestrator.objects.create(
-        workspace=workspace,
-        dbtresource=dbt_resource,
-        crontab=crontab_schedule,
-        commands=["dbt ls", "dbt run"],
-        name=f"Test Job {random.randint(1, 1000)}",
-    )
-
-    task_kwargs = {
-        "workspace_id": str(workspace.id),
-    }
-    for state in [states.FAILURE, states.SUCCESS, states.STARTED]:
-        TaskResult.objects.create(
-            task_id=str(random.randint(10, 10000)),
-            id=random.randint(10, 10000),
-            status=state,
-            periodic_task_name=job.replacement_identifier,
-            result=None,
-            date_created=datetime.now(),
-            date_done=datetime.now(),
-            traceback=None,
-            task_kwargs=json.dumps(task_kwargs),
-        )

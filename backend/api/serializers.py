@@ -566,12 +566,19 @@ class TaskArtifactSerializer(serializers.ModelSerializer):
         fields = ["id", "artifact", "artifact_type"]
 
 
+class TaskListSerializer(serializers.ListSerializer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._instance_cache = {i.task_id: i for i in self.instance}
+
+
 class TaskResultSerializer(serializers.ModelSerializer):
     artifacts = TaskArtifactSerializer(
         source="taskartifact_set", many=True, read_only=True
     )
     result = serializers.SerializerMethodField()
     task_kwargs = serializers.SerializerMethodField()
+    subtasks = serializers.SerializerMethodField()
 
     def get_result(self, obj):
         if obj.result:
@@ -598,9 +605,62 @@ class TaskResultSerializer(serializers.ModelSerializer):
 
     def get_job_name(self, obj):
         return obj.job_name
+    
+    def get_subtasks(self, obj):
+        try:
+            meta = obj.meta if isinstance(obj.meta, dict) else json.loads(obj.meta)
+        except (json.JSONDecodeError, AttributeError):
+            return []
+
+        if not meta or "children" not in meta:
+            return []
+
+        # Collect all task IDs first
+        task_ids = []
+        for subtask in meta["children"]:
+            if isinstance(subtask[0], list):
+                task_ids.append(subtask[0][0])
+
+        # Batch fetch all TaskResult objects
+        if hasattr(self.parent, "_instance_cache"):
+            # First get all tasks from cache that exist
+            task_objects = {}
+            missing_task_ids = []
+            for task_id in task_ids:
+                task_obj = self.parent._instance_cache.get(task_id)
+                if task_obj:
+                    task_objects[task_id] = task_obj
+                else:
+                    missing_task_ids.append(task_id)
+
+            # Fetch missing tasks from database
+            if missing_task_ids:
+                missing_tasks = TaskResult.objects.filter(task_id__in=missing_task_ids)
+                task_objects.update({task.task_id: task for task in missing_tasks})
+        else:
+            task_objects = {
+                task.task_id: task
+                for task in TaskResult.objects.filter(task_id__in=task_ids)
+            }
+
+        # Process results
+        serialized_tasks = []
+        for subtask in meta["children"]:
+            if isinstance(subtask[0], list):
+                task_id = subtask[0][0]
+                task_obj = task_objects.get(task_id)
+
+                if task_obj:
+                    task_data = TaskResultSerializer(task_obj).data
+                    if subtask[1]:
+                        task_data.update(subtask[1])
+                    serialized_tasks.append(task_data)
+
+        return serialized_tasks
 
     class Meta:
         model = TaskResult
+        list_serializer_class = TaskListSerializer
         fields = [
             "task_id",
             "status",
@@ -610,6 +670,7 @@ class TaskResultSerializer(serializers.ModelSerializer):
             "traceback",
             "artifacts",
             "task_kwargs",
+            "subtasks",
         ]
 
 

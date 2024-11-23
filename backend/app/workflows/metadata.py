@@ -3,7 +3,7 @@ import tempfile
 from app.core.e2e import DataHubDBParser
 from app.models import Resource
 from app.models.resources import ArtifactSource
-from app.workflows.utils import chain, task
+from app.workflows.utils import task
 
 
 @task
@@ -24,11 +24,11 @@ def ingest_metadata(
     workspace_id: str,
     resource_id: str,
     workunits: int | None = None,
-    task_id: str | None = None,
+    parent_task_id: str | None = None,
 ):
     resource = Resource.objects.get(id=resource_id)
     resource.details.run_datahub_ingest(
-        task_id=self.request.id if not task_id else task_id,
+        task_id=self.request.id if not parent_task_id else parent_task_id,
         workunits=workunits,
     )
 
@@ -54,7 +54,7 @@ def sync_metadata(self, workspace_id: str, resource_id: str):
     }
     tasks = [
         prepare_dbt_repos.si(**standard_kwargs),
-        ingest_metadata.si(**standard_kwargs, task_id=self.request.id),
+        ingest_metadata.si(**standard_kwargs, parent_task_id=self.request.id),
         process_metadata.si(**standard_kwargs),
     ]
-    return chain(*tasks).do()
+    return self.run_subtasks(*tasks)

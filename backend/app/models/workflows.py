@@ -19,8 +19,9 @@ from django.db.models import OuterRef, Subquery
 
 from app.models.project import Project
 from app.models.resources import DBTResource, Resource
+from app.models.settings import StorageSettings
 from app.models.workspace import Workspace
-from app.services.storage_backends import CustomS3Boto3Storage
+from app.services.storage_backends import CustomFileField
 from app.workflows.metadata import sync_metadata
 from app.workflows.orchestration import run_dbt_commands
 
@@ -383,16 +384,6 @@ class DBTOrchestrator(ScheduledWorkflow):
         return filters
 
 
-def custom_upload_to(instance, filename):
-    """
-    Determine the custom folder path based on the instance's resource_id.
-    """
-    folder_name = f"task_artifacts/{instance.workspace_id}/{instance.task_id}/"
-
-    # Return the full file path
-    return os.path.join(folder_name, filename)
-
-
 class ArtifactType(models.TextChoices):
     # use label as the file name
     MANIFEST = "manifest", "manifest.json"
@@ -401,12 +392,26 @@ class ArtifactType(models.TextChoices):
 
 
 class TaskArtifact(models.Model):
+    def custom_upload_to(instance, filename):
+        """
+        Determine the custom folder path based on the instance's resource_id.
+        """
+        folder_name = f"task_artifacts/{instance.workspace_id}/{instance.task_id}/"
+
+        # Return the full file path
+        return os.path.join(folder_name, filename)
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    artifact = models.FileField(
-        upload_to=custom_upload_to, storage=CustomS3Boto3Storage()
+    artifact = CustomFileField(
+        upload_to=custom_upload_to,
+        storage_category=StorageSettings.StorageCategories.METADATA,
     )
     artifact_type = models.CharField(choices=ArtifactType.choices, max_length=255)
 
     # relationships
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
     task = models.ForeignKey(TaskResult, on_delete=models.CASCADE, to_field="task_id")
+
+    @property
+    def storage_applies_to(self):
+        return StorageSettings.StorageCategories.METADATA

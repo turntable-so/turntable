@@ -13,6 +13,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 from app.utils.test_utils import assert_ingest_output
 from app.workflows.metadata import process_metadata
 from fixtures.local_env import (
+    create_local_alternative_storage,
     create_local_metabase,
     create_local_postgres,
     create_local_user,
@@ -125,6 +126,11 @@ def local_postgres(workspace):
 
 
 @pytest.fixture
+def local_alternative_storage(workspace):
+    return create_local_alternative_storage(workspace)
+
+
+@pytest.fixture
 def local_metabase(workspace):
     return create_local_metabase(workspace)
 
@@ -228,9 +234,7 @@ def test_queue_name():
 
 
 @pytest.fixture(scope="session")
-def custom_celery_app(test_queue_name, eager):
-    if eager:
-        return None
+def custom_celery_app(test_queue_name):
     app = Celery("api")
 
     # Load configuration from Django settings
@@ -247,13 +251,8 @@ def custom_celery_app(test_queue_name, eager):
 def custom_celery_worker(
     custom_celery_app,
     test_queue_name,
-    eager,
     max_retries: int = 10,
 ):
-    if eager:
-        yield
-        return
-
     # Clear the queue before starting the worker
     custom_celery_app.control.purge()
 
@@ -283,15 +282,11 @@ def custom_celery_worker(
 
 
 @pytest.fixture(scope="session")
-def suppress_celery_errors(eager):
+def suppress_celery_errors():
     """
     Suppress error logs from celery.worker.control and kombu.pidbox
     by setting their log levels to CRITICAL.
     """
-    if eager:
-        yield
-        return
-
     loggers_to_suppress = [
         "celery.worker.control",
         "kombu.pidbox",
@@ -314,6 +309,4 @@ def suppress_celery_errors(eager):
 
 @pytest.fixture(scope="session")
 def custom_celery(custom_celery_worker, bypass_celery_beat, suppress_celery_errors):
-    if eager:
-        return None
     return custom_celery_worker

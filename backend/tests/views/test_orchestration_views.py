@@ -126,10 +126,16 @@ class TestOrchestrationViews:
         assert result["success"]
         assert result["run_results"]
 
-        # check artifacts
+        # check subtasks
         response = client.get(f"/runs/{task_id}/")
         assert response.status_code == 200
         data = response.data
+        assert data["subtasks"]
+        assert len(data["subtasks"]) == 3
+        for subtask in data["subtasks"]:
+            assert not subtask["subtasks"]
+
+        # check artifacts
         assert data["artifacts"]
         url = data["artifacts"][0]["artifact"]
         url = url.replace(settings.AWS_S3_PUBLIC_URL, settings.AWS_S3_ENDPOINT_URL)
