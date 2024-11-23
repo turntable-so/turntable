@@ -552,6 +552,12 @@ class TaskArtifactSerializer(serializers.ModelSerializer):
         fields = ["id", "artifact", "artifact_type"]
 
 
+class TaskListSerializer(serializers.ListSerializer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._instance_cache = {i.task_id: i for i in self.instance}
+
+
 class TaskSerializer(serializers.ModelSerializer):
     artifacts = TaskArtifactSerializer(
         source="taskartifact_set", many=True, read_only=True
@@ -572,52 +578,59 @@ class TaskSerializer(serializers.ModelSerializer):
 
     def get_subtasks(self, obj):
         try:
-            obj.meta = json.loads(obj.meta)
+            meta = obj.meta if isinstance(obj.meta, dict) else json.loads(obj.meta)
         except (json.JSONDecodeError, AttributeError):
             return []
 
-        if not obj.meta or "children" not in obj.meta:
+        if not meta or "children" not in meta:
             return []
 
-        # Get tasks_map from context if it exists (batch mode)
-        # or create it for single instance
-        tasks_map = getattr(self.context, "tasks_map", None)
-        if tasks_map is None:
-            task_ids = set()
-            for item in obj.meta["children"]:
-                if isinstance(item[0], list):
-                    task_ids.add(item[0][0])
-            tasks_map = {
+        # Collect all task IDs first
+        task_ids = []
+        for subtask in meta["children"]:
+            if isinstance(subtask[0], list):
+                task_ids.append(subtask[0][0])
+
+        # Batch fetch all TaskResult objects
+        if hasattr(self.parent, "_instance_cache"):
+            # First get all tasks from cache that exist
+            task_objects = {}
+            missing_task_ids = []
+            for task_id in task_ids:
+                task_obj = self.parent._instance_cache.get(task_id)
+                if task_obj:
+                    task_objects[task_id] = task_obj
+                else:
+                    missing_task_ids.append(task_id)
+
+            # Fetch missing tasks from database
+            if missing_task_ids:
+                missing_tasks = TaskResult.objects.filter(task_id__in=missing_task_ids)
+                task_objects.update({task.task_id: task for task in missing_tasks})
+        else:
+            task_objects = {
                 task.task_id: task
                 for task in TaskResult.objects.filter(task_id__in=task_ids)
             }
 
-        # Process subtasks using the map - now returning task data directly
-        result = []
-        for subtask in obj.meta["children"]:
+        # Process results
+        serialized_tasks = []
+        for subtask in meta["children"]:
             if isinstance(subtask[0], list):
                 task_id = subtask[0][0]
-                task_obj = tasks_map.get(task_id)
+                task_obj = task_objects.get(task_id)
+
                 if task_obj:
-                    serialized = TaskSerializer(task_obj).data
-                else:
-                    serialized = {"task_id": task_id}
-                # Add any metadata as direct fields to the task data
-                if subtask[1]:
-                    serialized.update(subtask[1])
-                result.append(serialized)
+                    task_data = TaskSerializer(task_obj).data
+                    if subtask[1]:
+                        task_data.update(subtask[1])
+                    serialized_tasks.append(task_data)
 
-        return result
-
-    @classmethod
-    def many_init(cls, *args, **kwargs):
-        child_serializer = cls(*args, **kwargs)
-        list_kwargs = {"child": child_serializer}
-        list_kwargs.update(kwargs)
-        return TaskListSerializer(*args, **list_kwargs)
+        return serialized_tasks
 
     class Meta:
         model = TaskResult
+        list_serializer_class = TaskListSerializer
         fields = [
             "task_id",
             "status",
@@ -628,26 +641,3 @@ class TaskSerializer(serializers.ModelSerializer):
             "artifacts",
             "subtasks",
         ]
-
-
-class TaskListSerializer(serializers.ListSerializer):
-    def to_representation(self, data):
-        # Pre-fetch all task IDs for all instances
-        task_ids = set()
-        for obj in data:
-            try:
-                meta = json.loads(obj.meta)
-                if meta and "children" in meta:
-                    for item in meta["children"]:
-                        if isinstance(item[0], list):
-                            task_ids.add(item[0][0])
-            except (json.JSONDecodeError, AttributeError):
-                continue
-
-        # Store tasks_map in context for child serializers to use
-        self.context["tasks_map"] = {
-            task.task_id: task
-            for task in TaskResult.objects.filter(task_id__in=task_ids)
-        }
-
-        return super().to_representation(data)
