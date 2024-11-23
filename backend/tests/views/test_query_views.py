@@ -126,7 +126,6 @@ class TestDBTQueryViews:
 FORMAT_QUERY = """with source as (select * from {{ source('ecom', 'raw_customers') }}), renamed as (select id as customer_id, name as customer_name from source) select * from renamed"""
 
 
-@pytest.mark.django_db
 def test_format_query(client):
     response = client.post(
         "/query/format/",

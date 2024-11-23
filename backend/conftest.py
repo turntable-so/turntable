@@ -91,8 +91,8 @@ def use_cache(request):
     return request.config.getoption("--use_cache")
 
 
-@pytest.fixture()
-def user():
+@pytest.fixture
+def user(db):
     return create_local_user()
 
 

@@ -19,7 +19,6 @@ isolate_mark = pytest.mark.parametrize(
 )
 
 
-@pytest.mark.django_db
 @require_env_vars("SSHKEY_0_PUBLIC", "SSHKEY_0_PRIVATE")
 class TestRepository:
     @pytest.fixture(scope="session", autouse=True)
