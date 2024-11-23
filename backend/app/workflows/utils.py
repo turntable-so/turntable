@@ -99,7 +99,7 @@ class chain(celery_chain):
         outs = []
         for t in self.tasks:
             res = t.apply(*args, **kwargs)
-            outs.append(self._process_result(res))
+            outs.append(self._process_result(parent_task, res))
         return ChainResult(outs)
 
     def apply_async(self, *args, **kwargs):
