@@ -13,6 +13,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 from app.utils.test_utils import assert_ingest_output
 from app.workflows.metadata import process_metadata
 from fixtures.local_env import (
+    create_local_alternative_storage,
     create_local_metabase,
     create_local_postgres,
     create_local_user,
@@ -122,6 +123,11 @@ def local_postgres(workspace):
     ssh_key = create_ssh_key_n(workspace, 0)
     git_repo = create_repository_n(workspace, 0, ssh_key)
     return create_local_postgres(workspace, git_repo)
+
+
+@pytest.fixture
+def local_alternative_storage(workspace):
+    return create_local_alternative_storage(workspace)
 
 
 @pytest.fixture

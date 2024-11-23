@@ -85,3 +85,4 @@ jobs:
           LOCAL_REDIS: "true"
           LOCAL_S3: "true"
           MULTITENANT: "true"
+          MINIO_TEST_BUCKET_NAME: "test-bucket"

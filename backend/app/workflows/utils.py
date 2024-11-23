@@ -1,9 +1,11 @@
+import inspect
 import json
 import os
 import uuid
 
-from celery import Task, shared_task, states
+from celery import Task, _state, states
 from celery import chain as celery_chain
+from celery.local import Proxy
 from django_celery_results.models import TaskResult
 
 from app.utils.obj import make_values_serializable
@@ -49,10 +51,53 @@ class CustomTask(Task):
         return self.apply(*args, **kwargs)
 
 
+def _ensure_self(func):
+    params = inspect.signature(func).parameters
+    if not params or list(params.keys())[0] != "self":
+        raise ValueError(
+            f"Task function '{func.__name__}' must have 'self' as first parameter when bind=True"
+        )
+
+
+# slightly modified version of celery's shared_task that ensures that the task has a self parameter
+def _shared_task(*args, **kwargs):
+    def create_shared_task(**options):
+        def __inner(fun):
+            _ensure_self(fun)
+            name = options.get("name")
+            # Set as shared task so that unfinalized apps,
+            # and future apps will register a copy of this task.
+            _state.connect_on_app_finalize(
+                lambda app: app._task_from_fun(fun, **options)
+            )
+
+            # Force all finalized apps to take this task as well.
+            for app in _state._get_active_apps():
+                if app.finalized:
+                    with app._finalize_mutex:
+                        app._task_from_fun(fun, **options)
+
+            # Return a proxy that always gets the task from the current
+            # apps task registry.
+            def task_by_cons():
+                app = _state.get_current_app()
+                return app.tasks[
+                    name or app.gen_task_name(fun.__name__, fun.__module__)
+                ]
+
+            return Proxy(task_by_cons)
+
+        return __inner
+
+    if len(args) == 1 and callable(args[0]):
+        return create_shared_task(**kwargs)(args[0])
+    return create_shared_task(*args, **kwargs)
+
+
 def task(*args, **kwargs):
     kwargs.setdefault("bind", True)
     kwargs.setdefault("base", CustomTask)
-    return shared_task(*args, **kwargs)
+    return _shared_task(*args, **kwargs)
 
 
 class chain(celery_chain):
