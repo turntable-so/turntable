@@ -12,14 +12,6 @@ class CustomTask(Task):
 
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._called_directly = False
-
-    def __call__(self, *args, **kwargs):
-        self._called_directly = True
-        return super().__call__(*args, **kwargs)
-
     def _adjust_inputs(self, *args, **kwargs):
         # Argsrepr and kwargsrepr are used to ensure correct json serialization of task_args and task_kwargs in the Result backend.
         kwargs["argsrepr"] = args[0]
@@ -37,7 +29,7 @@ class CustomTask(Task):
         return res
 
     def run_subtasks(self, *tasks):
-        if self._called_directly:
+        if self.request.called_directly:
             return chain(*tasks)._run_directly()
         elif self.request.is_eager:
             return chain(*tasks).apply(*tasks, parent_task=self).get()
