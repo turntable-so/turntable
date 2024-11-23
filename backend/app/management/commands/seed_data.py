@@ -15,7 +15,6 @@ from fixtures.local_env import (
     create_repository_n,
     create_ssh_key_n,
 )
-from vinyl.lib.utils.env import set_env
 
 
 class Command(BaseCommand):
@@ -37,7 +36,6 @@ class Command(BaseCommand):
         ):
             self.stdout.write(self.style.SUCCESS("Database already seeded"))
             return
-        with set_env(CUSTOM_CELERY_EAGER="true"):
-            sync_metadata(resource_id=postgres.id, workspace_id=workspace.id)
-            sync_metadata(resource_id=metabase.id, workspace_id=workspace.id)
+        sync_metadata(resource_id=postgres.id, workspace_id=workspace.id)
+        sync_metadata(resource_id=metabase.id, workspace_id=workspace.id)
         self.stdout.write(self.style.SUCCESS("Successfully seeded the database"))

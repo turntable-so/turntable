@@ -14,6 +14,14 @@ class CustomTask(Task):
 
     """
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._called_directly = False
+
+    def __call__(self, *args, **kwargs):
+        self._called_directly = True
+        return super().__call__(*args, **kwargs)
+
     def apply(self, *args, **kwargs):
         if os.getenv("CUSTOM_CELERY_EAGER") != "true":
             return super().apply(
@@ -36,7 +44,13 @@ class CustomTask(Task):
         return res
 
     def run_subtasks(self, *tasks):
-        return chain(*tasks).apply_async(parent_task=self).get()
+        if self.request.is_eager:
+            f = chain(*tasks).apply
+        elif hasattr(self, "_called_directly") and self._called_directly:
+            f = chain(*tasks)._call_directly
+        else:
+            f = chain(*tasks).apply_async
+        return f(parent_task=self).get()
 
 
 def _ensure_self(func):
@@ -91,39 +105,75 @@ def task(*args, **kwargs):
 class ChainResult(list):
     def get(self, *args, **kwargs):
         kwargs["disable_sync_subtasks"] = False
-        return [res.get(*args, **kwargs) for res in self]
+        return [
+            res.get(*args, **kwargs) if hasattr(res, "get") else res for res in self
+        ]
+
+
+class BaseChainExecutor:
+    uses_celery = True
+
+    def __init__(self, chain, update_state=True):
+        self.chain = chain
+
+    def _validate_parent_task(self, kwargs):
+        parent_task = kwargs.get("parent_task")
+        if not parent_task:
+            raise ValueError("parent_task is required")
+        return parent_task
+
+    def _process_result(self, parent_task, res):
+        if self.uses_celery:
+            parent_task.update_state(state=states.STARTED)
+            return res.get(disable_sync_subtasks=False)
+        else:
+            return res
+
+    def execute_single_task(self, task, *args, **kwargs):
+        raise NotImplementedError("Subclasses must implement execute_single_task")
+
+    def _process_tasks(self, args, kwargs):
+        parent_task = self._validate_parent_task(kwargs)
+        outs = []
+        for t in self.chain.tasks:
+            result = self.execute_single_task(t, *args, **kwargs)
+            outs.append(self._process_result(parent_task, result))
+        return ChainResult(outs)
+
+    def execute(self, *args, **kwargs):
+        return self._process_tasks(args, kwargs)
+
+
+class SyncChainExecutor(BaseChainExecutor):
+    def execute_single_task(self, task, *args, **kwargs):
+        return task.apply(*args, **kwargs)
+
+
+class AsyncChainExecutor(BaseChainExecutor):
+    def execute_single_task(self, task, *args, **kwargs):
+        return task.apply_async(*args, **kwargs)
+
+
+class DirectChainExecutor(BaseChainExecutor):
+    uses_celery = False
+
+    def execute_single_task(self, task, *args, **kwargs):
+        if isinstance(task, type(self.chain)):
+            return task._call_directly(*task.args, **task.kwargs)
+        return task.type(*task.args, **task.kwargs)
 
 
 class chain(celery_chain):
-    def _process_result(self, parent_task, res):
-        # force parent task to update state, which updates its children
-        parent_task.update_state(state=states.STARTED)
-        res.get(disable_sync_subtasks=False)
-        return res
-
-    def do(self, *args, **kwargs):
-        return self.apply_async(*args, **kwargs).get(disable_sync_subtasks=False)
-
     def apply(self, *args, **kwargs):
-        parent_task = kwargs.pop("parent_task", None)
-        if not parent_task:
-            raise ValueError("parent_task is required")
-
-        outs = []
-        for t in self.tasks:
-            res = t.apply(*args, **kwargs)
-            outs.append(self._process_result(parent_task, res))
-        return ChainResult(outs)
+        executor = SyncChainExecutor(self)
+        return executor.execute(*args, **kwargs)
 
     def apply_async(self, *args, **kwargs):
-        parent_task = kwargs.pop("parent_task", None)
-        if not parent_task:
-            raise ValueError("parent_task is required")
         if os.getenv("CUSTOM_CELERY_EAGER") == "true":
             return self.apply(*args, **kwargs)
+        executor = AsyncChainExecutor(self)
+        return executor.execute(*args, **kwargs)
 
-        outs = []
-        for t in self.tasks:
-            res = t.apply_async(*args, **kwargs)
-            outs.append(self._process_result(parent_task, res))
-        return ChainResult(outs)
+    def _call_directly(self, *args, **kwargs):
+        executor = DirectChainExecutor(self)
+        return executor.execute(*args, **kwargs)
