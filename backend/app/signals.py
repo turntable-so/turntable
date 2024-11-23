@@ -35,6 +35,7 @@ def send_status_update(task_id, state, task_kwargs):
 
     channel_layer = get_channel_layer()
     try:
+        print(task_id, state, ids)
         async_to_sync(channel_layer.group_send)(
             f"workspace_{ids['workspace_id']}",
             {
@@ -77,6 +78,13 @@ def handle_task_state(
         task_start_handler(task_id, task, **kwargs)
 
     state = SIGNAL_STATE_MAP.get(signal_name, "")
+
+    # ensure task_id
+    if not task_id:
+        if sender:
+            task_id = sender.request.id
+        else:
+            return
 
     # Get task kwargs from the appropriate source based on signal
     if headers and body:  # before_task_publish
