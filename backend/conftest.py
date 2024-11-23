@@ -234,7 +234,9 @@ def test_queue_name():
 
 
 @pytest.fixture(scope="session")
-def custom_celery_app(test_queue_name):
+def custom_celery_app(test_queue_name, eager):
+    if eager:
+        return None
     app = Celery("api")
 
     # Load configuration from Django settings
@@ -251,8 +253,13 @@ def custom_celery_app(test_queue_name):
 def custom_celery_worker(
     custom_celery_app,
     test_queue_name,
+    eager,
     max_retries: int = 10,
 ):
+    if eager:
+        yield
+        return
+
     # Clear the queue before starting the worker
     custom_celery_app.control.purge()
 
@@ -282,11 +289,15 @@ def custom_celery_worker(
 
 
 @pytest.fixture(scope="session")
-def suppress_celery_errors():
+def suppress_celery_errors(eager):
     """
     Suppress error logs from celery.worker.control and kombu.pidbox
     by setting their log levels to CRITICAL.
     """
+    if eager:
+        yield
+        return
+
     loggers_to_suppress = [
         "celery.worker.control",
         "kombu.pidbox",
@@ -309,4 +320,6 @@ def suppress_celery_errors():
 
 @pytest.fixture(scope="session")
 def custom_celery(custom_celery_worker, bypass_celery_beat, suppress_celery_errors):
+    if eager:
+        return None
     return custom_celery_worker
