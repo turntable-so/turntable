@@ -17,7 +17,7 @@ import {
   createFile,
   deleteFile,
   fetchFileContents,
-  getBranch,
+  getProject,
   getFileIndex,
   discardBranchChanges,
   getProjectChanges,
@@ -277,14 +277,14 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
 
   const fetchBranch = async (id: string) => {
     if (id) {
-      const branch = await getBranch(id);
-      setBranchId(branch.id);
-      setBranchName(branch.name);
-      setReadOnly(branch.read_only);
-      setIsCloned(branch.is_cloned);
-      setPullRequestUrl(branch.pull_request_url);
-      setSchema(branch.schema);
-      setSourceBranch(branch.source_branch);
+      const project = await getProject(id);
+      setBranchId(project.id);
+      setBranchName(project.name);
+      setReadOnly(project.read_only);
+      setIsCloned(project.is_cloned);
+      setPullRequestUrl(project.pull_request_url);
+      setSchema(project.schema);
+      setSourceBranch(project.source_branch);
     }
   };
 
@@ -566,10 +566,10 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         prev.map((f) =>
           f.node.path === path
             ? {
-                ...f,
-                content,
-                node: { ...f.node, type: newNodeType },
-              }
+              ...f,
+              content,
+              node: { ...f.node, type: newNodeType },
+            }
             : f,
         ),
       );
