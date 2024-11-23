@@ -16,7 +16,7 @@ export default function LineageOptions() {
   if (!rootAsset || !lineageOptions) return null;
 
   const incrementPredecessorDepth = (delta: number) => {
-    if (lineageOptions.predecessor_depth + delta < 1) return;
+    if (lineageOptions.predecessor_depth + delta < 0) return;
     if (lineageOptions.predecessor_depth + delta > 5) return;
     setLineageOptionsAndRefetch(
       {
@@ -29,7 +29,7 @@ export default function LineageOptions() {
     );
   };
   const incrementSuccessorDepth = (delta: number) => {
-    if (lineageOptions.successor_depth + delta < 1) return;
+    if (lineageOptions.successor_depth + delta < 0) return;
     if (lineageOptions.successor_depth + delta > 5) return;
     setLineageOptionsAndRefetch(
       {
@@ -67,7 +67,7 @@ export default function LineageOptions() {
                 <Minus className="size-4" />
               </Button>
             </div>
-            <div>{rootAsset.name}</div>
+            <div className="text-xs">{rootAsset.name}</div>
             <div className="flex flex-col items-center space-y-1">
               <Button
                 onClick={() => incrementSuccessorDepth(1)}
@@ -96,7 +96,7 @@ export default function LineageOptions() {
             <div className="bg-muted text-xs font-bold p-1 rounded-full w-4 h-4 flex items-center justify-center">
               {lineageOptions.predecessor_depth}
             </div>
-            <div>+{rootAsset.name}+</div>
+            <div className="text-xs">+{rootAsset.name}+</div>
             <div className="bg-muted text-xs font-bold p-1 rounded-full w-4 h-4 flex items-center justify-center">
               {lineageOptions.successor_depth}
             </div>

@@ -86,7 +86,7 @@ export const LineageViewContext = React.createContext<{
   lineage: null,
   isTableOnly: true,
   isFilterOpen: false,
-  toggleFilter: () => {},
+  toggleFilter: () => { },
   isLoading: true,
   isLoadingColumns: true,
   error: null,
@@ -105,20 +105,20 @@ export const LineageViewContext = React.createContext<{
     asset_only: true,
   },
   isLineageOptionsPanelOpen: false,
-  setIsLineageOptionsPanelOpen: () => {},
-  handleSelectColumn: () => {},
-  handleExpandNode: () => {},
-  handleColumnHover: () => {},
+  setIsLineageOptionsPanelOpen: () => { },
+  handleSelectColumn: () => { },
+  handleExpandNode: () => { },
+  handleColumnHover: () => { },
   onTableHeaderClick: () => Promise.resolve(),
-  onMouseEnterNode: () => {},
-  onMouseLeaveNode: () => {},
-  updateHoveredEdge: () => {},
-  updateSelectedEdge: () => {},
-  updateGraph: () => {},
+  onMouseEnterNode: () => { },
+  onMouseLeaveNode: () => { },
+  updateHoveredEdge: () => { },
+  updateSelectedEdge: () => { },
+  updateGraph: () => { },
   rootAsset: null,
   isLineageLevelSelectorOpen: false,
-  setIsLineageLevelSelectorOpen: () => {},
-  setLineageOptionsAndRefetch: () => {},
+  setIsLineageLevelSelectorOpen: () => { },
+  setLineageOptionsAndRefetch: () => { },
 });
 
 type Column = {
@@ -148,18 +148,18 @@ type LineageViewProviderProps = {
 
 type LineageFetchType =
   | {
-      type: "asset";
-      data: {
-        nodeId: string;
-      };
-    }
-  | {
-      type: "project";
-      data: {
-        branchId: string;
-        filePath: string;
-      };
+    type: "asset";
+    data: {
+      nodeId: string;
     };
+  }
+  | {
+    type: "project";
+    data: {
+      branchId: string;
+      filePath: string;
+    };
+  };
 
 export function LineageViewProvider({ children }: LineageViewProviderProps) {
   const { setFocusedAsset, setAssetPreview } = useAppContext();
