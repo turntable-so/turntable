@@ -1,14 +1,9 @@
 import inspect
-import json
 import os
-import uuid
 
 from celery import Task, _state, states
 from celery import chain as celery_chain
 from celery.local import Proxy
-from django_celery_results.models import TaskResult
-
-from app.utils.obj import make_values_serializable
 
 
 class CustomTask(Task):
@@ -19,36 +14,17 @@ class CustomTask(Task):
     def apply(self, *args, **kwargs):
         if os.getenv("CUSTOM_CELERY_EAGER") != "true":
             return super().apply(*args, **kwargs)
-
-        kwargs["task_id"] = kwargs.get("task_id") or str(uuid.uuid4())
-        task_id = kwargs["task_id"]
-        task_args_json = (
-            json.dumps(make_values_serializable(args[0])) if args[0] else None
-        )
-        task_kwargs_json = (
-            json.dumps(make_values_serializable(args[1])) if args[1] else None
-        )
-        tr = TaskResult.objects.create(
-            task_id=task_id,
-            status=states.PENDING,
-            task_args=task_args_json,
-            task_kwargs=task_kwargs_json,
-        )
-        try:
-            res = Task.apply(self, *args, **kwargs)
-            tr.result = res.get()
-            tr.status = res.status
-            tr.save()
-            return res
-        except Exception as e:
-            tr.status = states.FAILURE
-            tr.save()
-            raise e
+        return self.apply_async(*args, **kwargs)
 
     def apply_async(self, *args, **kwargs):
         if os.getenv("CUSTOM_CELERY_EAGER") != "true":
             return super().apply_async(*args, **kwargs)
-        return self.apply(*args, **kwargs)
+        res = super().apply_async(*args, **kwargs)
+        res.get()
+        return res
+
+    def run_subtasks(self, *tasks):
+        return chain(*tasks).apply_async(parent_task=self).get()
 
 
 def _ensure_self(func):
@@ -100,19 +76,41 @@ def task(*args, **kwargs):
     return _shared_task(*args, **kwargs)
 
 
+class ChainResult(list):
+    def get(self, *args, **kwargs):
+        return [res.get(*args, **kwargs) for res in self]
+
+
 class chain(celery_chain):
+    def _process_result(self, parent_task, res):
+        # force parent task to update state, which updates its children
+        parent_task.update_state(state=states.STARTED)
+        res.get(disable_sync_subtasks=False)
+        return res
+
     def do(self, *args, **kwargs):
-        res = self.apply_async(*args, **kwargs)
+        return self.apply_async(*args, **kwargs).get(disable_sync_subtasks=False)
 
-        def recurse_results(res):
-            out = res.get(disable_sync_subtasks=False)
-            if res.parent is None:
-                return [out]
-            return recurse_results(res.parent) + [out]
+    def apply(self, *args, **kwargs):
+        parent_task = kwargs.pop("parent_task", None)
+        if not parent_task:
+            raise ValueError("parent_task is required")
 
-        return recurse_results(res)
+        outs = []
+        for t in self.tasks:
+            res = t.apply(*args, **kwargs)
+            outs.append(self._process_result(res))
+        return ChainResult(outs)
 
     def apply_async(self, *args, **kwargs):
+        parent_task = kwargs.pop("parent_task", None)
+        if not parent_task:
+            raise ValueError("parent_task is required")
         if os.getenv("CUSTOM_CELERY_EAGER") == "true":
-            return celery_chain.apply(self, *args, **kwargs)
-        return celery_chain.apply_async(self, *args, **kwargs)
+            return self.apply(*args, **kwargs)
+
+        outs = []
+        for t in self.tasks:
+            res = t.apply_async(*args, **kwargs)
+            outs.append(self._process_result(parent_task, res))
+        return ChainResult(outs)

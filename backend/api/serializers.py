@@ -557,6 +557,7 @@ class TaskSerializer(serializers.ModelSerializer):
         source="taskartifact_set", many=True, read_only=True
     )
     result = serializers.SerializerMethodField()
+    subtasks = serializers.SerializerMethodField()
 
     def get_result(self, obj):
         if obj.result:
@@ -569,6 +570,52 @@ class TaskSerializer(serializers.ModelSerializer):
                     return obj.result
         return None
 
+    def get_subtasks(self, obj):
+        try:
+            obj.meta = json.loads(obj.meta)
+        except (json.JSONDecodeError, AttributeError):
+            return []
+
+        if not obj.meta or "children" not in obj.meta:
+            return []
+
+        # Get tasks_map from context if it exists (batch mode)
+        # or create it for single instance
+        tasks_map = getattr(self.context, "tasks_map", None)
+        if tasks_map is None:
+            task_ids = set()
+            for item in obj.meta["children"]:
+                if isinstance(item[0], list):
+                    task_ids.add(item[0][0])
+            tasks_map = {
+                task.task_id: task
+                for task in TaskResult.objects.filter(task_id__in=task_ids)
+            }
+
+        # Process subtasks using the map - now returning task data directly
+        result = []
+        for subtask in obj.meta["children"]:
+            if isinstance(subtask[0], list):
+                task_id = subtask[0][0]
+                task_obj = tasks_map.get(task_id)
+                if task_obj:
+                    serialized = TaskSerializer(task_obj).data
+                else:
+                    serialized = {"task_id": task_id}
+                # Add any metadata as direct fields to the task data
+                if subtask[1]:
+                    serialized.update(subtask[1])
+                result.append(serialized)
+
+        return result
+
+    @classmethod
+    def many_init(cls, *args, **kwargs):
+        child_serializer = cls(*args, **kwargs)
+        list_kwargs = {"child": child_serializer}
+        list_kwargs.update(kwargs)
+        return TaskListSerializer(*args, **list_kwargs)
+
     class Meta:
         model = TaskResult
         fields = [
@@ -579,4 +626,28 @@ class TaskSerializer(serializers.ModelSerializer):
             "date_done",
             "traceback",
             "artifacts",
+            "subtasks",
         ]
+
+
+class TaskListSerializer(serializers.ListSerializer):
+    def to_representation(self, data):
+        # Pre-fetch all task IDs for all instances
+        task_ids = set()
+        for obj in data:
+            try:
+                meta = json.loads(obj.meta)
+                if meta and "children" in meta:
+                    for item in meta["children"]:
+                        if isinstance(item[0], list):
+                            task_ids.add(item[0][0])
+            except (json.JSONDecodeError, AttributeError):
+                continue
+
+        # Store tasks_map in context for child serializers to use
+        self.context["tasks_map"] = {
+            task.task_id: task
+            for task in TaskResult.objects.filter(task_id__in=task_ids)
+        }
+
+        return super().to_representation(data)

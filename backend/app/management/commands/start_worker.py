@@ -24,7 +24,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--pool",
             choices=["solo", "threads", "processes", "gevent", "eventlet"],
-            default="gevent",
+            default="threads",
         )
 
     def handle(self, *args, **options):
