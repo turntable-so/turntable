@@ -35,7 +35,6 @@ def send_status_update(task_id, state, task_kwargs):
 
     channel_layer = get_channel_layer()
     try:
-        print(task_id, state, ids)
         async_to_sync(channel_layer.group_send)(
             f"workspace_{ids['workspace_id']}",
             {
