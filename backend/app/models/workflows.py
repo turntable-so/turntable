@@ -24,7 +24,7 @@ from app.services.storage_backends import CustomFileField
 from app.workflows.metadata import sync_metadata
 from app.workflows.orchestration import run_dbt_commands
 
-TASK_START_TIMEOUT = 100
+TASK_START_TIMEOUT = 10
 TASK_START_POLLING_INTERVAL = 0.1
 
 
