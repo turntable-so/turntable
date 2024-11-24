@@ -110,7 +110,7 @@ class TestRepository:
     def test_pull(self, local_postgres_test_project):
         assert local_postgres_test_project.git_pull()
 
-    def test_generate_deploy_key(self):
+    def test_generate_deploy_key(self, db):
         workspace = Workspace.objects.create(
             id=TEST_WORKSPACE_ID + "1",
             name="Test workspace 1",
