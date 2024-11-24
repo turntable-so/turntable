@@ -78,7 +78,13 @@ def task(*args, **kwargs):
 
 class ChainResult(list):
     def get(self, *args, **kwargs):
-        return [res.get(*args, **kwargs) for res in self]
+        return [
+            res.get(
+                *args,
+                **kwargs,
+            )
+            for res in self
+        ]
 
 
 class chain(celery_chain):
