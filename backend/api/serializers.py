@@ -616,20 +616,22 @@ class TaskSerializer(serializers.ModelSerializer):
 
         return tasks
 
+    def _parse_json(self, data):
+        if not data:
+            return None
+        try:
+            return orjson.loads(data)
+        except orjson.JSONDecodeError:
+            return data
+
     def get_result(self, obj):
-        if obj.result:
-            return orjson.loads(obj.result)
-        return None
+        return self._parse_json(obj.result)
 
     def get_task_args(self, obj):
-        if obj.task_args:
-            return orjson.loads(obj.task_args)
-        return None
+        return self._parse_json(obj.task_args)
 
     def get_task_kwargs(self, obj):
-        if obj.task_kwargs:
-            return orjson.loads(obj.task_kwargs)
-        return None
+        return self._parse_json(obj.task_kwargs)
 
     def to_representation(self, instance):
         # Initialize cache if needed
