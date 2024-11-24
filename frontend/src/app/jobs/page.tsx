@@ -56,7 +56,7 @@ export default function JobsPage({ searchParams }: JobsPageProps) {
 
     if (!isMountedRef.current) return;
 
-    const sortedJobs = jobsData.results.sort((a, b) => {
+    const sortedJobs = jobsData?.results.sort((a, b) => {
       if (
         a.latest_run?.status === "STARTED" &&
         b.latest_run?.status !== "STARTED"
@@ -70,7 +70,7 @@ export default function JobsPage({ searchParams }: JobsPageProps) {
       return dayjs.utc(a.next_run).diff(dayjs.utc(b.next_run));
     });
 
-    const sortedRuns = runsData.results.sort((a, b) => {
+    const sortedRuns = runsData?.results.sort((a, b) => {
       if (a.status === "STARTED" && b.status !== "STARTED") return -1;
       if (a.status !== "STARTED" && b.status === "STARTED") return 1;
       return dayjs.utc(a.date_done).diff(dayjs.utc(b.date_done));

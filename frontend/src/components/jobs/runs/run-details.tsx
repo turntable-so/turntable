@@ -11,7 +11,6 @@ type RunDetailsProps = {
 
 export default function RunDetails({ run, job }: RunDetailsProps) {
   const trigger = job.cron_str ? "Schedule" : "Manual";
-  console.log({job, run});
 
   return (
     <Card>

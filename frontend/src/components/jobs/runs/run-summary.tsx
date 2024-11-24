@@ -7,7 +7,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import Convert from "ansi-to-html";
-import { ChevronsUpDown } from "lucide-react";
+import { ChevronsUpDown, Loader2 } from "lucide-react";
 
 type RunSummaryProps = {
   run: Run;
@@ -27,33 +27,38 @@ export default function RunSummary({ run }: RunSummaryProps) {
   };
 
   const SuccessContent = () => {
-    const stdouts = run.result.stdouts || [];
-    const commands = run.task_kwargs?.commands || [];
+    const subtasks = run.subtasks || [];
 
     return (
       <div>
-        {commands.map((command, index) => (
-          <Collapsible
-            key={index}
-            className="w-full space-y-2 mb-4"
-            defaultOpen
-          >
-            <div className="flex items-center justify-between space-x-4 px-4">
-              <h4 className="text-sm font-semibold">{command}</h4>
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="w-9 p-0">
-                  <ChevronsUpDown className="h-4 w-4" />
-                  <span className="sr-only">Toggle</span>
-                </Button>
-              </CollapsibleTrigger>
-            </div>
-            <CollapsibleContent>
-              <div className="rounded-md border px-4 py-3 font-mono text-sm whitespace-pre-wrap break-words">
-                {stdouts[index]}
+        {subtasks.length > 0 ? (
+          subtasks.map((subtask, index) => (
+            <Collapsible
+              key={subtask.task_id || index}
+              className="w-full space-y-2 mb-4"
+              defaultOpen
+            >
+              <div className="flex items-center justify-between space-x-4 px-4">
+                <h4 className="text-sm font-semibold">{subtask?.task_kwargs?.command}</h4>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm" className="w-9 p-0">
+                    <ChevronsUpDown className="h-4 w-4" />
+                    <span className="sr-only">Toggle</span>
+                  </Button>
+                </CollapsibleTrigger>
               </div>
-            </CollapsibleContent>
-          </Collapsible>
-        ))}
+              <CollapsibleContent>
+                <div className="rounded-md border px-4 py-3 font-mono text-sm whitespace-pre-wrap break-words">
+                  {subtask.result?.stdout || <Loader2 className="animate-spin" />}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          ))
+        ) : (
+          <div className="flex justify-center">
+            <Loader2 className="animate-spin" />
+          </div>
+        )}
       </div>
     );
   };

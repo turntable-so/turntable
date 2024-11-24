@@ -39,15 +39,19 @@ export default function JobRunPage({ params }: JobRunPageProps) {
 
     setRun(runData);
     setJob(jobData);
+
+    if (runData && runData.status !== "STARTED" && pollingInterval.current) {
+      clearInterval(pollingInterval.current);
+      pollingInterval.current = null;
+    }
   };
 
   useEffect(() => {
     isMountedRef.current = true;
 
     const startPolling = () => {
-      fetchData();
       if (!pollingInterval.current) {
-        pollingInterval.current = setInterval(fetchData, 2000);
+        pollingInterval.current = setInterval(fetchData, 1000);
       }
     };
 

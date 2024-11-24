@@ -832,7 +832,6 @@ export async function getPaginatedJobs({
   const urlParams = new URLSearchParams();
   if (page) urlParams.set("page", page.toString());
   if (pageSize) urlParams.set("page_size", pageSize.toString());
-  console.log(`/jobs/?${urlParams.toString()}`);
   const response = await fetcher(`/jobs/?${urlParams.toString()}`, {
     cookies,
     method: "GET",
@@ -851,12 +850,8 @@ export async function getJob(id: string): Promise<Job> {
 export type Run = {
   task_id: string;
   status: "FAILURE" | "SUCCESS" | "STARTED";
-  result: {
-    success: boolean;
-    stdouts: Array<string>;
-    stderrs: Array<string>;
-    run_results: any;
-  };
+  result: Record<string, any> | null;
+  subtasks: Array<Run>;
   date_created: string;
   date_done: string;
   traceback: any;
