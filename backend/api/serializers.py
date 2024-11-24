@@ -1,4 +1,3 @@
-import ast
 import json
 
 import orjson
@@ -617,30 +616,19 @@ class TaskSerializer(serializers.ModelSerializer):
 
         return tasks
 
-    def _convert_result_strings(self, data):
-        if isinstance(data, dict):
-            return {k: self._convert_result_strings(v) for k, v in data.items()}
-        elif isinstance(data, list):
-            return [self._convert_result_strings(v) for v in data]
-        elif isinstance(data, str):
-            if data == "True":
-                return True
-            elif data == "False":
-                return False
-            elif data == "None":
-                return None
-        return data
-
     def get_result(self, obj):
         if obj.result:
-            try:
-                result = json.loads(obj.result)
-                return self._convert_result_strings(result)
-            except json.JSONDecodeError:
-                try:
-                    return ast.literal_eval(obj.result)
-                except (ValueError, SyntaxError):
-                    return obj.result
+            return orjson.loads(obj.result)
+        return None
+
+    def get_task_args(self, obj):
+        if obj.task_args:
+            return orjson.loads(obj.task_args)
+        return None
+
+    def get_task_kwargs(self, obj):
+        if obj.task_kwargs:
+            return orjson.loads(obj.task_kwargs)
         return None
 
     def to_representation(self, instance):
@@ -666,6 +654,8 @@ class TaskSerializer(serializers.ModelSerializer):
         fields = [
             "task_id",
             "status",
+            "task_args",
+            "task_kwargs",
             "result",
             "date_created",
             "date_done",
