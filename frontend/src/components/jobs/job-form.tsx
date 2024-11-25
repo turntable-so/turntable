@@ -36,13 +36,16 @@ const FormSchema = z.object({
     }),
     commands: z.array(z.string()),
     cron_str: z.string()
-        .regex(
-            /^(\*|([0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])|\*\/([0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])) (\*|([0-9]|1[0-9]|2[0-3])|\*\/([0-9]|1[0-9]|2[0-3])) (\*|([1-9]|1[0-9]|2[0-9]|3[0-1])|\*\/([1-9]|1[0-9]|2[0-9]|3[0-1])) (\*|([1-9]|1[0-2])|\*\/([1-9]|1[0-2])) (\*|([0-6])|\*\/([0-6]))$/,
-            {
-                message: "Invalid cron expression. Format should be like '0 0 * * *' (minute hour day month weekday)",
-            }
-        )
-        .optional(),
+        .transform(str => str === undefined ? str : str.trim())
+        .pipe(
+            z.string()
+                .regex(
+                    /^(\*|([0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])|\*\/([0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])) (\*|([0-9]|1[0-9]|2[0-3])|\*\/([0-9]|1[0-9]|2[0-3])) (\*|([1-9]|1[0-9]|2[0-9]|3[0-1])|\*\/([1-9]|1[0-9]|2[0-9]|3[0-1])) (\*|([1-9]|1[0-2])|\*\/([1-9]|1[0-2])) (\*|([0-6])|\*\/([0-6]))$/,
+                    {
+                        message: "Invalid cron expression. Format should be like '0 0 * * *' (minute hour day month weekday)",
+                    }
+                )
+        ),
 });
 
 export default function JobForm({ title, job }: { title: string, job?: any }) {
