@@ -2,16 +2,13 @@
 
 import useSession from "@/app/hooks/use-session";
 import useWorkflowUpdates from "@/app/hooks/use-workflow-updates";
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
+import dayjs from "@/lib/dayjs";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useEffect } from "react";
 import { getResourceIcon } from "../../lib/utils";
 import { Badge } from "../ui/badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card";
-
-dayjs.extend(relativeTime);
 
 type Resource = {
   id: string;

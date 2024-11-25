@@ -1,7 +1,7 @@
 import json
 
 import orjson
-from django.contrib.auth.models import Group, User
+from django.contrib.auth.models import Group
 from django_celery_beat.models import CrontabSchedule
 from django_celery_results.models import TaskResult
 from djoser.serializers import UserCreateSerializer, UserSerializer
@@ -382,6 +382,7 @@ class DBTCoreDetailsSerializer(ResourceDetailsSerializer):
     class Meta:
         model = DBTCoreDetails
         fields = [
+            "id",
             "repository",
             "project_path",
             "target_name",
@@ -389,6 +390,7 @@ class DBTCoreDetailsSerializer(ResourceDetailsSerializer):
             "version",
             "database",
             "schema",
+            "environment",
         ]
 
     def update(self, instance, validated_data):
@@ -469,6 +471,7 @@ class ProjectSerializer(serializers.ModelSerializer):
 
 class CrontabWorkflowSerializer(serializers.ModelSerializer):
     cron_str = serializers.CharField(required=False)
+    name = serializers.CharField(required=False)
     workspace_id = serializers.PrimaryKeyRelatedField(
         queryset=Workspace.objects.all(), source="workspace"
     )
@@ -519,15 +522,19 @@ class DBTOrchestratorSerializer(CrontabWorkflowSerializer):
         queryset=DBTCoreDetails.objects.all(), source="dbtresource"
     )
     commands = serializers.ListField(child=serializers.CharField())
+    latest_run = serializers.SerializerMethodField()
+    next_run = serializers.SerializerMethodField()
 
     class Meta:
         model = DBTOrchestrator
         fields = [
             "id",
-            "workspace_id",
             "dbtresource_id",
             "cron_str",
             "commands",
+            "name",
+            "latest_run",
+            "next_run",
         ]
 
     def validate_commands(self, value):
@@ -545,6 +552,13 @@ class DBTOrchestratorSerializer(CrontabWorkflowSerializer):
     def update(self, instance, validated_data):
         return super().update(instance, validated_data)
 
+    def get_latest_run(self, obj):
+        latest_run = obj.most_recent(n=1).first()
+        return TaskResultSerializer(latest_run).data if latest_run else None
+
+    def get_next_run(self, obj):
+        return obj.get_next_run_date()
+
 
 class TaskArtifactSerializer(serializers.ModelSerializer):
     class Meta:
@@ -555,15 +569,17 @@ class TaskArtifactSerializer(serializers.ModelSerializer):
 class TaskListSerializer(serializers.ListSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._instance_cache = {i.task_id: i for i in self.instance}
+        self._instance_cache = {i.task_id: i for i in self.instance if i is not None}
 
 
-class TaskSerializer(serializers.ModelSerializer):
+class TaskResultSerializer(serializers.ModelSerializer):
     artifacts = TaskArtifactSerializer(
         source="taskartifact_set", many=True, read_only=True
     )
-    result = serializers.SerializerMethodField()
     subtasks = serializers.SerializerMethodField()
+    result = serializers.SerializerMethodField()
+    task_args = serializers.SerializerMethodField()
+    task_kwargs = serializers.SerializerMethodField()
 
     def _ensure_task_cached(self, task_ids: list[str]) -> None:
         """Fetch and cache any uncached tasks"""
@@ -603,7 +619,7 @@ class TaskSerializer(serializers.ModelSerializer):
         self._ensure_task_cached(task_ids)
 
         # Serialize available tasks
-        tasks = TaskSerializer(
+        tasks = TaskResultSerializer(
             [self.context["task_cache"].get(task_id) for task_id in task_ids],
             many=True,
             context=self.context,
@@ -631,11 +647,14 @@ class TaskSerializer(serializers.ModelSerializer):
         return self._parse_json(obj.task_args)
 
     def get_task_kwargs(self, obj):
-        return self._parse_json(obj.task_kwargs)
+        result = self._parse_json(obj.task_kwargs)
+        return result
 
     def to_representation(self, instance):
         # Initialize cache if needed
         self.context.setdefault("task_cache", {})
+        if instance is None:
+            return None
         self.context["task_cache"][instance.task_id] = instance
 
         data = super().to_representation(instance)
@@ -647,6 +666,12 @@ class TaskSerializer(serializers.ModelSerializer):
 
         return data
 
+    def get_job_id(self, obj):
+        return obj.job_id
+
+    def get_job_name(self, obj):
+        return obj.job_name
+    
     def get_subtasks(self, obj):
         return []
 
@@ -665,3 +690,17 @@ class TaskSerializer(serializers.ModelSerializer):
             "artifacts",
             "subtasks",
         ]
+
+
+class TaskResultWithJobSerializer(TaskResultSerializer):
+    job_id = serializers.SerializerMethodField()
+    job_name = serializers.SerializerMethodField()
+
+    def get_job_id(self, obj):
+        return obj.job_id
+
+    def get_job_name(self, obj):
+        return obj.job_name
+
+    class Meta(TaskResultSerializer.Meta):
+        fields = TaskResultSerializer.Meta.fields + ["job_id", "job_name"]

@@ -2,7 +2,7 @@ import json
 import os
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from celery import current_app, states
 from celery.result import AsyncResult
@@ -15,6 +15,7 @@ from django.db.models import QuerySet
 from django_celery_beat.models import ClockedSchedule, CrontabSchedule, PeriodicTask
 from django_celery_results.models import TaskResult
 from polymorphic.models import PolymorphicModel
+from django.db.models import OuterRef, Subquery
 
 from app.models.project import Project
 from app.models.resources import DBTResource, Resource
@@ -128,6 +129,10 @@ class ScheduledWorkflow(PolymorphicModel):
             results.append(max(0, (next_time - now_timestamp)))
             now_timestamp = next_time
         return results
+
+    def get_next_run_date(self) -> datetime:
+        next_run_seconds = self.get_upcoming_tasks(1)[0]
+        return datetime.now() + timedelta(seconds=next_run_seconds)
 
     def get_periodic_task_args(self):
         return {
@@ -277,7 +282,7 @@ class ScheduledWorkflow(PolymorphicModel):
         }
 
     @classmethod
-    def get_results(
+    def get_results_with_filters(
         cls,
         **kwargs,
     ):
@@ -286,6 +291,13 @@ class ScheduledWorkflow(PolymorphicModel):
             periodic_task_name__in=cls.objects.filter(**filters).values_list(
                 "replacement_identifier", flat=True
             )
+        )
+        dbt_orchestrators = cls.objects.filter(
+            replacement_identifier=OuterRef("periodic_task_name")
+        )
+        tasks = tasks.annotate(
+            job_id=Subquery(dbt_orchestrators.values("id")[:1]),
+            job_name=Subquery(dbt_orchestrators.values("name")[:1]),
         )
         tasks = tasks.order_by("-date_done")
         return tasks
@@ -313,6 +325,7 @@ class DBTOrchestrator(ScheduledWorkflow):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, null=True)
     commands = ArrayField(models.TextField())
     save_artifacts = models.BooleanField(default=True)
+    name = models.CharField(max_length=255, null=False, default="Job")
 
     @property
     def workflow(self):

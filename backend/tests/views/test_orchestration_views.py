@@ -10,7 +10,7 @@ from app.models.workflows import DBTOrchestrator
 
 BASE_DATA = {
     "cron_str": "0 0 * * *",
-    "commands": ["dbt deps", "dbt run"],
+    "commands": ["dbt deps", "dbt parse", "dbt run"],
 }
 MINIMAL_BASE_DATA = {
     "cron_str": "0 0 * * *",
@@ -62,7 +62,7 @@ class TestOrchestrationViews:
     def test_list_orchestration(self, client, minimal_scheduled_workflow):
         response = client.get("/jobs/")
         assert response.status_code == 200
-        assert len(response.data) == 1
+        assert len(response.data["results"]) == 1
         assert PeriodicTask.objects.count() == 1
 
     def test_delete_orchestration(self, client, minimal_scheduled_workflow):
@@ -113,8 +113,8 @@ class TestOrchestrationViews:
         # check runs
         response = client.get("/runs/")
         assert response.status_code == 200
-        assert len(response.data) == 1
-        data = response.data[0]
+        assert len(response.data["results"]) == 1
+        data = response.data["results"][0]
         assert data["task_id"] == task_id
         result = data["result"]
         assert result["success"]
@@ -125,7 +125,7 @@ class TestOrchestrationViews:
         assert response.status_code == 200
         data = response.data
         assert data["subtasks"]
-        assert len(data["subtasks"]) == 3
+        assert len(data["subtasks"]) == 4
         for subtask in data["subtasks"]:
             assert not subtask["subtasks"]
 

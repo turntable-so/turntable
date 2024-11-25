@@ -4,14 +4,16 @@ import shutil
 import tempfile
 from typing import Callable
 
+from celery import states
 from git import Repo as GitRepo
 
 from app.models.resources import DBTResource
 from app.workflows.utils import task
+from vinyl.lib.dbt import STREAM_ERROR_STRING, STREAM_SUCCESS_STRING
 from vinyl.lib.utils.files import load_orjson
 
 
-def return_helper(success, stdout, stderr, run_results):
+def return_helper(success, stdout, stderr, run_results=None):
     return {
         "success": success,
         "stdout": stdout,
@@ -21,20 +23,11 @@ def return_helper(success, stdout, stderr, run_results):
 
 
 def returns_helper(outs):
-    # get the run_results from the last non-empty run_results
-    run_result = None
-    for out in outs[::-1]:
-        if not out:
-            continue
-        if rr := out.get("run_results"):
-            run_result = rr
-            break
-
     return {
         "success": all(out["success"] for out in outs),
         "stdouts": [out["stdout"] for out in outs],
         "stderrs": [out["stderr"] for out in outs],
-        "run_results": run_result,
+        "run_results": [out["run_results"] for out in outs],
     }
 
 
@@ -48,6 +41,7 @@ def run_dbt_command(
     project_id: str | None = None,
     repo_override_dir: str | None = None,
     save_artifacts: bool = True,
+    stream: bool = False,
 ):
     dbt_resource = DBTResource.objects.get(id=dbtresource_id)
     if not dbt_resource.jobs_allowed:
@@ -61,9 +55,34 @@ def run_dbt_command(
             split_command = shlex.split(command)
             if split_command[0] == "dbt":
                 split_command.pop(0)
-            stdout, stderr, success = dbtproj.run_dbt_command(
-                split_command, write_json=True
-            )
+            if stream:
+                success = None
+                stdout = ""
+                stderr = ""
+                for line in dbtproj.stream_dbt_command(split_command, write_json=True):
+                    if line == STREAM_SUCCESS_STRING:
+                        success = True
+                        return return_helper(
+                            success=success, stdout=stdout, stderr=stderr
+                        )
+                    elif line == STREAM_ERROR_STRING:
+                        success = False
+                        return return_helper(
+                            success=success, stdout=stdout, stderr=stderr
+                        )
+                    stdout += line
+                    result = return_helper(
+                        success=success, stdout=stdout, stderr=stderr
+                    )
+                    self.update_state(
+                        state=states.STARTED,
+                        meta=result,
+                    )
+
+            else:
+                stdout, stderr, success = dbtproj.run_dbt_command(
+                    split_command, write_json=True
+                )
         finally:
             if os.path.exists(dbtproj.run_results_path):
                 run_results = load_orjson(dbtproj.run_results_path)
@@ -149,7 +168,8 @@ def run_dbt_commands(
         }
         # Create a chain of tasks
         tasks = [
-            run_dbt_command.si(**task_kwargs, command=command) for command in commands
+            run_dbt_command.si(**task_kwargs, command=command, stream=True)
+            for command in commands
         ]
 
         if save_artifacts:

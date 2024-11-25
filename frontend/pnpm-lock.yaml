@@ -149,6 +149,9 @@ importers:
       cookies-next:
         specifier: ^4.2.1
         version: 4.2.1
+      cronstrue:
+        specifier: ^2.51.0
+        version: 2.51.0
       date-fns:
         specifier: ^3.6.0
         version: 3.6.0
@@ -276,6 +279,9 @@ importers:
       '@tailwindcss/typography':
         specifier: ^0.5.13
         version: 0.5.13(tailwindcss@3.4.4)
+      '@types/lodash':
+        specifier: ^4.17.13
+        version: 4.17.13
       '@types/node':
         specifier: ^20.11.30
         version: 20.14.8
@@ -1783,6 +1789,9 @@ packages:
   '@types/linkify-it@3.0.5':
     resolution: {integrity: sha512-yg6E+u0/+Zjva+buc3EIb+29XEg4wltq7cSmd4Uc2EE/1nUVmxyzpX6gUXD0V8jIrG0r7YeOGVIbYRkxeooCtw==}
 
+  '@types/lodash@4.17.13':
+    resolution: {integrity: sha512-lfx+dftrEZcdBPczf9d0Qv0x+j/rfNCMuC6OcfXmO8gkfeNAY88PgKUbvG56whcN23gc27yenwF6oJZXGFpYxg==}
+
   '@types/markdown-it@13.0.8':
     resolution: {integrity: sha512-V+KmpgiipS+zoypeUSS9ojesWtY/0k4XfqcK2fnVrX/qInJhX7rsCxZ/rygiPH2zxlPPrhfuW0I6ddMcWTKLsg==}
 
@@ -2129,6 +2138,10 @@ packages:
 
   crelt@1.0.6:
     resolution: {integrity: sha512-VQ2MBenTq1fWZUH9DJNGti7kKv6EeAuYr3cLwxUWhIu1baTaXh4Ib5W2CqHVqib4/MqbYGJqiL3Zb8GJZr3l4g==}
+
+  cronstrue@2.51.0:
+    resolution: {integrity: sha512-7EG9VaZZ5SRbZ7m25dmP6xaS0qe9ay6wywMskFOU/lMDKa+3gZr2oeT5OUfXwRP/Bcj8wxdYJ65AHU70CI3tsw==}
+    hasBin: true
 
   cross-spawn@7.0.3:
     resolution: {integrity: sha512-iRDPJKUPVEND7dHPO8rkbOnPpyDygcDFtWjpeWNCgy8WP2rXcxXL8TskReQl6OrB2G7+UJrags1q15Fudc7G6w==}
@@ -5303,6 +5316,8 @@ snapshots:
 
   '@types/linkify-it@3.0.5': {}
 
+  '@types/lodash@4.17.13': {}
+
   '@types/markdown-it@13.0.8':
     dependencies:
       '@types/linkify-it': 3.0.5
@@ -5696,6 +5711,8 @@ snapshots:
   core-js@3.39.0: {}
 
   crelt@1.0.6: {}
+
+  cronstrue@2.51.0: {}
 
   cross-spawn@7.0.3:
     dependencies:

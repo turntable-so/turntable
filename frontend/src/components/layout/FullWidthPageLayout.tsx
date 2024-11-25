@@ -3,12 +3,14 @@
 export default function FullWidthPageLayout({
   title,
   button,
+  secondaryButton,
   children,
   breadcrumbs,
 }: {
   title?: string;
   children: React.ReactNode;
   button?: React.ReactNode;
+  secondaryButton?: React.ReactNode;
   breadcrumbs?: string[];
 }) {
   return (
@@ -18,7 +20,10 @@ export default function FullWidthPageLayout({
           <div className="text-3xl font-medium text-black dark:text-white">
             {title}
           </div>
-          <div>{button}</div>
+          <div className="flex items-center gap-2">
+            {secondaryButton}
+            {button}
+          </div>
         </div>
         <div className="mt-8">{children}</div>
       </div>
