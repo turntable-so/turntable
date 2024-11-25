@@ -6,7 +6,6 @@ from api.serializers import (
 from app.models import Resource, SSHKey
 
 
-@pytest.mark.django_db
 class TestResourceViews:
     @pytest.fixture
     def ssh_key(self, workspace):

@@ -91,8 +91,8 @@ def use_cache(request):
     return request.config.getoption("--use_cache")
 
 
-@pytest.fixture()
-def user():
+@pytest.fixture
+def user(db):
     return create_local_user()
 
 
@@ -219,12 +219,7 @@ def session_monkeypatch():
     mp.undo()
 
 
-@pytest.fixture(scope="session")
-def bypass_celery_beat(session_monkeypatch):
-    session_monkeypatch.setenv("BYPASS_CELERY_BEAT", "true")
-
-
-@pytest.fixture(scope="session")
+@pytest.fixture
 def test_queue_name():
     """Generate unique queue name for each pytest-xdist worker"""
     worker_id = os.getenv("PYTEST_XDIST_WORKER")
@@ -233,7 +228,7 @@ def test_queue_name():
     return f"{TEST_QUEUE}_{worker_id}"
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def custom_celery_app(test_queue_name):
     app = Celery("api")
 
@@ -247,10 +242,11 @@ def custom_celery_app(test_queue_name):
     return app
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def custom_celery_worker(
     custom_celery_app,
     test_queue_name,
+    transactional_db,
     max_retries: int = 10,
 ):
     # Clear the queue before starting the worker
@@ -267,6 +263,8 @@ def custom_celery_worker(
                 perform_ping_check=False,
                 pool="threads",
                 concurrency=4,
+                beat=True,
+                scheduler="django_celery_beat.schedulers:DatabaseScheduler",
             ) as worker:
                 yield worker
                 break  # If we get here successfully, exit the retry loop
@@ -281,7 +279,7 @@ def custom_celery_worker(
             )
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def suppress_celery_errors():
     """
     Suppress error logs from celery.worker.control and kombu.pidbox
@@ -290,6 +288,8 @@ def suppress_celery_errors():
     loggers_to_suppress = [
         "celery.worker.control",
         "kombu.pidbox",
+        "celery.worker.consumer.pidbox",
+        "celery.worker.pidbox",
         # You can add more loggers here if needed
     ]
 
@@ -307,6 +307,6 @@ def suppress_celery_errors():
         logging.getLogger(logger_name).setLevel(original_level)
 
 
-@pytest.fixture(scope="session")
-def custom_celery(custom_celery_worker, bypass_celery_beat, suppress_celery_errors):
+@pytest.fixture
+def custom_celery(custom_celery_worker, suppress_celery_errors):
     return custom_celery_worker

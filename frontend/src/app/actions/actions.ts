@@ -732,7 +732,7 @@ export async function getProjects() {
   return response.json();
 }
 
-export async function getBranch(id: string) {
+export async function getProject(id: string) {
   const response = await fetcher(`/project/${id}/`, {
     cookies,
     method: "GET",

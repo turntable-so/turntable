@@ -7,7 +7,7 @@ authors = [
     { name = "Ian Tracey", email = "ian@turntable.so" },
     { name = "Justin Leder", email = "justin@turntable.so" },
 ]
-requires-python = ">=3.11, <3.12"
+requires-python = ">=3.12, <3.13"
 dependencies = [
     "fastapi>=0.111.0",
     "sse-starlette>=2.1.0",
@@ -126,6 +126,7 @@ dev-dependencies = [
     "pytest-xdist>=3.6.1",
     "pytest-timeout>=2.3.1",
     "pytest-asyncio>=0.23.8",
+    "pytest-sugar>=1.0.0",
     "ruff>=0.7.3",
 ]
 
@@ -154,6 +155,7 @@ testpaths = [
 ]
 addopts = "--color=yes -v"
 DJANGO_SETTINGS_MODULE = "api.settings"
+asyncio_default_fixture_loop_scope = "function"
 timeout = 120
 
 [tool.ruff.lint]

@@ -18,10 +18,13 @@ class StorageSettings(WorkspaceSettings):
         DATA = "data"
         METADATA = "metadata"
 
+    def get_default_categories():
+        return list(StorageSettings.StorageCategories.values)
+
     applies_to = ArrayField(
         models.CharField(max_length=255, choices=StorageCategories.choices),
         null=True,
-        default=list(StorageCategories.values),
+        default=get_default_categories,
     )
     s3_access_key = encrypt(models.CharField(max_length=255))
     s3_secret_key = encrypt(models.CharField(max_length=255))

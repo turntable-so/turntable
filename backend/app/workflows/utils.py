@@ -9,21 +9,30 @@ from celery.local import Proxy
 class CustomTask(Task):
     """
     Custom base class for tasks to override the `apply` method.
+
     """
 
+    def _adjust_inputs(self, *args, **kwargs):
+        # Argsrepr and kwargsrepr are used to ensure correct json serialization of task_args and task_kwargs in the Result backend.
+        kwargs["argsrepr"] = args[0]
+        kwargs["kwargsrepr"] = args[1]
+
     def apply(self, *args, **kwargs):
-        if os.getenv("CUSTOM_CELERY_EAGER") != "true":
-            return super().apply(*args, **kwargs)
-        return self.apply_async(*args, **kwargs)
+        self._adjust_inputs(*args, **kwargs)
+        return super().apply(*args, **kwargs)
 
     def apply_async(self, *args, **kwargs):
-        if os.getenv("CUSTOM_CELERY_EAGER") != "true":
-            return super().apply_async(*args, **kwargs)
+        self._adjust_inputs(*args, **kwargs)
         res = super().apply_async(*args, **kwargs)
-        res.get()
+        if os.getenv("CUSTOM_CELERY_EAGER") == "true":
+            res.get(disable_sync_subtasks=False)
         return res
 
     def run_subtasks(self, *tasks):
+        if self.request.called_directly:
+            return chain(*tasks)._run_directly()
+        elif self.request.is_eager:
+            return chain(*tasks).apply(*tasks, parent_task=self).get()
         return chain(*tasks).apply_async(parent_task=self).get()
 
 
@@ -78,7 +87,10 @@ def task(*args, **kwargs):
 
 class ChainResult(list):
     def get(self, *args, **kwargs):
-        return [res.get(*args, **kwargs) for res in self]
+        kwargs["disable_sync_subtasks"] = False
+        return [
+            res.get(*args, **kwargs) if hasattr(res, "get") else res for res in self
+        ]
 
 
 class chain(celery_chain):
@@ -87,9 +99,6 @@ class chain(celery_chain):
         parent_task.update_state(state=states.STARTED)
         res.get(disable_sync_subtasks=False)
         return res
-
-    def do(self, *args, **kwargs):
-        return self.apply_async(*args, **kwargs).get(disable_sync_subtasks=False)
 
     def apply(self, *args, **kwargs):
         parent_task = kwargs.pop("parent_task", None)
@@ -106,11 +115,19 @@ class chain(celery_chain):
         parent_task = kwargs.pop("parent_task", None)
         if not parent_task:
             raise ValueError("parent_task is required")
-        if os.getenv("CUSTOM_CELERY_EAGER") == "true":
-            return self.apply(*args, **kwargs)
 
         outs = []
         for t in self.tasks:
             res = t.apply_async(*args, **kwargs)
             outs.append(self._process_result(parent_task, res))
+        return ChainResult(outs)
+
+    def _run_directly(self):
+        outs = []
+        for t in self.tasks:
+            if isinstance(t, type(self)):
+                res = t._run_directly()
+            else:
+                res = t.type(*t.args, **t.kwargs)
+            outs.append(res)
         return ChainResult(outs)

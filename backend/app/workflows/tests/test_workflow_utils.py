@@ -56,7 +56,6 @@ if "pytest" in sys.modules:
         return self.run_subtasks(t)
 
 
-@pytest.mark.django_db(transaction=True)
 def test_nested_task(custom_celery):
     task_id = str(uuid.uuid4())
     result = root.si(workspace_id="1", parent_id=task_id).apply_async(task_id=task_id)

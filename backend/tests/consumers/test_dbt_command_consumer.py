@@ -2,7 +2,6 @@ import asyncio
 
 import pytest
 from channels.testing import WebsocketCommunicator
-from rest_framework_simplejwt.exceptions import InvalidToken
 
 from api.asgi import application
 from app.consumers.dbt_command_consumer import (
@@ -10,9 +9,8 @@ from app.consumers.dbt_command_consumer import (
 )
 
 
-@pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio
-@pytest.mark.usefixtures("local_postgres")
+@pytest.mark.usefixtures("local_postgres", "transactional_db")
 class TestDBTCommandConsumer:
     url = "/ws/dbt_command/"
 

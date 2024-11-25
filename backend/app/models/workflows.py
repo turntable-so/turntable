@@ -38,16 +38,6 @@ class WorkflowType(models.TextChoices):
     ONE_TIME = "one_time", "One Time"
 
 
-class WorkflowTaskMap:
-    map: dict[str, list[str]] = {}
-    inverse_map: dict[str, str] = {}
-
-    @classmethod
-    def add(cls, workflow_id: str, task_id: str):
-        cls.map.setdefault(workflow_id, []).append(task_id)
-        cls.inverse_map[task_id] = workflow_id
-
-
 class ScheduledWorkflow(PolymorphicModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     workflow_type = models.CharField(
@@ -160,10 +150,7 @@ class ScheduledWorkflow(PolymorphicModel):
             del kwargs[SUPER_ONLY]
             super().save(*args, **kwargs)
             return
-        bypass_celery_beat = os.getenv("BYPASS_CELERY_BEAT") == "true"
-        custom_celery_eager = (
-            bypass_celery_beat and os.getenv("CUSTOM_CELERY_EAGER") == "true"
-        )
+        custom_celery_eager = os.getenv("CUSTOM_CELERY_EAGER") == "true"
 
         self.clean()
 
@@ -178,46 +165,32 @@ class ScheduledWorkflow(PolymorphicModel):
             )
 
         # Find and cleanup existing instance before creating new one
-        if not custom_celery_eager:
-            try:
-                existing = type(self).objects.get(id=self.id) if self.id else None
-                if existing:
-                    # Clean up the old periodic task
-                    PeriodicTask.objects.filter(
-                        name=existing.replacement_identifier
-                    ).delete()
+        try:
+            existing = type(self).objects.get(id=self.id) if self.id else None
+            if existing:
+                # Clean up the old periodic task
+                PeriodicTask.objects.filter(
+                    name=existing.replacement_identifier
+                ).delete()
 
-                    # Clean up old crontab if it's not being used by any other workflows (in this case, not this workflow)
-                    if (
-                        existing.crontab != self.crontab
-                        and not type(self)
-                        .objects.filter(crontab=existing.crontab)
-                        .exclude(id=existing.id)
-                        .exists()
-                    ):
-                        existing.crontab.delete()
-            except type(self).DoesNotExist:
-                pass
+                # Clean up old crontab if it's not being used by any other workflows (in this case, not this workflow)
+                if (
+                    existing.crontab != self.crontab
+                    and not type(self)
+                    .objects.filter(crontab=existing.crontab)
+                    .exclude(id=existing.id)
+                    .exists()
+                ):
+                    existing.crontab.delete()
+        except type(self).DoesNotExist:
+            pass
 
-            # Create new periodic task
-            self.periodic_task = PeriodicTask.objects.create(
-                **self.get_periodic_task_args()
-            )
+        # Create new periodic task
+        self.periodic_task = PeriodicTask.objects.create(
+            **self.get_periodic_task_args()
+        )
 
         super().save(*args, **kwargs)
-
-        # if testing, schedule the task immediately
-        if custom_celery_eager:
-            if self.get_upcoming_tasks(1)[0] <= 0:
-                task_id = str(uuid.uuid4())
-                WorkflowTaskMap.add(self.id, task_id)
-                task = self.workflow.si(**self.kwargs).apply_async(task_id=task_id)
-
-        elif bypass_celery_beat:
-            next_delays = self.get_upcoming_tasks(10)
-            for next_delay in next_delays:
-                task = self.workflow.si(**self.kwargs).apply_async(countdown=next_delay)
-                WorkflowTaskMap.add(self.id, task.id)
 
     def delete(self, *args, **kwargs):
         super().delete(*args, **kwargs)
@@ -233,13 +206,6 @@ class ScheduledWorkflow(PolymorphicModel):
             .exists()
         ):
             self.crontab.delete()
-
-        # if testing, delete the queued tasks
-        if os.getenv("BYPASS_CELERY_BEAT") == "true":
-            for task_id in WorkflowTaskMap.map[self.id]:
-                current_app.control.revoke(task_id, terminate=False)
-                WorkflowTaskMap.inverse_map.pop(task_id)
-            WorkflowTaskMap.map.pop(self.id)
 
     def await_next_id(
         self,
