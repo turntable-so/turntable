@@ -113,8 +113,8 @@ class TestOrchestrationViews:
         # check runs
         response = client.get("/runs/")
         assert response.status_code == 200
-        assert len(response.data) == 1
-        data = response.data[0]
+        assert len(response.data["results"]) == 1
+        data = response.data["results"][0]
         assert data["task_id"] == task_id
         result = data["result"]
         assert result["success"]
