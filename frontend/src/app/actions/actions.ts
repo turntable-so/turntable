@@ -977,3 +977,11 @@ export async function startJob(jobId: string): Promise<Job | null> {
     return null;
   }
 }
+
+export async function deleteJob(jobId: string) {
+  const response = await fetcher(`/jobs/${jobId}/`, {
+    cookies,
+    method: "DELETE",
+  });
+  return await response.ok;
+}

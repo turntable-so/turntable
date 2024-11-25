@@ -5,6 +5,7 @@ import {
   type JobAnalytics,
   type PaginatedResponse,
   type Run,
+  deleteJob,
   getJob,
   getJobAnalytics,
   getRunsForJob,
@@ -13,16 +14,97 @@ import {
 import JobIdPage from "@/components/jobs/id/job-id-page";
 import FullWidthPageLayout from "@/components/layout/FullWidthPageLayout";
 import { Button } from "@/components/ui/button";
-import { Edit, Loader2, Play } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Edit, Loader2, MoreHorizontal, Play, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 type JobPageProps = {
   params: { jobId: string };
   searchParams: { page?: number; pageSize?: number };
 };
+
+const RunNowButton = memo(({ jobId }: { jobId: string }) => {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleRunNow = async () => {
+    setIsLoading(true);
+    try {
+      const job = await startJob(jobId);
+      if (job) {
+        toast.success("Job started");
+        router.refresh();
+      } else {
+        toast.error("Failed to start job");
+      }
+    } catch (error) {
+      toast.error("Failed to start job");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Button
+      className="rounded-full"
+      onClick={handleRunNow}
+      disabled={isLoading}
+    >
+      {isLoading ? (
+        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+      ) : (
+        <Play className="w-4 h-4 mr-2" />
+      )}
+      Run Now
+    </Button>
+  );
+});
+
+const JobActions = memo(({ jobId }: { jobId: string }) => {
+  const router = useRouter();
+
+  const handleDelete = async () => {
+    const success = await deleteJob(jobId);
+    if (success) {
+      toast.success("Job deleted");
+      router.push("/jobs");
+    } else {
+      toast.error("Failed to delete job");
+    }
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="icon" className="rounded-full">
+          <MoreHorizontal className="w-4 h-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem asChild>
+          <Link href={`/jobs/${jobId}/edit`}>
+            <Edit className="w-4 h-4 mr-2" />
+            <span>Edit Job</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <div onClick={handleDelete}>
+            <Trash2 className="w-4 h-4 mr-2" />
+            <span>Delete</span>
+          </div>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+});
 
 export default function JobPage({ params, searchParams }: JobPageProps) {
   const { jobId } = params;
@@ -56,56 +138,6 @@ export default function JobPage({ params, searchParams }: JobPageProps) {
     setJob(jobData);
     setPaginatedRuns(runsData);
     setJobAnalytics(analyticsData);
-  };
-
-  const RunNowButton = () => {
-    const router = useRouter();
-    const [isLoading, setIsLoading] = useState(false);
-
-    const handleRunNow = async () => {
-      setIsLoading(true);
-      try {
-        const job = await startJob(jobId);
-        if (job) {
-          toast.success("Job started");
-          router.refresh();
-        } else {
-          toast.error("Failed to start job");
-        }
-      } catch (error) {
-        toast.error("Failed to start job");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    return (
-      <Button
-        className="rounded-full"
-        onClick={handleRunNow}
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-        ) : (
-          <Play className="w-4 h-4 mr-2" />
-        )}
-        Run Now
-      </Button>
-    );
-  };
-
-  const EditJobButton = () => {
-    return (
-      <Button asChild variant="outline" className="rounded-full">
-        <Link href={`/jobs/${jobId}/edit`}>
-          <div className="flex items-center gap-2">
-            <Edit className="w-4 h-4" />
-            Edit Job
-          </div>
-        </Link>
-      </Button>
-    );
   };
 
   useEffect(() => {
@@ -146,11 +178,14 @@ export default function JobPage({ params, searchParams }: JobPageProps) {
     };
   }, [pathname, jobId, page, pageSize]);
 
-  if (!job || !paginatedRuns || !jobAnalytics) {
+  const memoizedJob = useMemo(() => job, [job]);
+  const memoizedPaginatedRuns = useMemo(() => paginatedRuns, [paginatedRuns]);
+
+  if (!memoizedJob || !memoizedPaginatedRuns || !jobAnalytics) {
     return (
       <FullWidthPageLayout
-        button={<RunNowButton />}
-        secondaryButton={<EditJobButton />}
+        button={<RunNowButton jobId={jobId} />}
+        secondaryButton={<JobActions jobId={jobId} />}
       >
         <div className="flex justify-center items-center h-full">
           <Loader2 className="h-6 w-6 animate-spin" />
@@ -161,13 +196,13 @@ export default function JobPage({ params, searchParams }: JobPageProps) {
 
   return (
     <FullWidthPageLayout
-      title={job.name}
-      button={<RunNowButton />}
-      secondaryButton={<EditJobButton />}
+      title={memoizedJob.name}
+      button={<RunNowButton jobId={jobId} />}
+      secondaryButton={<JobActions jobId={jobId} />}
     >
       <JobIdPage
-        job={job}
-        paginatedRuns={paginatedRuns}
+        job={memoizedJob}
+        paginatedRuns={memoizedPaginatedRuns}
         page={page}
         pageSize={pageSize}
         jobAnalytics={jobAnalytics}
