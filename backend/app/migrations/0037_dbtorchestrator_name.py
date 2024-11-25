@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("app", "0035_workspacesettings_alter_block_results_and_more"),
+        ("app", "0036_alter_storagesettings_applies_to"),
     ]
 
     operations = [
