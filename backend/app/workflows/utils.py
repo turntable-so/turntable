@@ -19,7 +19,7 @@ class CustomTask(Task):
         return args, kwargs
 
     def apply(self, *args, **kwargs):
-        args, kwargs =self._adjust_inputs(*args, **kwargs)
+        args, kwargs = self._adjust_inputs(*args, **kwargs)
         return super().apply(*args, **kwargs)
 
     def apply_async(self, *args, **kwargs):
@@ -88,9 +88,11 @@ def task(*args, **kwargs):
 
 class ChainResult(list):
     def get(self, *args, **kwargs):
-        kwargs["disable_sync_subtasks"] = False
         return [
-            res.get(*args, **kwargs) if hasattr(res, "get") else res for res in self
+            res.get(*args, **kwargs, disable_sync_subtasks=False)
+            if hasattr(res, "get")
+            else res
+            for res in self
         ]
 
 

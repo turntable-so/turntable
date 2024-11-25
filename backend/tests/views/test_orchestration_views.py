@@ -125,7 +125,7 @@ class TestOrchestrationViews:
         assert response.status_code == 200
         data = response.data
         assert data["subtasks"]
-        assert len(data["subtasks"]) == 3
+        assert len(data["subtasks"]) == 4
         for subtask in data["subtasks"]:
             assert not subtask["subtasks"]
 
