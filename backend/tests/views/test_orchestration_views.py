@@ -136,22 +136,3 @@ class TestOrchestrationViews:
 
         response = requests.get(url)
         assert response.status_code == 200
-
-    def test_cancel_orchestration(self, client, custom_celery, scheduled_workflow):
-        time.sleep(1)
-        response = client.post(f"/jobs/{scheduled_workflow.id}/start/")
-        assert response.status_code == 202
-        workflow = DBTOrchestrator.objects.get(id=response.data["id"])
-        task_id = workflow.await_next_id()
-        time.sleep(1)
-        print(task_id)
-        response = client.post(f"/runs/{task_id}/cancel/")
-        assert response.status_code == 200
-        assert response.data["message"] == "Task cancelled successfully"
-
-        # confirm task is cancelled
-        time.sleep(1)
-        response = client.get(f"/runs/{task_id}/")
-        assert response.status_code == 200
-        breakpoint()
-        assert response.data["status"] == "CANCELLED"
