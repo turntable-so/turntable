@@ -938,6 +938,7 @@ type CreateJobPayload = {
   dbtresource_id: string;
   commands: string[];
   cron_str: string;
+  save_artifacts: boolean;
 };
 
 export async function createJob(payload: CreateJobPayload) {
