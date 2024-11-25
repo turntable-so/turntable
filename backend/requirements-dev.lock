@@ -12,7 +12,7 @@ acryl-datahub==0.14.1.12
 adrf==0.1.8
 aiohappyeyeballs==2.4.3
     # via aiohttp
-aiohttp==3.11.6
+aiohttp==3.11.7
     # via acryl-datahub
     # via instructor
     # via litellm
@@ -156,7 +156,7 @@ db-dtypes==1.3.1
     # via turntable-spoonbill
 dbt-extractor==0.5.1
 dbtx==0.0.3
-debugpy==1.8.8
+debugpy==1.8.9
     # via pytest-celery
 decorator==5.1.1
     # via ipython
@@ -386,7 +386,7 @@ kombu==5.4.2
 lets-plot==4.5.1
 linkify-it-py==2.0.3
     # via markdown-it-py
-litellm==1.52.11
+litellm==1.52.14
 lxml==5.3.0
 lz4==4.3.3
     # via databricks-sql-connector
@@ -466,6 +466,7 @@ packaging==24.2
     # via matplotlib
     # via pyogrio
     # via pytest
+    # via pytest-sugar
     # via snowflake-connector-python
 palettable==3.3.3
     # via lets-plot
@@ -561,7 +562,7 @@ pydantic==2.8.2
 pydantic-core==2.20.1
     # via instructor
     # via pydantic
-pydata-google-auth==1.8.2
+pydata-google-auth==1.9.0
     # via turntable-spoonbill
 pygments==2.18.0
     # via ipython
@@ -591,6 +592,7 @@ pytest==8.3.3
     # via pytest-asyncio
     # via pytest-django
     # via pytest-docker-tools
+    # via pytest-sugar
     # via pytest-timeout
     # via pytest-xdist
 pytest-asyncio==0.24.0
@@ -598,6 +600,7 @@ pytest-celery==1.1.3
 pytest-django==4.9.0
 pytest-docker-tools==3.1.3
     # via pytest-celery
+pytest-sugar==1.0.0
 pytest-timeout==2.3.1
 pytest-xdist==3.6.1
 python-crontab==3.2.0
@@ -689,14 +692,14 @@ ruamel-yaml==0.18.6
     # via acryl-datahub
 ruamel-yaml-clib==0.2.12
     # via ruamel-yaml
-ruff==0.7.4
+ruff==0.8.0
 rustworkx==0.15.1
 s3transfer==0.10.4
     # via boto3
 scipy==1.14.1
     # via networkx
 selenium==4.26.1
-sentry-sdk==2.18.0
+sentry-sdk==2.19.0
     # via acryl-datahub
 service-identity==24.2.0
     # via twisted
@@ -707,7 +710,7 @@ setuptools==75.6.0
     # via pytest-celery
     # via zope-event
     # via zope-interface
-shandy-sqlfmt==0.23.3
+shandy-sqlfmt==0.24.0
 shapely==2.0.6
     # via geopandas
     # via netext
@@ -760,6 +763,8 @@ tabulate==0.9.0
 tenacity==9.0.0
     # via instructor
     # via pytest-celery
+termcolor==2.5.0
+    # via pytest-sugar
 textual==0.86.3
 thrift==0.20.0
     # via databricks-sql-connector
@@ -773,7 +778,7 @@ tomlkit==0.13.2
     # via snowflake-connector-python
 toolz==0.12.1
     # via turntable-spoonbill
-tornado==6.4.1
+tornado==6.4.2
     # via flower
 tqdm==4.67.0
     # via huggingface-hub
@@ -805,7 +810,6 @@ typing-extensions==4.12.2
     # via githubkit
     # via hishel
     # via huggingface-hub
-    # via ipython
     # via mypy
     # via openai
     # via plum-dispatch
@@ -860,11 +864,11 @@ websockets==13.1
     # via uvicorn
 werkzeug==3.1.3
     # via flask
-wrapt==1.16.0
+wrapt==1.17.0
     # via deprecated
 wsproto==1.2.0
     # via trio-websocket
-yarl==1.17.2
+yarl==1.18.0
     # via aiohttp
 zipp==3.21.0
     # via importlib-metadata

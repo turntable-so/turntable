@@ -1,6 +1,6 @@
-import ast
 import json
 
+import orjson
 from django.contrib.auth.models import Group, User
 from django_celery_beat.models import CrontabSchedule
 from django_celery_results.models import TaskResult
@@ -552,31 +552,116 @@ class TaskArtifactSerializer(serializers.ModelSerializer):
         fields = ["id", "artifact", "artifact_type"]
 
 
+class TaskListSerializer(serializers.ListSerializer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._instance_cache = {i.task_id: i for i in self.instance}
+
+
 class TaskSerializer(serializers.ModelSerializer):
     artifacts = TaskArtifactSerializer(
         source="taskartifact_set", many=True, read_only=True
     )
     result = serializers.SerializerMethodField()
+    subtasks = serializers.SerializerMethodField()
+
+    def _ensure_task_cached(self, task_ids: list[str]) -> None:
+        """Fetch and cache any uncached tasks"""
+        uncached_ids = set(task_ids) - set(self.context["task_cache"])
+        if uncached_ids:
+            new_tasks = TaskResult.objects.filter(task_id__in=uncached_ids)
+            self.context["task_cache"].update(
+                {task.task_id: task for task in new_tasks}
+            )
+
+    def _parse_meta(self, instance) -> dict | None:
+        """Parse instance metadata, returning None if invalid"""
+        if not hasattr(instance, "meta"):
+            return None
+
+        if isinstance(instance.meta, dict):
+            return instance.meta
+
+        try:
+            return orjson.loads(instance.meta)
+        except (json.JSONDecodeError, AttributeError):
+            return None
+
+    def _process_subtasks(self, children: list) -> list:
+        """Process and serialize subtasks from children data"""
+        # Extract valid task entries
+        task_entries = [
+            (child[0][0], child[1])  # (task_id, metadata)
+            for child in children
+            if isinstance(child[0], list)
+        ]
+        if not task_entries:
+            return []
+
+        # Ensure all tasks are cached
+        task_ids = [task_id for task_id, _ in task_entries]
+        self._ensure_task_cached(task_ids)
+
+        # Serialize available tasks
+        tasks = TaskSerializer(
+            [self.context["task_cache"].get(task_id) for task_id in task_ids],
+            many=True,
+            context=self.context,
+        ).data
+
+        # Apply additional metadata
+        for task_data, (_, metadata) in zip(tasks, task_entries):
+            if metadata:
+                task_data.update(metadata)
+
+        return tasks
+
+    def _parse_json(self, data):
+        if not data:
+            return None
+        try:
+            return orjson.loads(data)
+        except orjson.JSONDecodeError:
+            return data
 
     def get_result(self, obj):
-        if obj.result:
-            try:
-                return ast.literal_eval(obj.result)
-            except (ValueError, SyntaxError):
-                try:
-                    return json.loads(obj.result)
-                except json.JSONDecodeError:
-                    return obj.result
-        return None
+        return self._parse_json(obj.result)
+
+    def get_task_args(self, obj):
+        return self._parse_json(obj.task_args)
+
+    def get_task_kwargs(self, obj):
+        return self._parse_json(obj.task_kwargs)
+
+    def to_representation(self, instance):
+        # Initialize cache if needed
+        self.context.setdefault("task_cache", {})
+        self.context["task_cache"][instance.task_id] = instance
+
+        data = super().to_representation(instance)
+
+        # Process subtasks if present
+        meta = self._parse_meta(instance)
+        if meta and "children" in meta:
+            data["subtasks"] = self._process_subtasks(meta["children"])
+
+        return data
+
+    def get_subtasks(self, obj):
+        return []
 
     class Meta:
         model = TaskResult
+        list_serializer_class = TaskListSerializer
         fields = [
             "task_id",
             "status",
+            "task_args",
+            "task_kwargs",
             "result",
             "date_created",
             "date_done",
             "traceback",
             "artifacts",
+            "subtasks",
         ]

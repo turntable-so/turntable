@@ -23,7 +23,6 @@ def _validate_query_test(response, limit):
     return url
 
 
-@pytest.mark.django_db(transaction=True)
 @pytest.mark.usefixtures("force_isolate", "custom_celery")
 class TestQueryViews:
     def _test(
@@ -74,7 +73,6 @@ class TestQueryViews:
         self._test(client, user, remote_databricks)
 
 
-@pytest.mark.django_db(transaction=True)
 @pytest.mark.usefixtures("force_isolate", "custom_celery")
 class TestDBTQueryViews:
     @classmethod
@@ -128,7 +126,6 @@ class TestDBTQueryViews:
 FORMAT_QUERY = """with source as (select * from {{ source('ecom', 'raw_customers') }}), renamed as (select id as customer_id, name as customer_name from source) select * from renamed"""
 
 
-@pytest.mark.django_db
 def test_format_query(client):
     response = client.post(
         "/query/format/",

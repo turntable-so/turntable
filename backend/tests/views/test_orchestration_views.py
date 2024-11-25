@@ -55,26 +55,22 @@ class TestOrchestrationViews:
         response = client.post("/jobs/", data, format="json")
         return DBTOrchestrator.objects.get(id=response.data["id"])
 
-    @pytest.mark.django_db
     def test_create_orchestration(self, client, minimal_scheduled_workflow):
         assert minimal_scheduled_workflow is not None
         assert PeriodicTask.objects.count() == 1
 
-    @pytest.mark.django_db
     def test_list_orchestration(self, client, minimal_scheduled_workflow):
         response = client.get("/jobs/")
         assert response.status_code == 200
         assert len(response.data) == 1
         assert PeriodicTask.objects.count() == 1
 
-    @pytest.mark.django_db
     def test_delete_orchestration(self, client, minimal_scheduled_workflow):
         response = client.delete(f"/jobs/{minimal_scheduled_workflow.id}/")
         assert response.status_code == 204
         assert PeriodicTask.objects.count() == 0
         assert DBTOrchestrator.objects.count() == 0
 
-    @pytest.mark.django_db
     @pytest.mark.parametrize(
         "data",
         [NEW_COMMANDS_DATA, NEW_SCHEDULE_DATA],
@@ -92,7 +88,6 @@ class TestOrchestrationViews:
         assert response.data["cron_str"] == data["cron_str"]
         assert response.data["commands"] == data["commands"]
 
-    @pytest.mark.django_db
     def test_invalid_commands(self, client, local_postgres_dbtresource):
         data = {
             **BASE_DATA,
@@ -104,7 +99,6 @@ class TestOrchestrationViews:
         assert response.status_code == 400
         assert "All commands must start with 'dbt'" in response.data["commands"]
 
-    @pytest.mark.django_db(transaction=True)
     def test_orchestration_integration(self, client, custom_celery, scheduled_workflow):
         time.sleep(1)
         # check start
@@ -126,10 +120,16 @@ class TestOrchestrationViews:
         assert result["success"]
         assert result["run_results"]
 
-        # check artifacts
+        # check subtasks
         response = client.get(f"/runs/{task_id}/")
         assert response.status_code == 200
         data = response.data
+        assert data["subtasks"]
+        assert len(data["subtasks"]) == 3
+        for subtask in data["subtasks"]:
+            assert not subtask["subtasks"]
+
+        # check artifacts
         assert data["artifacts"]
         url = data["artifacts"][0]["artifact"]
         url = url.replace(settings.AWS_S3_PUBLIC_URL, settings.AWS_S3_ENDPOINT_URL)

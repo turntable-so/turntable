@@ -7,7 +7,7 @@ from typing import Callable
 from git import Repo as GitRepo
 
 from app.models.resources import DBTResource
-from app.workflows.utils import chain, task
+from app.workflows.utils import task
 from vinyl.lib.utils.files import load_orjson
 
 
@@ -157,7 +157,7 @@ def run_dbt_commands(
                 save_artifacts_task.si(**task_kwargs, parent_task_id=self.request.id)
             )
 
-        outs = chain(*tasks).do()
+        outs = self.run_subtasks(*tasks)
 
     return returns_helper(outs)
 

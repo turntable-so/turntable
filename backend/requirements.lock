@@ -12,7 +12,7 @@ acryl-datahub==0.14.1.12
 adrf==0.1.8
 aiohappyeyeballs==2.4.3
     # via aiohttp
-aiohttp==3.11.6
+aiohttp==3.11.7
     # via acryl-datahub
     # via instructor
     # via litellm
@@ -340,7 +340,7 @@ kombu==5.4.2
 lets-plot==4.5.1
 linkify-it-py==2.0.3
     # via markdown-it-py
-litellm==1.52.11
+litellm==1.52.14
 lz4==4.3.3
     # via databricks-sql-connector
 markdown-it-py==3.0.0
@@ -490,7 +490,7 @@ pydantic==2.8.2
 pydantic-core==2.20.1
     # via instructor
     # via pydantic
-pydata-google-auth==1.8.2
+pydata-google-auth==1.9.0
     # via turntable-spoonbill
 pygments==2.18.0
     # via mpire
@@ -600,13 +600,13 @@ ruamel-yaml==0.18.6
     # via acryl-datahub
 ruamel-yaml-clib==0.2.12
     # via ruamel-yaml
-ruff==0.7.4
+ruff==0.8.0
 rustworkx==0.15.1
 s3transfer==0.10.4
     # via boto3
 scipy==1.14.1
     # via networkx
-sentry-sdk==2.18.0
+sentry-sdk==2.19.0
     # via acryl-datahub
 service-identity==24.2.0
     # via twisted
@@ -616,7 +616,7 @@ setuptools==75.6.0
     # via pydata-google-auth
     # via zope-event
     # via zope-interface
-shandy-sqlfmt==0.23.3
+shandy-sqlfmt==0.24.0
 shapely==2.0.6
     # via geopandas
     # via netext
@@ -676,7 +676,7 @@ tomlkit==0.13.2
     # via snowflake-connector-python
 toolz==0.12.1
     # via turntable-spoonbill
-tornado==6.4.1
+tornado==6.4.2
     # via flower
 tqdm==4.67.0
     # via huggingface-hub
@@ -744,9 +744,9 @@ wcwidth==0.2.13
 websockets==13.1
     # via realtime
     # via uvicorn
-wrapt==1.16.0
+wrapt==1.17.0
     # via deprecated
-yarl==1.17.2
+yarl==1.18.0
     # via aiohttp
 zipp==3.21.0
     # via importlib-metadata

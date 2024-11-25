@@ -16,7 +16,6 @@ def safe_decode(s):
     return unquote(s)
 
 
-@pytest.mark.django_db
 @pytest.mark.usefixtures("force_isolate", "local_postgres")
 class TestProjectViews:
     @pytest.fixture
@@ -189,7 +188,6 @@ class TestProjectViews:
         assert response.status_code == 200
 
 
-@pytest.mark.django_db
 @pytest.mark.usefixtures("local_postgres")
 @require_env_vars("SSHKEY_0_PUBLIC", "SSHKEY_0_PRIVATE")
 class TestFileChanges:

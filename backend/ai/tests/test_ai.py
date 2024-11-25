@@ -1,5 +1,3 @@
-import pytest
-
 from ai.documentation.dbt import get_column_completion, get_table_completion
 from ai.embeddings import embed
 from app.models import DBTCoreDetails
@@ -9,7 +7,6 @@ def test_embed():
     assert embed("text-embedding-3-small", ["hello"]) != []
 
 
-@pytest.mark.django_db
 def test_table_description(local_postgres):
     dbt_core_resource = DBTCoreDetails.objects.filter(resource=local_postgres).first()
     with dbt_core_resource.dbt_repo_context() as (dbtproj, dbt_path, _):
@@ -22,7 +19,6 @@ def test_table_description(local_postgres):
     assert x != []
 
 
-@pytest.mark.django_db
 def test_column_description(local_postgres):
     dbt_core_resource = DBTCoreDetails.objects.filter(resource=local_postgres).first()
     with dbt_core_resource.dbt_repo_context() as (dbtproj, dbt_path, _):
