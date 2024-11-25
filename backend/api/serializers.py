@@ -682,12 +682,12 @@ class TaskResultSerializer(serializers.ModelSerializer):
             "task_id",
             "status",
             "task_args",
+            "task_kwargs",
             "result",
             "date_created",
             "date_done",
             "traceback",
             "artifacts",
-            "task_kwargs",
             "subtasks",
         ]
 
