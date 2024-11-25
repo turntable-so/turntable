@@ -732,7 +732,7 @@ export async function getProjects() {
   return response.json();
 }
 
-export async function getBranch(id: string) {
+export async function getProject(id: string) {
   const response = await fetcher(`/project/${id}/`, {
     cookies,
     method: "GET",
@@ -809,4 +809,180 @@ export async function sync(projectId: string) {
     method: "POST",
   });
   return await response.json();
+}
+
+export type Job = {
+  id: string;
+  workspace_id: string;
+  dbtresource_id: string;
+  commands: Array<string>;
+  cron_str: string;
+  name: string;
+  latest_run: Run | null;
+  next_run: string | null;
+};
+
+export async function getPaginatedJobs({
+  page,
+  pageSize,
+}: {
+  page?: number;
+  pageSize?: number;
+}): Promise<PaginatedResponse<Job>> {
+  const urlParams = new URLSearchParams();
+  if (page) urlParams.set("page", page.toString());
+  if (pageSize) urlParams.set("page_size", pageSize.toString());
+  const response = await fetcher(`/jobs/?${urlParams.toString()}`, {
+    cookies,
+    method: "GET",
+  });
+  return await response.json();
+}
+
+export async function getJob(id: string): Promise<Job> {
+  const response = await fetcher(`/jobs/${id}/`, {
+    cookies,
+    method: "GET",
+  });
+  return await response.json();
+}
+
+export type Run = {
+  task_id: string;
+  status: "FAILURE" | "SUCCESS" | "STARTED";
+  result: Record<string, any> | null;
+  subtasks: Array<Run>;
+  date_created: string;
+  date_done: string;
+  traceback: any;
+  artifacts: Array<{
+    id: string;
+    artifact_type: string;
+    artifact: string;
+  }>;
+  task_kwargs: any;
+};
+
+export type RunWithJob = Run & {
+  job_id: string;
+  job_name: string;
+};
+
+export async function getPaginatedRuns({
+  page,
+  pageSize,
+}: {
+  page: number;
+  pageSize: number;
+}): Promise<PaginatedResponse<RunWithJob>> {
+  const response = await fetcher(`/runs/?page=${page}&page_size=${pageSize}`, {
+    cookies,
+    method: "GET",
+  });
+  return await response.json();
+}
+
+type GetRunsForJobArgs = {
+  jobId: string;
+  page?: number;
+  pageSize?: number;
+};
+
+export type PaginatedResponse<T> = {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+};
+
+export async function getRunsForJob({
+  jobId,
+  page = 1,
+  pageSize = 10,
+}: GetRunsForJobArgs): Promise<PaginatedResponse<Run>> {
+  const response = await fetcher(
+    `/jobs/${jobId}/runs/?page=${page}&page_size=${pageSize}`,
+    {
+      cookies,
+      method: "GET",
+    },
+  );
+  return await response.json();
+}
+
+export type JobAnalytics = {
+  success_rate: number;
+  started: number;
+  succeeded: number;
+  errored: number;
+};
+
+export async function getJobAnalytics(jobId: string): Promise<JobAnalytics> {
+  const response = await fetcher(`/jobs/${jobId}/analytics/`, {
+    cookies,
+    method: "GET",
+  });
+  return await response.json();
+}
+
+export async function getRun(runId: string): Promise<RunWithJob> {
+  const response = await fetcher(`/runs/${runId}/`, {
+    cookies,
+    method: "GET",
+  });
+  return await response.json();
+}
+
+type CreateJobPayload = {
+  name: string;
+  dbtresource_id: string;
+  commands: string[];
+  cron_str: string;
+  save_artifacts: boolean;
+};
+
+export async function createJob(payload: CreateJobPayload) {
+  const response = await fetcher("/jobs/", {
+    cookies,
+    method: "POST",
+    body: payload,
+  });
+  return await response.json();
+}
+
+export async function updateJob(jobId: string, payload: CreateJobPayload) {
+  const response = await fetcher(`/jobs/${jobId}/`, {
+    cookies,
+    method: "PUT",
+    body: payload,
+  });
+  return await response.json();
+}
+
+export async function getEnvironments() {
+  const response = await fetcher("/jobs/environments/", {
+    cookies,
+    method: "GET",
+  });
+  return await response.json();
+}
+
+export async function startJob(jobId: string): Promise<Job | null> {
+  try {
+    const response = await fetcher(`/jobs/${jobId}/start/`, {
+      cookies,
+      method: "POST",
+    });
+    return await response.json();
+  } catch (error) {
+    return null;
+  }
+}
+
+export async function deleteJob(jobId: string) {
+  const response = await fetcher(`/jobs/${jobId}/`, {
+    cookies,
+    method: "DELETE",
+  });
+  return await response.ok;
 }

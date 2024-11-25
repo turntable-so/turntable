@@ -23,29 +23,6 @@ export function LineageControls() {
   const { updateGraph, lineageOptions } = useContext(LineageViewContext);
 
   const instance = useReactFlow();
-
-  const onExpandLeft = useCallback(() => {
-    updateGraph(
-      {
-        ...lineageOptions,
-        predecessor_depth: lineageOptions.predecessor_depth + 1,
-        successor_depth: lineageOptions.successor_depth,
-      },
-      false,
-    );
-  }, [lineageOptions]);
-
-  const onExpandRight = useCallback(() => {
-    updateGraph(
-      {
-        ...lineageOptions,
-        predecessor_depth: lineageOptions.predecessor_depth,
-        successor_depth: lineageOptions.successor_depth + 1,
-      },
-      false,
-    );
-  }, [lineageOptions]);
-
   return (
     <>
       <Panel position="bottom-left">
@@ -61,7 +38,7 @@ export function LineageControls() {
               variant="secondary"
               className="p-1 border-2 border-gray-300 hover:bg-white opacity-70 hover:opacity-100"
             >
-              <Maximize className="text-muted-foreground size-5" />
+              <Maximize className="text-muted-foreground size-4" />
             </Button>
           </div>
 
@@ -74,7 +51,7 @@ export function LineageControls() {
               variant="secondary"
               className="p-1 border-2 border-gray-300 hover:bg-white opacity-70 hover:opacity-100"
             >
-              <ZoomOut className="text-muted-foreground size-5" />
+              <ZoomOut className="text-muted-foreground size-4" />
             </Button>
           </div>
 
@@ -87,7 +64,7 @@ export function LineageControls() {
               variant="secondary"
               className="p-1 border-2 border-gray-300 hover:bg-white opacity-70 hover:opacity-100"
             >
-              <ZoomIn className="text-muted-foreground size-5" />
+              <ZoomIn className="text-muted-foreground size-4" />
             </Button>
           </div>
         </div>

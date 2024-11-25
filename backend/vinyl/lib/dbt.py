@@ -25,6 +25,9 @@ from vinyl.lib.utils.files import adjust_path, cd, file_exists_in_directory, loa
 from vinyl.lib.utils.graph import DAG
 from vinyl.lib.utils.query_limit_helper import query_limit_helper
 
+STREAM_SUCCESS_STRING = "PROCESS_STREAM_SUCCESS"
+STREAM_ERROR_STRING = "PROCESS_STREAM_ERROR"
+
 
 def run_adjusted_replace(base_pattern_list, replacement, contents):
     pattern = r"\s*".join(base_pattern_list)
@@ -387,7 +390,7 @@ class DBTProject(object):
         stderr = "".join(stderrs)
 
         success = self.check_command_success(stdout, stderr)
-        success_str = "PROCESS_STREAM_SUCCESS" if success else "PROCESS_STREAM_ERROR"
+        success_str = STREAM_SUCCESS_STRING if success else STREAM_ERROR_STRING
         yield success_str
 
     @classmethod

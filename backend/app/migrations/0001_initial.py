@@ -526,7 +526,7 @@ class Migration(migrations.Migration):
                     "results",
                     models.FileField(
                         null=True,
-                        storage=app.services.storage_backends.CustomS3Boto3Storage(),
+                        storage=app.services.storage_backends.CustomS3Boto3StorageDeprecated(),
                         upload_to="results/",
                     ),
                 ),

@@ -7,30 +7,23 @@
 #   all-features: false
 #   with-sources: false
 #   generate-hashes: false
-#   universal: false
 
-acryl-datahub==0.14.1
-adrf==0.1.7
-aiohappyeyeballs==2.4.2
+acryl-datahub==0.14.1.12
+adrf==0.1.8
+aiohappyeyeballs==2.4.3
     # via aiohttp
-aiohttp==3.10.8
+aiohttp==3.11.7
     # via acryl-datahub
-    # via aiohttp-retry
-    # via hatchet-sdk
     # via instructor
     # via litellm
     # via realtime
-aiohttp-retry==2.8.3
-    # via hatchet-sdk
 aiosignal==1.3.1
     # via aiohttp
-aiostream==0.5.2
-    # via hatchet-sdk
-amqp==5.2.0
+amqp==5.3.1
     # via kombu
 annotated-types==0.7.0
     # via pydantic
-anyio==4.6.0
+anyio==4.6.2.post1
     # via httpx
     # via openai
     # via sse-starlette
@@ -73,9 +66,9 @@ bidict==0.23.1
     # via turntable-spoonbill
 billiard==4.2.1
     # via celery
-bitarray==2.9.2
+bitarray==2.9.3
     # via netext
-black==24.8.0
+black==24.10.0
     # via shandy-sqlfmt
 boto3==1.34.20
     # via django-storages
@@ -83,7 +76,7 @@ botocore==1.34.162
     # via boto3
     # via s3transfer
 bs4==0.0.2
-cached-property==1.5.2
+cached-property==2.0.1
     # via acryl-datahub
 cachetools==5.5.0
     # via google-auth
@@ -102,12 +95,11 @@ certifi==2024.8.30
     # via snowflake-connector-python
 cffi==1.17.1
     # via cryptography
-    # via pynacl
     # via snowflake-connector-python
-channels==4.1.0
+channels==4.2.0
     # via channels-redis
-channels-redis==4.2.0
-charset-normalizer==3.3.2
+channels-redis==4.2.1
+charset-normalizer==3.4.0
     # via requests
     # via snowflake-connector-python
 click==8.1.7
@@ -134,12 +126,12 @@ click-spinner==0.1.10
     # via acryl-datahub
 constantly==23.10.4
     # via twisted
-contourpy==1.3.0
+contourpy==1.3.1
     # via matplotlib
 cron-descriptor==1.4.5
     # via django-celery-beat
 croniter==5.0.1
-cryptography==43.0.1
+cryptography==43.0.3
     # via autobahn
     # via pyjwt
     # via pyopenssl
@@ -149,19 +141,17 @@ cryptography==43.0.1
 cycler==0.12.1
     # via matplotlib
 daphne==4.1.2
-databricks-sql-connector==3.4.0
-db-dtypes==1.3.0
+databricks-sql-connector==3.6.0
+db-dtypes==1.3.1
     # via turntable-spoonbill
 dbt-extractor==0.5.1
 dbtx==0.0.3
 deepmerge==2.0
-    # via turntable-cli
 defusedxml==0.7.1
     # via python3-openid
     # via social-auth-core
-deprecated==1.2.14
+deprecated==1.2.15
     # via acryl-datahub
-    # via pygithub
 deprecation==2.1.0
     # via postgrest
 dill==0.3.9
@@ -169,9 +159,9 @@ dill==0.3.9
 diskcache==5.6.3
 distro==1.9.0
     # via openai
-dj-database-url==2.2.0
-dj-rest-auth==6.0.0
-django==5.1.1
+dj-database-url==2.3.0
+dj-rest-auth==7.0.0
+django==5.1.3
     # via adrf
     # via channels
     # via dj-database-url
@@ -195,14 +185,12 @@ django-allauth==0.61.1
     # via dj-rest-auth
 django-celery-beat==2.7.0
 django-celery-results==2.5.1
-django-cors-headers==4.4.0
+django-cors-headers==4.6.0
 django-health-check==3.18.3
 django-invitations==2.1.0
-django-pgbulk==3.0.1
-django-polymorphic @ git+https://github.com/jazzband/django-polymorphic.git@1039f882b99f97bf657bd958c949ee6a3b00377a#egg=django-polymorphic
+django-pgbulk==3.2.0
+django-polymorphic @ git+https://github.com/jazzband/django-polymorphic.git@1039f882b99f97bf657bd958c949ee6a3b00377a
 django-storages==1.14.4
-django-templated-mail==1.1.1
-    # via djoser
 django-timezone-field==7.0
     # via django-celery-beat
 djangorestframework==3.15.2
@@ -211,40 +199,42 @@ djangorestframework==3.15.2
     # via djangorestframework-simplejwt
 djangorestframework-simplejwt==5.3.1
     # via djoser
-djoser==2.2.3
+djoser==2.3.1
 docker==7.1.0
     # via acryl-datahub
 docstring-parser==0.16
     # via instructor
-duckdb==1.1.1
+duckdb==1.1.3
     # via turntable-spoonbill
-et-xmlfile==1.1.0
+et-xmlfile==2.0.0
     # via openpyxl
 expandvars==0.12.0
     # via acryl-datahub
-fastapi==0.115.0
+fastapi==0.115.5
 fernet==1.0.1
 filelock==3.16.1
     # via huggingface-hub
     # via snowflake-connector-python
 flower==2.0.1
-fonttools==4.54.1
+fonttools==4.55.0
     # via matplotlib
-frozenlist==1.4.1
+frozenlist==1.5.0
     # via aiohttp
     # via aiosignal
-fsspec==2024.9.0
+fsspec==2024.10.0
     # via huggingface-hub
 geopandas==1.0.1
+gevent==24.11.1
+    # via celery
 gitdb==4.0.11
     # via gitpython
-githubkit==0.11.11
+githubkit==0.11.14
 gitpython==3.1.43
-google-api-core==2.20.0
+google-api-core==2.23.0
     # via google-cloud-bigquery
     # via google-cloud-bigquery-storage
     # via google-cloud-core
-google-auth==2.35.0
+google-auth==2.36.0
     # via google-api-core
     # via google-auth-oauthlib
     # via google-cloud-bigquery
@@ -253,9 +243,9 @@ google-auth==2.35.0
     # via pydata-google-auth
 google-auth-oauthlib==1.2.1
     # via pydata-google-auth
-google-cloud-bigquery==3.26.0
+google-cloud-bigquery==3.27.0
     # via turntable-spoonbill
-google-cloud-bigquery-storage==2.26.0
+google-cloud-bigquery-storage==2.27.0
     # via turntable-spoonbill
 google-cloud-core==2.4.1
     # via google-cloud-bigquery
@@ -263,36 +253,33 @@ google-crc32c==1.6.0
     # via google-resumable-media
 google-resumable-media==2.7.2
     # via google-cloud-bigquery
-googleapis-common-protos==1.65.0
+googleapis-common-protos==1.66.0
     # via google-api-core
     # via grpcio-status
-gotrue==2.9.0
+gotrue==2.10.0
     # via supabase
 grandalf==0.7
     # via netext
-grpcio==1.66.2
+greenlet==3.1.1
+    # via gevent
+grpcio==1.68.0
     # via google-api-core
     # via grpcio-status
-    # via grpcio-tools
-    # via hatchet-sdk
-grpcio-status==1.62.3
+grpcio-status==1.68.0
     # via google-api-core
-grpcio-tools==1.62.3
-    # via hatchet-sdk
 gunicorn==23.0.0
 h11==0.14.0
     # via httpcore
     # via uvicorn
 h2==4.1.0
     # via httpx
-hatchet-sdk==0.38.3
-hishel==0.0.32
+hishel==0.0.33
     # via githubkit
 hpack==4.0.0
     # via h2
-httpcore==1.0.5
+httpcore==1.0.7
     # via httpx
-httptools==0.6.1
+httptools==0.6.4
     # via uvicorn
 httpx==0.27.2
     # via githubkit
@@ -303,7 +290,7 @@ httpx==0.27.2
     # via storage3
     # via supabase
     # via supafunc
-huggingface-hub==0.25.1
+huggingface-hub==0.26.2
     # via tokenizers
 humanfriendly==10.0
     # via acryl-datahub
@@ -324,18 +311,16 @@ idna==3.10
     # via yarl
 ijson==3.3.0
     # via acryl-datahub
-importlib-metadata==6.11.0
+importlib-metadata==8.5.0
     # via litellm
 incremental==24.7.2
     # via twisted
-iniconfig==2.0.0
-    # via pytest
-instructor==1.6.2
+instructor==1.6.4
 jinja2==3.1.4
     # via instructor
     # via litellm
     # via shandy-sqlfmt
-jiter==0.5.0
+jiter==0.6.1
     # via instructor
     # via openai
 jmespath==1.0.1
@@ -346,27 +331,23 @@ jsonref==1.1.0
 jsonschema==4.23.0
     # via acryl-datahub
     # via litellm
-jsonschema-specifications==2023.12.1
+jsonschema-specifications==2024.10.1
     # via jsonschema
 kiwisolver==1.4.7
     # via matplotlib
 kombu==5.4.2
     # via celery
-lets-plot==4.4.1
+lets-plot==4.5.1
 linkify-it-py==2.0.3
     # via markdown-it-py
-litellm==1.48.6
-logtail-python==0.3.1
-    # via turntable-cli
-loguru==0.7.2
-    # via hatchet-sdk
+litellm==1.52.14
 lz4==4.3.3
     # via databricks-sql-connector
 markdown-it-py==3.0.0
     # via mdit-py-plugins
     # via rich
     # via textual
-markupsafe==2.1.5
+markupsafe==3.0.2
     # via jinja2
 matplotlib==3.9.2
     # via networkx
@@ -379,24 +360,19 @@ mixpanel==4.10.1
 monotonic==1.6
     # via posthog
 mpire==2.10.2
-    # via turntable-cli
 msgpack==1.1.0
     # via channels-redis
-    # via logtail-python
 multidict==6.1.0
     # via aiohttp
     # via yarl
-multiprocess==0.70.16
+multiprocess==0.70.17
     # via mpire
 mypy-extensions==1.0.0
     # via black
     # via typing-inspect
-nest-asyncio==1.6.0
-    # via hatchet-sdk
 netext==0.2.1
-networkx==3.3
+networkx==3.4.2
     # via netext
-    # via turntable-cli
 ngrok==1.4.0
 numpy==1.26.4
     # via contourpy
@@ -417,14 +393,13 @@ oauthlib==3.2.2
     # via databricks-sql-connector
     # via requests-oauthlib
     # via social-auth-core
-openai==1.50.2
+openai==1.55.0
     # via instructor
     # via litellm
 openpyxl==3.1.5
     # via databricks-sql-connector
-orjson==3.10.7
-    # via turntable-cli
-packaging==24.1
+orjson==3.10.11
+packaging==24.2
     # via acryl-datahub
     # via black
     # via db-dtypes
@@ -435,7 +410,6 @@ packaging==24.1
     # via huggingface-hub
     # via matplotlib
     # via pyogrio
-    # via pytest
     # via snowflake-connector-python
 palettable==3.3.3
     # via lets-plot
@@ -444,51 +418,48 @@ pandas==2.2.3
     # via db-dtypes
     # via geopandas
     # via networkx
-    # via turntable-cli
     # via turntable-spoonbill
 parsy==2.1
     # via turntable-spoonbill
 pathspec==0.12.1
     # via black
-pgvector==0.3.4
-pillow==10.4.0
+pgvector==0.3.6
+pillow==11.0.0
     # via matplotlib
 platformdirs==4.3.6
     # via black
     # via shandy-sqlfmt
     # via snowflake-connector-python
     # via textual
-pluggy==1.5.0
-    # via pytest
-plum-dispatch==2.5.2
+plum-dispatch==2.5.3
     # via netext
-postgrest==0.17.0
+postgrest==0.18.0
     # via supabase
-posthog==3.6.6
-    # via turntable-cli
+posthog==3.7.2
 progressbar2==4.5.0
     # via acryl-datahub
 prometheus-client==0.21.0
     # via flower
 prompt-toolkit==3.0.48
     # via click-repl
-proto-plus==1.24.0
+propcache==0.2.0
+    # via aiohttp
+    # via yarl
+proto-plus==1.25.0
     # via google-api-core
     # via google-cloud-bigquery-storage
-protobuf==4.25.5
+protobuf==5.28.3
     # via google-api-core
     # via google-cloud-bigquery-storage
     # via googleapis-common-protos
     # via grpcio-status
-    # via grpcio-tools
-    # via hatchet-sdk
     # via proto-plus
-psutil==6.0.0
+psutil==6.1.0
     # via acryl-datahub
-psycopg==3.1.19
-psycopg-binary==3.1.19
+psycopg==3.2.3
+psycopg-binary==3.2.3
     # via psycopg
-psycopg2-binary==2.9.9
+psycopg2-binary==2.9.10
     # via turntable-spoonbill
 pyaes==1.6.1
     # via fernet
@@ -512,47 +483,35 @@ pydantic==2.8.2
     # via fastapi
     # via githubkit
     # via gotrue
-    # via hatchet-sdk
     # via instructor
     # via litellm
     # via openai
     # via postgrest
-    # via turntable-cli
 pydantic-core==2.20.1
     # via instructor
     # via pydantic
-pydata-google-auth==1.8.2
+pydata-google-auth==1.9.0
     # via turntable-spoonbill
-pygithub==2.4.0
-    # via turntable-cli
 pygments==2.18.0
     # via mpire
     # via rich
-pyjwt==2.9.0
+pyjwt==2.10.0
     # via django-allauth
     # via djangorestframework-simplejwt
-    # via pygithub
     # via snowflake-connector-python
     # via social-auth-core
-pynacl==1.5.0
-    # via pygithub
 pyogrio==0.10.0
     # via geopandas
 pyopenssl==24.2.1
     # via snowflake-connector-python
     # via twisted
-pyparsing==3.1.4
+pyparsing==3.2.0
     # via grandalf
     # via matplotlib
 pypng==0.20220715.0
     # via lets-plot
-pyproj==3.6.1
+pyproj==3.7.0
     # via geopandas
-pytest==8.3.3
-    # via pytest-asyncio
-    # via pytest-timeout
-pytest-asyncio==0.24.0
-pytest-timeout==2.3.1
 python-crontab==3.2.0
     # via django-celery-beat
 python-dateutil==2.9.0.post0
@@ -561,17 +520,14 @@ python-dateutil==2.9.0.post0
     # via celery
     # via croniter
     # via google-cloud-bigquery
-    # via hatchet-sdk
     # via matplotlib
     # via pandas
     # via posthog
     # via python-crontab
     # via realtime
     # via storage3
-    # via turntable-cli
     # via turntable-spoonbill
 python-dotenv==1.0.1
-    # via hatchet-sdk
     # via litellm
     # via uvicorn
 python-utils==3.9.0
@@ -588,14 +544,12 @@ pytz==2024.2
 pyyaml==6.0.2
     # via acryl-datahub
     # via dbtx
-    # via hatchet-sdk
     # via huggingface-hub
-    # via turntable-cli
     # via uvicorn
     # via watchdog
-realtime==2.0.5
+realtime==2.0.6
     # via supabase
-redis==5.1.0
+redis==5.2.0
     # via celery
     # via channels-redis
     # via redis-cli
@@ -603,7 +557,7 @@ redis-cli==1.0.1
 referencing==0.35.1
     # via jsonschema
     # via jsonschema-specifications
-regex==2024.9.11
+regex==2024.11.6
     # via tiktoken
     # via turntable-spoonbill
 requests==2.32.3
@@ -613,11 +567,10 @@ requests==2.32.3
     # via google-api-core
     # via google-cloud-bigquery
     # via huggingface-hub
+    # via instructor
     # via litellm
-    # via logtail-python
     # via mixpanel
     # via posthog
-    # via pygithub
     # via requests-file
     # via requests-oauthlib
     # via snowflake-connector-python
@@ -629,14 +582,14 @@ requests-oauthlib==2.0.0
     # via django-allauth
     # via google-auth-oauthlib
     # via social-auth-core
-rich==13.8.1
+rich==13.9.4
     # via instructor
     # via netext
     # via plum-dispatch
     # via textual
     # via turntable-spoonbill
     # via typer
-rpds-py==0.20.0
+rpds-py==0.21.0
     # via jsonschema
     # via referencing
 rsa==4.9
@@ -645,27 +598,25 @@ rtree==1.3.0
     # via netext
 ruamel-yaml==0.18.6
     # via acryl-datahub
-    # via turntable-cli
-ruamel-yaml-clib==0.2.8
+ruamel-yaml-clib==0.2.12
     # via ruamel-yaml
-ruff==0.6.8
+ruff==0.8.0
 rustworkx==0.15.1
-s3transfer==0.10.2
+s3transfer==0.10.4
     # via boto3
 scipy==1.14.1
     # via networkx
-sentry-sdk==2.18.0
+sentry-sdk==2.19.0
     # via acryl-datahub
-service-identity==24.1.0
+service-identity==24.2.0
     # via twisted
-setuptools==75.1.0
+setuptools==75.6.0
     # via autobahn
-    # via grpcio-tools
     # via incremental
     # via pydata-google-auth
+    # via zope-event
     # via zope-interface
-shandy-sqlfmt==0.23.2
-    # via turntable-cli
+shandy-sqlfmt==0.24.0
 shapely==2.0.6
     # via geopandas
     # via netext
@@ -683,7 +634,7 @@ sniffio==1.3.1
     # via anyio
     # via httpx
     # via openai
-snowflake-connector-python==3.12.2
+snowflake-connector-python==3.12.3
     # via turntable-spoonbill
 social-auth-app-django==5.4.2
     # via djoser
@@ -694,37 +645,30 @@ sortedcontainers==2.4.0
 soupsieve==2.6
     # via beautifulsoup4
 sqlglot==25.0.3
-    # via turntable-cli
     # via turntable-spoonbill
 sqlglotrs==0.2.5
     # via sqlglot
-sqlparse==0.5.1
+sqlparse==0.5.2
     # via django
 sse-starlette==2.1.3
-starlette==0.38.6
+starlette==0.41.3
     # via fastapi
     # via sse-starlette
-storage3==0.8.0
+storage3==0.9.0
     # via supabase
-strenum==0.4.15
-    # via postgrest
-supabase==2.8.0
-supafunc==0.6.0
+supabase==2.10.0
+supafunc==0.7.0
     # via supabase
 tabulate==0.9.0
     # via acryl-datahub
-    # via turntable-cli
 tenacity==9.0.0
-    # via hatchet-sdk
     # via instructor
-termcolor==2.4.0
-    # via acryl-datahub
-textual==0.81.0
+textual==0.86.3
 thrift==0.20.0
     # via databricks-sql-connector
-tiktoken==0.7.0
+tiktoken==0.8.0
     # via litellm
-tokenizers==0.20.0
+tokenizers==0.20.3
     # via litellm
 toml==0.10.2
     # via acryl-datahub
@@ -732,25 +676,22 @@ tomlkit==0.13.2
     # via snowflake-connector-python
 toolz==0.12.1
     # via turntable-spoonbill
-tornado==6.4.1
+tornado==6.4.2
     # via flower
-tqdm==4.66.5
+tqdm==4.67.0
     # via huggingface-hub
     # via mpire
     # via openai
     # via shandy-sqlfmt
-turntable-cli==0.4.10
 turntable-spoonbill==10.0.2
-twisted==24.7.0
+twisted==24.10.0
     # via daphne
 txaio==23.1.1
     # via autobahn
-typer==0.12.5
+typer==0.13.1
     # via instructor
-    # via turntable-cli
 typing-extensions==4.12.2
     # via acryl-datahub
-    # via aiostream
     # via dj-database-url
     # via fastapi
     # via githubkit
@@ -761,12 +702,9 @@ typing-extensions==4.12.2
     # via psycopg
     # via pydantic
     # via pydantic-core
-    # via pygithub
     # via python-utils
     # via realtime
     # via snowflake-connector-python
-    # via storage3
-    # via supabase
     # via textual
     # via turntable-spoonbill
     # via twisted
@@ -785,22 +723,20 @@ urllib3==2.2.3
     # via botocore
     # via databricks-sql-connector
     # via docker
-    # via hatchet-sdk
     # via mixpanel
-    # via pygithub
     # via requests
     # via sentry-sdk
-uv==0.4.17
+uv==0.5.4
     # via dbtx
-uvicorn==0.31.0
+uvicorn==0.32.1
     # via sse-starlette
-uvloop==0.20.0
+uvloop==0.21.0
     # via uvicorn
 vine==5.1.0
     # via amqp
     # via celery
     # via kombu
-watchdog==5.0.3
+watchdog==6.0.0
 watchfiles==0.24.0
     # via uvicorn
 wcwidth==0.2.13
@@ -808,11 +744,14 @@ wcwidth==0.2.13
 websockets==13.1
     # via realtime
     # via uvicorn
-wrapt==1.16.0
+wrapt==1.17.0
     # via deprecated
-yarl==1.13.1
+yarl==1.18.0
     # via aiohttp
-zipp==3.20.2
+zipp==3.21.0
     # via importlib-metadata
-zope-interface==7.1.0
+zope-event==5.0
+    # via gevent
+zope-interface==7.1.1
+    # via gevent
     # via twisted

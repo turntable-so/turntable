@@ -17,8 +17,12 @@ from polymorphic.models import PolymorphicModel
 
 from app.models.project import Project
 from app.models.repository import Repository
+from app.models.settings import StorageSettings
 from app.models.workspace import Workspace
-from app.services.storage_backends import CustomS3Boto3Storage
+from app.services.storage_backends import (
+    CustomFileField,
+    CustomS3Boto3StorageDeprecated,
+)
 from app.utils.fields import encrypt
 from vinyl.lib.connect import (
     BigQueryConnector,
@@ -101,6 +105,11 @@ def repo_path(
 
 
 class Resource(models.Model):
+    def custom_get_storage(self):
+        return CustomS3Boto3StorageDeprecated(
+            workspace_id=self.workspace_id, storage_category=self.storage_applies_to
+        )
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     workspace = models.ForeignKey(
         Workspace, on_delete=models.CASCADE, null=True, related_name="resources"
@@ -112,9 +121,14 @@ class Resource(models.Model):
     creator = models.ForeignKey(
         "User", on_delete=models.SET_NULL, null=True, default=None
     )
-    datahub_db = models.FileField(
-        upload_to="datahub_dbs/", null=True, storage=CustomS3Boto3Storage()
+    datahub_db = CustomFileField(
+        storage_category=StorageSettings.StorageCategories.METADATA,
+        upload_to="datahub_dbs/",
+        null=True,
     )
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
 
     class Meta:
         indexes = [
@@ -355,20 +369,19 @@ class EnvironmentType(models.TextChoices):
         return [EnvironmentType.DEV, EnvironmentType.COMBINED]
 
 
-def custom_dbtresource_upload_to(instance, filename):
-    """
-    Determine the custom folder path based on the instance's id.cc
-    """
-    folder_name = f"dbt_artifacts/{instance.workspace_id}/{instance.id}/"
-    return os.path.join(folder_name, filename)
-
-
 class ArtifactSource(models.TextChoices):
     METADATA_SYNC = "metadata"
     ORCHESTRATION = "orchestration"
 
 
 class DBTResource(PolymorphicModel):
+    def custom_upload_to(instance, filename):
+        """
+        Determine the custom folder path based on the instance's id.cc
+        """
+        folder_name = f"dbt_artifacts/{instance.workspace_id}/{instance.id}/"
+        return os.path.join(folder_name, filename)
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     environment = models.CharField(
         choices=EnvironmentType.choices,
@@ -384,15 +397,15 @@ class DBTResource(PolymorphicModel):
         "User", on_delete=models.SET_NULL, null=True, default=None
     )
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE, null=True)
-    manifest = models.FileField(
+    manifest = CustomFileField(
         null=True,
-        upload_to=custom_dbtresource_upload_to,
-        storage=CustomS3Boto3Storage(),
+        upload_to=custom_upload_to,
+        storage_category=StorageSettings.StorageCategories.METADATA,
     )
-    catalog = models.FileField(
+    catalog = CustomFileField(
         null=True,
-        upload_to=custom_dbtresource_upload_to,
-        storage=CustomS3Boto3Storage(),
+        upload_to=custom_upload_to,
+        storage_category=StorageSettings.StorageCategories.METADATA,
     )
     artifact_source = models.CharField(
         choices=ArtifactSource.choices, max_length=255, null=True

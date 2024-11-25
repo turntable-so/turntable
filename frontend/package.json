@@ -56,6 +56,7 @@
     "clsx": "^2.1.0",
     "cmdk": "^1.0.0",
     "cookies-next": "^4.2.1",
+    "cronstrue": "^2.51.0",
     "date-fns": "^3.6.0",
     "dayjs": "^1.11.11",
     "highlight.js": "^11.9.0",
@@ -100,6 +101,7 @@
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@tailwindcss/typography": "^0.5.13",
+    "@types/lodash": "^4.17.13",
     "@types/node": "^20.11.30",
     "@types/papaparse": "^5.3.15",
     "@types/react": "^18",

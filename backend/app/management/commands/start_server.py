@@ -16,10 +16,10 @@ class Command(BaseCommand):
         call_command("custom_create_superuser")
         call_command("collectstatic", interactive=False)
 
-        # if options["mode"] in ["demo", "dev", "dev-internal"]:
-        #     call_command("seed_data")
-        # if options["mode"] in ["dev-internal", "staging"]:
-        #     call_command("seed_data_staging")
+        if options["mode"] in ["demo", "dev", "dev-internal"]:
+            call_command("seed_data")
+        if options["mode"] in ["dev-internal", "staging"]:
+            call_command("seed_data_staging")
 
         uvicorn_args = {
             "host": "0.0.0.0",

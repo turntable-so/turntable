@@ -8,9 +8,11 @@ import { getResourceIcon } from "@/lib/utils";
 import ColumnsTable from "./columns-table";
 import MetabasePreview from "./metabase-preview";
 
-export default async function AssetPage({
-  params,
-}: { params: { id: string } }) {
+type AssetPageProps = {
+  params: { id: string };
+};
+
+export default async function AssetPage({ params }: AssetPageProps) {
   const asset = await getAssetPreview(params.id);
 
   const validMetabaseSubtypes = ["chart", "dashboard"];
