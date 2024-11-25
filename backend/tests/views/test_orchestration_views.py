@@ -62,7 +62,7 @@ class TestOrchestrationViews:
     def test_list_orchestration(self, client, minimal_scheduled_workflow):
         response = client.get("/jobs/")
         assert response.status_code == 200
-        assert len(response.data) == 1
+        assert len(response.data["results"]) == 1
         assert PeriodicTask.objects.count() == 1
 
     def test_delete_orchestration(self, client, minimal_scheduled_workflow):
