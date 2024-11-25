@@ -1,7 +1,6 @@
 import json
 
 import orjson
-from backend.vinyl.lib.utils import ast
 from django.contrib.auth.models import Group
 from django_celery_beat.models import CrontabSchedule
 from django_celery_results.models import TaskResult
@@ -38,6 +37,7 @@ from app.models.project import Project
 from app.models.resources import MetabaseDetails
 from app.models.workflows import DBTOrchestrator, ScheduledWorkflow, TaskArtifact
 from vinyl.lib.dbt_methods import DBTVersion
+from vinyl.lib.utils import ast
 
 Invitation = get_invitation_model()
 
