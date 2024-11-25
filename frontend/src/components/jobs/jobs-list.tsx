@@ -1,6 +1,8 @@
+"use client";
+
 import type { Job } from "@/app/actions/actions";
-import JobCard from "./job-card";
 import { Fragment } from "react";
+import JobCard from "./job-card";
 import JobRunPagination from "./job-run-pagination";
 
 type JobsListProps = {
