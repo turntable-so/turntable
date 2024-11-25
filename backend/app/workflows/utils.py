@@ -16,13 +16,14 @@ class CustomTask(Task):
         # Argsrepr and kwargsrepr are used to ensure correct json serialization of task_args and task_kwargs in the Result backend.
         kwargs["argsrepr"] = args[0]
         kwargs["kwargsrepr"] = args[1]
+        return args, kwargs
 
     def apply(self, *args, **kwargs):
-        self._adjust_inputs(*args, **kwargs)
+        args, kwargs =self._adjust_inputs(*args, **kwargs)
         return super().apply(*args, **kwargs)
 
     def apply_async(self, *args, **kwargs):
-        self._adjust_inputs(*args, **kwargs)
+        args, kwargs = self._adjust_inputs(*args, **kwargs)
         res = super().apply_async(*args, **kwargs)
         if os.getenv("CUSTOM_CELERY_EAGER") == "true":
             res.get(disable_sync_subtasks=False)

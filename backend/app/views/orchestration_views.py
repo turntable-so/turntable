@@ -1,4 +1,3 @@
-from django.db.models import OuterRef, Subquery
 from django_celery_results.models import TaskResult
 from rest_framework import status, viewsets
 from rest_framework.decorators import action

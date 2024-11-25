@@ -37,7 +37,6 @@ from app.models.project import Project
 from app.models.resources import MetabaseDetails
 from app.models.workflows import DBTOrchestrator, ScheduledWorkflow, TaskArtifact
 from vinyl.lib.dbt_methods import DBTVersion
-from vinyl.lib.utils import ast
 
 Invitation = get_invitation_model()
 
@@ -570,16 +569,17 @@ class TaskArtifactSerializer(serializers.ModelSerializer):
 class TaskListSerializer(serializers.ListSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._instance_cache = {i.task_id: i for i in self.instance}
+        self._instance_cache = {i.task_id: i for i in self.instance if i is not None}
 
 
 class TaskResultSerializer(serializers.ModelSerializer):
     artifacts = TaskArtifactSerializer(
         source="taskartifact_set", many=True, read_only=True
     )
-    result = serializers.SerializerMethodField()
-    task_kwargs = serializers.SerializerMethodField()
     subtasks = serializers.SerializerMethodField()
+    result = serializers.SerializerMethodField()
+    task_args = serializers.SerializerMethodField()
+    task_kwargs = serializers.SerializerMethodField()
 
     def _ensure_task_cached(self, task_ids: list[str]) -> None:
         """Fetch and cache any uncached tasks"""
@@ -619,7 +619,7 @@ class TaskResultSerializer(serializers.ModelSerializer):
         self._ensure_task_cached(task_ids)
 
         # Serialize available tasks
-        tasks = TaskSerializer(
+        tasks = TaskResultSerializer(
             [self.context["task_cache"].get(task_id) for task_id in task_ids],
             many=True,
             context=self.context,
@@ -647,11 +647,14 @@ class TaskResultSerializer(serializers.ModelSerializer):
         return self._parse_json(obj.task_args)
 
     def get_task_kwargs(self, obj):
-        return self._parse_json(obj.task_kwargs)
+        result = self._parse_json(obj.task_kwargs)
+        return result
 
     def to_representation(self, instance):
         # Initialize cache if needed
         self.context.setdefault("task_cache", {})
+        if instance is None:
+            return None
         self.context["task_cache"][instance.task_id] = instance
 
         data = super().to_representation(instance)
@@ -662,15 +665,6 @@ class TaskResultSerializer(serializers.ModelSerializer):
             data["subtasks"] = self._process_subtasks(meta["children"])
 
         return data
-
-    def get_task_kwargs(self, obj):
-        if obj.result:
-            try:
-                first = ast.literal_eval(obj.task_kwargs)
-                return ast.literal_eval(first)
-            except (ValueError, SyntaxError):
-                return None
-        return None
 
     def get_job_id(self, obj):
         return obj.job_id
@@ -688,7 +682,6 @@ class TaskResultSerializer(serializers.ModelSerializer):
             "task_id",
             "status",
             "task_args",
-            "task_kwargs",
             "result",
             "date_created",
             "date_done",
