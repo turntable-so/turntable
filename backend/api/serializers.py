@@ -670,8 +670,7 @@ class TaskResultSerializer(serializers.ModelSerializer):
 
     def get_traceback(self, obj):
         # ignore traceback if the task was aborted
-        result = self._parse_json(obj.result)
-        if not self._was_aborted(result):
+        if not self._was_aborted(obj):
             return obj.traceback
         return None
 
