@@ -1,7 +1,10 @@
+import concurrent.futures
 import itertools
 import os
 import re
-from typing import List
+import time
+from concurrent.futures import ThreadPoolExecutor
+from typing import List, Optional
 
 import pandas as pd
 from diskcache import FanoutCache
@@ -18,6 +21,15 @@ from app.utils.df import get_first_n_values, truncate_values
 from vinyl.lib.table import VinylTable
 
 cache = FanoutCache(directory="/cache", shards=10, timeout=300)
+
+
+class ChatRequestBody(BaseModel):
+    current_file: Optional[str] = None
+    asset_id: Optional[str] = None
+    related_assets: Optional[List[dict]] = None
+    asset_links: Optional[List[dict]] = None
+    column_links: Optional[List[dict]] = None
+    message_history: Optional[List[dict]] = None
 
 
 def get_asset_object(asset_dict: dict):
@@ -47,14 +59,13 @@ def get_asset_object(asset_dict: dict):
     return asset, [Column(**col, asset_id=asset.id) for col in columns]
 
 
-def recreate_lineage_object(data: dict) -> Lineage:
-    assets, columns = zip(*[get_asset_object(d) for d in data.get("related_assets")])
+def recreate_lineage_object(data: ChatRequestBody) -> Lineage:
+    assets, columns = zip(*[get_asset_object(d) for d in data.related_assets])
     columns = list(itertools.chain(*columns))
-    asset_links = [AssetLink(**link) for link in data.get("asset_links")]
-    column_links = [ColumnLink(**link) for link in data.get("column_links")]
-    print(data.get("asset_id"))
+    asset_links = [AssetLink(**link) for link in data.asset_links]
+    column_links = [ColumnLink(**link) for link in data.column_links]
     return Lineage(
-        asset_id=data.get("asset_id"),
+        asset_id=data.asset_id,
         assets=assets,
         columns=columns,
         asset_links=asset_links,
@@ -188,12 +199,15 @@ def lineage_ascii(edges):
 def build_context(
     user: User,
     lineage: Lineage,
-    instructions: str,
+    message_history: List[dict],
     current_file: str = None,
 ):
-    # map each id to a schema (with name, type and description)
+    user_instruction = next(
+        msg["content"] for msg in reversed(message_history) if msg["role"] == "user"
+    )
+    # Map each id to a schema (with name, type, and description)
     if not lineage.assets or len(lineage.assets) == 0:
-        return f"\nUser Instructions: {instructions}\n"
+        return f"\nUser Instructions: {user_instruction}\n"
     workspace = user.current_workspace()
     dbt_details = workspace.get_dbt_dev_details()
     resource = dbt_details.resource
@@ -203,40 +217,61 @@ def build_context(
         project_path,
         repo,
     ):
+        print("mounting manifest")
+        start_time = time.time()
         transition.mount_manifest(defer=True)
+        end_time = time.time()
+        print(f"Time taken to mount manifest: {end_time - start_time} seconds")
         asset_mds = []
 
-        # schemas
-        for asset in lineage.assets:
-            # don't include the current asset
-            if asset.id == lineage.asset_id:
-                continue
+        # Schemas
+        print("getting asset md")
+        start_time = time.time()
 
-            # find each file for the related assets
+        # Define the function to process each asset
+        def process_asset(asset):
+            # Find each file for the related assets
             manifest_node = LiveDBTParser.get_manifest_node(
                 transition.after, asset.unique_name
             )
             if not manifest_node:
-                continue
+                return None
             path = os.path.join(project_path, manifest_node.get("original_file_path"))
             if not os.path.exists(path):
-                continue
+                return None
             with open(path) as file:
                 contents = file.read()
-                asset_mds.append(
-                    asset_md(
-                        asset,
-                        resource,
-                        contents,
-                    )
+                return asset_md(
+                    asset,
+                    resource,
+                    contents,
                 )
 
-        # lineage information
+        # Use ThreadPoolExecutor to parallelize the I/O-bound tasks
+        with ThreadPoolExecutor() as executor:
+            futures = [
+                executor.submit(process_asset, asset)
+                for asset in lineage.assets
+                if asset.id != lineage.asset_id  # Skip the current asset
+            ]
+            for future in concurrent.futures.as_completed(futures):
+                result = future.result()
+                if result is not None:
+                    asset_mds.append(result)
+
+        end_time = time.time()
+        print(f"Time taken to get asset md: {end_time - start_time} seconds")
+
+        # Lineage information
+        print("getting lineage edges")
+        start_time = time.time()
         edges = []
         for link in lineage.asset_links:
             source_model = extract_model_name(link.source_id)
             target_model = extract_model_name(link.target_id)
             edges.append({"source": source_model, "target": target_model})
+        end_time = time.time()
+        print(f"Time taken to get lineage edges: {end_time - start_time} seconds")
 
         dialect_md = f"""
 # Dialect
@@ -249,11 +284,11 @@ IMPORTANT: keep in mind how these are connected to each other. You may need to a
 {lineage_ascii(edges)}
 """
         assets = "\n".join(asset_mds)
-        # file contents
+        # File contents
         output = f"""{dialect_md}
 {lineage_md}
 {assets}
-User Instructions: {instructions}
+User Instructions: {user_instruction}
 """
         if current_file:
             output += f"""
@@ -262,7 +297,6 @@ Current File:
 {current_file}
 ```
 """
-        print("output", output)
         return output
 
 
