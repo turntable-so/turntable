@@ -4,9 +4,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "../../ui/tooltip";
 
 interface ChatHeaderProps {
   setView: (view: "chat" | "history") => void;
+  resetState: () => void;
 }
 
-export default function ChatHeader({ setView }: ChatHeaderProps) {
+export default function ChatHeader({ setView, resetState }: ChatHeaderProps) {
   return (
     <div className="relative space-y-2 bg-muted p-1 rounded">
       <div className="flex justify-between items-center">
@@ -19,7 +20,10 @@ export default function ChatHeader({ setView }: ChatHeaderProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setView("chat")}
+                onClick={() => {
+                  resetState();
+                  setView("chat");
+                }}
               >
                 <Plus className="w-4 h-4" />
               </Button>

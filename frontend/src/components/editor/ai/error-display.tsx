@@ -5,5 +5,5 @@ interface ErrorDisplayProps {
 
 export default function ErrorDisplay({ error }: ErrorDisplayProps) {
   if (!error) return null;
-  return <div className="text-red-500">{error}</div>;
+  return <div className="text-red-500 text-sm">{error}</div>;
 }

@@ -1,4 +1,4 @@
-import { FileNode, useFiles } from "@/app/contexts/FilesContext";
+import { type FileNode, useFiles } from "@/app/contexts/FilesContext";
 import { useWebSocket } from "@/app/hooks/use-websocket";
 import getUrl from "@/app/url";
 import { AuthActions } from "@/lib/auth";
@@ -27,13 +27,19 @@ export default function AiSidebarChat() {
   const { getToken } = AuthActions();
   const accessToken = getToken("access");
 
+  const resetState = () => {
+    setInput("");
+    setCurrentResponse("");
+    setError(null);
+    setContextFiles([]);
+  };
+
   const { startWebSocket, sendMessage, stopWebSocket } = useWebSocket(
     `${protocol}://${base}/ws/infer/?token=${accessToken}`,
     {
       onOpen: () => {
         sendMessage(
           JSON.stringify({
-            type: "completion",
             current_file: activeFile?.content || "",
             asset_id: visibleLineage?.data?.asset_id,
             related_assets: visibleLineage?.data?.assets,
@@ -45,6 +51,7 @@ export default function AiSidebarChat() {
       },
       onClose: () => {
         console.log("WebSocket disconnected");
+        setIsLoading(false);
       },
       onMessage: ({ event }) => {
         const data = JSON.parse(event.data);
@@ -53,6 +60,10 @@ export default function AiSidebarChat() {
         } else if (data.type === "message_end") {
           setIsLoading(false);
           stopWebSocket();
+        } else if (data.type === "error") {
+          setError(data.message);
+          stopWebSocket();
+          setIsLoading(false);
         }
       },
       onError: ({ event }) => {
@@ -66,30 +77,31 @@ export default function AiSidebarChat() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setCurrentResponse("");
     startWebSocket();
-    setError(null);
+    resetState();
   };
 
   return (
     <div className="flex flex-col w-full h-full overflow-y-scroll hide-scrollbar">
-      <ChatHeader setView={setView} />
+      <ChatHeader setView={setView} resetState={resetState} />
       {view === "chat" ? (
-        <ChatControls
-          input={input}
-          setInput={setInput}
-          isLoading={isLoading}
-          handleSubmit={handleSubmit}
-          activeFile={activeFile}
-          lineageData={visibleLineage}
-          contextFiles={contextFiles}
-          setContextFiles={setContextFiles}
-        />
+        <div>
+          <ChatControls
+            input={input}
+            setInput={setInput}
+            isLoading={isLoading}
+            handleSubmit={handleSubmit}
+            activeFile={activeFile}
+            lineageData={visibleLineage}
+            contextFiles={contextFiles}
+            setContextFiles={setContextFiles}
+          />
+          <ResponseDisplay response={currentResponse} />
+          <ErrorDisplay error={error} />
+        </div>
       ) : (
         <History />
       )}
-      <ErrorDisplay error={error} />
-      <ResponseDisplay response={currentResponse} />
     </div>
   );
 }

@@ -1,6 +1,3 @@
-from datetime import time
-import os
-import asyncio
 import json
 
 from channels.generic.websocket import WebsocketConsumer
@@ -18,22 +15,24 @@ class AIChatConsumer(WebsocketConsumer):
 
     def receive(self, text_data):
         from app.core.inference.chat import (
-            EDIT_PROMPT_SYSTEM,
             SYSTEM_PROMPT,
             build_context,
             recreate_lineage_object,
         )
 
-        print(f"Received message: {text_data[:100]}...")
-        data = json.loads(text_data)
-        user = self.scope["user"]
-        lineage = recreate_lineage_object(data)
-        if data.get("type") == "completion":
+        try:
+            print(f"Received message: {text_data[:100]}...")
+            data = json.loads(text_data)
+            user = self.scope["user"]
+            lineage = recreate_lineage_object(data)
+
             prompt = build_context(
                 user=user,
                 instructions=data.get("instructions"),
                 lineage=lineage,
             )
+            
+            print(prompt)
 
             response = completion(
                 temperature=0,
@@ -44,7 +43,6 @@ class AIChatConsumer(WebsocketConsumer):
                 ],
                 stream=True,
             )
-            print(prompt)
             for chunk in response:
                 print(chunk.choices[0].delta.content)
                 self.send(
@@ -57,32 +55,6 @@ class AIChatConsumer(WebsocketConsumer):
                 )
 
             self.send(text_data=json.dumps({"type": "message_end"}))
-
-        if data.get("type") == "single_file_edit":
-            prompt = build_context(
-                user=user,
-                lineage=lineage,
-                instructions=data.get("instructions"),
-                current_file=data.get("current_file"),
-            )
-
-            response = completion(
-                temperature=0,
-                model="claude-3-5-sonnet-20241022",
-                messages=[
-                    {"content": EDIT_PROMPT_SYSTEM, "role": "system"},
-                    {"role": "user", "content": prompt},
-                ],
-                stream=True,
-            )
-            for chunk in response:
-                self.send(
-                    text_data=json.dumps(
-                        {
-                            "type": "single_file_edit_chunk",
-                            "content": chunk.choices[0].delta.content or "",
-                        }
-                    )
-                )
-
-            self.send(text_data=json.dumps({"type": "single_file_edit_end"}))
+        except Exception as e:
+            print("Sending error message")
+            self.send(text_data=json.dumps({"type": "error", "message": str(e)}))

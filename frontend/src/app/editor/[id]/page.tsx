@@ -4,7 +4,6 @@ import CustomDiffEditor from "@/components/editor/CustomDiffEditor";
 import CustomEditor from "@/components/editor/CustomEditor";
 import AiSidebarChat from "@/components/editor/ai/ai-sidebar";
 import BottomPanel from "@/components/editor/bottom-panel";
-import SingleFileEditPromptPopover from "@/components/editor/command-panel/single-file-prompt-popover";
 import ConfirmSaveDialog from "@/components/editor/dialogs/confirm-save-dialog";
 import EditorSidebar from "@/components/editor/editor-sidebar";
 import EditorTopBar from "@/components/editor/editor-top-bar";
@@ -22,9 +21,8 @@ import { type OpenedFile, useFiles } from "../../contexts/FilesContext";
 import { useLayoutContext } from "../../contexts/LayoutContext";
 
 function EditorContent({
-  setPromptBoxOpen,
   containerWidth,
-}: { setPromptBoxOpen: (open: boolean) => void; containerWidth: number }) {
+}: { containerWidth: number }) {
   const { resolvedTheme } = useTheme();
   const {
     activeFile,
@@ -254,7 +252,6 @@ function EditorPageContent() {
     setBottomPanelShown,
   } = useLayoutContext();
 
-  const [promptBoxOpen, setPromptBoxOpen] = useState(false);
   const [colDefs, setColDefs] = useState([]);
   const [rowData, setRowData] = useState([]);
   const gridRef = useRef<AgGridReact>(null);
@@ -329,10 +326,6 @@ function EditorPageContent() {
           case "j":
             event.preventDefault();
             setBottomPanelShown(!bottomPanelShown);
-            break;
-          case "k":
-            event.preventDefault();
-            setPromptBoxOpen(true);
             break;
           case "enter":
             event.preventDefault();
@@ -485,14 +478,8 @@ function EditorPageContent() {
             />
             <div className="w-full h-full">
               <PanelGroup direction="vertical" className="h-fit">
-                {promptBoxOpen && (
-                  <SingleFileEditPromptPopover
-                    setPromptBoxOpen={setPromptBoxOpen}
-                  />
-                )}
                 <Panel className="h-full relative z-0">
                   <EditorContent
-                    setPromptBoxOpen={setPromptBoxOpen}
                     containerWidth={topBarWidth as number}
                   />
                 </Panel>

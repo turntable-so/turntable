@@ -15,7 +15,6 @@ export default function ResponseDisplay({ response }: ResponseDisplayProps) {
           code: AICodeBlock,
         }}
       />
-      <div className="h-12" />
     </div>
   );
 }
