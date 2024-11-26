@@ -85,6 +85,7 @@ celery==5.4.0
     # via django-celery-beat
     # via django-celery-results
     # via flower
+    # via sentry-sdk
 certifi==2024.8.30
     # via httpcore
     # via httpx

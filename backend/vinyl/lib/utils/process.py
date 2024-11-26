@@ -1,5 +1,10 @@
+import select
 import signal
 import subprocess
+from typing import Callable
+
+STREAM_SUCCESS_STRING = "PROCESS_STREAM_SUCCESS"
+STREAM_ERROR_STRING = "PROCESS_STREAM_ERROR"
 
 
 class CustomCalledProcessError(subprocess.CalledProcessError):
@@ -44,3 +49,60 @@ def run_and_capture_subprocess(
             process.returncode, command, stderr=process.stderr
         )
     return process
+
+
+def stream_subprocess(
+    command_ls: list[str],
+    env: dict[str, str] | None = None,
+    cwd: str = None,
+    check_success: Callable[[], bool] = None,
+    should_terminate: Callable[[], bool] = None,
+):
+    stdouts = []
+    stderrs = []
+    try:
+        process = subprocess.Popen(
+            command_ls,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=env,
+            text=True,
+            cwd=cwd,
+        )
+
+        while process.poll() is None:
+            if should_terminate is not None and should_terminate():
+                process.terminate()
+                return
+            ready, _, _ = select.select([process.stdout, process.stderr], [], [], 0.1)
+            for stream in ready:
+                line = stream.readline()
+                if line:
+                    if stream == process.stdout:
+                        stdouts.append(line)
+                    else:
+                        stderrs.append(line)
+                    yield line
+
+        # Read any remaining output after termination
+        if process.stdout:
+            for line in process.stdout:
+                stdouts.append(line)
+                yield line
+        if process.stderr:
+            for line in process.stderr:
+                stderrs.append(line)
+                yield line
+
+        stdout = "".join(stdouts)
+        stderr = "".join(stderrs)
+
+        if not check_success:
+            return
+
+        success = check_success(stdout, stderr) if check_success else None
+        success_str = STREAM_SUCCESS_STRING if success else STREAM_ERROR_STRING
+        yield success_str
+    finally:
+        if "process" in locals() and process and process.poll() is None:
+            process.terminate()

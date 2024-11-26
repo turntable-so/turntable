@@ -4,10 +4,12 @@ import time
 import uuid
 
 import pytest
+from celery import states
 from django_celery_results.models import TaskResult
 
 from api.serializers import TaskResultSerializer
-from app.workflows.utils import task
+from app.workflows.utils import ABORTED, task
+from vinyl.lib.utils.process import stream_subprocess
 from vinyl.lib.utils.sequence import _get_list_depth, _get_list_key_depth
 
 
@@ -25,6 +27,7 @@ def test_good_task():
         pass
 
 
+# Nesting test
 if "pytest" in sys.modules:
     # only initialize these tasks if we're running the tests. Otherwise, will pollute our actual worker.
 
@@ -69,3 +72,43 @@ def test_nested_task(custom_celery):
         result_depth = _get_list_depth(tr["result"])
         subtask_depth = _get_list_key_depth(tr["subtasks"], "subtasks")
         assert result_depth == subtask_depth
+
+
+# Task abortion test
+if "pytest" in sys.modules:
+
+    @task
+    def child_task_noop(self, workspace_id):
+        return 1
+
+    @task(abortable=True)
+    def child_task(self, workspace_id):
+        for line in stream_subprocess(
+            ["bash", "-c", "for i in {0..100}; do echo $i; sleep 1; done"]
+        ):
+            self.is_aborted(raise_exception=True)
+            self.update_state(state=states.STARTED, meta=line)
+
+        return 1
+
+    @task(abortable=True)
+    def parent_task(self, workspace_id):
+        t = child_task.si(workspace_id=workspace_id)
+        t2 = child_task_noop.si(workspace_id=workspace_id)
+        x = self.run_subtasks(t, t2)
+        return x
+
+
+def test_abortable_task(custom_celery):
+    # won't work in eager mode, so ensure it's not set
+    # with set_env(CUSTOM_CELERY_EAGER="false"):
+    parent_id = str(uuid.uuid4())
+    result = parent_task.si(workspace_id="1").apply_async(task_id=parent_id)
+
+    time.sleep(1)
+    result.abort()
+
+    time.sleep(1)
+
+    for tr in TaskResultSerializer(TaskResult.objects.all(), many=True).data:
+        assert tr["status"] == ABORTED

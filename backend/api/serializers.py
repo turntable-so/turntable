@@ -36,6 +36,7 @@ from app.models import (
 from app.models.project import Project
 from app.models.resources import MetabaseDetails
 from app.models.workflows import DBTOrchestrator, ScheduledWorkflow, TaskArtifact
+from app.workflows.utils import ABORTED, PREABORT_RESULT_KEY, AbortedException
 from vinyl.lib.dbt_methods import DBTVersion
 
 Invitation = get_invitation_model()
@@ -579,6 +580,8 @@ class TaskResultSerializer(serializers.ModelSerializer):
     )
     subtasks = serializers.SerializerMethodField()
     result = serializers.SerializerMethodField()
+    traceback = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
     task_args = serializers.SerializerMethodField()
     task_kwargs = serializers.SerializerMethodField()
 
@@ -607,14 +610,13 @@ class TaskResultSerializer(serializers.ModelSerializer):
     def _process_subtasks(self, children: list) -> list:
         """Process and serialize subtasks from children data"""
         # Extract valid task entries
+        if not children:
+            return []
         task_entries = [
             (child[0][0], child[1])  # (task_id, metadata)
             for child in children
             if isinstance(child[0], list)
         ]
-        if not task_entries:
-            return []
-
         # Ensure all tasks are cached
         task_ids = [task_id for task_id, _ in task_entries]
         self._ensure_task_cached(task_ids)
@@ -641,8 +643,39 @@ class TaskResultSerializer(serializers.ModelSerializer):
         except orjson.JSONDecodeError:
             return data
 
+    def _was_aborted(self, obj, result_override: dict | None = None) -> bool:
+        result = result_override or self._parse_json(obj.result)
+        if (
+            isinstance(result, dict)
+            and result.get("exc_type") == AbortedException.__name__
+        ):
+            return True
+        return False
+
+    def get_status(self, obj):
+        # ignore status if the task was aborted
+        if not self._was_aborted(obj):
+            return obj.status
+        return ABORTED
+
     def get_result(self, obj):
-        return self._parse_json(obj.result)
+        # adjust result if the task was aborted
+        result = self._parse_json(obj.result)
+        if not self._was_aborted(obj, result):
+            return result
+
+        messages = result.get("exc_message", [None])
+        if not messages or len(messages) != 1:
+            return result
+
+        preabort_results = self._parse_json(messages[0])[PREABORT_RESULT_KEY]
+        return preabort_results.get(obj.task_id, None)
+
+    def get_traceback(self, obj):
+        # ignore traceback if the task was aborted
+        if not self._was_aborted(obj):
+            return obj.traceback
+        return None
 
     def get_task_args(self, obj):
         return self._parse_json(obj.task_args)
@@ -672,7 +705,7 @@ class TaskResultSerializer(serializers.ModelSerializer):
 
     def get_job_name(self, obj):
         return obj.job_name
-    
+
     def get_subtasks(self, obj):
         return []
 
