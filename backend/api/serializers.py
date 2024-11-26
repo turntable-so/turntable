@@ -645,7 +645,10 @@ class TaskResultSerializer(serializers.ModelSerializer):
 
     def _was_aborted(self, obj, result_override: dict | None = None) -> bool:
         result = result_override or self._parse_json(obj.result)
-        if "exc_type" in result and result["exc_type"] == AbortedException.__name__:
+        if (
+            isinstance(result, dict)
+            and result.get("exc_type") == AbortedException.__name__
+        ):
             return True
         return False
 
