@@ -1,4 +1,5 @@
 import json
+import time
 
 from channels.generic.websocket import WebsocketConsumer
 from litellm import completion
@@ -15,10 +16,14 @@ class AIChatConsumer(WebsocketConsumer):
 
     def receive(self, text_data):
         from app.core.inference.chat import (
-            SYSTEM_PROMPT,
             build_context,
             recreate_lineage_object,
         )
+        from app.core.inference.prompts import SYSTEM_PROMPT
+
+        self.send(text_data=json.dumps({"type": "message_chunk", "content": "Hi from the server"}))
+        self.send(text_data=json.dumps({"type": "message_end"}))
+        return
 
         try:
             print(f"Received message: {text_data[:100]}...")
@@ -26,12 +31,16 @@ class AIChatConsumer(WebsocketConsumer):
             user = self.scope["user"]
             lineage = recreate_lineage_object(data)
 
+            print("Building context")
+            start_time = time.time()
             prompt = build_context(
                 user=user,
                 instructions=data.get("instructions"),
                 lineage=lineage,
             )
-            
+            end_time = time.time()
+            print(f"Time taken to build context: {end_time - start_time} seconds")
+
             print(prompt)
 
             response = completion(

@@ -1,13 +1,12 @@
-import { History, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "../../ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../ui/tooltip";
 
 interface ChatHeaderProps {
-  setView: (view: "chat" | "history") => void;
   resetState: () => void;
 }
 
-export default function ChatHeader({ setView, resetState }: ChatHeaderProps) {
+export default function ChatHeader({ resetState }: ChatHeaderProps) {
   return (
     <div className="relative space-y-2 bg-muted p-1 rounded">
       <div className="flex justify-between items-center">
@@ -22,7 +21,6 @@ export default function ChatHeader({ setView, resetState }: ChatHeaderProps) {
                 size="icon"
                 onClick={() => {
                   resetState();
-                  setView("chat");
                 }}
               >
                 <Plus className="w-4 h-4" />
@@ -30,20 +28,6 @@ export default function ChatHeader({ setView, resetState }: ChatHeaderProps) {
             </TooltipTrigger>
             <TooltipContent>
               <p>New Chat</p>
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip delayDuration={300}>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setView("history")}
-              >
-                <History className="w-4 h-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Previous Chats</p>
             </TooltipContent>
           </Tooltip>
         </div>

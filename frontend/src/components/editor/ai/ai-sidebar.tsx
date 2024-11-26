@@ -1,37 +1,43 @@
+import { LocalStorageKeys } from "@/app/constants/local-storage-keys";
 import { type FileNode, useFiles } from "@/app/contexts/FilesContext";
 import { useWebSocket } from "@/app/hooks/use-websocket";
 import getUrl from "@/app/url";
 import { AuthActions } from "@/lib/auth";
+import _ from "lodash";
 import type React from "react";
 import { useState } from "react";
-import History from "./ai-history";
+import { useLocalStorage } from "usehooks-ts";
 import ChatControls from "./chat-controls";
 import ChatHeader from "./chat-header";
 import ErrorDisplay from "./error-display";
-import ResponseDisplay from "./response-display";
+import type { MessageHistory } from "./types";
 
 const baseUrl = getUrl();
 const base = new URL(baseUrl).host;
 const protocol = process.env.NODE_ENV === "development" ? "ws" : "wss";
 
 export default function AiSidebarChat() {
+  const { activeFile, lineageData, branchId } = useFiles();
+
   const [isLoading, setIsLoading] = useState(false);
   const [input, setInput] = useState("");
-  const [currentResponse, setCurrentResponse] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [view, setView] = useState<"chat" | "history">("chat");
   const [contextFiles, setContextFiles] = useState<FileNode[]>([]);
+  const [messageHistory, setMessageHistory] = useLocalStorage<MessageHistory>(
+    LocalStorageKeys.aiMessageHistory(branchId),
+    [],
+  );
 
-  const { activeFile, lineageData } = useFiles();
   const visibleLineage = lineageData[activeFile?.node.path || ""] || null;
   const { getToken } = AuthActions();
   const accessToken = getToken("access");
 
   const resetState = () => {
+    setIsLoading(false);
     setInput("");
-    setCurrentResponse("");
     setError(null);
     setContextFiles([]);
+    setMessageHistory([]);
   };
 
   const { startWebSocket, sendMessage, stopWebSocket } = useWebSocket(
@@ -56,7 +62,14 @@ export default function AiSidebarChat() {
       onMessage: ({ event }) => {
         const data = JSON.parse(event.data);
         if (data.type === "message_chunk") {
-          setCurrentResponse((prev) => prev + data.content);
+          setMessageHistory((prev) => {
+            const lastMessage = prev[prev.length - 1];
+            const updatedLastMessage = {
+              ...lastMessage,
+              content: lastMessage.content + data.content,
+            };
+            return [...prev.slice(0, -1), updatedLastMessage];
+          });
         } else if (data.type === "message_end") {
           setIsLoading(false);
           stopWebSocket();
@@ -76,16 +89,47 @@ export default function AiSidebarChat() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setMessageHistory((prev) => [
+      ...prev,
+      { id: _.uniqueId(), role: "user" as const, content: input },
+      { id: _.uniqueId(), role: "assistant" as const, content: "" },
+    ]);
+    setInput("");
+    setError(null);
     setIsLoading(true);
     startWebSocket();
-    resetState();
   };
 
   return (
-    <div className="flex flex-col w-full h-full overflow-y-scroll hide-scrollbar">
-      <ChatHeader setView={setView} resetState={resetState} />
-      {view === "chat" ? (
-        <div>
+    <div className="flex flex-col w-full h-full">
+      <ChatHeader resetState={resetState} />
+      {messageHistory.length === 0 ? (
+        <ChatControls
+          input={input}
+          setInput={setInput}
+          isLoading={isLoading}
+          handleSubmit={handleSubmit}
+          activeFile={activeFile}
+          lineageData={visibleLineage}
+          contextFiles={contextFiles}
+          setContextFiles={setContextFiles}
+        />
+      ) : (
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex flex-col flex-1 overflow-y-auto hide-scrollbar text-sm gap-4">
+            {messageHistory.map((message) => (
+              <div
+                key={message.id}
+                className={`${
+                  message.role === "user"
+                    ? " bg-background p-2 rounded-md"
+                    : "p-1 mb-8"
+                }`}
+              >
+                {message.content}
+              </div>
+            ))}
+          </div>
           <ChatControls
             input={input}
             setInput={setInput}
@@ -96,12 +140,9 @@ export default function AiSidebarChat() {
             contextFiles={contextFiles}
             setContextFiles={setContextFiles}
           />
-          <ResponseDisplay response={currentResponse} />
-          <ErrorDisplay error={error} />
         </div>
-      ) : (
-        <History />
       )}
+      <ErrorDisplay error={error} />
     </div>
   );
 }

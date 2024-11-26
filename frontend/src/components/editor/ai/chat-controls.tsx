@@ -41,6 +41,7 @@ export default function ChatControls({
   setContextFiles,
 }: ChatControlsProps) {
   const [isFileExplorerOpen, setIsFileExplorerOpen] = useState(false);
+  const numberOfLineageFiles = lineageData?.data?.assets?.length;
 
   const handleRemoveContextFile = (file: FileNode) => {
     setContextFiles((prev) => prev.filter((f) => f.path !== file.path));
@@ -69,12 +70,23 @@ export default function ChatControls({
             Current file
           </span>
         </div>
-        {lineageData?.data?.assets?.map((node: any) => (
-          <div key={node.id} className="bg-muted/50 rounded-md p-1 text-xs">
-            {node.name}{" "}
-            <span className="text-[10px] text-muted-foreground">Lineage</span>
-          </div>
-        ))}
+
+        {numberOfLineageFiles > 0 ? (
+          <Tooltip delayDuration={100}>
+            <TooltipTrigger asChild>
+              <div className="bg-muted/50 rounded-md p-1 text-xs">
+                {numberOfLineageFiles}{" "}
+                <span className="text-[10px] text-muted-foreground">
+                  models from lineage
+                </span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{lineageData?.data?.assets?.map((asset: any) => asset.name).join(", ")}</p>
+            </TooltipContent>
+          </Tooltip>
+        ) : null}
+
         {contextFiles.map((file) => (
           <Tooltip key={file.path} delayDuration={100}>
             <TooltipTrigger asChild>
@@ -97,16 +109,27 @@ export default function ChatControls({
         className="resize-none border-none focus:ring-0 focus:outline-none focus:border-none focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 min-h-8 p-2"
         value={input}
         onChange={(e) => setInput(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            handleSubmit(e);
+          }
+        }}
       />
+
       <div className="flex justify-between items-center">
-        <Select defaultValue="smarter">
-          <SelectTrigger className="w-fit border-none text-sm">
+        <Select defaultValue="claude-3.5-sonnet">
+          <SelectTrigger className="w-fit border-none text-xs text-muted-foreground">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectItem value="smarter">smarter but slower</SelectItem>
-              <SelectItem value="smart">smart and fast</SelectItem>
+              <SelectItem value="claude-3.5-sonnet">
+                claude-3.5-sonnet
+              </SelectItem>
+              <SelectItem value="gpt-4o">gpt-4o</SelectItem>
+              <SelectItem value="o1-mini">o1-mini</SelectItem>
+              <SelectItem value="o1-preview">o1-preview</SelectItem>
             </SelectGroup>
           </SelectContent>
         </Select>
