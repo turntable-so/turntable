@@ -1,7 +1,6 @@
 ## NOTE: can't name this file `dbt.py` or weird import errors will ensue.
 import os
 import re
-import select
 import subprocess
 import sys
 import tempfile
@@ -23,10 +22,8 @@ from vinyl.lib.dbt_methods import (
 from vinyl.lib.errors import VinylError, VinylErrorType
 from vinyl.lib.utils.files import adjust_path, cd, file_exists_in_directory, load_orjson
 from vinyl.lib.utils.graph import DAG
+from vinyl.lib.utils.process import stream_subprocess
 from vinyl.lib.utils.query_limit_helper import query_limit_helper
-
-STREAM_SUCCESS_STRING = "PROCESS_STREAM_SUCCESS"
-STREAM_ERROR_STRING = "PROCESS_STREAM_ERROR"
 
 
 def run_adjusted_replace(base_pattern_list, replacement, contents):
@@ -347,51 +344,19 @@ class DBTProject(object):
         return out.stdout, out.stderr, success
 
     def dbt_cli_stream(
-        self, command: list[str], should_terminate: Callable[[], bool] = None
+        self,
+        command: list[str],
+        should_terminate: Callable[[], bool] | None = None,
     ) -> Generator[str, None, tuple[str, str, bool]]:
         env, cwd = self._dbt_cli_env()
 
-        stdouts = []
-        stderrs = []
-        process = subprocess.Popen(
+        yield from stream_subprocess(
             ["dbtx", *command],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
             env=env,
-            text=True,
             cwd=cwd,
+            check_success=self.check_command_success,
+            should_terminate=should_terminate,
         )
-
-        while process.poll() is None:
-            if should_terminate is not None and should_terminate():
-                process.terminate()
-                return
-            ready, _, _ = select.select([process.stdout, process.stderr], [], [], 0.1)
-            for stream in ready:
-                line = stream.readline()
-                if line:
-                    if stream == process.stdout:
-                        stdouts.append(line)
-                    else:
-                        stderrs.append(line)
-                    yield line
-
-        # Read any remaining output after termination
-        if process.stdout:
-            for line in process.stdout:
-                stdouts.append(line)
-                yield line
-        if process.stderr:
-            for line in process.stderr:
-                stderrs.append(line)
-                yield line
-
-        stdout = "".join(stdouts)
-        stderr = "".join(stderrs)
-
-        success = self.check_command_success(stdout, stderr)
-        success_str = STREAM_SUCCESS_STRING if success else STREAM_ERROR_STRING
-        yield success_str
 
     @classmethod
     def check_command_success(cls, stdout: str, stderr: str) -> bool:

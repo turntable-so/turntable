@@ -1,3 +1,4 @@
+from celery import states
 from django_celery_results.models import TaskResult
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -12,6 +13,7 @@ from api.serializers import (
 )
 from app.models.resources import DBTCoreDetails
 from app.models.workflows import DBTOrchestrator
+from app.workflows.utils import AbortableAsyncResult
 
 
 class Pagination(PageNumberPagination):
@@ -87,9 +89,9 @@ class JobViewSet(viewsets.ModelViewSet):
         runs_queryset = job.most_recent(n=n)
         runs_list = list(runs_queryset)
         total_runs = len(runs_list)
-        started_runs = sum(1 for run in runs_list if run.status == "STARTED")
-        succeeded_runs = sum(1 for run in runs_list if run.status == "SUCCESS")
-        errored_runs = sum(1 for run in runs_list if run.status == "FAILURE")
+        started_runs = sum(1 for run in runs_list if run.status == states.STARTED)
+        succeeded_runs = sum(1 for run in runs_list if run.status == states.SUCCESS)
+        errored_runs = sum(1 for run in runs_list if run.status == states.FAILURE)
 
         success_rate = (succeeded_runs / total_runs) * 100 if total_runs > 0 else 0
         rounded_success_rate = int(success_rate)
@@ -124,3 +126,12 @@ class RunViewSet(viewsets.ModelViewSet):
     def retry(self, request, pk=None):
         # TODO: implement retry
         pass
+
+    @action(detail=True, methods=["post"])
+    def abort(self, request, pk=None):
+        wait_for_completion = request.query_params.get("await", "false")
+        res = AbortableAsyncResult(pk)
+        res.abort(wait_for_completion=wait_for_completion)
+        return Response(
+            {"message": "Task aborted successfully"}, status=status.HTTP_200_OK
+        )

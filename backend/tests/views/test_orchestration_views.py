@@ -7,6 +7,7 @@ from django_celery_beat.models import PeriodicTask
 
 from app.models.resources import DBTCoreDetails
 from app.models.workflows import DBTOrchestrator
+from app.workflows.utils import ABORTED
 
 BASE_DATA = {
     "cron_str": "0 0 * * *",
@@ -137,21 +138,21 @@ class TestOrchestrationViews:
         response = requests.get(url)
         assert response.status_code == 200
 
-    def test_cancel_orchestration(self, client, custom_celery, scheduled_workflow):
+    def test_abort_orchestration(self, client, custom_celery, scheduled_workflow):
         time.sleep(1)
         response = client.post(f"/jobs/{scheduled_workflow.id}/start/")
         assert response.status_code == 202
         workflow = DBTOrchestrator.objects.get(id=response.data["id"])
         task_id = workflow.await_next_id()
-        time.sleep(1)
-        print(task_id)
-        response = client.post(f"/runs/{task_id}/cancel/")
+        time.sleep(10)
+        response = client.post(f"/runs/{task_id}/abort/", data={"await": "true"})
         assert response.status_code == 200
-        assert response.data["message"] == "Task cancelled successfully"
+        assert response.data["message"] == "Task aborted successfully"
 
-        # confirm task is cancelled
         time.sleep(1)
+        # confirm task is cancelled
         response = client.get(f"/runs/{task_id}/")
+
         assert response.status_code == 200
-        breakpoint()
-        assert response.data["status"] == "CANCELLED"
+        assert response.data["status"] == ABORTED
+        assert response.data["result"] == None

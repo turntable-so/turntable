@@ -9,8 +9,8 @@ from git import Repo as GitRepo
 
 from app.models.resources import DBTResource
 from app.workflows.utils import task
-from vinyl.lib.dbt import STREAM_ERROR_STRING, STREAM_SUCCESS_STRING
 from vinyl.lib.utils.files import load_orjson
+from vinyl.lib.utils.process import STREAM_ERROR_STRING, STREAM_SUCCESS_STRING
 
 
 def return_helper(success, stdout, stderr, run_results=None):
@@ -31,7 +31,7 @@ def returns_helper(outs):
     }
 
 
-@task
+@task(abortable=True)
 def run_dbt_command(
     self,
     workspace_id: str,
@@ -60,6 +60,7 @@ def run_dbt_command(
                 stdout = ""
                 stderr = ""
                 for line in dbtproj.stream_dbt_command(split_command, write_json=True):
+                    self.is_aborted(raise_exception=True)
                     if line == STREAM_SUCCESS_STRING:
                         success = True
                         return return_helper(
@@ -137,7 +138,7 @@ def save_artifacts_task(
     return return_helper(True, "uploaded artifacts successfully", "", {})
 
 
-@task
+@task(abortable=True)
 def run_dbt_commands(
     self,
     workspace_id: str,
