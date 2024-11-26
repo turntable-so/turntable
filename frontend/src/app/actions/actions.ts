@@ -938,6 +938,7 @@ type CreateJobPayload = {
   dbtresource_id: string;
   commands: string[];
   cron_str: string;
+  save_artifacts: boolean;
 };
 
 export async function createJob(payload: CreateJobPayload) {
@@ -976,4 +977,12 @@ export async function startJob(jobId: string): Promise<Job | null> {
   } catch (error) {
     return null;
   }
+}
+
+export async function deleteJob(jobId: string) {
+  const response = await fetcher(`/jobs/${jobId}/`, {
+    cookies,
+    method: "DELETE",
+  });
+  return await response.ok;
 }

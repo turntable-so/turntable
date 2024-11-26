@@ -532,6 +532,7 @@ class DBTOrchestratorSerializer(CrontabWorkflowSerializer):
             "id",
             "dbtresource_id",
             "cron_str",
+            "save_artifacts",
             "commands",
             "name",
             "latest_run",

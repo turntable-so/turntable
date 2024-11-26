@@ -15,22 +15,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import dayjs from "dayjs";
 import { Loader2, Plus } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 type JobsPageProps = {
   searchParams: {
-    type?: "jobs" | "runs";
     page?: number;
     pageSize?: number;
   };
 };
 
 export default function JobsPage({ searchParams }: JobsPageProps) {
-  const type = searchParams.type || "jobs";
   const page = Number(searchParams.page || 1);
   const pageSize = Number(searchParams.pageSize || 5);
-  const pathname = usePathname();
 
   const paginationParams = {
     page,
@@ -117,10 +113,9 @@ export default function JobsPage({ searchParams }: JobsPageProps) {
       stopPolling();
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [pathname, type, page, pageSize]);
+  }, [page, pageSize]);
 
   const TabNames = { jobs: "Jobs", runs: "Runs" };
-  const selectedTab = type === "jobs" ? TabNames.jobs : TabNames.runs;
 
   const NewJobButton = () => (
     <Link href="/jobs/new">
@@ -143,34 +138,26 @@ export default function JobsPage({ searchParams }: JobsPageProps) {
 
   return (
     <FullWidthPageLayout title="Jobs" button={<NewJobButton />}>
-      <Tabs defaultValue={selectedTab}>
+      <Tabs defaultValue={TabNames.jobs}>
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value={TabNames.jobs} asChild>
-            <Link href={"/jobs"}>{TabNames.jobs}</Link>
-          </TabsTrigger>
-          <TabsTrigger value={TabNames.runs} asChild>
-            <Link href={"/jobs?type=runs"}>{TabNames.runs}</Link>
-          </TabsTrigger>
+          <TabsTrigger value={TabNames.jobs}>Jobs</TabsTrigger>
+          <TabsTrigger value={TabNames.runs}>Runs</TabsTrigger>
         </TabsList>
         <TabsContent value={TabNames.jobs}>
-          {type === "jobs" ? (
-            <JobsList
-              jobs={jobsResult.results || []}
-              page={page}
-              pageSize={pageSize}
-              count={jobsResult.count}
-            />
-          ) : null}
+          <JobsList
+            jobs={jobsResult.results || []}
+            page={page}
+            pageSize={pageSize}
+            count={jobsResult.count}
+          />
         </TabsContent>
         <TabsContent value={TabNames.runs}>
-          {type === "runs" ? (
-            <RunsList
-              runs={runsResult.results || []}
-              page={page}
-              pageSize={pageSize}
-              count={runsResult.count}
-            />
-          ) : null}
+          <RunsList
+            runs={runsResult.results || []}
+            page={page}
+            pageSize={pageSize}
+            count={runsResult.count}
+          />
         </TabsContent>
       </Tabs>
     </FullWidthPageLayout>
