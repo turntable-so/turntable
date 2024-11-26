@@ -86,7 +86,6 @@ if "pytest" in sys.modules:
         for line in stream_subprocess(
             ["bash", "-c", "for i in {0..100}; do echo $i; sleep 1; done"]
         ):
-            print(line)
             self.is_aborted(raise_exception=True)
             self.update_state(state=states.STARTED, meta=line)
 

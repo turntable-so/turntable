@@ -126,12 +126,14 @@ class AbortableAsyncResult(AsyncResult):
                 cached_kvs = {k: v for k, v in cached_kv.items() if v is not None}
                 print(cached_kvs)
                 if len(cached_kvs) == 0:
-                    break
+                    return True
                 for k, v in cached_kvs.items():
                     status = AsyncResult(v).status
                     if status != states.STARTED:
                         cache.delete(key=k)
                 time.sleep(abort_poll_interval)
+
+            raise TimeoutError("Abort timed out")
 
         return True
 
