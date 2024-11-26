@@ -19,9 +19,7 @@ export default function ChatHeader({ resetState }: ChatHeaderProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => {
-                  resetState();
-                }}
+                onClick={resetState}
               >
                 <Plus className="w-4 h-4" />
               </Button>

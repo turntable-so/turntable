@@ -1,8 +1,19 @@
 import json
 import time
+from typing import List, Optional
 
 from channels.generic.websocket import WebsocketConsumer
 from litellm import completion
+from pydantic import BaseModel
+
+
+class ChatRequestBody(BaseModel):
+    current_file: Optional[str] = None
+    asset_id: Optional[str] = None
+    related_assets: Optional[List[dict]] = None
+    asset_links: Optional[List[dict]] = None
+    column_links: Optional[List[dict]] = None
+    message_history: Optional[List[dict]] = None
 
 
 class AIChatConsumer(WebsocketConsumer):
@@ -21,14 +32,18 @@ class AIChatConsumer(WebsocketConsumer):
         )
         from app.core.inference.prompts import SYSTEM_PROMPT
 
-        self.send(text_data=json.dumps({"type": "message_chunk", "content": "Hi from the server"}))
-        self.send(text_data=json.dumps({"type": "message_end"}))
-        return
-
         try:
             print(f"Received message: {text_data[:100]}...")
-            data = json.loads(text_data)
             user = self.scope["user"]
+            data = ChatRequestBody.model_validate_json(text_data)
+            print(data)
+            self.send(
+                text_data=json.dumps(
+                    {"type": "message_chunk", "content": "Hi from the server"}
+                )
+            )
+            self.send(text_data=json.dumps({"type": "message_end"}))
+            return
             lineage = recreate_lineage_object(data)
 
             print("Building context")
