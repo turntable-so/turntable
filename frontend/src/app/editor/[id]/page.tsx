@@ -1,29 +1,25 @@
 "use client";
 
+import CustomDiffEditor from "@/components/editor/CustomDiffEditor";
+import CustomEditor from "@/components/editor/CustomEditor";
+import AiSidebarChat from "@/components/editor/ai/ai-sidebar";
+import BottomPanel from "@/components/editor/bottom-panel";
+import SingleFileEditPromptPopover from "@/components/editor/command-panel/single-file-prompt-popover";
+import ConfirmSaveDialog from "@/components/editor/dialogs/confirm-save-dialog";
+import EditorSidebar from "@/components/editor/editor-sidebar";
+import EditorTopBar from "@/components/editor/editor-top-bar";
+import FileTabs from "@/components/editor/file-tabs";
+import InlineTabSearch from "@/components/editor/search-bar/inline-tab-search";
 import { Button } from "@/components/ui/button";
 import type { AgGridReact } from "ag-grid-react";
-import { Check, Download, Loader2, X } from "lucide-react";
-import type React from "react";
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { Download, Loader2 } from "lucide-react";
+import { useTheme } from "next-themes";
+import { usePathname } from "next/navigation";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import useResizeObserver from "use-resize-observer";
-import { infer } from "../../actions/actions";
 import { type OpenedFile, useFiles } from "../../contexts/FilesContext";
-import BottomPanel from "@/components/editor/bottom-panel";
-import EditorSidebar from "@/components/editor/editor-sidebar";
-import FileTabs from "@/components/editor/file-tabs";
-import { Textarea } from "@/components/ui/textarea";
 import { useLayoutContext } from "../../contexts/LayoutContext";
-import { usePathname } from "next/navigation";
-import EditorTopBar from "@/components/editor/editor-top-bar";
-import { useTheme } from "next-themes";
-import ConfirmSaveDialog from "@/components/editor/dialogs/confirm-save-dialog";
-import CustomEditor from "@/components/editor/CustomEditor";
-import CustomDiffEditor from "@/components/editor/CustomDiffEditor";
-import InlineTabSearch from "@/components/editor/search-bar/inline-tab-search";
-import AiSidebarChat from "@/components/editor/ai-sidebar-chat";
-import SingleFileEditPromptPopover from "@/components/editor/command-panel/single-file-prompt-popover";
-
 
 function EditorContent({
   setPromptBoxOpen,
@@ -215,14 +211,13 @@ function EditorContent({
         );
 
         // Prevent default behavior for cmd+s
-        editor.addCommand(
-          monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-          () => runQueryPreview(editor.getValue())
+        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () =>
+          runQueryPreview(editor.getValue()),
         );
 
         editor.addCommand(
           monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Enter,
-          () => compileActiveFile(editor.getValue())
+          () => compileActiveFile(editor.getValue()),
         );
       }}
     />
@@ -260,7 +255,6 @@ function EditorPageContent() {
   } = useLayoutContext();
 
   const [promptBoxOpen, setPromptBoxOpen] = useState(false);
-  console.log({ promptBoxOpen })
   const [colDefs, setColDefs] = useState([]);
   const [rowData, setRowData] = useState([]);
   const gridRef = useRef<AgGridReact>(null);
@@ -280,7 +274,7 @@ function EditorPageContent() {
     isCloned,
     cloneBranch,
     compileActiveFile,
-    runQueryPreview
+    runQueryPreview,
   } = useFiles();
 
   useEffect(() => {
@@ -336,8 +330,7 @@ function EditorPageContent() {
             event.preventDefault();
             setBottomPanelShown(!bottomPanelShown);
             break;
-          case 'k':
-            console.log("k")
+          case "k":
             event.preventDefault();
             setPromptBoxOpen(true);
             break;
@@ -386,7 +379,7 @@ function EditorPageContent() {
     activeFile,
     saveFile,
     runQueryPreview,
-    compileActiveFile
+    compileActiveFile,
   ]);
 
   const getTablefromSignedUrl = async (signedUrl: string) => {
@@ -493,7 +486,9 @@ function EditorPageContent() {
             <div className="w-full h-full">
               <PanelGroup direction="vertical" className="h-fit">
                 {promptBoxOpen && (
-                  <SingleFileEditPromptPopover setPromptBoxOpen={setPromptBoxOpen} />
+                  <SingleFileEditPromptPopover
+                    setPromptBoxOpen={setPromptBoxOpen}
+                  />
                 )}
                 <Panel className="h-full relative z-0">
                   <EditorContent
