@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import dayjs from "dayjs";
 import { Loader2, Plus } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 type JobsPageProps = {
@@ -25,6 +26,7 @@ type JobsPageProps = {
 };
 
 export default function JobsPage({ searchParams }: JobsPageProps) {
+  const router = useRouter();
   const page = Number(searchParams.page || 1);
   const pageSize = Number(searchParams.pageSize || 5);
 
@@ -69,7 +71,7 @@ export default function JobsPage({ searchParams }: JobsPageProps) {
     const sortedRuns = (runsData?.results || []).sort((a, b) => {
       if (a.status === "STARTED" && b.status !== "STARTED") return -1;
       if (a.status !== "STARTED" && b.status === "STARTED") return 1;
-      return dayjs.utc(a.date_done).diff(dayjs.utc(b.date_done));
+      return dayjs.utc(b.date_done).diff(dayjs.utc(a.date_done));
     });
 
     setJobsResult({ ...jobsData, results: sortedJobs });
@@ -117,6 +119,10 @@ export default function JobsPage({ searchParams }: JobsPageProps) {
 
   const TabNames = { jobs: "Jobs", runs: "Runs" };
 
+  const handleTabChange = (value: string) => {
+    router.push("/jobs");
+  };
+
   const NewJobButton = () => (
     <Link href="/jobs/new">
       <Button className="rounded-full space-x-2">
@@ -138,7 +144,7 @@ export default function JobsPage({ searchParams }: JobsPageProps) {
 
   return (
     <FullWidthPageLayout title="Jobs" button={<NewJobButton />}>
-      <Tabs defaultValue={TabNames.jobs}>
+      <Tabs defaultValue={TabNames.jobs} onValueChange={handleTabChange}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value={TabNames.jobs}>Jobs</TabsTrigger>
           <TabsTrigger value={TabNames.runs}>Runs</TabsTrigger>
