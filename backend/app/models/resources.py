@@ -357,7 +357,12 @@ class EnvironmentType(models.TextChoices):
     @classmethod
     def jobs_allowed_environments(cls):
         # order of preference
-        return [EnvironmentType.PROD, EnvironmentType.COMBINED, EnvironmentType.STAGING]
+        return [
+            EnvironmentType.PROD,
+            EnvironmentType.COMBINED,
+            EnvironmentType.STAGING,
+            EnvironmentType.DEV,
+        ]
 
     @classmethod
     def metadata_sync_allowed_environments(cls):
@@ -366,7 +371,7 @@ class EnvironmentType(models.TextChoices):
     @classmethod
     def development_allowed_environments(cls):
         # order of preference
-        return [EnvironmentType.DEV, EnvironmentType.COMBINED]
+        return [EnvironmentType.DEV, EnvironmentType.COMBINED, EnvironmentType.STAGING]
 
 
 class ArtifactSource(models.TextChoices):
