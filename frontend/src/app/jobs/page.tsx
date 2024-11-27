@@ -28,7 +28,7 @@ type JobsPageProps = {
 export default function JobsPage({ searchParams }: JobsPageProps) {
   const router = useRouter();
   const page = Number(searchParams.page || 1);
-  const pageSize = Number(searchParams.pageSize || 5);
+  const pageSize = Number(searchParams.pageSize || 10);
 
   const paginationParams = {
     page,

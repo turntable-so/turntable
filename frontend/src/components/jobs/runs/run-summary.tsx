@@ -34,7 +34,7 @@ export default function RunSummary({ run }: RunSummaryProps) {
         {subtasks.length > 0 ? (
           subtasks.map((subtask, index) => (
             <Collapsible
-              key={subtask.task_id || index}
+              key={subtask?.task_id || index}
               className="w-full space-y-2 mb-4"
               defaultOpen
             >
