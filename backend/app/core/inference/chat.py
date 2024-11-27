@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from app.core.dbt import LiveDBTParser
 from app.core.inference.prompts import CHAT_PROMPT_NO_CONTEXT
 from app.models import Asset, AssetLink, Column, ColumnLink, Resource, User
+from app.models.resources import DBTCoreDetails
 from app.services.lineage_service import Lineage
 from app.utils.df import get_first_n_values, truncate_values
 from vinyl.lib.table import VinylTable
@@ -24,6 +25,7 @@ cache = FanoutCache(directory="/cache", shards=10, timeout=300)
 
 
 class ChatRequestBody(BaseModel):
+    model: str
     current_file: Optional[str] = None
     asset_id: Optional[str] = None
     related_assets: Optional[List[dict]] = None
@@ -197,9 +199,9 @@ def lineage_ascii(edges):
 
 
 def build_context(
-    user: User,
     lineage: Lineage,
     message_history: List[dict],
+    dbt_details: DBTCoreDetails,
     current_file: str = None,
 ):
     user_instruction = next(
@@ -208,8 +210,6 @@ def build_context(
     # Map each id to a schema (with name, type, and description)
     if not lineage.assets or len(lineage.assets) == 0:
         return f"\nUser Instructions: {user_instruction}\n"
-    workspace = user.current_workspace()
-    dbt_details = workspace.get_dbt_dev_details()
     resource = dbt_details.resource
 
     with dbt_details.dbt_transition_context() as (

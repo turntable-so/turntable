@@ -24,18 +24,22 @@ class AIChatConsumer(WebsocketConsumer):
         try:
             print(f"Received message: {text_data[:100]}...")
             user = self.scope["user"]
+            workspace = user.current_workspace()
+            dbt_details = workspace.get_dbt_dev_details()
+
             data = ChatRequestBody.model_validate_json(text_data)
             lineage = recreate_lineage_object(data)
 
             prompt = build_context(
-                user=user,
-                message_history=data.message_history,
                 lineage=lineage,
+                message_history=data.message_history,
+                dbt_details=dbt_details,
+                current_file=data.current_file,
             )
 
             response = completion(
                 temperature=0,
-                model="claude-3-5-sonnet-20241022",
+                model=data.model,
                 messages=[
                     {"content": SYSTEM_PROMPT, "role": "system"},
                     {"role": "user", "content": prompt},
