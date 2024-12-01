@@ -109,7 +109,7 @@ const JobActions = memo(({ jobId }: { jobId: string }) => {
 export default function JobPage({ params, searchParams }: JobPageProps) {
   const { jobId } = params;
   const page = Number(searchParams.page || 1);
-  const pageSize = Number(searchParams.pageSize || 5);
+  const pageSize = Number(searchParams.pageSize || 10);
   const pathname = usePathname();
 
   const [job, setJob] = useState<Job | null>(null);

@@ -34,7 +34,7 @@ export default function RunSummary({ run }: RunSummaryProps) {
         {subtasks.length > 0 ? (
           subtasks.map((subtask, index) => (
             <Collapsible
-              key={subtask.task_id || index}
+              key={subtask?.task_id || index}
               className="w-full space-y-2 mb-4"
               defaultOpen
             >
@@ -49,7 +49,7 @@ export default function RunSummary({ run }: RunSummaryProps) {
               </div>
               <CollapsibleContent>
                 <div className="rounded-md border px-4 py-3 font-mono text-sm whitespace-pre-wrap break-words">
-                  {subtask.result?.stdout ? (
+                  {subtask?.result?.stdout ? (
                     <p dangerouslySetInnerHTML={{ __html: convert.toHtml(subtask.result.stdout) }} />
                   ) : (
                     <Loader2 className="animate-spin" />
