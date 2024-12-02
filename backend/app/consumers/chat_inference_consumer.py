@@ -6,30 +6,42 @@ from litellm import completion
 
 class AIChatConsumer(WebsocketConsumer):
     def connect(self):
-        print("AI Chat WebSocket Connected")
         self.accept()
-        print("Connected")
 
     def disconnect(self, close_code):
         print(f"AI Chat WebSocket Disconnected with code: {close_code}")
 
     def receive(self, text_data):
-        from app.core.inference.chat import (
+        from ai.core.chat import (
             ChatRequestBody,
             build_context,
             recreate_lineage_object,
         )
-        from app.core.inference.prompts import SYSTEM_PROMPT
+        from ai.core.prompts import SYSTEM_PROMPT
 
         try:
-            print(f"Received message: {text_data[:100]}...")
             user = self.scope["user"]
             workspace = user.current_workspace()
             dbt_details = workspace.get_dbt_dev_details()
 
             data = ChatRequestBody.model_validate_json(text_data)
-            lineage = recreate_lineage_object(data)
-
+            print("Check data here: ", data)
+            should_recreate_lineage = (
+                data.asset_id is not None
+                and data.related_assets is not None
+                and data.asset_links is not None
+                and data.column_links is not None
+            )
+            lineage = (
+                recreate_lineage_object(
+                    asset_id=data.asset_id,
+                    related_assets=data.related_assets,
+                    asset_links=data.asset_links,
+                    column_links=data.column_links,
+                )
+                if should_recreate_lineage
+                else None
+            )
             prompt = build_context(
                 lineage=lineage,
                 message_history=data.message_history,
@@ -37,13 +49,21 @@ class AIChatConsumer(WebsocketConsumer):
                 current_file=data.current_file,
             )
 
+            message_history = []
+            for idx, msg in enumerate(data.message_history):
+                if idx == len(data.message_history) - 1:
+                    msg.content = prompt
+                message_history.append(msg.model_dump())
+
+            messages = [
+                {"content": SYSTEM_PROMPT, "role": "system"},
+                *message_history,
+            ]
+            print("Sending messages to ai: ", messages)
             response = completion(
                 temperature=0,
                 model=data.model,
-                messages=[
-                    {"content": SYSTEM_PROMPT, "role": "system"},
-                    {"role": "user", "content": prompt},
-                ],
+                messages=messages,
                 stream=True,
             )
             for chunk in response:
@@ -59,5 +79,9 @@ class AIChatConsumer(WebsocketConsumer):
 
             self.send(text_data=json.dumps({"type": "message_end"}))
         except Exception as e:
-            print("Sending error message")
-            self.send(text_data=json.dumps({"type": "error", "message": str(e)}))
+            print("error", e)
+            self.send(
+                text_data=json.dumps(
+                    {"type": "error", "message": "Something went wrong"}
+                )
+            )

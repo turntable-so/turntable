@@ -10,6 +10,8 @@ x-dev-credentials: &dev-credentials
   GITHUB_PRIVATE_KEY_BASE64: ${GITHUB_PRIVATE_KEY_BASE64}
   GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET}
   DEV: "true"
+  OPENAI_API_KEY: ${OPENAI_API_KEY}
+  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
 
 x-telemetry-credentials: &telemetry-credentials
   NEXT_PUBLIC_POSTHOG_KEY: ""

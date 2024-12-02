@@ -28,4 +28,6 @@ export const LocalStorageKeys = {
     createLocalStorageKey(branchId, "format-on-save"),
   aiMessageHistory: (branchId: string): string =>
     createLocalStorageKey(branchId, "ai-message-history"),
+  aiSelectedModel: (branchId: string): string =>
+    createLocalStorageKey(branchId, "ai-selected-model"),
 };

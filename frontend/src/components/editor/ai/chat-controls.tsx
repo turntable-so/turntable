@@ -1,10 +1,11 @@
-import type { FileNode } from "@/app/contexts/FilesContext";
+import type { FileNode, OpenedFile } from "@/app/contexts/FilesContext";
+import type { Lineage } from "@/app/contexts/LineageView";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { CornerDownLeft, Loader2, Plus } from "lucide-react";
+import { CornerDownLeft, Loader2, Plus, X } from "lucide-react";
 import type React from "react";
 import { type Dispatch, type SetStateAction, useState } from "react";
 import { Button } from "../../ui/button";
@@ -17,6 +18,7 @@ import {
   SelectValue,
 } from "../../ui/select";
 import { Textarea } from "../../ui/textarea";
+import { SUPPORTED_AI_MODELS } from "./constants";
 import FileExplorer from "./file-explorer";
 
 interface ChatControlsProps {
@@ -24,10 +26,14 @@ interface ChatControlsProps {
   setInput: (value: string) => void;
   isLoading: boolean;
   handleSubmit: (e: React.FormEvent) => void;
-  activeFile: any;
-  lineageData: any;
+  aiActiveFile: OpenedFile | null;
+  setAiActiveFile: Dispatch<SetStateAction<OpenedFile | null>>;
+  aiLineageContext: Lineage | null;
+  setAiLineageContext: Dispatch<SetStateAction<Lineage | null>>;
   contextFiles: FileNode[];
   setContextFiles: Dispatch<SetStateAction<FileNode[]>>;
+  selectedModel: string;
+  setSelectedModel: Dispatch<SetStateAction<string>>;
 }
 
 export default function ChatControls({
@@ -35,13 +41,25 @@ export default function ChatControls({
   setInput,
   isLoading,
   handleSubmit,
-  activeFile,
-  lineageData,
+  aiActiveFile,
+  setAiActiveFile,
+  aiLineageContext,
+  setAiLineageContext,
   contextFiles,
   setContextFiles,
+  selectedModel,
+  setSelectedModel,
 }: ChatControlsProps) {
   const [isFileExplorerOpen, setIsFileExplorerOpen] = useState(false);
-  const numberOfLineageFiles = lineageData?.data?.assets?.length;
+  const numberOfLineageFiles = aiLineageContext?.assets?.length || 0;
+
+  const handleRemoveAiActiveFile = () => {
+    setAiActiveFile(null);
+  };
+
+  const handleRemoveLineageContext = () => {
+    setAiLineageContext(null);
+  };
 
   const handleRemoveContextFile = (file: FileNode) => {
     setContextFiles((prev) => prev.filter((f) => f.path !== file.path));
@@ -49,9 +67,9 @@ export default function ChatControls({
 
   return (
     <div className="flex flex-col bg-background rounded-md p-2 gap-2 relative">
-      <div className="flex gap-1 flex-wrap">
+      <div className="flex gap-1 flex-wrap min-h-6">
         <div
-          className="hover:bg-muted rounded-md p-0.5 cursor-pointer border flex items-center justify-center relative"
+          className="hover:bg-muted rounded-md px-0.5 cursor-pointer border flex items-center justify-center relative"
           onClick={() => setIsFileExplorerOpen((prev) => !prev)}
         >
           <Plus className="w-4 h-4" />
@@ -64,44 +82,56 @@ export default function ChatControls({
             </div>
           )}
         </div>
-        <div className="bg-muted/50 rounded-md p-1 text-xs">
-          {activeFile?.node.name}{" "}
-          <span className="text-[10px] text-muted-foreground">
-            Current file
-          </span>
-        </div>
+        {aiActiveFile ? (
+          <div
+            className="bg-muted/50 rounded-md p-1 text-xs flex items-center justify-between gap-1"
+            onClick={handleRemoveAiActiveFile}
+          >
+            {aiActiveFile.node.name}{" "}
+            <span className="text-[10px] text-muted-foreground cursor-pointer">
+              <X className="w-[0.6rem] h-[0.6rem]" />
+            </span>
+          </div>
+        ) : null}
 
         {numberOfLineageFiles > 0 ? (
           <Tooltip delayDuration={100}>
             <TooltipTrigger asChild>
-              <div className="bg-muted/50 rounded-md p-1 text-xs">
+              <div className="bg-muted/50 rounded-md p-1 text-xs flex items-center justify-between gap-1">
                 {numberOfLineageFiles}{" "}
                 <span className="text-[10px] text-muted-foreground">
                   models from lineage
                 </span>
+                <span
+                  className="text-[10px] text-muted-foreground cursor-pointer"
+                  onClick={handleRemoveLineageContext}
+                >
+                  <X className="w-[0.6rem] h-[0.6rem]" />
+                </span>
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{lineageData?.data?.assets?.map((asset: any) => asset.name).join(", ")}</p>
+              <p>
+                {aiLineageContext?.assets
+                  ?.map((asset) => asset.name)
+                  .join(", ")}
+              </p>
             </TooltipContent>
           </Tooltip>
         ) : null}
 
         {contextFiles.map((file) => (
-          <Tooltip key={file.path} delayDuration={100}>
-            <TooltipTrigger asChild>
-              <div
-                className="bg-muted/50 rounded-md p-1 text-xs cursor-pointer"
-                onClick={() => handleRemoveContextFile(file)}
-              >
-                {file.name}{" "}
-                <span className="text-[10px] text-muted-foreground">File</span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Click to remove</p>
-            </TooltipContent>
-          </Tooltip>
+          <div
+            key={file.path}
+            className="bg-muted/50 rounded-md p-1 text-xs flex items-center justify-between gap-1"
+            onClick={() => handleRemoveContextFile(file)}
+          >
+            {file.name}{" "}
+            <span className="text-[10px] text-muted-foreground">File</span>
+            <span className="text-[10px] text-muted-foreground cursor-pointer">
+              <X className="w-[0.6rem] h-[0.6rem]" />
+            </span>
+          </div>
         ))}
       </div>
       <Textarea
@@ -118,18 +148,21 @@ export default function ChatControls({
       />
 
       <div className="flex justify-between items-center">
-        <Select defaultValue="claude-3.5-sonnet">
+        <Select
+          defaultValue={selectedModel}
+          value={selectedModel}
+          onValueChange={setSelectedModel}
+        >
           <SelectTrigger className="w-fit border-none text-xs text-muted-foreground">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectItem value="claude-3.5-sonnet">
-                claude-3.5-sonnet
-              </SelectItem>
-              <SelectItem value="gpt-4o">gpt-4o</SelectItem>
-              <SelectItem value="o1-mini">o1-mini</SelectItem>
-              <SelectItem value="o1-preview">o1-preview</SelectItem>
+              {SUPPORTED_AI_MODELS.map((model) => (
+                <SelectItem key={model} value={model} className="text-xs">
+                  {model}
+                </SelectItem>
+              ))}
             </SelectGroup>
           </SelectContent>
         </Select>

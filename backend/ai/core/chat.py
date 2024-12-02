@@ -13,15 +13,20 @@ from litellm import completion
 from mpire import WorkerPool
 from pydantic import BaseModel
 
+from ai.core.prompts import CHAT_PROMPT_NO_CONTEXT
 from app.core.dbt import LiveDBTParser
-from app.core.inference.prompts import CHAT_PROMPT_NO_CONTEXT
-from app.models import Asset, AssetLink, Column, ColumnLink, Resource, User
+from app.models import Asset, AssetLink, Column, ColumnLink, Resource
 from app.models.resources import DBTCoreDetails
 from app.services.lineage_service import Lineage
 from app.utils.df import get_first_n_values, truncate_values
 from vinyl.lib.table import VinylTable
 
 cache = FanoutCache(directory="/cache", shards=10, timeout=300)
+
+
+class ChatMessage(BaseModel):
+    role: str
+    content: str
 
 
 class ChatRequestBody(BaseModel):
@@ -31,7 +36,7 @@ class ChatRequestBody(BaseModel):
     related_assets: Optional[List[dict]] = None
     asset_links: Optional[List[dict]] = None
     column_links: Optional[List[dict]] = None
-    message_history: Optional[List[dict]] = None
+    message_history: Optional[List[ChatMessage]] = None
 
 
 def get_asset_object(asset_dict: dict):
@@ -61,13 +66,18 @@ def get_asset_object(asset_dict: dict):
     return asset, [Column(**col, asset_id=asset.id) for col in columns]
 
 
-def recreate_lineage_object(data: ChatRequestBody) -> Lineage:
-    assets, columns = zip(*[get_asset_object(d) for d in data.related_assets])
+def recreate_lineage_object(
+    asset_id: str,
+    related_assets: List[dict],
+    asset_links: List[dict],
+    column_links: List[dict],
+) -> Lineage:
+    assets, columns = zip(*[get_asset_object(d) for d in related_assets])
     columns = list(itertools.chain(*columns))
-    asset_links = [AssetLink(**link) for link in data.asset_links]
-    column_links = [ColumnLink(**link) for link in data.column_links]
+    asset_links = [AssetLink(**link) for link in asset_links]
+    column_links = [ColumnLink(**link) for link in column_links]
     return Lineage(
-        asset_id=data.asset_id,
+        asset_id=asset_id,
         assets=assets,
         columns=columns,
         asset_links=asset_links,
@@ -199,16 +209,16 @@ def lineage_ascii(edges):
 
 
 def build_context(
-    lineage: Lineage,
-    message_history: List[dict],
+    lineage: Lineage | None,
+    message_history: List[ChatMessage],
     dbt_details: DBTCoreDetails,
-    current_file: str = None,
+    current_file: str | None = None,
 ):
     user_instruction = next(
-        msg["content"] for msg in reversed(message_history) if msg["role"] == "user"
+        msg.content for msg in reversed(message_history) if msg.role == "user"
     )
     # Map each id to a schema (with name, type, and description)
-    if not lineage.assets or len(lineage.assets) == 0:
+    if lineage is None or not lineage.assets or len(lineage.assets) == 0:
         return f"\nUser Instructions: {user_instruction}\n"
     resource = dbt_details.resource
 

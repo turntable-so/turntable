@@ -1,20 +1,44 @@
-import Markdown from "react-markdown";
-import { AICodeBlock } from "./ai-code-block";
+import { useTheme } from "next-themes";
+import ReactMarkdown from "react-markdown";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import {
+  darcula as darkStyle,
+  prism as lightStyle,
+} from "react-syntax-highlighter/dist/cjs/styles/prism";
 
 interface ResponseDisplayProps {
-  response: string;
+  content: string;
 }
 
-export default function ResponseDisplay({ response }: ResponseDisplayProps) {
+export default function ResponseDisplay({ content }: ResponseDisplayProps) {
+  const { resolvedTheme } = useTheme();
+  const syntaxStyle = resolvedTheme === "dark" ? darkStyle : lightStyle;
+
   return (
-    <div className="overflow-x-hidden space-y-4 mt-4">
-      <Markdown
-        children={response}
-        className="prose dark:prose-invert max-w-none [&_pre]:!p-0 [&_pre]:!m-0 [&_pre]:!border-none [&_code]:!border-none"
+    <div className="overflow-y-auto prose max-w-none dark:prose-invert">
+      <ReactMarkdown
         components={{
-          code: AICodeBlock,
+          code({ node, inline, className, children, ...props }) {
+            const match = /language-(\w+)/.exec(className || "");
+            return !inline && match ? (
+              <SyntaxHighlighter
+                style={syntaxStyle}
+                language={match[1]}
+                PreTag="div"
+                {...props}
+              >
+                {String(children).replace(/\n$/, "")}
+              </SyntaxHighlighter>
+            ) : (
+              <code className={className} {...props}>
+                {children}
+              </code>
+            );
+          },
         }}
-      />
+      >
+        {content}
+      </ReactMarkdown>
     </div>
   );
 }
