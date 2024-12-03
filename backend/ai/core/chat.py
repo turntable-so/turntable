@@ -213,16 +213,6 @@ def stream_chat_completion(*, payload: ChatRequestBody, dbt_details: DBTCoreDeta
         {"content": SYSTEM_PROMPT, "role": "system"},
         *message_history,
     ]
-    with open("test.yml", "w") as f:
-        f.write("- name: Example Entry\n")
-        f.write("  input:\n")
-        f.write("    messages:\n")
-        for msg in messages:
-            f.write(f"      - role: {msg['role']}\n")
-            f.write("        content: |\n")
-            for line in msg["content"].split("\n"):
-                f.write(f"          {line}\n")
-        f.write("  output: Expected output\n")
     response = completion(
         temperature=0,
         model=payload.model,

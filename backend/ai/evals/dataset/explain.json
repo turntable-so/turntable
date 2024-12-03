@@ -1,7 +1,14 @@
 {
   "name": "Explain the query",
+  "output": "expected output",
   "input": {
     "model": "claude-3-5-sonnet-20240620",
+    "message_history": [
+      {
+        "role": "user",
+        "content": "explain"
+      }
+    ],
     "context_files": [
       "models/marts/customer360/customers.sql"
     ],
@@ -126,13 +133,6 @@
         "target_id": "urn:li:dataset:(urn:li:dataPlatform:bigquery,turntable-test.dbt_sami_ai.customers,PROD)"
       }
     ],
-    "column_links": [],
-    "message_history": [
-      {
-        "role": "user",
-        "content": "explain"
-      }
-    ]
-  },
-  "output": "expected output"
+    "column_links": []
+  }
 }
