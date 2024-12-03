@@ -162,10 +162,8 @@ class Project(models.Model):
 
         with self._code_repo_path(isolate) as path:
             if os.path.exists(path) and ".git" in os.listdir(path):
-                with self.repository.with_ssh_env(env_override) as env:
-                    repo = GitRepo(path)
-                    yield repo, env
-                    return
+                yield GitRepo(path), env_override
+                return
 
             with self.repository.with_ssh_env(env_override) as env:
                 repo = GitRepo.clone_from(self.repository.git_repo_url, path, env=env)
@@ -176,8 +174,7 @@ class Project(models.Model):
                 # switch to the branch
                 self.checkout(isolate=isolate, repo_override=repo, env_override=env)
 
-                yield repo, env
-                return
+                yield repo, env_override
 
     def create_git_branch(
         self,
