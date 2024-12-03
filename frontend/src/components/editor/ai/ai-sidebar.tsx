@@ -56,7 +56,7 @@ export default function AiSidebarChat() {
     setMessageHistory([]);
   };
 
-  const { startWebSocket, sendMessage, stopWebSocket } =
+  const { startWebSocket, sendMessage, stopWebSocket, isConnected } =
     useWebSocket<MessageHistoryPayload>(
       `${protocol}://${base}/ws/infer/?token=${accessToken}`,
       {
@@ -166,7 +166,9 @@ export default function AiSidebarChat() {
           input={input}
           setInput={setInput}
           isLoading={isLoading}
+          isConnected={isConnected}
           handleSubmit={handleSubmit}
+          stopWebSocket={stopWebSocket}
           aiActiveFile={aiActiveFile}
           setAiActiveFile={setAiActiveFile}
           aiLineageContext={aiLineageContext}
@@ -184,6 +186,7 @@ export default function AiSidebarChat() {
                 key={message.id}
                 message={message}
                 isLastMessage={index === messageHistory.length - 1}
+                isConnected={isConnected}
                 index={index}
                 onEditMessage={handleEditMessage}
                 aiActiveFile={aiActiveFile}
@@ -202,7 +205,9 @@ export default function AiSidebarChat() {
             input={input}
             setInput={setInput}
             isLoading={isLoading}
+            isConnected={isConnected}
             handleSubmit={handleSubmit}
+            stopWebSocket={stopWebSocket}
             aiActiveFile={aiActiveFile}
             setAiActiveFile={setAiActiveFile}
             aiLineageContext={aiLineageContext}

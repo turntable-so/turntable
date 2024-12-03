@@ -9,6 +9,7 @@ import type { AIMessage } from "./types";
 type AiMessageBoxProps = {
   message: AIMessage;
   isLastMessage: boolean;
+  isConnected: boolean;
   index: number;
   onEditMessage: (index: number, newContent: string) => void;
   aiActiveFile: OpenedFile | null;
@@ -24,6 +25,7 @@ type AiMessageBoxProps = {
 export default function AiMessageBox({
   message,
   isLastMessage,
+  isConnected,
   index,
   onEditMessage,
   aiActiveFile,
@@ -92,6 +94,7 @@ export default function AiMessageBox({
           input={input}
           setInput={setInput}
           isLoading={false}
+          isConnected={isConnected}
           handleSubmit={handleSubmit}
           aiActiveFile={aiActiveFile}
           setAiActiveFile={setAiActiveFile}
