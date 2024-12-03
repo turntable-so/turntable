@@ -25,7 +25,6 @@ class AIChatConsumer(WebsocketConsumer):
             dbt_details = workspace.get_dbt_dev_details()
 
             data = ChatRequestBody.model_validate_json(text_data)
-            print("Check data here: ", data)
             should_recreate_lineage = (
                 data.asset_id is not None
                 and data.related_assets is not None
@@ -59,7 +58,6 @@ class AIChatConsumer(WebsocketConsumer):
                 {"content": SYSTEM_PROMPT, "role": "system"},
                 *message_history,
             ]
-            print("Sending messages to ai: ", messages)
             response = completion(
                 temperature=0,
                 model=data.model,
@@ -67,7 +65,6 @@ class AIChatConsumer(WebsocketConsumer):
                 stream=True,
             )
             for chunk in response:
-                print(chunk.choices[0].delta.content)
                 self.send(
                     text_data=json.dumps(
                         {

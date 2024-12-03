@@ -18,6 +18,12 @@ export default function ResponseDisplay({ content }: ResponseDisplayProps) {
     <div className="overflow-y-auto prose max-w-none dark:prose-invert">
       <ReactMarkdown
         components={{
+          h1: "h2",
+          h2: "h3",
+          h3: "h4",
+          h4: "h5",
+          h5: "h6",
+          h6: "p",
           code({ node, inline, className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || "");
             return !inline && match ? (

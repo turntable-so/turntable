@@ -9,16 +9,15 @@ import { useWebSocket } from "@/app/hooks/use-websocket";
 import getUrl from "@/app/url";
 import { AuthActions } from "@/lib/auth";
 import _ from "lodash";
-import { Loader2 } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { useLocalStorage } from "usehooks-ts";
+import AiMessageBox from "./ai-message-box";
 import ChatControls from "./chat-controls";
 import ChatHeader from "./chat-header";
 import { SUPPORTED_AI_MODELS } from "./constants";
 import ErrorDisplay from "./error-display";
-import ResponseDisplay from "./response-display";
-import type { Message } from "./types";
+import type { AIMessage } from "./types";
 
 const baseUrl = getUrl();
 const base = new URL(baseUrl).host;
@@ -31,7 +30,7 @@ type MessageHistoryPayload = {
   related_assets: Asset[] | undefined;
   asset_links: any | undefined;
   column_links: any | undefined;
-  message_history: Omit<Message, "id">[];
+  message_history: Omit<AIMessage, "id">[];
 };
 
 export default function AiSidebarChat() {
@@ -42,7 +41,7 @@ export default function AiSidebarChat() {
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [contextFiles, setContextFiles] = useState<FileNode[]>([]);
-  const [messageHistory, setMessageHistory] = useLocalStorage<Array<Message>>(
+  const [messageHistory, setMessageHistory] = useLocalStorage<Array<AIMessage>>(
     LocalStorageKeys.aiMessageHistory(branchId),
     [],
   );
@@ -107,16 +106,22 @@ export default function AiSidebarChat() {
       },
     );
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (
+    e: React.FormEvent | null,
+    messageHistoryOverride?: AIMessage[],
+  ) => {
+    if (e) e.preventDefault();
 
-    const newMessageHistory = [
+    const newMessageHistory = messageHistoryOverride || [
       ...messageHistory,
       { id: _.uniqueId(), role: "user" as const, content: input },
     ];
 
-    setMessageHistory(newMessageHistory);
-    setInput("");
+    if (!messageHistoryOverride) {
+      setMessageHistory(newMessageHistory);
+      setInput("");
+    }
+
     setError(null);
     setIsLoading(true);
 
@@ -130,19 +135,29 @@ export default function AiSidebarChat() {
       related_assets: aiLineageContext?.assets,
       asset_links: aiLineageContext?.asset_links,
       column_links: aiLineageContext?.column_links,
-      message_history: newMessageHistory.map(({ id, ...rest }) => ({
-        ...rest,
-      })),
+      message_history: newMessageHistory.map(({ id, ...rest }) => rest),
     };
     startWebSocket(payload);
 
-    // append a new assistant message to the end of the history (optimistic update)
+    // Append assistant's placeholder message
     setMessageHistory((prev) => [
       ...prev,
       { id: _.uniqueId(), role: "assistant" as const, content: "" },
     ]);
 
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const handleEditMessage = (index: number, newContent: string) => {
+    const newMessageHistory = messageHistory.slice(0, index + 1);
+    newMessageHistory[index] = {
+      ...newMessageHistory[index],
+      content: newContent,
+    };
+    setMessageHistory(newMessageHistory);
+    setMessageHistory((prev) => prev.slice(0, index + 1));
+    stopWebSocket();
+    handleSubmit(null, newMessageHistory);
   };
 
   useEffect(() => {
@@ -175,28 +190,22 @@ export default function AiSidebarChat() {
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex flex-col flex-1 overflow-y-auto hide-scrollbar text-sm gap-4">
             {messageHistory.map((message, index) => (
-              <div
+              <AiMessageBox
                 key={message.id}
-                className={`${
-                  message.role === "user"
-                    ? " bg-background p-2 rounded-md"
-                    : index === messageHistory.length - 1
-                      ? "p-1 mb-96"
-                      : "p-1 mb-8"
-                }`}
-              >
-                {message.role === "user" ? (
-                  message.content
-                ) : (
-                  <ResponseDisplay content={message.content} />
-                )}
-              </div>
+                message={message}
+                isLastMessage={index === messageHistory.length - 1}
+                index={index}
+                onEditMessage={handleEditMessage}
+                aiActiveFile={aiActiveFile}
+                setAiActiveFile={setAiActiveFile}
+                aiLineageContext={aiLineageContext}
+                setAiLineageContext={setAiLineageContext}
+                contextFiles={contextFiles}
+                setContextFiles={setContextFiles}
+                selectedModel={selectedModel}
+                setSelectedModel={setSelectedModel}
+              />
             ))}
-            {isLoading && (
-              <div className="flex items-center justify-center">
-                <Loader2 className="w-4 h-4 animate-spin" />
-              </div>
-            )}
             <div ref={messagesEndRef} />
           </div>
           <ChatControls
