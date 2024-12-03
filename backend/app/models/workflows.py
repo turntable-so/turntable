@@ -2,7 +2,7 @@ import json
 import os
 import time
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from celery import current_app, states
 from celery.result import AsyncResult
@@ -11,11 +11,10 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import QuerySet
+from django.db.models import OuterRef, QuerySet, Subquery
 from django_celery_beat.models import ClockedSchedule, CrontabSchedule, PeriodicTask
 from django_celery_results.models import TaskResult
 from polymorphic.models import PolymorphicModel
-from django.db.models import OuterRef, Subquery
 
 from app.models.project import Project
 from app.models.resources import DBTResource, Resource
@@ -109,7 +108,7 @@ class ScheduledWorkflow(PolymorphicModel):
         }
 
     def get_upcoming_tasks(self, n: int = 10):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         if self.workflow_type == WorkflowType.ONE_TIME:
             diff = self.clocked.clocked_time - now
             return [diff.total_seconds()]
@@ -132,7 +131,7 @@ class ScheduledWorkflow(PolymorphicModel):
 
     def get_next_run_date(self) -> datetime:
         next_run_seconds = self.get_upcoming_tasks(1)[0]
-        return datetime.now() + timedelta(seconds=next_run_seconds)
+        return datetime.now(UTC) + timedelta(seconds=next_run_seconds)
 
     def get_periodic_task_args(self):
         return {
@@ -264,7 +263,7 @@ class ScheduledWorkflow(PolymorphicModel):
             return QuerySet()
 
     def schedule_now(self):
-        now = datetime.now(tz=timezone.utc)
+        now = datetime.now(tz=UTC)
         clocked = ClockedSchedule.objects.create(clocked_time=now)
         attrs = {
             k: v
