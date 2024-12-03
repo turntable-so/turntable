@@ -4,7 +4,7 @@ import {
   type OpenedFile,
   useFiles,
 } from "@/app/contexts/FilesContext";
-import type { Asset, Lineage } from "@/app/contexts/LineageView";
+import type { Lineage } from "@/app/contexts/LineageView";
 import { useWebSocket } from "@/app/hooks/use-websocket";
 import getUrl from "@/app/url";
 import { AuthActions } from "@/lib/auth";
@@ -17,21 +17,11 @@ import ChatControls from "./chat-controls";
 import ChatHeader from "./chat-header";
 import { SUPPORTED_AI_MODELS } from "./constants";
 import ErrorDisplay from "./error-display";
-import type { AIMessage } from "./types";
+import type { AIMessage, MessageHistoryPayload } from "./types";
 
 const baseUrl = getUrl();
 const base = new URL(baseUrl).host;
 const protocol = process.env.NODE_ENV === "development" ? "ws" : "wss";
-
-type MessageHistoryPayload = {
-  model: string;
-  current_file: string;
-  asset_id: string | undefined;
-  related_assets: Asset[] | undefined;
-  asset_links: any | undefined;
-  column_links: any | undefined;
-  message_history: Omit<AIMessage, "id">[];
-};
 
 export default function AiSidebarChat() {
   const { activeFile, lineageData, branchId } = useFiles();
@@ -125,12 +115,9 @@ export default function AiSidebarChat() {
     setError(null);
     setIsLoading(true);
 
-    const currentFileContent =
-      typeof aiActiveFile?.content === "string" ? aiActiveFile?.content : "";
-
     const payload: MessageHistoryPayload = {
       model: selectedModel,
-      current_file: currentFileContent,
+      context_files: contextFiles.map((file) => file.path),
       asset_id: aiLineageContext?.asset_id,
       related_assets: aiLineageContext?.assets,
       asset_links: aiLineageContext?.asset_links,

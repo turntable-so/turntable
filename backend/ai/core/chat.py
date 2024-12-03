@@ -5,6 +5,7 @@ import re
 import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Optional
+from urllib.parse import unquote
 
 import pandas as pd
 from diskcache import FanoutCache
@@ -31,7 +32,7 @@ class ChatMessage(BaseModel):
 
 class ChatRequestBody(BaseModel):
     model: str
-    current_file: Optional[str] = None
+    context_files: Optional[List[str]] = None
     asset_id: Optional[str] = None
     related_assets: Optional[List[dict]] = None
     asset_links: Optional[List[dict]] = None
@@ -212,14 +213,11 @@ def build_context(
     lineage: Lineage | None,
     message_history: List[ChatMessage],
     dbt_details: DBTCoreDetails,
-    current_file: str | None = None,
+    context_files: List[str] | None = None,
 ):
     user_instruction = next(
         msg.content for msg in reversed(message_history) if msg.role == "user"
     )
-    # Map each id to a schema (with name, type, and description)
-    if lineage is None or not lineage.assets or len(lineage.assets) == 0:
-        return f"\nUser Instructions: {user_instruction}\n"
     resource = dbt_details.resource
 
     with dbt_details.dbt_transition_context() as (
@@ -257,17 +255,24 @@ def build_context(
                     contents,
                 )
 
-        # Use ThreadPoolExecutor to parallelize the I/O-bound tasks
-        with ThreadPoolExecutor() as executor:
-            futures = [
-                executor.submit(process_asset, asset)
-                for asset in lineage.assets
-                if asset.id != lineage.asset_id  # Skip the current asset
-            ]
-            for future in concurrent.futures.as_completed(futures):
-                result = future.result()
-                if result is not None:
-                    asset_mds.append(result)
+        if lineage:
+            with ThreadPoolExecutor() as executor:
+                futures = [
+                    executor.submit(process_asset, asset)
+                    for asset in lineage.assets
+                    if asset.id != lineage.asset_id
+                ]
+                for future in concurrent.futures.as_completed(futures):
+                    result = future.result()
+                    if result is not None:
+                        asset_mds.append(result)
+
+        file_contents = [
+            open(os.path.join(repo.working_tree_dir, unquote(path)), "r").read()
+            for path in context_files
+        ]
+
+        print("file_contents", file_contents)
 
         end_time = time.time()
         print(f"Time taken to get asset md: {end_time - start_time} seconds")
@@ -276,10 +281,11 @@ def build_context(
         print("getting lineage edges")
         start_time = time.time()
         edges = []
-        for link in lineage.asset_links:
-            source_model = extract_model_name(link.source_id)
-            target_model = extract_model_name(link.target_id)
-            edges.append({"source": source_model, "target": target_model})
+        if lineage:
+            for link in lineage.asset_links:
+                source_model = extract_model_name(link.source_id)
+                target_model = extract_model_name(link.target_id)
+                edges.append({"source": source_model, "target": target_model})
         end_time = time.time()
         print(f"Time taken to get lineage edges: {end_time - start_time} seconds")
 
@@ -300,11 +306,11 @@ IMPORTANT: keep in mind how these are connected to each other. You may need to a
 {assets}
 User Instructions: {user_instruction}
 """
-        if current_file:
+        if file_contents:
             output += f"""
-Current File:
+Context Files:
 ```sql
-{current_file}
+{file_contents}
 ```
 """
         return output

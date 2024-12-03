@@ -25,6 +25,7 @@ class AIChatConsumer(WebsocketConsumer):
             dbt_details = workspace.get_dbt_dev_details()
 
             data = ChatRequestBody.model_validate_json(text_data)
+            print("Data here: ", data)
             should_recreate_lineage = (
                 data.asset_id is not None
                 and data.related_assets is not None
@@ -41,12 +42,14 @@ class AIChatConsumer(WebsocketConsumer):
                 if should_recreate_lineage
                 else None
             )
+            print("\n\n\nbuilding prompt")
             prompt = build_context(
                 lineage=lineage,
                 message_history=data.message_history,
                 dbt_details=dbt_details,
-                current_file=data.current_file,
+                context_files=data.context_files,
             )
+            print("prompt built: ", prompt)
 
             message_history = []
             for idx, msg in enumerate(data.message_history):
