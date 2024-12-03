@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/tooltip";
 import { CornerDownLeft, Loader2, Plus, X } from "lucide-react";
 import type React from "react";
-import { type Dispatch, type SetStateAction, useState } from "react";
+import { type Dispatch, type SetStateAction, useEffect, useRef, useState } from "react";
 import { Button } from "../../ui/button";
 import {
   Select,
@@ -34,6 +34,7 @@ interface ChatControlsProps {
   setContextFiles: Dispatch<SetStateAction<FileNode[]>>;
   selectedModel: string;
   setSelectedModel: Dispatch<SetStateAction<string>>;
+  autoFocus?: boolean;
 }
 
 export default function ChatControls({
@@ -49,9 +50,16 @@ export default function ChatControls({
   setContextFiles,
   selectedModel,
   setSelectedModel,
+  autoFocus = false,
 }: ChatControlsProps) {
   const [isFileExplorerOpen, setIsFileExplorerOpen] = useState(false);
   const numberOfLineageFiles = aiLineageContext?.assets?.length || 0;
+  const lineageContextString =
+    aiLineageContext?.assets?.map((asset) => asset.name).join(", ") || "";
+  const displayLineageContextString =
+    lineageContextString.length > 50
+      ? `${lineageContextString.slice(0, 50)}...`
+      : lineageContextString;
 
   const handleRemoveAiActiveFile = () => {
     setAiActiveFile(null);
@@ -64,6 +72,22 @@ export default function ChatControls({
   const handleRemoveContextFile = (file: FileNode) => {
     setContextFiles((prev) => prev.filter((f) => f.path !== file.path));
   };
+
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [input]);
+
+  useEffect(() => {
+    if (autoFocus && textareaRef.current) {
+      textareaRef.current.focus();
+      textareaRef.current.setSelectionRange(input.length, input.length);
+    }
+  }, [autoFocus, input]);
 
   return (
     <div className="flex flex-col bg-background rounded-md p-2 gap-2 relative">
@@ -111,11 +135,7 @@ export default function ChatControls({
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              <p>
-                {aiLineageContext?.assets
-                  ?.map((asset) => asset.name)
-                  .join(", ")}
-              </p>
+              <p>{displayLineageContextString}</p>
             </TooltipContent>
           </Tooltip>
         ) : null}
@@ -135,6 +155,7 @@ export default function ChatControls({
         ))}
       </div>
       <Textarea
+        ref={textareaRef}
         placeholder="Ask anything"
         className="resize-none border-none focus:ring-0 focus:outline-none focus:border-none focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 min-h-8 p-2"
         value={input}

@@ -101,9 +101,10 @@ export default function AiMessageBox({
           setContextFiles={setContextFiles}
           selectedModel={selectedModel}
           setSelectedModel={setSelectedModel}
+          autoFocus={true}
         />
       ) : message.role === "user" ? (
-        message.content
+        <p className="whitespace-pre-wrap">{message.content}</p>
       ) : (
         <ResponseDisplay content={message.content} />
       )}

@@ -1,7 +1,7 @@
 import itertools
 import os
 import re
-from typing import List
+from typing import Iterator, List
 from urllib.parse import unquote
 
 from diskcache import FanoutCache
@@ -185,8 +185,9 @@ def chat_completion(user_prompt: str):
     )
 
 
-def stream_chat_completion(*, payload: ChatRequestBody, dbt_details: DBTCoreDetails):
-    print("payload: ", payload)
+def stream_chat_completion(
+    *, payload: ChatRequestBody, dbt_details: DBTCoreDetails
+) -> Iterator[str]:
     lineage = recreate_lineage_object(
         asset_id=payload.asset_id,
         related_assets=payload.related_assets,
@@ -201,11 +202,11 @@ def stream_chat_completion(*, payload: ChatRequestBody, dbt_details: DBTCoreDeta
             context_files=payload.context_files,
         )
         if lineage
-        else ""
+        else None
     )
     message_history = []
     for idx, msg in enumerate(payload.message_history):
-        if idx == len(payload.message_history) - 1:
+        if idx == len(payload.message_history) - 1 and prompt:
             msg.content = prompt
         message_history.append(msg.model_dump())
 
@@ -214,7 +215,7 @@ def stream_chat_completion(*, payload: ChatRequestBody, dbt_details: DBTCoreDeta
         *message_history,
     ]
     response = completion(
-        temperature=0,
+        temperature=0.3,
         model=payload.model,
         messages=messages,
         stream=True,
