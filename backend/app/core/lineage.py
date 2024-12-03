@@ -16,13 +16,11 @@ def get_lineage_helper(
 ):
     if defer:
         transition = DBTTransition(before_project=before_proj, after_project=proj)
-        transition.mount_manifest(defer=defer)
-        if not asset_only:
-            transition.mount_catalog(defer=defer)
+        combined_proj_obj = transition
+
     else:
-        proj.mount_manifest()
-        if not asset_only:
-            proj.mount_catalog()
+        combined_proj_obj = proj
+    combined_proj_obj.mount_manifest(defer=defer)
 
     node_id = LiveDBTParser.get_node_id_from_filepath(proj, filepath, defer)
     if not node_id:
@@ -38,6 +36,7 @@ def get_lineage_helper(
         defer=defer,
         asset_only=asset_only,
     )
+
     lineage, _ = dbtparser.get_lineage(lineage_type=lineage_type, asset_only=asset_only)
     root_asset = None
     column_lookup = {}

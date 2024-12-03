@@ -3,13 +3,13 @@ import shutil
 from urllib.parse import unquote
 
 from django.db import transaction
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from git import GitCommandError
 from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from api.serializers import AssetSerializer, LineageSerializer, ProjectSerializer
+from api.serializers import LineageAssetSerializer, LineageSerializer, ProjectSerializer
 from app.core.lineage import get_lineage_helper
 from app.models.project import Project
 from app.views.query_views import format_query
@@ -528,8 +528,13 @@ class ProjectViewSet(viewsets.ViewSet):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-        asset_serializer = AssetSerializer(root_asset, context={"request": request})
-        lineage_serializer = LineageSerializer(lineage, context={"request": request})
+        asset_serializer = LineageAssetSerializer(
+            root_asset, context={"request": request}
+        )
+        lineage_serializer = LineageSerializer(
+            lineage,
+            context={"request": request},
+        )
         return Response(
             {
                 "root_asset": asset_serializer.data,

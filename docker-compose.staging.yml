@@ -81,14 +81,14 @@ services:
     extends:
       file: docker-compose.dev-internal.yml
       service: postgres
-    command: /bin/sh -c "echo 'Service postgres disabled' && sleep 240"
-    restart: always
-    healthcheck:
-      test: ["CMD", "true"]
-      interval: 10s
-      start_period: 20s
-      timeout: 5s
-      retries: 10
+    # command: /bin/sh -c "echo 'Service postgres disabled' && sleep 240"
+    # restart: always
+    # healthcheck:
+    #   test: ["CMD", "true"]
+    #   interval: 10s
+    #   start_period: 20s
+    #   timeout: 5s
+    #   retries: 10
 
   createbuckets:
     extends:

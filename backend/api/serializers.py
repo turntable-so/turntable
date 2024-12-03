@@ -156,6 +156,20 @@ class ColumnSerializer(serializers.ModelSerializer):
         ]
 
 
+class LineageColumnSerializer(ColumnSerializer):
+    class Meta(ColumnSerializer.Meta):
+        fields = [
+            "id",
+            "name",
+            "type",
+            "description",
+            "ai_description",
+            "created_at",
+            "updated_at",
+            "tests",
+        ]
+
+
 # minified asset serializers for listing in the asset tree
 class AssetIndexSerializer(serializers.ModelSerializer):
     class Meta:
@@ -229,6 +243,35 @@ class AssetSerializer(serializers.ModelSerializer):
         return ColumnSerializer(obj.columns, many=True).data
 
 
+class LineageAssetSerializer(AssetSerializer):
+    class Meta(AssetSerializer.Meta):
+        fields = [
+            "id",
+            "unique_name",
+            "schema",
+            "dataset",
+            "table_name",
+            "name",
+            "columns",
+            "description",
+            "url",
+            "type",
+            "tags",
+            "created_at",
+            "updated_at",
+            "tags",
+            "tests",
+            "materialization",
+            "resource_id",
+        ]
+
+    def get_columns(self, obj):
+        temp_columns = getattr(obj, "temp_columns", None)
+        if temp_columns is not None:
+            return LineageColumnSerializer(temp_columns, many=True).data
+        return LineageColumnSerializer(obj.columns, many=True).data
+
+
 class AssetLinkSerializer(serializers.ModelSerializer):
     source_id = serializers.PrimaryKeyRelatedField(
         queryset=Asset.objects.all(), source="source"
@@ -257,7 +300,7 @@ class ColumnLinkSerializer(serializers.ModelSerializer):
 
 class LineageSerializer(serializers.Serializer):
     asset_id = serializers.UUIDField()
-    assets = AssetSerializer(many=True)
+    assets = LineageAssetSerializer(many=True)
     asset_links = AssetLinkSerializer(many=True)
     column_links = ColumnLinkSerializer(many=True)
 
@@ -672,7 +715,7 @@ class TaskResultSerializer(serializers.ModelSerializer):
 
     def get_job_name(self, obj):
         return obj.job_name
-    
+
     def get_subtasks(self, obj):
         return []
 
