@@ -11,6 +11,7 @@ from ai.core.models import ChatMessage, ChatRequestBody
 from ai.core.prompts import CHAT_PROMPT_NO_CONTEXT, SYSTEM_PROMPT
 from app.models import Asset, AssetLink, Column, ColumnLink
 from app.models.resources import DBTCoreDetails
+from app.models.workspace import Workspace
 from app.services.lineage_service import Lineage
 
 cache = FanoutCache(directory="/cache", shards=10, timeout=300)
@@ -186,8 +187,15 @@ def chat_completion(user_prompt: str):
 
 
 def stream_chat_completion(
-    *, payload: ChatRequestBody, dbt_details: DBTCoreDetails
+    *, payload: ChatRequestBody, dbt_details: DBTCoreDetails, workspace: Workspace
 ) -> Iterator[str]:
+    if payload.model.startswith("claude"):
+        api_key = workspace.anthropic_api_key
+    elif payload.model.startswith("gpt") or payload.model.startswith("o1"):
+        api_key = workspace.openai_api_key
+    else:
+        raise ValueError(f"Unsupported model: {payload.model}")
+
     lineage = recreate_lineage_object(
         asset_id=payload.asset_id,
         related_assets=payload.related_assets,
@@ -214,7 +222,9 @@ def stream_chat_completion(
         {"content": SYSTEM_PROMPT, "role": "system"},
         *message_history,
     ]
+
     response = completion(
+        api_key=api_key,
         temperature=0.3,
         model=payload.model,
         messages=messages,

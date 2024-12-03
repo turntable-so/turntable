@@ -37,7 +37,7 @@ class TestEvals:
             model="o1-preview",
             messages=[
                 {
-                    "role": "user", 
+                    "role": "user",
                     "content": f"""You must determine if the output is close to the expected output. Close in this context means that the output is somewhat similar to the expected output, as long as it is not completely wrong.
 Here is the output:
 
@@ -59,11 +59,15 @@ Please answer in the following JSON format:
 
     # @pytest.mark.skip(reason="Uncomment to run")
     @pytest.mark.parametrize("data_row", _get_dataset())
-    def test_eval(self, data_row, local_postgres_dbtresource, openai_client):
+    def test_eval(
+        self, data_row, local_postgres_dbtresource, openai_client, local_postgres
+    ):
         input_data = ChatRequestBody(**data_row["input"])
         expected_output = data_row["output"]
         stream = stream_chat_completion(
-            payload=input_data, dbt_details=local_postgres_dbtresource
+            payload=input_data,
+            dbt_details=local_postgres_dbtresource,
+            workspace=local_postgres.workspace,
         )
         output = "".join(chunk for chunk in stream)
         self._assert_output(output, expected_output, openai_client)

@@ -19,7 +19,7 @@ class AIChatConsumer(WebsocketConsumer):
             workspace = user.current_workspace()
             dbt_details = workspace.get_dbt_dev_details()
             data = ChatRequestBody.model_validate_json(text_data)
-            stream = stream_chat_completion(payload=data, dbt_details=dbt_details)
+            stream = stream_chat_completion(payload=data, dbt_details=dbt_details, workspace=workspace)
             for chunk in stream:
                 self.send(text_data=json.dumps({"type": "message_chunk", "content": chunk}))
 
