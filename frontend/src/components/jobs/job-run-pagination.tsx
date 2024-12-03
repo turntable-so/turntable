@@ -37,7 +37,7 @@ export default function JobRunPagination({
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", newPage.toString());
     params.set("pageSize", pageSize.toString());
-    router.push(`?${params.toString()}`);
+    router.replace(`?${params.toString()}`, { scroll: false });
   };
 
   const handlePageSizeChange = (value: string) => {
@@ -45,7 +45,7 @@ export default function JobRunPagination({
     const params = new URLSearchParams(searchParams.toString());
     params.set("pageSize", newPageSize.toString());
     params.set("page", "1");
-    router.push(`?${params.toString()}`);
+    router.replace(`?${params.toString()}`, { scroll: false });
   };
 
   const totalPages = useMemo(() => {
