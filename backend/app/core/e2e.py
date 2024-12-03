@@ -868,6 +868,9 @@ class DataHubDBParser:
                     node.deps_schemas[self.get_sqlglot_table_helper(dep)] = (
                         self.get_schema_helper(dep)
                     )
+
+        breakpoint()
+
         node.optimize()
 
         nodes = []

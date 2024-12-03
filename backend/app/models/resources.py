@@ -258,7 +258,7 @@ class ResourceDetails(PolymorphicModel):
                                 str(workunits),
                             ]
                         )
-                    process = run_and_capture_subprocess(command)
+                    process = run_and_capture_subprocess(command, check=True)
                     connection_type = os.path.basename(path).split(".")[0]
                     if process.returncode != 0:
                         errors.append(
@@ -800,6 +800,7 @@ class DBTCoreDetails(DBTResource):
                 update_manifest=True,
                 exclude_introspective=exclude_introspective,
             )
+            breakpoint()
             if not success:
                 if raise_exception:
                     raise Exception(

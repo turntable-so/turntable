@@ -13,7 +13,7 @@ def prepare_dbt_repos(self, workspace_id: str, resource_id: str):
         # only generate artifacts if not already generated from orchestration
         if (
             dbt_repo.artifact_source is None
-            or dbt_repo.artifact_source == ArtifactSource.ORCHESTRATION
+            or dbt_repo.artifact_source != ArtifactSource.ORCHESTRATION
         ):
             dbt_repo.upload_artifacts(artifact_source=ArtifactSource.METADATA_SYNC)
 
