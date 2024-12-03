@@ -3,7 +3,7 @@ import shutil
 from urllib.parse import unquote
 
 from django.db import transaction
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from git import GitCommandError
 from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action

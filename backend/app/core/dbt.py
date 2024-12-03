@@ -77,7 +77,7 @@ class LiveDBTParser:
             combined_proj_object = transition
         else:
             combined_proj_object = proj
-        proj.mount_manifest(defer=defer)
+        proj.mount_manifest(defer=defer, force_run=True)
 
         proj.build_model_graph()
         all_downstream_nodes = proj.model_graph.get_relatives(
@@ -147,7 +147,9 @@ class LiveDBTParser:
                 workspace_id=resource.workspace.id,
             )
             if not asset_only:
-                compiled_sql, error = proj.get_compiled_sql(nid, defer=defer, errors=[])
+                compiled_sql, error = proj.get_compiled_sql(
+                    nid, defer=defer, errors=[], compile_if_not_found=False
+                )
 
                 if error:
                     out.asset_errors.append(error)

@@ -567,6 +567,9 @@ class DBTProject(object):
             else:
                 adj_full_node_list = full_node_list
 
+            if len(adj_full_node_list) == 0:
+                return "", "", True
+
             command += [v.split(".")[-1] for v in adj_full_node_list]
 
         # determine exclusions
@@ -966,7 +969,7 @@ class DBTProject(object):
 
     def fast_compile_node(self, node_id: str) -> str | None:
         self.mount_manifest()
-        model_path = self.manifest["nodes"].get("nodes", {}).get("original_file_path")
+        model_path = self.manifest["nodes"].get(node_id, {}).get("original_file_path")
         if not model_path:
             return None
         model_abs_path = os.path.join(self.dbt_project_dir, model_path)
