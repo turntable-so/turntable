@@ -159,7 +159,14 @@ class ColumnSerializer(serializers.ModelSerializer):
 class LineageColumnSerializer(ColumnSerializer):
     class Meta(ColumnSerializer.Meta):
         fields = [
-            field for field in ColumnSerializer.Meta.fields if field != "is_unused"
+            "id",
+            "name",
+            "type",
+            "description",
+            "ai_description",
+            "created_at",
+            "updated_at",
+            "tests",
         ]
 
 
@@ -239,15 +246,23 @@ class AssetSerializer(serializers.ModelSerializer):
 class LineageAssetSerializer(AssetSerializer):
     class Meta(AssetSerializer.Meta):
         fields = [
-            field
-            for field in AssetSerializer.Meta.fields
-            if field
-            not in [
-                "resource_type",
-                "resource_subtype",
-                "resource_has_dbt",
-                "resource_name",
-            ]
+            "id",
+            "unique_name",
+            "schema",
+            "dataset",
+            "table_name",
+            "name",
+            "columns",
+            "description",
+            "url",
+            "type",
+            "tags",
+            "created_at",
+            "updated_at",
+            "tags",
+            "tests",
+            "materialization",
+            "resource_id",
         ]
 
     def get_columns(self, obj):
