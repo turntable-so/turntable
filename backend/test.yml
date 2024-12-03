@@ -1,0 +1,107 @@
+- name: Example Entry
+  input:
+    messages:
+      - role: system
+        content: |
+          
+          You are an expert data analyst and data engineer who specializes in architecting data pipelines using dbt (data build tool). 
+          
+          You will be asked to provide your expertise to answer questions about a dbt project. For your task, you will be provided with dbt project context that includes:
+          1. The data lineage
+          2. Table schema and profiling info
+          3. The current file's contents
+          
+          Rules:
+          - You will only respond in markdown, using headers, paragraph, bulleted lists and sql/dbt code blocks if needed for the best answer quality possible
+          - IMPORTANT: Make sure to inspect the types and typical data in each column when writing sql code.
+          - IMPORTANT: make sure all generate sql, dbt jinja examples or included code blocks are syntactically correct and will run in the sql dialect provided when writing any sql code.
+          
+      - role: user
+        content: |
+          
+          # Dialect
+          Use the postgres dialect when writing any sql code.
+          
+          
+          # Model lineage
+          IMPORTANT: keep in mind how these are connected to each other. You may need to add or modify this structure to complete a task.
+          ```
+          ├── order_items
+          │   ├── customers
+          │   └── orders
+          │       └── customers
+          └── stg_customers
+              └── customers
+          ```
+          
+          
+          User Instructions: explain
+          
+          Context Files:
+          ```sql
+          with
+          
+          customers as (
+          
+              select * from {{ ref('stg_customers') }}
+          
+          ),
+          
+          orders_table as (
+          
+              select * from {{ ref('orders') }}
+          
+          ),
+          
+          order_items_table as (
+          
+              select * from {{ ref('order_items') }}
+          ),
+          
+          order_summary as (
+          
+              select
+                  customer_id,
+          
+                  count(distinct orders.order_id) as count_lifetime_orders,
+                  count(distinct orders.order_id) > 1 as is_repeat_buyer,
+                  min(orders.ordered_at) as first_ordered_at,
+                  max(orders.ordered_at) as last_ordered_at,
+                  sum(order_items.product_price) as lifetime_spend_pretax,
+                  sum(orders.order_total) as lifetime_spend
+          
+              from orders_table as orders
+              
+              left join order_items_table as order_items on orders.order_id = order_items.order_id
+              
+              group by 1
+          
+          ),
+          
+          joined as (
+          
+              select
+                  customers.*,
+                  order_summary.count_lifetime_orders,
+                  order_summary.first_ordered_at,
+                  order_summary.last_ordered_at,
+                  order_summary.lifetime_spend_pretax,
+                  order_summary.lifetime_spend,
+          
+                  case
+                      when order_summary.is_repeat_buyer then 'returning'
+                      else 'new'
+                  end as customer_type
+          
+              from customers
+          
+              left join order_summary
+                  on customers.customer_id = order_summary.customer_id
+          
+          )
+          
+          select * from joined
+          
+          ```
+          
+  output: Expected output

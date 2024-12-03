@@ -1,43 +1,19 @@
-import concurrent.futures
 import itertools
 import os
 import re
-import time
-from concurrent.futures import ThreadPoolExecutor
-from typing import List, Optional
+from typing import List
 from urllib.parse import unquote
 
-import pandas as pd
 from diskcache import FanoutCache
-from ibis.expr.types import Table
 from litellm import completion
-from mpire import WorkerPool
-from pydantic import BaseModel
 
-from ai.core.prompts import CHAT_PROMPT_NO_CONTEXT
-from app.core.dbt import LiveDBTParser
-from app.models import Asset, AssetLink, Column, ColumnLink, Resource
+from ai.core.models import ChatMessage, ChatRequestBody
+from ai.core.prompts import CHAT_PROMPT_NO_CONTEXT, SYSTEM_PROMPT
+from app.models import Asset, AssetLink, Column, ColumnLink
 from app.models.resources import DBTCoreDetails
 from app.services.lineage_service import Lineage
-from app.utils.df import get_first_n_values, truncate_values
-from vinyl.lib.table import VinylTable
 
 cache = FanoutCache(directory="/cache", shards=10, timeout=300)
-
-
-class ChatMessage(BaseModel):
-    role: str
-    content: str
-
-
-class ChatRequestBody(BaseModel):
-    model: str
-    context_files: Optional[List[str]] = None
-    asset_id: Optional[str] = None
-    related_assets: Optional[List[dict]] = None
-    asset_links: Optional[List[dict]] = None
-    column_links: Optional[List[dict]] = None
-    message_history: Optional[List[ChatMessage]] = None
 
 
 def get_asset_object(asset_dict: dict):
@@ -68,11 +44,18 @@ def get_asset_object(asset_dict: dict):
 
 
 def recreate_lineage_object(
-    asset_id: str,
-    related_assets: List[dict],
-    asset_links: List[dict],
-    column_links: List[dict],
-) -> Lineage:
+    asset_id: str | None,
+    related_assets: List[dict] | None,
+    asset_links: List[dict] | None,
+    column_links: List[dict] | None,
+) -> Lineage | None:
+    if (
+        asset_id is None
+        or related_assets is None
+        or asset_links is None
+        or column_links is None
+    ):
+        return None
     assets, columns = zip(*[get_asset_object(d) for d in related_assets])
     columns = list(itertools.chain(*columns))
     asset_links = [AssetLink(**link) for link in asset_links]
@@ -84,85 +67,6 @@ def recreate_lineage_object(
         asset_links=asset_links,
         column_links=column_links,
     )
-
-
-@cache.memoize(tag="query2")
-def run_query(query: str, resource_id: str):
-    resource = Resource.objects.get(id=resource_id)
-    connector = resource.details.get_connector()
-    return connector.run_query(query)[0]
-
-
-@cache.memoize(tag="eda2")
-def get_eda_sql(table: Table, column: str, dialect: str, topk: int = 5):
-    vinyltable = VinylTable(table._arg)
-    return vinyltable.eda(cols=[column], topk=topk, topk_col_name=False).to_sql(
-        dialect=dialect, node_name=""
-    )
-
-
-def get_asset_eda(asset: Asset, resource: Resource, topk: int = 5):
-    db, schema, table = asset.db_location
-    connector = resource.details.get_connector()
-    table = connector._get_table(database=db, schema=schema, table=table)
-    print("table", table)
-    print("table.columns", table.columns)
-    dialect = resource.details.subtype
-    sqls = [get_eda_sql(table, col, dialect, topk) for col in table.columns]
-
-    with WorkerPool(n_jobs=10, start_method="threading", use_dill=True) as pool:
-        dfs = pool.imap_unordered(run_query, [(sql, resource.id) for sql in sqls])
-    df = pd.concat(dfs)
-
-    df["distinct_frac"] = df["distinct_frac"].round(3)
-
-    # Truncate max/min values that are too long
-    df["max"] = df["max"].apply(truncate_values())
-    df["min"] = df["min"].apply(truncate_values())
-
-    # For low cardinality columns, only show first value
-    def transform_row(row):
-        values, n_added = get_first_n_values()(row["top_values"])
-        return pd.Series(
-            {
-                "top_values": values,
-                "top_value_counts": row["top_value_counts"][:n_added],
-            }
-        )
-
-    # filter = (df["n_distinct"] > 1000) & (df["distinct_frac"] < 0.001)
-    filter = df["type"] == "json"
-    df.loc[filter, ["top_values", "top_value_counts"]] = df[filter].apply(
-        transform_row,
-        axis=1,
-    )
-    # for non-json columns, truncate the values
-    filter = df["type"] != "json"
-    for col in ["min", "max"]:
-        df.loc[filter, col] = df.loc[filter, col].apply(truncate_values())
-    df.loc[filter, "top_values"] = df.loc[filter, "top_values"].apply(
-        lambda x: [truncate_values()(v) for v in x]
-    )
-    df.reset_index(drop=True)
-    df.sort_values(by="position", inplace=True)
-    return df
-
-
-def asset_md(asset: Asset, resource: Resource, contents: str):
-    column_table = get_asset_eda(asset, resource, 30).to_csv(index=False)
-    description = asset.description or ""
-    return f"""
-## {asset.name}
-{description}
-
-## Schema and profiling info
-{column_table}
-
-## Contents
-```sql
-{contents}
-```
-"""
 
 
 def extract_model_name(urn_string):
@@ -225,69 +129,20 @@ def build_context(
         project_path,
         repo,
     ):
-        print("mounting manifest")
-        start_time = time.time()
         transition.mount_manifest(defer=True)
-        end_time = time.time()
-        print(f"Time taken to mount manifest: {end_time - start_time} seconds")
         asset_mds = []
-
-        # Schemas
-        print("getting asset md")
-        start_time = time.time()
-
-        # Define the function to process each asset
-        def process_asset(asset):
-            # Find each file for the related assets
-            manifest_node = LiveDBTParser.get_manifest_node(
-                transition.after, asset.unique_name
-            )
-            if not manifest_node:
-                return None
-            path = os.path.join(project_path, manifest_node.get("original_file_path"))
-            if not os.path.exists(path):
-                return None
-            with open(path) as file:
-                contents = file.read()
-                return asset_md(
-                    asset,
-                    resource,
-                    contents,
-                )
-
-        if lineage:
-            with ThreadPoolExecutor() as executor:
-                futures = [
-                    executor.submit(process_asset, asset)
-                    for asset in lineage.assets
-                    if asset.id != lineage.asset_id
-                ]
-                for future in concurrent.futures.as_completed(futures):
-                    result = future.result()
-                    if result is not None:
-                        asset_mds.append(result)
 
         file_contents = [
             open(os.path.join(repo.working_tree_dir, unquote(path)), "r").read()
             for path in context_files
         ]
 
-        print("file_contents", file_contents)
-
-        end_time = time.time()
-        print(f"Time taken to get asset md: {end_time - start_time} seconds")
-
-        # Lineage information
-        print("getting lineage edges")
-        start_time = time.time()
         edges = []
         if lineage:
             for link in lineage.asset_links:
                 source_model = extract_model_name(link.source_id)
                 target_model = extract_model_name(link.target_id)
                 edges.append({"source": source_model, "target": target_model})
-        end_time = time.time()
-        print(f"Time taken to get lineage edges: {end_time - start_time} seconds")
 
         dialect_md = f"""
 # Dialect
@@ -307,25 +162,15 @@ IMPORTANT: keep in mind how these are connected to each other. You may need to a
 User Instructions: {user_instruction}
 """
         if file_contents:
+            file_content_blocks = []
+            for content in file_contents:
+                file_content_blocks.append(f"```sql\n{content}\n```")
+
             output += f"""
 Context Files:
-```sql
-{file_contents}
-```
+{"\n".join(file_content_blocks)}
 """
         return output
-
-
-class RelatedAsset(BaseModel):
-    id: str
-    unique_name: str
-    name: str
-    path: str
-
-
-class Context(BaseModel):
-    current_file: str
-    related_asset: List[RelatedAsset]
 
 
 def chat_completion(user_prompt: str):
@@ -338,3 +183,51 @@ def chat_completion(user_prompt: str):
         ],
         stream=True,
     )
+
+
+def stream_chat_completion(*, payload: ChatRequestBody, dbt_details: DBTCoreDetails):
+    print("payload: ", payload)
+    lineage = recreate_lineage_object(
+        asset_id=payload.asset_id,
+        related_assets=payload.related_assets,
+        asset_links=payload.asset_links,
+        column_links=payload.column_links,
+    )
+    prompt = (
+        build_context(
+            lineage=lineage,
+            message_history=payload.message_history,
+            dbt_details=dbt_details,
+            context_files=payload.context_files,
+        )
+        if lineage
+        else ""
+    )
+    message_history = []
+    for idx, msg in enumerate(payload.message_history):
+        if idx == len(payload.message_history) - 1:
+            msg.content = prompt
+        message_history.append(msg.model_dump())
+
+    messages = [
+        {"content": SYSTEM_PROMPT, "role": "system"},
+        *message_history,
+    ]
+    with open("test.yml", "w") as f:
+        f.write("- name: Example Entry\n")
+        f.write("  input:\n")
+        f.write("    messages:\n")
+        for msg in messages:
+            f.write(f"      - role: {msg['role']}\n")
+            f.write("        content: |\n")
+            for line in msg["content"].split("\n"):
+                f.write(f"          {line}\n")
+        f.write("  output: Expected output\n")
+    response = completion(
+        temperature=0,
+        model=payload.model,
+        messages=messages,
+        stream=True,
+    )
+    for chunk in response:
+        yield chunk.choices[0].delta.content or ""

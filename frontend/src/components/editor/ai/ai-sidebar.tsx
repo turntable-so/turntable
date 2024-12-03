@@ -117,7 +117,10 @@ export default function AiSidebarChat() {
 
     const payload: MessageHistoryPayload = {
       model: selectedModel,
-      context_files: contextFiles.map((file) => file.path),
+      context_files: [
+        ...(aiActiveFile?.node.path ? [aiActiveFile.node.path] : []),
+        ...contextFiles.map((file) => file.path),
+      ],
       asset_id: aiLineageContext?.asset_id,
       related_assets: aiLineageContext?.assets,
       asset_links: aiLineageContext?.asset_links,
