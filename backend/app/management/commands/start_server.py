@@ -18,7 +18,7 @@ class Command(BaseCommand):
 
         if options["mode"] in ["demo", "dev", "dev-internal"]:
             call_command("seed_data")
-        if options["mode"] in ["dev-internal", "staging"]:
+        if options["mode"] in ["dev-internal"]:
             call_command("seed_data_staging")
 
         uvicorn_args = {

@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 
 import PowerBIForm from "@/components/connections/forms/powerbi-form";
 import { PowerBIIcon } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 export default function PowerBiPage() {
   const router = useRouter();
@@ -28,9 +29,9 @@ export default function PowerBiPage() {
       </Button>
       <Separator />
       <div className="flex justify-center">
-        <div className="flex justify-center w-full py-8">
+        <Card className="flex justify-center w-full py-8">
           <PowerBIForm />
-        </div>
+        </Card>
       </div>
     </div>
   );
