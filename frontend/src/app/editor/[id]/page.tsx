@@ -1,187 +1,28 @@
 "use client";
 
+import CustomDiffEditor from "@/components/editor/CustomDiffEditor";
+import CustomEditor from "@/components/editor/CustomEditor";
+import AiSidebarChat from "@/components/editor/ai/ai-sidebar";
+import BottomPanel from "@/components/editor/bottom-panel";
+import ConfirmSaveDialog from "@/components/editor/dialogs/confirm-save-dialog";
+import EditorSidebar from "@/components/editor/editor-sidebar";
+import EditorTopBar from "@/components/editor/editor-top-bar";
+import FileTabs from "@/components/editor/file-tabs";
+import InlineTabSearch from "@/components/editor/search-bar/inline-tab-search";
 import { Button } from "@/components/ui/button";
 import type { AgGridReact } from "ag-grid-react";
-import { Check, Download, Loader2, X } from "lucide-react";
-import type React from "react";
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { Download, Loader2 } from "lucide-react";
+import { useTheme } from "next-themes";
+import { usePathname } from "next/navigation";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import useResizeObserver from "use-resize-observer";
-import { infer } from "../../actions/actions";
 import { type OpenedFile, useFiles } from "../../contexts/FilesContext";
-import BottomPanel from "@/components/editor/bottom-panel";
-import EditorSidebar from "@/components/editor/editor-sidebar";
-import FileTabs from "@/components/editor/file-tabs";
-import { Textarea } from "@/components/ui/textarea";
 import { useLayoutContext } from "../../contexts/LayoutContext";
-import { usePathname } from "next/navigation";
-import EditorTopBar from "@/components/editor/editor-top-bar";
-import { useTheme } from "next-themes";
-import ConfirmSaveDialog from "@/components/editor/dialogs/confirm-save-dialog";
-import CustomEditor from "@/components/editor/CustomEditor";
-import CustomDiffEditor from "@/components/editor/CustomDiffEditor";
-import InlineTabSearch from "@/components/editor/search-bar/inline-tab-search";
-
-const PromptBox = ({
-  setPromptBoxOpen,
-}: { setPromptBoxOpen: (open: boolean) => void }) => {
-  const { activeFile, setActiveFile, updateFileContent } = useFiles();
-  const [prompt, setPrompt] = useState("");
-  const [model, setModel] = useState<"PROMPT" | "CONFIRM">("PROMPT");
-  const [isLoading, setIsLoading] = useState(false);
-
-  const callInference = async () => {
-    const content = activeFile?.content;
-    if (typeof content !== "string") {
-      console.error("Content is not a string", { content });
-      return;
-    }
-
-    if (activeFile) {
-      setIsLoading(true);
-      const response = await infer({
-        filepath: activeFile.node.path,
-        content,
-        instructions: prompt,
-      });
-      if (response.content) {
-        setActiveFile({
-          ...activeFile,
-          view: "diff",
-          diff: {
-            original:
-              typeof activeFile.content === "string" ? activeFile.content : "",
-            modified: response.content,
-          },
-        });
-        setModel("CONFIRM");
-      }
-      setIsLoading(false);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-      e.preventDefault();
-      callInference();
-    }
-  };
-
-  const handleEscape = (e: KeyboardEvent) => {
-    if (e.key === "Escape") {
-      setPromptBoxOpen(false);
-    }
-  };
-
-  useEffect(() => {
-    document.addEventListener("keydown", handleEscape);
-    return () => {
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, []);
-
-  useEffect(() => {
-    const textarea = document.querySelector("textarea");
-    if (textarea) {
-      textarea.addEventListener("keydown", handleKeyDown as any);
-      return () => {
-        textarea.removeEventListener("keydown", handleKeyDown as any);
-      };
-    }
-  }, []);
-
-  return (
-    <div className="border-b py-2 mb-2">
-      <div className="flex flex-col items-center w-full px-4">
-        <Textarea
-          className="w-full my-2 z-100"
-          autoFocus
-          placeholder="Add materialization to this model"
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          disabled={isLoading}
-        />
-        <div className="flex space-x-2 justify-end w-full">
-          {model === "PROMPT" ? (
-            <>
-              <Button
-                size="sm"
-                variant="outline"
-                className="rounded-sm"
-                onClick={() => setPromptBoxOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                size="sm"
-                disabled={!prompt || isLoading}
-                variant="default"
-                className="rounded-sm"
-                onClick={() => {
-                  callInference();
-                }}
-              >
-                {isLoading ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  "Generate"
-                )}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                size="sm"
-                variant="destructive"
-                className="rounded-sm"
-                onClick={() => {
-                  if (activeFile) {
-                    setActiveFile({
-                      ...activeFile,
-                      view: "edit",
-                    });
-                  }
-                  setPromptBoxOpen(false);
-                }}
-              >
-                <X className="mr-2 size-4" />
-                Reject
-              </Button>
-              <Button
-                size="sm"
-                disabled={!prompt || isLoading}
-                variant="default"
-                className="rounded-sm"
-                onClick={() => {
-                  updateFileContent(
-                    activeFile?.node.path || "",
-                    activeFile?.diff?.modified || "",
-                  );
-                  setActiveFile({
-                    ...activeFile,
-                    isDirty: true,
-                    content: activeFile?.diff?.modified || "",
-                    view: "edit",
-                    diff: undefined,
-                  } as OpenedFile);
-                  setPromptBoxOpen(false);
-                }}
-              >
-                <Check className="mr-2 size-4" />
-                Accept
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 function EditorContent({
-  setPromptBoxOpen,
   containerWidth,
-}: { setPromptBoxOpen: (open: boolean) => void; containerWidth: number }) {
+}: { containerWidth: number }) {
   const { resolvedTheme } = useTheme();
   const {
     activeFile,
@@ -368,14 +209,13 @@ function EditorContent({
         );
 
         // Prevent default behavior for cmd+s
-        editor.addCommand(
-          monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-          () => runQueryPreview(editor.getValue())
+        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () =>
+          runQueryPreview(editor.getValue()),
         );
 
         editor.addCommand(
           monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Enter,
-          () => compileActiveFile(editor.getValue())
+          () => compileActiveFile(editor.getValue()),
         );
       }}
     />
@@ -412,7 +252,6 @@ function EditorPageContent() {
     setBottomPanelShown,
   } = useLayoutContext();
 
-  const [promptBoxOpen, setPromptBoxOpen] = useState(false);
   const [colDefs, setColDefs] = useState([]);
   const [rowData, setRowData] = useState([]);
   const gridRef = useRef<AgGridReact>(null);
@@ -432,7 +271,7 @@ function EditorPageContent() {
     isCloned,
     cloneBranch,
     compileActiveFile,
-    runQueryPreview
+    runQueryPreview,
   } = useFiles();
 
   useEffect(() => {
@@ -533,7 +372,7 @@ function EditorPageContent() {
     activeFile,
     saveFile,
     runQueryPreview,
-    compileActiveFile
+    compileActiveFile,
   ]);
 
   const getTablefromSignedUrl = async (signedUrl: string) => {
@@ -639,12 +478,8 @@ function EditorPageContent() {
             />
             <div className="w-full h-full">
               <PanelGroup direction="vertical" className="h-fit">
-                {promptBoxOpen && (
-                  <PromptBox setPromptBoxOpen={setPromptBoxOpen} />
-                )}
                 <Panel className="h-full relative z-0">
                   <EditorContent
-                    setPromptBoxOpen={setPromptBoxOpen}
                     containerWidth={topBarWidth as number}
                   />
                 </Panel>
@@ -671,8 +506,8 @@ function EditorPageContent() {
               maxSize={60}
               onResize={setRightWidth}
             >
-              <div className="bg-muted h-full p-4 flex items-center justify-center">
-                Coming soon...
+              <div className="bg-muted h-full p-4 flex justify-center">
+                <AiSidebarChat />
               </div>
             </Panel>
           </Fragment>
