@@ -485,7 +485,6 @@ class ProjectViewSet(viewsets.ViewSet):
         )
 
     @action(detail=True, methods=["GET"])
-    # @pyprofile()
     def lineage(self, request, pk=None):
         workspace = request.user.current_workspace()
         dbt_details = workspace.get_dbt_dev_details()
