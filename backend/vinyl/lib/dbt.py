@@ -23,6 +23,7 @@ from vinyl.lib.dbt_methods import (
 from vinyl.lib.errors import VinylError, VinylErrorType
 from vinyl.lib.utils.files import adjust_path, cd, file_exists_in_directory, load_orjson
 from vinyl.lib.utils.graph import DAG
+from vinyl.lib.utils.patch import patch_json_with_orjson, patch_yaml_with_libyaml
 from vinyl.lib.utils.query_limit_helper import query_limit_helper
 
 STREAM_SUCCESS_STRING = "PROCESS_STREAM_SUCCESS"
@@ -305,8 +306,8 @@ class DBTProject(object):
             and self.dialect in adjusted_supported_api_dialects
         )
 
-    # @patch_json_with_orjson
-    # @patch_yaml_with_libyaml
+    @patch_json_with_orjson
+    @patch_yaml_with_libyaml
     def dbt_runner(self, command: list[str]) -> tuple[str, str, bool]:
         try:
             from dbt.cli.main import dbtRunner, dbtRunnerResult
