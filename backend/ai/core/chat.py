@@ -5,13 +5,14 @@ from typing import Iterator, List
 from urllib.parse import unquote
 
 from diskcache import FanoutCache
-from litellm import completion
 
+from ai.core.custom_litellm import completion
 from ai.core.models import ChatMessage, ChatRequestBody
 from ai.core.prompts import CHAT_PROMPT_NO_CONTEXT, SYSTEM_PROMPT
 from app.models import Asset, AssetLink, Column, ColumnLink
 from app.models.project import Project
 from app.models.resources import DBTCoreDetails
+from app.models.user import User
 from app.models.workspace import Workspace
 from app.services.lineage_service import Lineage
 
@@ -171,20 +172,8 @@ Context Files:
         return output
 
 
-def chat_completion(user_prompt: str):
-    return completion(
-        temperature=0,
-        model="gpt-4o",
-        messages=[
-            {"content": CHAT_PROMPT_NO_CONTEXT, "role": "system"},
-            {"role": "user", "content": user_prompt},
-        ],
-        stream=True,
-    )
-
-
 def stream_chat_completion(
-    *, payload: ChatRequestBody, dbt_details: DBTCoreDetails, workspace: Workspace
+    *, payload: ChatRequestBody, dbt_details: DBTCoreDetails, workspace: Workspace, user: User
 ) -> Iterator[str]:
     if payload.model.startswith("claude"):
         api_key = workspace.anthropic_api_key
@@ -192,6 +181,8 @@ def stream_chat_completion(
         api_key = workspace.openai_api_key
     else:
         raise ValueError(f"Unsupported model: {payload.model}")
+    if api_key is None:
+        raise ValueError("NO_API_KEY")
 
     lineage = recreate_lineage_object(
         asset_id=payload.asset_id,
@@ -227,6 +218,7 @@ def stream_chat_completion(
         model=payload.model,
         messages=messages,
         stream=True,
+        user_id=user.id,
     )
 
     for chunk in response:

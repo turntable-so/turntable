@@ -87,6 +87,7 @@ dependencies = [
     "django-celery-beat>=2.7.0",
     "croniter>=5.0.1",
     "sentry-sdk[django]>=2.18.0",
+    "langfuse>=2.55.0",
 ]
 
 [project.scripts]

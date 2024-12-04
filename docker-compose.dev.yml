@@ -12,6 +12,8 @@ x-dev-credentials: &dev-credentials
   DEV: "true"
   OPENAI_API_KEY: ${OPENAI_API_KEY}
   ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+  LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
+  LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
 
 x-telemetry-credentials: &telemetry-credentials
   NEXT_PUBLIC_POSTHOG_KEY: ""

@@ -61,7 +61,7 @@ Please answer in the following JSON format:
     @pytest.mark.manual
     @pytest.mark.parametrize("data_row", _get_dataset())
     def test_eval(
-        self, data_row, local_postgres_dbtresource, openai_client, local_postgres
+        self, data_row, local_postgres_dbtresource, openai_client, local_postgres, user
     ):
         input_data = ChatRequestBody(**data_row["input"])
         expected_output = data_row["output"]
@@ -69,6 +69,7 @@ Please answer in the following JSON format:
             payload=input_data,
             dbt_details=local_postgres_dbtresource,
             workspace=local_postgres.workspace,
+            user=user,
         )
         output = "".join(chunk for chunk in stream)
         self._assert_output(output, expected_output, openai_client)
