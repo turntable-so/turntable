@@ -10,6 +10,7 @@ from litellm import completion
 from ai.core.models import ChatMessage, ChatRequestBody
 from ai.core.prompts import CHAT_PROMPT_NO_CONTEXT, SYSTEM_PROMPT
 from app.models import Asset, AssetLink, Column, ColumnLink
+from app.models.project import Project
 from app.models.resources import DBTCoreDetails
 from app.models.workspace import Workspace
 from app.services.lineage_service import Lineage
@@ -118,20 +119,20 @@ def build_context(
     lineage: Lineage | None,
     message_history: List[ChatMessage],
     dbt_details: DBTCoreDetails,
+    project_id: str,
     context_files: List[str] | None = None,
 ):
     user_instruction = next(
         msg.content for msg in reversed(message_history) if msg.role == "user"
     )
     resource = dbt_details.resource
+    project = Project.objects.get(id=project_id)
 
-    with dbt_details.dbt_transition_context() as (
-        transition,
-        project_path,
+    with project.repo_context() as (
         repo,
+        env,
     ):
-        transition.mount_manifest(defer=True)
-        asset_mds = []
+        print(f"repo.working_tree_dir in chat: {repo.working_tree_dir}")
 
         file_contents = [
             open(os.path.join(repo.working_tree_dir, unquote(path)), "r").read()
@@ -155,12 +156,9 @@ Use the {resource.details.subtype} dialect when writing any sql code.
 IMPORTANT: keep in mind how these are connected to each other. You may need to add or modify this structure to complete a task.
 {lineage_ascii(edges)}
 """
-        assets = "\n".join(asset_mds)
         # File contents
         output = f"""{dialect_md}
 {lineage_md}
-{assets}
-User Instructions: {user_instruction}
 """
         if file_contents:
             file_content_blocks = []
@@ -171,6 +169,7 @@ User Instructions: {user_instruction}
 Context Files:
 {"\n".join(file_content_blocks)}
 """
+        output += f"\nUser Instructions: {user_instruction}\n\nAnswer the user's question based on the above context. Do not answer anything else, just answer the question."
         return output
 
 
@@ -189,9 +188,12 @@ def chat_completion(user_prompt: str):
 def stream_chat_completion(
     *, payload: ChatRequestBody, dbt_details: DBTCoreDetails, workspace: Workspace
 ) -> Iterator[str]:
+    print(f"payload: {payload}")
     if payload.model.startswith("claude"):
+        print(f"using anthropic api key: {workspace.anthropic_api_key}")
         api_key = workspace.anthropic_api_key
     elif payload.model.startswith("gpt") or payload.model.startswith("o1"):
+        print(f"using openai api key: {workspace.openai_api_key}")
         api_key = workspace.openai_api_key
     else:
         raise ValueError(f"Unsupported model: {payload.model}")
@@ -208,6 +210,7 @@ def stream_chat_completion(
             message_history=payload.message_history,
             dbt_details=dbt_details,
             context_files=payload.context_files,
+            project_id=payload.project_id,
         )
         if lineage
         else None
@@ -222,6 +225,7 @@ def stream_chat_completion(
         {"content": SYSTEM_PROMPT, "role": "system"},
         *message_history,
     ]
+    print("sending messages:" , messages)
 
     response = completion(
         api_key=api_key,
@@ -230,5 +234,6 @@ def stream_chat_completion(
         messages=messages,
         stream=True,
     )
+
     for chunk in response:
         yield chunk.choices[0].delta.content or ""

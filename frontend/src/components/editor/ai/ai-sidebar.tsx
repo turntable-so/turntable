@@ -116,6 +116,7 @@ export default function AiSidebarChat() {
     setIsLoading(true);
 
     const payload: MessageHistoryPayload = {
+      project_id: branchId,
       model: selectedModel,
       context_files: [
         ...(aiActiveFile?.node.path ? [aiActiveFile.node.path] : []),
