@@ -18,22 +18,22 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     libffi-dev \
     libpq-dev \
+    libyaml-dev \
     postgresql \
     gcc \
     git \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv
-ADD --chmod=755 https://astral.sh/uv/0.2.18/install.sh /install.sh
-RUN bash /install.sh && rm /install.sh
+COPY --from=ghcr.io/astral-sh/uv:0.5.6 /uv /uvx /bin/
 
 # Install the notebook backend
 COPY requirements.lock .
 COPY requirements-dev.lock .
 RUN if [ "$ENV" != "prod" ]; then \
-        /root/.cargo/bin/uv pip install --system --no-cache -r requirements-dev.lock; \
+        uv pip install --system --no-cache -r requirements-dev.lock; \
     else \
-        /root/.cargo/bin/uv pip install --system --no-cache -r requirements.lock; \
+        uv pip install --system --no-cache -r requirements.lock; \
     fi
 
 

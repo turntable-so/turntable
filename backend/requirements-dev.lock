@@ -10,6 +10,13 @@
 
 acryl-datahub==0.14.1.12
 adrf==0.1.8
+agate==1.9.1
+    # via dbt-adapters
+    # via dbt-common
+    # via dbt-core
+    # via dbt-postgres
+    # via dbt-redshift
+    # via dbt-snowflake
 aiohappyeyeballs==2.4.3
     # via aiohttp
 aiohttp==3.11.7
@@ -36,6 +43,7 @@ asgiref==3.8.1
     # via django
     # via django-cors-headers
 asn1crypto==1.5.1
+    # via scramp
     # via snowflake-connector-python
 asttokens==2.4.1
     # via stack-data
@@ -60,12 +68,15 @@ avro==1.11.3
     # via avro-gen3
 avro-gen3==0.7.16
     # via acryl-datahub
+babel==2.16.0
+    # via agate
 backoff==2.2.1
     # via posthog
 beartype==0.19.0
     # via plum-dispatch
 beautifulsoup4==4.12.3
     # via bs4
+    # via redshift-connector
 bidict==0.23.1
     # via turntable-spoonbill
 billiard==4.2.1
@@ -78,8 +89,10 @@ blinker==1.9.0
     # via flask
 boto3==1.34.20
     # via django-storages
+    # via redshift-connector
 botocore==1.34.162
     # via boto3
+    # via redshift-connector
     # via s3transfer
 bs4==0.0.2
 cached-property==2.0.1
@@ -119,6 +132,8 @@ click==8.1.7
     # via click-didyoumean
     # via click-plugins
     # via click-repl
+    # via dbt-core
+    # via dbt-semantic-interfaces
     # via flask
     # via litellm
     # via shandy-sqlfmt
@@ -134,6 +149,8 @@ click-repl==0.3.0
     # via celery
 click-spinner==0.1.10
     # via acryl-datahub
+colorama==0.4.6
+    # via dbt-common
 constantly==23.10.4
     # via twisted
 contourpy==1.3.1
@@ -150,16 +167,51 @@ cryptography==43.0.3
     # via social-auth-core
 cycler==0.12.1
     # via matplotlib
+daff==1.3.46
+    # via dbt-core
 daphne==4.1.2
 databricks-sql-connector==3.6.0
 db-dtypes==1.3.1
+    # via google-cloud-bigquery
     # via turntable-spoonbill
+dbt-adapters==1.9.0
+    # via dbt-bigquery
+    # via dbt-core
+    # via dbt-duckdb
+    # via dbt-postgres
+    # via dbt-redshift
+    # via dbt-snowflake
+dbt-bigquery==1.8.3
+dbt-common==1.12.0
+    # via dbt-adapters
+    # via dbt-bigquery
+    # via dbt-core
+    # via dbt-duckdb
+    # via dbt-postgres
+    # via dbt-redshift
+    # via dbt-snowflake
+dbt-core==1.8.7
+    # via dbt-bigquery
+    # via dbt-duckdb
+    # via dbt-postgres
+    # via dbt-redshift
+    # via dbt-snowflake
+dbt-duckdb==1.8.4
 dbt-extractor==0.5.1
+    # via dbt-core
+dbt-postgres==1.8.2
+    # via dbt-redshift
+dbt-redshift==1.8.1
+dbt-semantic-interfaces==0.5.1
+    # via dbt-core
+dbt-snowflake==1.8.4
 dbtx==0.0.3
 debugpy==1.8.9
     # via pytest-celery
 decorator==5.1.1
     # via ipython
+deepdiff==7.0.1
+    # via dbt-common
 deepmerge==2.0
 defusedxml==0.7.1
     # via python3-openid
@@ -221,6 +273,7 @@ docker==7.1.0
 docstring-parser==0.16
     # via instructor
 duckdb==1.1.3
+    # via dbt-duckdb
     # via turntable-spoonbill
 et-xmlfile==2.0.0
     # via openpyxl
@@ -253,6 +306,7 @@ gitdb==4.0.11
 githubkit==0.11.14
 gitpython==3.1.43
 google-api-core==2.23.0
+    # via dbt-bigquery
     # via google-cloud-bigquery
     # via google-cloud-bigquery-storage
     # via google-cloud-core
@@ -270,6 +324,7 @@ google-auth==2.36.0
 google-auth-oauthlib==1.2.1
     # via pydata-google-auth
 google-cloud-bigquery==3.27.0
+    # via dbt-bigquery
     # via turntable-spoonbill
 google-cloud-bigquery-storage==2.27.0
     # via turntable-spoonbill
@@ -277,7 +332,9 @@ google-cloud-core==2.4.1
     # via google-cloud-bigquery
     # via google-cloud-storage
 google-cloud-dataproc==5.15.1
+    # via dbt-bigquery
 google-cloud-storage==2.18.2
+    # via dbt-bigquery
 google-crc32c==1.6.0
     # via google-cloud-storage
     # via google-resumable-media
@@ -301,7 +358,7 @@ grpcio==1.68.0
     # via googleapis-common-protos
     # via grpc-google-iam-v1
     # via grpcio-status
-grpcio-status==1.68.0
+grpcio-status==1.62.3
     # via google-api-core
 gunicorn==23.0.0
 h11==0.14.0
@@ -349,7 +406,8 @@ idna==3.10
     # via yarl
 ijson==3.3.0
     # via acryl-datahub
-importlib-metadata==8.5.0
+importlib-metadata==6.11.0
+    # via dbt-semantic-interfaces
     # via litellm
 incremental==24.7.2
     # via twisted
@@ -357,11 +415,23 @@ iniconfig==2.0.0
     # via pytest
 instructor==1.6.4
 ipython==8.29.0
+isodate==0.6.1
+    # via agate
+    # via dbt-common
 itsdangerous==2.2.0
     # via flask
+jaraco-classes==3.4.0
+    # via keyring
+jaraco-context==6.0.1
+    # via keyring
+jaraco-functools==4.1.0
+    # via keyring
 jedi==0.19.2
     # via ipython
 jinja2==3.1.4
+    # via dbt-common
+    # via dbt-core
+    # via dbt-semantic-interfaces
     # via flask
     # via instructor
     # via litellm
@@ -376,18 +446,27 @@ jsonref==1.1.0
     # via acryl-datahub
 jsonschema==4.23.0
     # via acryl-datahub
+    # via dbt-common
+    # via dbt-semantic-interfaces
     # via litellm
 jsonschema-specifications==2024.10.1
     # via jsonschema
+keyring==25.5.0
+    # via snowflake-connector-python
 kiwisolver==1.4.7
     # via matplotlib
 kombu==5.4.2
     # via celery
+leather==0.4.0
+    # via agate
 lets-plot==4.5.1
 linkify-it-py==2.0.3
     # via markdown-it-py
 litellm==1.52.14
+logbook==1.5.3
+    # via dbt-core
 lxml==5.3.0
+    # via redshift-connector
 lz4==4.3.3
     # via databricks-sql-connector
 markdown-it-py==3.0.0
@@ -397,6 +476,10 @@ markdown-it-py==3.0.0
 markupsafe==3.0.2
     # via jinja2
     # via werkzeug
+mashumaro==3.15
+    # via dbt-adapters
+    # via dbt-common
+    # via dbt-core
 matplotlib==3.9.2
     # via networkx
 matplotlib-inline==0.1.7
@@ -405,13 +488,20 @@ mdit-py-plugins==0.4.2
     # via markdown-it-py
 mdurl==0.1.2
     # via markdown-it-py
+minimal-snowplow-tracker==0.0.2
+    # via dbt-core
 mixpanel==4.10.1
     # via acryl-datahub
 monotonic==1.6
     # via posthog
+more-itertools==10.5.0
+    # via dbt-semantic-interfaces
+    # via jaraco-classes
+    # via jaraco-functools
 mpire==2.10.2
 msgpack==1.1.0
     # via channels-redis
+    # via mashumaro
 multidict==6.1.0
     # via aiohttp
     # via yarl
@@ -424,6 +514,7 @@ mypy-extensions==1.0.0
     # via typing-inspect
 netext==0.2.1
 networkx==3.4.2
+    # via dbt-core
     # via netext
 ngrok==1.4.0
 numpy==1.26.4
@@ -450,6 +541,8 @@ openai==1.55.0
     # via litellm
 openpyxl==3.1.5
     # via databricks-sql-connector
+ordered-set==4.1.0
+    # via deepdiff
 orjson==3.10.11
 outcome==1.3.0.post0
     # via trio
@@ -458,6 +551,7 @@ packaging==24.2
     # via black
     # via chromedriver-autoinstaller
     # via db-dtypes
+    # via dbt-core
     # via deprecation
     # via geopandas
     # via google-cloud-bigquery
@@ -467,6 +561,7 @@ packaging==24.2
     # via pyogrio
     # via pytest
     # via pytest-sugar
+    # via redshift-connector
     # via snowflake-connector-python
 palettable==3.3.3
     # via lets-plot
@@ -474,14 +569,19 @@ pandas==2.2.3
     # via databricks-sql-connector
     # via db-dtypes
     # via geopandas
+    # via google-cloud-bigquery
     # via networkx
     # via turntable-spoonbill
+parsedatetime==2.6
+    # via agate
 parso==0.8.4
     # via jedi
 parsy==2.1
     # via turntable-spoonbill
 pathspec==0.12.1
     # via black
+    # via dbt-common
+    # via dbt-core
 pexpect==4.9.0
     # via ipython
 pgvector==0.3.6
@@ -513,7 +613,10 @@ proto-plus==1.25.0
     # via google-api-core
     # via google-cloud-bigquery-storage
     # via google-cloud-dataproc
-protobuf==5.28.3
+protobuf==4.25.5
+    # via dbt-adapters
+    # via dbt-common
+    # via dbt-core
     # via google-api-core
     # via google-cloud-bigquery-storage
     # via google-cloud-dataproc
@@ -528,6 +631,7 @@ psycopg==3.2.3
 psycopg-binary==3.2.3
     # via psycopg
 psycopg2-binary==2.9.10
+    # via dbt-postgres
     # via turntable-spoonbill
 ptyprocess==0.7.0
     # via pexpect
@@ -538,6 +642,7 @@ pyaes==1.6.1
 pyarrow==16.1.0
     # via databricks-sql-connector
     # via db-dtypes
+    # via google-cloud-bigquery
     # via turntable-spoonbill
 pyarrow-hotfix==0.6
     # via turntable-spoonbill
@@ -552,6 +657,7 @@ pycparser==2.22
     # via cffi
 pydantic==2.8.2
     # via acryl-datahub
+    # via dbt-semantic-interfaces
     # via fastapi
     # via githubkit
     # via gotrue
@@ -610,6 +716,8 @@ python-dateutil==2.9.0.post0
     # via botocore
     # via celery
     # via croniter
+    # via dbt-common
+    # via dbt-semantic-interfaces
     # via google-cloud-bigquery
     # via matplotlib
     # via pandas
@@ -621,19 +729,28 @@ python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
     # via litellm
     # via uvicorn
+python-slugify==8.0.4
+    # via agate
 python-utils==3.9.0
     # via progressbar2
 python3-openid==3.2.0
     # via django-allauth
     # via social-auth-core
+pytimeparse==1.1.8
+    # via agate
 pytz==2024.2
     # via croniter
+    # via dbt-adapters
+    # via dbt-core
     # via flower
     # via pandas
+    # via redshift-connector
     # via snowflake-connector-python
     # via turntable-spoonbill
 pyyaml==6.0.2
     # via acryl-datahub
+    # via dbt-core
+    # via dbt-semantic-interfaces
     # via dbtx
     # via huggingface-hub
     # via uvicorn
@@ -645,6 +762,8 @@ redis==5.2.0
     # via channels-redis
     # via redis-cli
 redis-cli==1.0.1
+redshift-connector==2.0.917
+    # via dbt-redshift
 referencing==0.35.1
     # via jsonschema
     # via jsonschema-specifications
@@ -653,6 +772,8 @@ regex==2024.11.6
     # via turntable-spoonbill
 requests==2.32.3
     # via databricks-sql-connector
+    # via dbt-common
+    # via dbt-core
     # via django-allauth
     # via docker
     # via google-api-core
@@ -661,8 +782,10 @@ requests==2.32.3
     # via huggingface-hub
     # via instructor
     # via litellm
+    # via minimal-snowplow-tracker
     # via mixpanel
     # via posthog
+    # via redshift-connector
     # via requests-file
     # via requests-oauthlib
     # via snowflake-connector-python
@@ -698,6 +821,8 @@ s3transfer==0.10.4
     # via boto3
 scipy==1.14.1
     # via networkx
+scramp==1.4.5
+    # via redshift-connector
 selenium==4.26.1
 sentry-sdk==2.19.0
     # via acryl-datahub
@@ -708,6 +833,7 @@ setuptools==75.6.0
     # via incremental
     # via pydata-google-auth
     # via pytest-celery
+    # via redshift-connector
     # via zope-event
     # via zope-interface
 shandy-sqlfmt==0.24.0
@@ -719,6 +845,8 @@ shellingham==1.5.4
 six==1.16.0
     # via asttokens
     # via avro-gen3
+    # via isodate
+    # via minimal-snowplow-tracker
     # via mixpanel
     # via posthog
     # via python-dateutil
@@ -731,6 +859,7 @@ sniffio==1.3.1
     # via openai
     # via trio
 snowflake-connector-python==3.12.3
+    # via dbt-snowflake
     # via turntable-spoonbill
 social-auth-app-django==5.4.2
     # via djoser
@@ -746,6 +875,8 @@ sqlglot==25.0.3
 sqlglotrs==0.2.5
     # via sqlglot
 sqlparse==0.5.2
+    # via dbt-core
+    # via dbt-redshift
     # via django
 sse-starlette==2.1.3
 stack-data==0.6.3
@@ -765,8 +896,10 @@ tenacity==9.0.0
     # via pytest-celery
 termcolor==2.5.0
     # via pytest-sugar
+text-unidecode==1.3
+    # via python-slugify
 textual==0.86.3
-thrift==0.20.0
+thrift==0.16.0
     # via databricks-sql-connector
 tiktoken==0.8.0
     # via litellm
@@ -805,11 +938,16 @@ types-pyyaml==6.0.12.20240917
 types-toml==0.10.8.20240310
 typing-extensions==4.12.2
     # via acryl-datahub
+    # via dbt-adapters
+    # via dbt-common
+    # via dbt-core
+    # via dbt-semantic-interfaces
     # via dj-database-url
     # via fastapi
     # via githubkit
     # via hishel
     # via huggingface-hub
+    # via mashumaro
     # via mypy
     # via openai
     # via plum-dispatch
