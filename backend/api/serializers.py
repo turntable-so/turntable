@@ -491,7 +491,6 @@ class ResourceSerializer(serializers.HyperlinkedModelSerializer):
 class ProjectSerializer(serializers.ModelSerializer):
     is_cloned = serializers.SerializerMethodField()
     pull_request_url = serializers.SerializerMethodField()
-
     owner = UserSerializer()
 
     class Meta:

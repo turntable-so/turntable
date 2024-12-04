@@ -3,6 +3,7 @@ import shutil
 from urllib.parse import unquote
 
 from django.db import transaction
+from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
 from git import GitCommandError
 from rest_framework import serializers, status, viewsets
@@ -47,17 +48,30 @@ def get_file_tree(user_id: str, path: str, base_path: str):
 
 class ProjectViewSet(viewsets.ViewSet):
     def list(self, request):
+        filter_value = request.query_params.get("filter")
         workspace = request.user.current_workspace()
         dbt_details = workspace.get_dbt_dev_details()
+        
         if not dbt_details.repository:
             return Response(
                 {"error": "No repository found for this workspace"},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        projects = ProjectSerializer(dbt_details.repository.projects, many=True)
+        # Get base queryset
+        projects = dbt_details.repository.projects
 
-        return Response(projects.data, status=status.HTTP_200_OK)
+        # Apply filters
+        if filter_value:
+            if filter_value == "active":
+                projects = projects.filter(archived=False)
+            elif filter_value == "yours":
+                projects = projects.filter(owner=request.user, archived=False)
+            elif filter_value == "archived":
+                projects = projects.filter(archived=True)
+
+        serializer = ProjectSerializer(projects, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def retrieve(self, request, pk=None):
         workspace = request.user.current_workspace()

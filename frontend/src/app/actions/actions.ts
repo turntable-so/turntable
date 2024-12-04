@@ -2,6 +2,7 @@
 
 import { fetcher } from "@/app/fetcher";
 import getUrl from "@/app/url";
+import { FilterValue } from "@/components/projects/types";
 import { revalidateTag } from "next/cache";
 import { cookies } from "next/headers";
 import type { Settings } from "../settings/types";
@@ -703,8 +704,12 @@ export type ProjectChanges = {
   }>;
 };
 
-export async function getProjects() {
-  const response = await fetcher(`/project/`, {
+export async function getProjects({ filter }: { filter: FilterValue }) {
+  const urlParams = new URLSearchParams();
+  if (filter) {
+    urlParams.set("filter", filter);
+  }
+  const response = await fetcher(`/project/?${urlParams.toString()}`, {
     cookies,
     method: "GET",
   });
