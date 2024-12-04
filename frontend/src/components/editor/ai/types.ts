@@ -7,6 +7,7 @@ export type AIMessage = {
 };
 
 export type MessageHistoryPayload = {
+  project_id: string;
   model: string;
   context_files: Array<string>;
   asset_id: string | undefined;

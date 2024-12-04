@@ -2,6 +2,8 @@
 
 from django.db import migrations, models
 
+import app.utils.fields
+
 
 class Migration(migrations.Migration):
 
@@ -13,11 +15,15 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="workspace",
             name="anthropic_api_key",
-            field=models.CharField(blank=True, max_length=255, null=True),
+            field=app.utils.fields.encrypt(
+                models.CharField(blank=True, max_length=255, null=True)
+            ),
         ),
         migrations.AddField(
             model_name="workspace",
             name="openai_api_key",
-            field=models.CharField(blank=True, max_length=255, null=True),
+            field=app.utils.fields.encrypt(
+                models.CharField(blank=True, max_length=255, null=True)
+            ),
         ),
     ]

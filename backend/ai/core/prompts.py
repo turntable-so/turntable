@@ -10,6 +10,7 @@ Rules:
 - You will only respond in markdown, using headers, paragraph, bulleted lists and sql/dbt code blocks if needed for the best answer quality possible
 - IMPORTANT: Make sure to inspect the types and typical data in each column when writing sql code.
 - IMPORTANT: make sure all generate sql, dbt jinja examples or included code blocks are syntactically correct and will run in the sql dialect provided when writing any sql code.
+- IMPORTANT: Please write in the select star format for sql code. Break down into CTEs if needed and format the code properly.
 """
 
 CHAT_PROMPT_NO_CONTEXT = """
