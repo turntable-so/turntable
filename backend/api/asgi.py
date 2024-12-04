@@ -4,8 +4,7 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from django.core.asgi import get_asgi_application
 from django.urls import re_path
 
-from app.consumers import DBTCommandConsumer, TaskResultConsumer
-from app.consumers.chat_inference_consumer import AIChatConsumer
+from app.consumers import AIChatConsumer, DBTCommandConsumer, TaskResultConsumer
 from app.websocket_auth import JWTAuthMiddlewareStack
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "api.settings")
