@@ -27,8 +27,6 @@ export default function FileExplorer({
   const collectMatchingFiles = (node: FileNode): FileNode[] => {
     let result: FileNode[] = [];
 
-    console.log(node.path)
-
     const isMatchingFile =
       node.type === "file" &&
       !node.path.includes("target/") &&
