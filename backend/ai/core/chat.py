@@ -123,20 +123,24 @@ def build_context(
     project_id: str,
     context_files: List[str] | None = None,
 ):
+    print("Building context")
     user_instruction = next(
         msg.content for msg in reversed(message_history) if msg.role == "user"
     )
     resource = dbt_details.resource
     project = Project.objects.get(id=project_id)
+    print("Project: ", project)
 
     with project.repo_context() as (
         repo,
         env,
     ):
+        print("Inside here")
         file_contents = [
             open(os.path.join(repo.working_tree_dir, unquote(path)), "r").read()
             for path in context_files
         ]
+        print("File contents: ", file_contents)
 
         edges = []
         if lineage:
@@ -173,7 +177,11 @@ Context Files:
 
 
 def stream_chat_completion(
-    *, payload: ChatRequestBody, dbt_details: DBTCoreDetails, workspace: Workspace, user: User
+    *,
+    payload: ChatRequestBody,
+    dbt_details: DBTCoreDetails,
+    workspace: Workspace,
+    user: User,
 ) -> Iterator[str]:
     if payload.model.startswith("claude"):
         api_key = workspace.anthropic_api_key
@@ -190,16 +198,12 @@ def stream_chat_completion(
         asset_links=payload.asset_links,
         column_links=payload.column_links,
     )
-    prompt = (
-        build_context(
-            lineage=lineage,
-            message_history=payload.message_history,
-            dbt_details=dbt_details,
-            context_files=payload.context_files,
-            project_id=payload.project_id,
-        )
-        if lineage
-        else None
+    prompt = build_context(
+        lineage=lineage,
+        message_history=payload.message_history,
+        dbt_details=dbt_details,
+        context_files=payload.context_files,
+        project_id=payload.project_id,
     )
     message_history = []
     for idx, msg in enumerate(payload.message_history):
