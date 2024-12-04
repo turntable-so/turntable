@@ -1,11 +1,11 @@
 import { type FileNode, useFiles } from "@/app/contexts/FilesContext";
 import { Input } from "@/components/ui/input";
 import {
-    type Dispatch,
-    type SetStateAction,
-    useEffect,
-    useRef,
-    useState,
+  type Dispatch,
+  type SetStateAction,
+  useEffect,
+  useRef,
+  useState,
 } from "react";
 import { useOnClickOutside } from "usehooks-ts";
 
@@ -59,7 +59,11 @@ export default function FileExplorer({
   const handleClick = (e: React.MouseEvent, file: FileNode) => {
     e.stopPropagation();
     onClose();
-    setContextFiles((prev) => [...prev, file]);
+    setContextFiles((prev) => {
+      const isDuplicate = prev.some((f) => f.path === file.path);
+      if (isDuplicate) return prev;
+      return [...prev, file];
+    });
   };
 
   const focusInputOnMount = () => {

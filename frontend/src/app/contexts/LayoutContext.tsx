@@ -33,8 +33,7 @@ export const LayoutProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   const [sidebarLeftShown, setSidebarLeftShown] = useState(true);
   const [bottomPanelShown, setBottomPanelShown] = useState(true);
-  // TODO: reset this back to false before merging
-  const [sidebarRightShown, setSidebarRightShown] = useState(true);
+  const [sidebarRightShown, setSidebarRightShown] = useState(false);
   const [appSidebarCollapsed, setAppSidebarCollapsed] = useState(false);
   const pathName = usePathname();
 

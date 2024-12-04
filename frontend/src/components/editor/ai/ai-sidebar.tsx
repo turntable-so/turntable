@@ -56,7 +56,7 @@ export default function AiSidebarChat() {
     setMessageHistory([]);
   };
 
-  const { startWebSocket, sendMessage, stopWebSocket } =
+  const { startWebSocket, sendMessage, stopWebSocket, isConnected } =
     useWebSocket<MessageHistoryPayload>(
       `${protocol}://${base}/ws/infer/?token=${accessToken}`,
       {
@@ -116,8 +116,12 @@ export default function AiSidebarChat() {
     setIsLoading(true);
 
     const payload: MessageHistoryPayload = {
+      project_id: branchId,
       model: selectedModel,
-      context_files: contextFiles.map((file) => file.path),
+      context_files: [
+        ...(aiActiveFile?.node.path ? [aiActiveFile.node.path] : []),
+        ...contextFiles.map((file) => file.path),
+      ],
       asset_id: aiLineageContext?.asset_id,
       related_assets: aiLineageContext?.assets,
       asset_links: aiLineageContext?.asset_links,
@@ -163,7 +167,9 @@ export default function AiSidebarChat() {
           input={input}
           setInput={setInput}
           isLoading={isLoading}
+          isConnected={isConnected}
           handleSubmit={handleSubmit}
+          stopWebSocket={stopWebSocket}
           aiActiveFile={aiActiveFile}
           setAiActiveFile={setAiActiveFile}
           aiLineageContext={aiLineageContext}
@@ -181,6 +187,7 @@ export default function AiSidebarChat() {
                 key={message.id}
                 message={message}
                 isLastMessage={index === messageHistory.length - 1}
+                isConnected={isConnected}
                 index={index}
                 onEditMessage={handleEditMessage}
                 aiActiveFile={aiActiveFile}
@@ -199,7 +206,9 @@ export default function AiSidebarChat() {
             input={input}
             setInput={setInput}
             isLoading={isLoading}
+            isConnected={isConnected}
             handleSubmit={handleSubmit}
+            stopWebSocket={stopWebSocket}
             aiActiveFile={aiActiveFile}
             setAiActiveFile={setAiActiveFile}
             aiLineageContext={aiLineageContext}

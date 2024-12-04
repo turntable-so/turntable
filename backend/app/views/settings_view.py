@@ -3,6 +3,14 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 
+def truncate_api_key(
+    api_key: str | None, visible_chars: int = 12, mask: str = "********"
+) -> str | None:
+    if not api_key:
+        return None
+    return api_key[:visible_chars] + mask
+
+
 class SettingsView(APIView):
     def get(self, request):
         workspace = request.user.current_workspace()
@@ -27,8 +35,8 @@ class SettingsView(APIView):
             )
 
         api_keys = {
-            "openai_api_key": workspace.openai_api_key,
-            "anthropic_api_key": workspace.anthropic_api_key,
+            "openai_api_key": truncate_api_key(workspace.openai_api_key),
+            "anthropic_api_key": truncate_api_key(workspace.anthropic_api_key),
         }
 
         # Prepare the response data
