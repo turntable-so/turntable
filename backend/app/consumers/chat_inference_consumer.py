@@ -2,6 +2,7 @@ import json
 
 from channels.generic.websocket import WebsocketConsumer
 from litellm import completion
+from sentry_sdk import capture_exception
 
 
 class AIChatConsumer(WebsocketConsumer):
@@ -79,7 +80,7 @@ class AIChatConsumer(WebsocketConsumer):
 
             self.send(text_data=json.dumps({"type": "message_end"}))
         except Exception as e:
-            print("error", e)
+            capture_exception(e)
             self.send(
                 text_data=json.dumps(
                     {"type": "error", "message": "Something went wrong"}
