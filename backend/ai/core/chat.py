@@ -8,7 +8,8 @@ from diskcache import FanoutCache
 
 from ai.core.custom_litellm import completion
 from ai.core.models import ChatMessage, ChatRequestBody
-from ai.core.prompts import CHAT_PROMPT_NO_CONTEXT, SYSTEM_PROMPT
+from ai.core.prompts import SYSTEM_PROMPT
+from app.core.dbt import LiveDBTParser
 from app.models import Asset, AssetLink, Column, ColumnLink
 from app.models.project import Project
 from app.models.resources import DBTCoreDetails
@@ -116,6 +117,19 @@ def lineage_ascii(edges):
     return ascii_graph
 
 
+def asset_md(asset: Asset, contents: str):
+    description = asset.description or ""
+    return f"""
+## {asset.name}
+{description}
+
+## Contents
+```sql
+{contents}
+```
+"""
+
+
 def build_context(
     lineage: Lineage | None,
     message_history: List[ChatMessage],
@@ -129,47 +143,75 @@ def build_context(
     resource = dbt_details.resource
     project = Project.objects.get(id=project_id)
 
-    with project.repo_context() as (
-        repo,
-        env,
-    ):
-        file_contents = [
-            open(os.path.join(repo.working_tree_dir, unquote(path)), "r").read()
-            for path in context_files
-        ]
+    with dbt_details.dbt_transition_context() as (transition, project_path, _):
+        with project.repo_context() as (repo, _):
+            transition.mount_manifest(defer=True)
+            asset_mds = []
 
-        edges = []
-        if lineage:
-            for link in lineage.asset_links:
-                source_model = extract_model_name(link.source_id)
-                target_model = extract_model_name(link.target_id)
-                edges.append({"source": source_model, "target": target_model})
+            for asset in lineage.assets:
+                # don't include the current asset
+                if asset.id == lineage.asset_id:
+                    continue
 
-        dialect_md = f"""
-# Dialect
-Use the {resource.details.subtype} dialect when writing any sql code.
-"""
+                # find each file for the related assets
+                manifest_node = LiveDBTParser.get_manifest_node(
+                    transition.after, asset.unique_name
+                )
+                if not manifest_node:
+                    continue
+                path = os.path.join(
+                    project_path, manifest_node.get("original_file_path")
+                )
+                if not os.path.exists(path):
+                    continue
+                with open(path) as file:
+                    contents = file.read()
+                    asset_mds.append(
+                        asset_md(
+                            asset,
+                            contents,
+                        )
+                    )
+            file_contents = [
+                open(os.path.join(repo.working_tree_dir, unquote(path)), "r").read()
+                for path in context_files
+            ]
 
-        lineage_md = f"""
-# Model lineage
-IMPORTANT: keep in mind how these are connected to each other. You may need to add or modify this structure to complete a task.
-{lineage_ascii(edges)}
-"""
-        # File contents
-        output = f"""{dialect_md}
+            edges = []
+            if lineage:
+                for link in lineage.asset_links:
+                    source_model = extract_model_name(link.source_id)
+                    target_model = extract_model_name(link.target_id)
+                    edges.append({"source": source_model, "target": target_model})
+
+            dialect_md = f"""
+    # Dialect
+    Use the {resource.details.subtype} dialect when writing any sql code.
+    """
+
+            lineage_md = f"""
+    # Model lineage
+    IMPORTANT: keep in mind how these are connected to each other. You may need to add or modify this structure to complete a task.
+    {lineage_ascii(edges)}
+    """
+            assets = "\n".join(asset_mds)
+
+            # File contents
+            output = f"""{dialect_md}
 {lineage_md}
-"""
-        if file_contents:
-            file_content_blocks = []
-            for content in file_contents:
-                file_content_blocks.append(f"```sql\n{content}\n```")
+{assets}
+    """
+            if file_contents:
+                file_content_blocks = []
+                for content in file_contents:
+                    file_content_blocks.append(f"```sql\n{content}\n```")
 
-            output += f"""
-Context Files:
-{"\n".join(file_content_blocks)}
-"""
-        output += f"\nUser Instructions: {user_instruction}\n\nAnswer the user's question based on the above context. Do not answer anything else, just answer the question."
-        return output
+                output += f"""
+    Context Files:
+    {"\n".join(file_content_blocks)}
+    """
+            output += f"\nUser Instructions: {user_instruction}\n\nAnswer the user's question based on the above context. Do not answer anything else, just answer the question."
+            return output
 
 
 def stream_chat_completion(
