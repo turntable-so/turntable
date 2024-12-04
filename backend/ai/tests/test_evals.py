@@ -58,7 +58,7 @@ Please answer in the following JSON format:
         json_response = json.loads(response.choices[0].message.content)
         assert json_response["result"] == "true"
 
-    @pytest.mark.manual
+    @pytest.mark.skip(reason="manual test")
     @pytest.mark.parametrize("data_row", _get_dataset())
     def test_eval(
         self, data_row, local_postgres_dbtresource, openai_client, local_postgres, user

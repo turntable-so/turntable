@@ -13,7 +13,6 @@ from api.serializers import LineageAssetSerializer, LineageSerializer, ProjectSe
 from app.core.lineage import get_lineage_helper
 from app.models.project import Project
 from app.views.query_views import format_query
-from scripts.debug.profiling import pyprofile
 
 
 def _build_file_tree(user_id: str, path: str, base_path: str):
@@ -486,7 +485,7 @@ class ProjectViewSet(viewsets.ViewSet):
         )
 
     @action(detail=True, methods=["GET"])
-    @pyprofile()
+    # @pyprofile()
     def lineage(self, request, pk=None):
         workspace = request.user.current_workspace()
         dbt_details = workspace.get_dbt_dev_details()

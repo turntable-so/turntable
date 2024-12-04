@@ -70,7 +70,7 @@ def patch_json_with_orjson(func):
 def with_libyaml():
     """Temporarily patch yaml module to use libyaml implementations."""
     try:
-        from yaml import CDumper, CLoader, CSafeLoader, Dumper, Loader
+        from yaml import CDumper, CLoader, Dumper, Loader
     except ImportError:
         yield
         return
