@@ -36,6 +36,9 @@ class StorageSettings(WorkspaceSettings):
     def save(self, *args, **kwargs):
         if not self.s3_public_url:
             self.s3_public_url = self.s3_endpoint_url
-        if type(self).objects.filter(workspace=self.workspace).exists():
+
+        existing = type(self).objects.filter(workspace=self.workspace)
+        if existing.exists() and not existing.filter(id=self.id).exists():
             raise ValueError("Only one StorageSettings per workspace is allowed")
+
         super().save(*args, **kwargs)
