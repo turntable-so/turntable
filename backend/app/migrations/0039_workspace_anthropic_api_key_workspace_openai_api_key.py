@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("app", "0037_dbtorchestrator_name"),
+        ("app", "0038_alter_scheduledworkflow_clocked_and_more"),
     ]
 
     operations = [
