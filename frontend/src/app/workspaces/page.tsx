@@ -40,44 +40,46 @@ export default function WorkspacePage() {
   };
 
   return (
-    <div className="h-screen w-full flex flex-col bg-muted items-center mt-[150px]">
-      <Card className="w-[500px]">
-        <CardTitle className="p-6 text-xl">Choose a Workspace</CardTitle>
-        <CardContent className="text-xl font-medium my-8 space-y-4">
-          {loading ? (
-            <div className="flex items-center justify-center">
-              <Loader2 className="text-center h-6 w-6 animate-spin opacity-50" />
-            </div>
-          ) : (
-            workspaces.map((workspace: Workspace) => (
-              <div
-                className=" flex justify-between  items-center hover:bg-secondary dark:hover:bg-secondary p-4 rounded-md cursor-pointer"
-                key={workspace.id}
-                onClick={() => handleSwitchWorkspace(workspace.id)}
-              >
-                <div className="flex items-center space-x-4">
-                  <WorkspaceIcon
-                    name={workspace.name}
-                    iconUrl={workspace.icon_url || ""}
-                  />
+    <div className="h-screen w-full flex items-center justify-center bg-muted">
+      <Card className="w-[500px] max-h-[80vh] flex flex-col">
+        <div className="flex justify-between items-center p-6">
+          <CardTitle className="text-xl">Choose a Workspace</CardTitle>
+          <NewWorkspaceButton />
+        </div>
+        <CardContent className="flex-1 overflow-y-auto">
+          <div className="space-y-4">
+            {loading ? (
+              <div className="flex items-center justify-center">
+                <Loader2 className="text-center h-6 w-6 animate-spin opacity-50" />
+              </div>
+            ) : (
+              workspaces.map((workspace: Workspace) => (
+                <div
+                  className="flex justify-between items-center hover:bg-secondary dark:hover:bg-secondary p-4 rounded-md cursor-pointer"
+                  key={workspace.id}
+                  onClick={() => handleSwitchWorkspace(workspace.id)}
+                >
+                  <div className="flex items-center space-x-4">
+                    <WorkspaceIcon
+                      name={workspace.name}
+                      iconUrl={workspace.icon_url || ""}
+                    />
+                    <div>
+                      <p className="text-lg font-medium">{workspace.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {workspace.member_count}{" "}
+                        {workspace.member_count === 1 ? "Member" : "Members"}
+                      </p>
+                    </div>
+                  </div>
                   <div>
-                    <p className="text-lg font-medium">{workspace.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {workspace.member_count}{" "}
-                      {workspace.member_count === 1 ? "Member" : "Members"}
-                    </p>
+                    {loadingWorkspaceId === workspace.id && (
+                      <Loader2 className="text-center h-6 w-6 animate-spin opacity-50" />
+                    )}
                   </div>
                 </div>
-                <div>
-                  {loadingWorkspaceId === workspace.id && (
-                    <Loader2 className="text-center h-6 w-6 animate-spin opacity-50" />
-                  )}
-                </div>
-              </div>
-            ))
-          )}
-          <div className="pt-4">
-            <NewWorkspaceButton />
+              ))
+            )}
           </div>
         </CardContent>
       </Card>

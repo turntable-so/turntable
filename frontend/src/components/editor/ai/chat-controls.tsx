@@ -70,7 +70,6 @@ export default function ChatControls({
     lineageContextString.length > 50
       ? `${lineageContextString.slice(0, 50)}...`
       : lineageContextString;
-  console.log("isConnected", isConnected);
   const handleRemoveAiActiveFile = () => {
     setAiActiveFile(null);
   };
