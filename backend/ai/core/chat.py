@@ -17,7 +17,7 @@ from app.models.user import User
 from app.models.workspace import Workspace
 from app.services.lineage_service import Lineage
 
-cache = FanoutCache(directory="/cache", shards=10, timeout=300)
+cache = FanoutCache(directory="./cache", shards=10, timeout=300)
 
 
 def get_asset_object(asset_dict: dict):
