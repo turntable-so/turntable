@@ -320,6 +320,7 @@ class DBTProject(object):
         # Save original streams
         orig_stdout = sys.stdout
         orig_stderr = sys.stderr
+        orig_cwd = os.getcwd()
 
         # Redirect streams to buffers
         sys.stdout = stdout_buffer
@@ -327,32 +328,40 @@ class DBTProject(object):
 
         # Cache env variables
         current_dbt_profiles_dir = os.environ.get("DBT_PROFILES_DIR")
-        os.environ["DBT_PROFILES_DIR"] = self.dbt_profiles_dir
+        if self.dbt_profiles_dir:
+            os.environ["DBT_PROFILES_DIR"] = self.dbt_profiles_dir
         current_dbt_project_dir = os.environ.get("DBT_PROJECT_DIR")
-        os.environ["DBT_PROJECT_DIR"] = self.dbt_project_dir
+        if self.dbt_project_dir:
+            os.environ["DBT_PROJECT_DIR"] = self.dbt_project_dir
 
-        # Invoke dbt
-        result: dbtRunnerResult = runner.invoke(
-            command, send_anonymous_usage_stats=False
-        )
+        try:
+            # Invoke dbt
+            result: dbtRunnerResult = runner.invoke(
+                command, send_anonymous_usage_stats=False
+            )
+            captured_stdout = stdout_buffer.getvalue()
+            captured_stderr = stderr_buffer.getvalue()
 
-        # Restore env variables
-        del os.environ["DBT_PROFILES_DIR"]
-        if current_dbt_profiles_dir:
-            os.environ["DBT_PROFILES_DIR"] = current_dbt_profiles_dir
-        del os.environ["DBT_PROJECT_DIR"]
-        if current_dbt_project_dir:
-            os.environ["DBT_PROJECT_DIR"] = current_dbt_project_dir
+            # Return captured output along with function's result
+            return captured_stdout, captured_stderr, result.success
+        finally:
+            # Restore env variables
+            if "DBT_PROFILES_DIR" in os.environ:
+                if current_dbt_profiles_dir:
+                    os.environ["DBT_PROFILES_DIR"] = current_dbt_profiles_dir
+                else:
+                    os.environ.pop("DBT_PROFILES_DIR")
 
-        captured_stdout = stdout_buffer.getvalue()
-        captured_stderr = stderr_buffer.getvalue()
+            if "DBT_PROJECT_DIR" in os.environ:
+                if current_dbt_project_dir:
+                    os.environ["DBT_PROJECT_DIR"] = current_dbt_project_dir
+                else:
+                    os.environ.pop("DBT_PROJECT_DIR")
 
-        # Restore original streams
-        sys.stdout = orig_stdout
-        sys.stderr = orig_stderr
-
-        # Return captured output along with function's result
-        return captured_stdout, captured_stderr, result.success
+            # Restore original streams
+            sys.stdout = orig_stdout
+            sys.stderr = orig_stderr
+            os.chdir(orig_cwd)
 
     def _dbt_cli_env(self):
         env = {
@@ -521,7 +530,7 @@ class DBTProject(object):
         cli_args: list[str] | None = None,
         write_json: bool = False,
         dbt_cache: bool = False,
-        force_terminal: bool = False,
+        force_terminal: bool = True,
         defer: bool = False,
         defer_selection: bool = True,
     ) -> Generator[str, None, tuple[str, str, bool]]:

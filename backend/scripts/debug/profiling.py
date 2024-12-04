@@ -18,7 +18,8 @@ def pyprofile(show_all=False, save_html=True):
                 if save_html:
                     save_path = f"scripts/debug/profile/{func.__name__}.html"
                     os.makedirs(os.path.dirname(save_path), exist_ok=True)
-                    profiler.write_html(save_path, show_all=show_all)
+                    with open(save_path, "w") as f:
+                        f.write(profiler.output_html())
                 else:
                     print(
                         profiler.output_text(
