@@ -523,16 +523,15 @@ class CrontabWorkflowSerializer(serializers.ModelSerializer):
         model = ScheduledWorkflow
         fields = ["id", "workspace_id", "cron_str"]
 
-    def schedule_helper(self, cron_str):
+    def _get_crontab_kwargs(self, cron_str):
         split_cron = cron_str.split(" ")
-        crontab, _ = CrontabSchedule.objects.get_or_create(
-            minute=split_cron[0],
-            hour=split_cron[1],
-            day_of_week=split_cron[2],
-            day_of_month=split_cron[3],
-            month_of_year=split_cron[4],
-        )
-        return crontab
+        return {
+            "minute": split_cron[0],
+            "hour": split_cron[1],
+            "day_of_week": split_cron[2],
+            "day_of_month": split_cron[3],
+            "month_of_year": split_cron[4],
+        }
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -545,7 +544,9 @@ class CrontabWorkflowSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         if "cron_str" in validated_data:
             cron_str = validated_data.pop("cron_str")
-            crontab = self.schedule_helper(cron_str)
+            crontab = CrontabSchedule.objects.create(
+                **self._get_crontab_kwargs(cron_str)
+            )
             validated_data["crontab"] = crontab
         return super().create(validated_data)
 
@@ -553,9 +554,9 @@ class CrontabWorkflowSerializer(serializers.ModelSerializer):
         # Update the crontab schedule if cron_str is provided
         if "cron_str" in validated_data:
             cron_str = validated_data.pop("cron_str")
-            crontab = self.schedule_helper(cron_str)
-            instance.crontab = crontab
-            instance.save()
+            for key, value in self._get_crontab_kwargs(cron_str).items():
+                setattr(instance.crontab, key, value)
+            instance.crontab.save()
 
         return super().update(instance, validated_data)
 
@@ -589,7 +590,9 @@ class DBTOrchestratorSerializer(CrontabWorkflowSerializer):
     def create(self, validated_data):
         if "cron_str" in validated_data:
             cron_str = validated_data.pop("cron_str")
-            crontab = self.schedule_helper(cron_str)
+            crontab = CrontabSchedule.objects.create(
+                **self._get_crontab_kwargs(cron_str)
+            )
             validated_data["crontab"] = crontab
         return super().create(validated_data)
 

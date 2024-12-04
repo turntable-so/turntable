@@ -12,12 +12,14 @@ import ibis
 import ibis.backends
 import ibis.backends.bigquery
 import ibis.common.exceptions as com
+import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
 import ibis.expr.rewrites as rw
 import ibis.expr.types as ir
 import ibis.selectors as s
 from ibis import Schema, _
 from ibis import literal as lit
+from ibis.backends.bigquery import Backend as BigqueryBackend
 from ibis.expr.types.pretty import to_rich
 from sqlglot import exp
 from sqlglot.optimizer import optimize
@@ -27,6 +29,8 @@ from sqlglot.optimizer.eliminate_subqueries import eliminate_subqueries
 from sqlglot.optimizer.normalize import normalize
 from sqlglot.optimizer.pushdown_predicates import pushdown_predicates
 from sqlglot.optimizer.pushdown_projections import pushdown_projections
+from sqlglot.optimizer.qualify import qualify
+from sqlglot.optimizer.qualify_columns import validate_qualify_columns
 from sqlglot.optimizer.unnest_subqueries import unnest_subqueries
 
 from vinyl.lib.column import VinylColumn, _demote_args
@@ -1028,7 +1032,31 @@ class VinylTable:
         sg_expr = backend._to_sqlglot(expr.unbind())
         sg_tbl = exp.Table(this=exp.Identifier(this=node_name))
         if optimized:
-            sg_expr = optimize(sg_expr, dialect=dialect, rules=_RULES)
+            dont_optimize = False
+            # check if table is qualified
+            try:
+                validate_qualify_columns(sg_expr)
+                schema = None
+            except Exception:
+                # if not qualified, qualify
+                schema = {}
+                for root in expr.op().find(ops.DatabaseTable):
+                    schema_name = exp.Table(
+                        this=exp.Identifier(this=root.args[0], quoted=True),
+                        catalog=exp.Identifier(this=root.args[-1].catalog, quoted=True),
+                        db=exp.Identifier(this=root.args[-1].database, quoted=True),
+                    )
+                    schema[schema_name] = {k: str(v) for k, v in root.args[1].items()}
+                try:
+                    sg_expr = qualify(sg_expr, schema=schema, dialect=dialect)
+                    validate_qualify_columns(sg_expr)
+                except Exception:
+                    # if qualify fails, don't optimize, won't work
+                    dont_optimize = True
+            if not dont_optimize:
+                sg_expr = optimize(
+                    sg_expr, schema=schema, dialect=dialect, rules=_RULES
+                )
 
         return (
             sg_expr,
@@ -1043,6 +1071,7 @@ class VinylTable:
         optimized=False,
         formatted=True,
         relative_to: dict[str, VinylTable] = {},
+        node_name: str | None = None,
     ) -> str:
         """
         Output the table as a SQL string. The dialect argument can be used to specify the SQL dialect to use.
@@ -1050,7 +1079,7 @@ class VinylTable:
         If optimized is True, the SQL will be optimized using the SQLglot optimizer. If formatted is True, the SQL will be formatted for readability.
         """
         sg_expr, _, _ = self._to_sql_ast(
-            dialect, optimized, relative_to, name_required=False
+            dialect, optimized, relative_to, node_name, name_required=False
         )
         sql = sg_expr.sql(dialect=dialect, pretty=formatted)
 
@@ -1377,6 +1406,7 @@ class VinylTable:
         descriptive_stats: bool = True,
         with_docs=False,
         docs_class_name=False,
+        topk_col_name: bool = True,
     ) -> VinylTable:
         """
         Return summary statistics for each column in the table.
@@ -1393,11 +1423,24 @@ class VinylTable:
         for pos, colname in enumerate(self.columns):
             if colname not in to_include:
                 continue
-            col = self.tbl[colname]
+            tbl = self.tbl.select(colname)
+            col = tbl[colname]
             none_col = ibis.literal(None).cast(str)
             type_col = type(col)
             typ = col.type()
-            agg = self.tbl.mutate(
+            if isinstance(typ, dt.JSON):
+                if isinstance(self.get_backend(), BigqueryBackend):
+                    # bigquery doesn't support casting to json, so we need to convert to string first
+                    tbl = ops.SQLStringView(
+                        child=tbl.alias("t").op(),
+                        query=f"select to_json_string(`{colname}`) as `{colname}` from t",
+                        schema=ibis.schema([(colname, dt.String)]),
+                    ).to_expr()
+                else:
+                    tbl = tbl.mutate(**{colname: col.cast(dt.String)})
+
+                col = tbl[colname]
+            agg = tbl.mutate(
                 isna=ibis.case().when(col.isnull(), 1).else_(0).end(),
             )
             column_dict = {
@@ -1413,11 +1456,11 @@ class VinylTable:
             rename_dict = {"position": "pos"}
 
             if calculate_distinct_values:
-                column_dict["n_distinct"] = _[colname].nunique()
-                column_dict["duplicates"] = (1 - _.isna).sum() - _[colname].nunique()
-                column_dict["distinct_frac"] = _[colname].nunique() / (
-                    (1 - _.isna).sum()
-                )
+                distinct_col = _[colname].nunique()
+                count_col = (1 - _.isna).sum()
+                column_dict["n_distinct"] = distinct_col
+                column_dict["duplicates"] = count_col - distinct_col
+                column_dict["distinct_frac"] = distinct_col / count_col
 
             if descriptive_stats:
                 column_dict["avg"] = (
@@ -1435,9 +1478,17 @@ class VinylTable:
             agg = agg.aggregate(**column_dict)
 
             if topk > 0:
-                rename_dict[f"top_{topk}_values"] = "values"
-                rename_dict[f"top_{topk}_value_counts"] = "counts"
-                vc = self.tbl[colname].topk(topk)
+                topk_col_name_helper = topk + "_" if topk_col_name else ""
+                rename_dict[f"top_{topk_col_name_helper}values"] = "values"
+                rename_dict[f"top_{topk_col_name_helper}value_counts"] = "counts"
+                vc = tbl.select(colname).drop_null(colname)
+                if typ == dt.JSON:
+                    vc = vc.filter(_[colname] != {})
+                if typ == dt.String:
+                    vc = vc.filter(_[colname] != "")
+                elif typ == dt.Array:
+                    vc = vc.filter(_[colname] != [])
+                vc = vc[colname].topk(topk)
                 if backend is None:
                     raise ValueError("No backend found")
                 elif backend.has_operation(ops.ArrayCollect):
@@ -1464,7 +1515,7 @@ class VinylTable:
 
         # make
         out = VinylTable(
-            ibis.union(*aggs)._arg,
+            aggs[0]._arg if len(aggs) == 1 else ibis.union(*aggs)._arg,
             self._conn_replace,
             self._twin_conn_replace,
             self._col_replace,
@@ -1478,21 +1529,27 @@ class VinylTable:
                 self._col_replace,
             )
         out = out.rename(rename_dict)
+        out = out.sort(out.position)
 
         return out
 
     def metric(
         self,
-        cols: ir.Scalar
-        | Callable[..., ir.Scalar]
-        | list[ir.Scalar | Callable[..., ir.Scalar]]
-        | dict[str, ir.Scalar | Callable[..., ir.Scalar]],
+        cols: (
+            ir.Scalar
+            | Callable[..., ir.Scalar]
+            | list[ir.Scalar | Callable[..., ir.Scalar]]
+            | dict[str, ir.Scalar | Callable[..., ir.Scalar]]
+        ),
         ts: ir.TimestampValue | Callable[..., ir.TimestampValue],
-        by: ir.Value
-        | Callable[..., ir.Value]
-        | Sequence[ir.Value | Callable[..., ir.Value]] = [],
-        fill: FillOptions
-        | Callable[..., Any] = FillOptions.null,  # all metrics have fill
+        by: (
+            ir.Value
+            | Callable[..., ir.Value]
+            | Sequence[ir.Value | Callable[..., ir.Value]]
+        ) = [],
+        fill: (
+            FillOptions | Callable[..., Any]
+        ) = FillOptions.null,  # all metrics have fill
     ) -> MetricStore:
         """
         Create a MetricStore (dynamic table) with a set of metrics based on the table. `cols` are the metrics, `ts` is the timestamp, `by` are the dimensions, and `fill` is the fill strategy for missing values.

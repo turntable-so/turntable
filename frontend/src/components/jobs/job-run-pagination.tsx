@@ -10,6 +10,14 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "../ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 type JobRunPaginationProps = {
   page: number;
@@ -29,7 +37,15 @@ export default function JobRunPagination({
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", newPage.toString());
     params.set("pageSize", pageSize.toString());
-    router.push(`?${params.toString()}`);
+    router.replace(`?${params.toString()}`, { scroll: false });
+  };
+
+  const handlePageSizeChange = (value: string) => {
+    const newPageSize = Number(value);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("pageSize", newPageSize.toString());
+    params.set("page", "1");
+    router.replace(`?${params.toString()}`, { scroll: false });
   };
 
   const totalPages = useMemo(() => {
@@ -67,81 +83,101 @@ export default function JobRunPagination({
   }, [startPage, endPage]);
 
   return (
-    <Pagination>
-      <PaginationContent>
-        <PaginationItem>
-          <PaginationPrevious
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              if (page > 1) handlePageChange(page - 1);
-            }}
-          />
-        </PaginationItem>
-        {startPage > 1 && (
-          <>
-            <PaginationItem>
-              <PaginationLink
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handlePageChange(1);
-                }}
-              >
-                1
-              </PaginationLink>
-            </PaginationItem>
-            {startPage > 2 && (
-              <PaginationItem>
-                <span>...</span>
-              </PaginationItem>
-            )}
-          </>
-        )}
-        {pageNumbers.map((pageNum) => (
-          <PaginationItem key={pageNum}>
-            <PaginationLink
+    <div className="flex justify-center items-center mt-4">
+      <Pagination>
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious
               href="#"
-              isActive={pageNum === page}
               onClick={(e) => {
                 e.preventDefault();
-                handlePageChange(pageNum);
+                if (page > 1) handlePageChange(page - 1);
               }}
-            >
-              {pageNum}
-            </PaginationLink>
+            />
           </PaginationItem>
-        ))}
-        {endPage < totalPages && (
-          <>
-            {endPage < totalPages - 1 && (
+          {startPage > 1 && (
+            <>
               <PaginationItem>
-                <span>...</span>
+                <PaginationLink
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handlePageChange(1);
+                  }}
+                >
+                  1
+                </PaginationLink>
               </PaginationItem>
-            )}
-            <PaginationItem>
+              {startPage > 2 && (
+                <PaginationItem>
+                  <span>...</span>
+                </PaginationItem>
+              )}
+            </>
+          )}
+          {pageNumbers.map((pageNum) => (
+            <PaginationItem key={pageNum}>
               <PaginationLink
                 href="#"
+                isActive={pageNum === page}
                 onClick={(e) => {
                   e.preventDefault();
-                  handlePageChange(totalPages);
+                  handlePageChange(pageNum);
                 }}
               >
-                {totalPages}
+                {pageNum}
               </PaginationLink>
             </PaginationItem>
-          </>
-        )}
-        <PaginationItem>
-          <PaginationNext
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              if (page < totalPages) handlePageChange(page + 1);
-            }}
-          />
-        </PaginationItem>
-      </PaginationContent>
-    </Pagination>
+          ))}
+          {endPage < totalPages && (
+            <>
+              {endPage < totalPages - 1 && (
+                <PaginationItem>
+                  <span>...</span>
+                </PaginationItem>
+              )}
+              <PaginationItem>
+                <PaginationLink
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handlePageChange(totalPages);
+                  }}
+                >
+                  {totalPages}
+                </PaginationLink>
+              </PaginationItem>
+            </>
+          )}
+          <PaginationItem>
+            <PaginationNext
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                if (page < totalPages) handlePageChange(page + 1);
+              }}
+            />
+          </PaginationItem>
+          <PaginationItem>
+            <Select
+              value={pageSize.toString()}
+              onValueChange={handlePageSizeChange}
+            >
+              <SelectTrigger className="w-[80px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
+    </div>
   );
 }

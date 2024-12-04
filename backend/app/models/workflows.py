@@ -46,9 +46,11 @@ class ScheduledWorkflow(PolymorphicModel):
 
     # relationships
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
-    clocked = models.ForeignKey(ClockedSchedule, on_delete=models.CASCADE, null=True)
-    crontab = models.ForeignKey(CrontabSchedule, on_delete=models.CASCADE, null=True)
-    periodic_task = models.ForeignKey(PeriodicTask, on_delete=models.CASCADE, null=True)
+    clocked = models.OneToOneField(ClockedSchedule, on_delete=models.CASCADE, null=True)
+    crontab = models.OneToOneField(CrontabSchedule, on_delete=models.CASCADE, null=True)
+    periodic_task = models.OneToOneField(
+        PeriodicTask, on_delete=models.CASCADE, null=True
+    )
 
     # derived fields
     replacement_identifier = models.CharField(
@@ -149,7 +151,6 @@ class ScheduledWorkflow(PolymorphicModel):
             del kwargs[SUPER_ONLY]
             super().save(*args, **kwargs)
             return
-        custom_celery_eager = os.getenv("CUSTOM_CELERY_EAGER") == "true"
 
         self.clean()
 
@@ -164,47 +165,28 @@ class ScheduledWorkflow(PolymorphicModel):
             )
 
         # Find and cleanup existing instance before creating new one
-        try:
-            existing = type(self).objects.get(id=self.id) if self.id else None
-            if existing:
-                # Clean up the old periodic task
-                PeriodicTask.objects.filter(
-                    name=existing.replacement_identifier
-                ).delete()
-
-                # Clean up old crontab if it's not being used by any other workflows (in this case, not this workflow)
-                if (
-                    existing.crontab != self.crontab
-                    and not type(self)
-                    .objects.filter(crontab=existing.crontab)
-                    .exclude(id=existing.id)
-                    .exists()
-                ):
-                    existing.crontab.delete()
-        except type(self).DoesNotExist:
-            pass
+        if self.periodic_task:
+            for key, value in self.get_periodic_task_args().items():
+                setattr(self.periodic_task, key, value)
+            self.periodic_task.save()
+        else:
+            self.periodic_task = PeriodicTask.objects.create(
+                **self.get_periodic_task_args()
+            )
 
         # Create new periodic task
-        self.periodic_task = PeriodicTask.objects.create(
-            **self.get_periodic_task_args()
-        )
-
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         super().delete(*args, **kwargs)
 
-        # delete the periodic task
-        self.periodic_task.delete()
-
-        # delete the crontab if no other workflows are using it
-        if (
-            not type(self)
-            .objects.filter(crontab=self.crontab)
-            .exclude(id=self.id)
-            .exists()
-        ):
+        # ensure all one-to-one related objects are also deleted
+        if self.periodic_task:
+            self.periodic_task.delete()
+        if self.crontab:
             self.crontab.delete()
+        if self.clocked:
+            self.clocked.delete()
 
     def await_next_id(
         self,

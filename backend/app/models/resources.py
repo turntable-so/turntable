@@ -765,6 +765,7 @@ class DBTCoreDetails(DBTResource):
                 ),
                 (before.catalog_path, prod_environment.catalog, override_catalog),
             ]
+            os.makedirs(before.target_path, exist_ok=True)
             for path, artifact, override in to_update:
                 if artifact and (override or not os.path.exists(path)):
                     with open(path, "w") as f:

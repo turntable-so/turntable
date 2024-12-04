@@ -10,27 +10,29 @@ import {
   useRef,
   useState,
 } from "react";
+import { toast } from "sonner";
 import { useDebounceValue, useLocalStorage } from "usehooks-ts";
 import {
+  changeFilePath,
   cloneBranchAndMount,
   commit,
+  compileDbtQuery,
   createFile,
   deleteFile,
-  fetchFileContents,
-  getProject,
-  getFileIndex,
   discardBranchChanges,
+  duplicateFileOrFolder,
+  executeQueryPreview,
+  fetchFileContents,
+  formatDbtQuery,
+  getFileIndex,
+  getProject,
   getProjectChanges,
   persistFile,
-  changeFilePath,
-  formatDbtQuery,
-  compileDbtQuery,
-  executeQueryPreview,
-  duplicateFileOrFolder,
 } from "../actions/actions";
-import { validateDbtQuery } from "../actions/client-actions";
-import { getDownloadableFile } from "../actions/client-actions";
-import { toast } from "sonner";
+import {
+  getDownloadableFile,
+  validateDbtQuery,
+} from "../actions/client-actions";
 import type { Lineage } from "./LineageView";
 
 export const MAX_RECENT_COMMANDS = 5;
@@ -566,10 +568,10 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         prev.map((f) =>
           f.node.path === path
             ? {
-              ...f,
-              content,
-              node: { ...f.node, type: newNodeType },
-            }
+                ...f,
+                content,
+                node: { ...f.node, type: newNodeType },
+              }
             : f,
         ),
       );
@@ -592,6 +594,9 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
       prev.map((f) =>
         f.node.path === path ? { ...f, content, isDirty: true } : f,
       ),
+    );
+    setActiveFile((prev) =>
+      prev?.node.path === path ? { ...prev, content, isDirty: true } : prev,
     );
   }, []);
 

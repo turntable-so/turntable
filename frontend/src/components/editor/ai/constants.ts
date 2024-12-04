@@ -1,0 +1,1 @@
+export const SUPPORTED_AI_MODELS = ["claude-3-5-sonnet-20240620", "gpt-4o", "o1-mini", "o1-preview"];
