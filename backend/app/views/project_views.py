@@ -136,7 +136,6 @@ class ProjectViewSet(viewsets.ViewSet):
         project = Project.objects.get(id=pk)
 
         with project.repo_context() as (repo, env):
-            print(f"repo.working_tree_dir in view: {repo.working_tree_dir}")
             filepath = request.query_params.get("filepath")
             if filepath and len(filepath) > 0:
                 filepath = os.path.join(repo.working_tree_dir, unquote(filepath))

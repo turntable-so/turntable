@@ -45,7 +45,6 @@ class SettingsView(APIView):
 
     def post(self, request):
         workspace = request.user.current_workspace()
-        print(request.data)
         api_keys = request.data.get("api_keys", {})
         if "openai_api_key" in api_keys:
             workspace.openai_api_key = api_keys["openai_api_key"]

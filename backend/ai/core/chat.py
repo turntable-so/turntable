@@ -132,8 +132,6 @@ def build_context(
         repo,
         env,
     ):
-        print(f"repo.working_tree_dir in chat: {repo.working_tree_dir}")
-
         file_contents = [
             open(os.path.join(repo.working_tree_dir, unquote(path)), "r").read()
             for path in context_files
@@ -188,12 +186,9 @@ def chat_completion(user_prompt: str):
 def stream_chat_completion(
     *, payload: ChatRequestBody, dbt_details: DBTCoreDetails, workspace: Workspace
 ) -> Iterator[str]:
-    print(f"payload: {payload}")
     if payload.model.startswith("claude"):
-        print(f"using anthropic api key: {workspace.anthropic_api_key}")
         api_key = workspace.anthropic_api_key
     elif payload.model.startswith("gpt") or payload.model.startswith("o1"):
-        print(f"using openai api key: {workspace.openai_api_key}")
         api_key = workspace.openai_api_key
     else:
         raise ValueError(f"Unsupported model: {payload.model}")
@@ -225,7 +220,6 @@ def stream_chat_completion(
         {"content": SYSTEM_PROMPT, "role": "system"},
         *message_history,
     ]
-    print("sending messages:" , messages)
 
     response = completion(
         api_key=api_key,

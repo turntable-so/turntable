@@ -8,8 +8,8 @@ class AIChatConsumer(WebsocketConsumer):
     def connect(self):
         self.accept()
 
-    def disconnect(self, close_code):
-        print(f"AI Chat WebSocket Disconnected with code: {close_code}")
+    def disconnect(self):
+        pass
 
     def receive(self, text_data):
         from ai.core.chat import stream_chat_completion

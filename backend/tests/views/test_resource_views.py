@@ -55,7 +55,6 @@ class TestResourceViews:
             },
         }
         response = client.post("/resources/", data, format="json")
-        print(response.json())
         assert response.status_code == 201
 
     def test_get_bigquery_resource(self, client, resource_id):
