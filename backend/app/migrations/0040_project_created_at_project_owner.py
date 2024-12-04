@@ -7,9 +7,8 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ("app", "0038_alter_scheduledworkflow_clocked_and_more"),
+        ("app", "0039_workspace_anthropic_api_key_workspace_openai_api_key"),
     ]
 
     operations = [
@@ -29,5 +28,10 @@ class Migration(migrations.Migration):
                 on_delete=django.db.models.deletion.SET_NULL,
                 to=settings.AUTH_USER_MODEL,
             ),
+        ),
+        migrations.AddField(
+            model_name="project",
+            name="archived",
+            field=models.BooleanField(default=False),
         ),
     ]
