@@ -2,6 +2,7 @@ import os
 import shlex
 import shutil
 import tempfile
+import time
 from typing import Callable
 
 from celery import states
@@ -11,6 +12,8 @@ from app.models.resources import DBTResource
 from app.workflows.utils import task
 from vinyl.lib.dbt import STREAM_ERROR_STRING, STREAM_SUCCESS_STRING
 from vinyl.lib.utils.files import load_orjson
+
+STREAM_BUFFER_INTERVAL = 1.0
 
 
 def return_helper(success, stdout, stderr, run_results=None):
@@ -42,6 +45,7 @@ def run_dbt_command(
     repo_override_dir: str | None = None,
     save_artifacts: bool = True,
     stream: bool = False,
+    buffer_interval: float = STREAM_BUFFER_INTERVAL,
 ):
     dbt_resource = DBTResource.objects.get(id=dbtresource_id)
     if not dbt_resource.jobs_allowed:
@@ -59,6 +63,8 @@ def run_dbt_command(
                 success = None
                 stdout = ""
                 stderr = ""
+                last_update = time.time()
+
                 for line in dbtproj.stream_dbt_command(split_command, write_json=True):
                     if line == STREAM_SUCCESS_STRING:
                         success = True
@@ -70,14 +76,20 @@ def run_dbt_command(
                         return return_helper(
                             success=success, stdout=stdout, stderr=stderr
                         )
+
                     stdout += line
-                    result = return_helper(
-                        success=success, stdout=stdout, stderr=stderr
-                    )
-                    self.update_state(
-                        state=states.STARTED,
-                        meta=result,
-                    )
+                    current_time = time.time()
+
+                    # Only update state if buffer_interval has elapsed
+                    if current_time - last_update >= buffer_interval:
+                        result = return_helper(
+                            success=success, stdout=stdout, stderr=stderr
+                        )
+                        self.update_state(
+                            state=states.STARTED,
+                            meta=result,
+                        )
+                        last_update = current_time
 
             else:
                 stdout, stderr, success = dbtproj.run_dbt_command(
