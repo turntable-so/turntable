@@ -29,6 +29,9 @@ export default function FileExplorer({
 
     const isMatchingFile =
       node.type === "file" &&
+      !node.path.includes("target/") &&
+      !node.path.includes("dbt_packages/") &&
+      !node.path.includes("logs/") &&
       (node.name.endsWith(".sql") ||
         node.name.endsWith(".yml") ||
         node.name.endsWith(".yaml"));
