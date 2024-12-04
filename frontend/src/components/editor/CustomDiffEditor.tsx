@@ -21,8 +21,9 @@ export default function CustomDiffEditor(props: CustomDiffEditorProps) {
     inherit: true,
     rules: [],
     colors: {
-      "editor.foreground": "#000000",
+      "editor.foreground": resolvedTheme === "dark" ? "#ffffff" : "#000000",
       "editorLineNumber.foreground": "#A1A1AA",
+
     },
   };
 

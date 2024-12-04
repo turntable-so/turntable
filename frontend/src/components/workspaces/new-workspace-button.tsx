@@ -9,13 +9,12 @@ export default function NewWorkspaceButton() {
   return (
     <Button
       variant="secondary"
-      className="w-full text-muted-foreground"
       onClick={() => {
         router.push("/workspaces/new");
       }}
     >
       <PlusIcon className="size-4 mr-2" />
-      <p className="text-md">Create new workspace</p>
+      <p className="text-md">New workspace</p>
     </Button>
   );
 }

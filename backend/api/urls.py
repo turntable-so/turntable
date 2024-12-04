@@ -39,7 +39,6 @@ from app.views import (
     WorkspaceGroupViewSet,
     WorkspaceViewSet,
 )
-from app.views.inference_views import InferenceView
 from app.views.project_views import ProjectViewSet
 from app.views.query_views import (
     DbtQueryPreviewView,
@@ -128,7 +127,6 @@ urlpatterns = [
     path("ws/subscribe/<str:workspace_id>/", TaskResultConsumer.as_asgi()),
     path("ws/dbt_command/<str:workspace_id>/", DBTCommandConsumer.as_asgi()),
     path("settings/", SettingsView.as_view(), name="settings"),
-    path("infer/", InferenceView.as_view(), name="inference"),
     path("", include(router.urls)),
 ]
 

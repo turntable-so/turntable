@@ -640,27 +640,6 @@ export async function duplicateFileOrFolder({
   return response.ok;
 }
 
-export async function infer({
-  instructions,
-  content,
-  filepath,
-}: {
-  instructions: string;
-  content: string;
-  filepath: string;
-}) {
-  const response = await fetcher(`/infer/`, {
-    cookies,
-    method: "POST",
-    body: {
-      instructions,
-      content,
-      filepath,
-    },
-  });
-  return response.json();
-}
-
 export async function getProjectBasedLineage({
   branchId,
   filePath,

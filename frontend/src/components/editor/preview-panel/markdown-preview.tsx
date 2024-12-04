@@ -1,9 +1,7 @@
-import React from "react";
 import { useTheme } from "next-themes";
 import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { darcula as darkStyle } from "react-syntax-highlighter/dist/cjs/styles/prism";
-import { prism as lightStyle } from "react-syntax-highlighter/dist/cjs/styles/prism";
+import { darcula as darkStyle, prism as lightStyle } from "react-syntax-highlighter/dist/cjs/styles/prism";
 
 type MarkdownPreviewProps = {
   content: string;
@@ -14,7 +12,7 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
   const syntaxStyle = resolvedTheme === "dark" ? darkStyle : lightStyle;
 
   return (
-    <div className="markdown-preview p-4 overflow-y-auto prose max-w-none dark:prose-invert">
+    <div className="p-4 overflow-y-auto prose max-w-none dark:prose-invert">
       <ReactMarkdown
         components={{
           code({ node, inline, className, children, ...props }) {
