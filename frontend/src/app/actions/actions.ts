@@ -986,3 +986,11 @@ export async function deleteJob(jobId: string) {
   });
   return await response.ok;
 }
+
+export async function archiveProject(projectId: string) {
+  const response = await fetcher(`/project/${projectId}/`, {
+    cookies,
+    method: "DELETE",
+  });
+  return await response.ok;
+}

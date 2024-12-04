@@ -1,4 +1,5 @@
 "use client";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 import FullWidthPageLayout from "@/components/layout/FullWidthPageLayout";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Plus } from "lucide-react";
+import { Ellipsis, EllipsisVertical, Loader2, Plus, Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -37,6 +38,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const formSchema = z.object({
   projectName: z.string().min(2, {
@@ -65,8 +72,6 @@ const NewProjectButton = () => {
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const router = useRouter();
-  // Watch projectName to transform it for branchName
-  const projectName = form.watch("projectName");
   const [branches, setBranches] = useState<string[]>([]);
   const { isSubmitting } = form.formState;
 
@@ -79,14 +84,16 @@ const NewProjectButton = () => {
     fetchBranches();
   }, []);
 
-  // Update branchName whenever projectName changes
-  useEffect(() => {
-    const transformedName = projectName
+  const handleProjectNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newProjectName = e.target.value;
+    const transformedName = newProjectName
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
-    form.setValue("branchName", transformedName);
-  }, [projectName, form]);
+
+    form.setValue("projectName", newProjectName);
+    form.setValue("branchName", transformedName, { shouldValidate: false });
+  };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     const result = await createBranch(
@@ -103,6 +110,14 @@ const NewProjectButton = () => {
 
   return (
     <>
+      <div>
+        <Tabs defaultValue="active">
+          <TabsList>
+            <TabsTrigger value="active" className="p-2">Active Projects</TabsTrigger>
+            <TabsTrigger value="archived" className="p-2">Archived</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
       <Button
         onClick={() => setIsDialogOpen(true)}
         className="rounded-full space-x-2"
@@ -110,6 +125,7 @@ const NewProjectButton = () => {
         <Plus className="size-4" />
         <div>New project</div>
       </Button>
+
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogTitle>Create New Project</DialogTitle>
@@ -122,7 +138,10 @@ const NewProjectButton = () => {
                   <FormItem>
                     <FormLabel>Project Name</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input
+                        {...field}
+                        onChange={handleProjectNameChange}
+                      />
                     </FormControl>
                     <FormDescription>
                       A git branch in your repository will be created with this
@@ -211,6 +230,7 @@ const NewProjectButton = () => {
 export default function Projects() {
   const [projects, setProjects] = useState<[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("active");
 
   const router = useRouter();
 
@@ -218,6 +238,7 @@ export default function Projects() {
     const fetchProjects = async () => {
       setIsLoading(true);
       const projects = await getProjects();
+      console.log({ projects })
       setProjects(projects);
       setIsLoading(false);
     };
@@ -226,50 +247,80 @@ export default function Projects() {
 
   return (
     <FullWidthPageLayout title="Projects" button={<NewProjectButton />}>
-      <Table className="bg-white dark:bg-black rounded">
-        <TableHeader>
-          <TableRow>
-            <TableHead className="p-4">Name</TableHead>
-            <TableHead className="p-4">Git Branch</TableHead>
-            <TableHead className="p-4">Schema</TableHead>
-            <TableHead className="p-4">Your access</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {isLoading
-            ? Array.from({ length: 3 }).map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell className="font-semibold hover:underline hover:cursor-pointer p-4">
-                    <div className="h-4 w-full bg-muted rounded animate-pulse" />
-                  </TableCell>
-                  <TableCell className="p-4">
-                    <div className="h-4 w-full bg-muted rounded animate-pulse" />
-                  </TableCell>
-                  <TableCell className="p-4">
-                    <div className="h-4 w-full bg-muted rounded animate-pulse" />
-                  </TableCell>
-                  <TableCell className="p-4">
-                    <div className="h-4 w-full bg-muted rounded animate-pulse" />
-                  </TableCell>
-                </TableRow>
-              ))
-            : projects.map((project: any, i: number) => (
-                <TableRow key={i}>
-                  <TableCell
-                    className="font-semibold hover:underline hover:cursor-pointer p-4"
-                    onClick={() => router.push(`/editor/${project.id}`)}
-                  >
-                    {project.name}
-                  </TableCell>
-                  <TableCell className="p-4">{project.branch_name}</TableCell>
-                  <TableCell className="p-4">{project.schema}</TableCell>
-                  <TableCell className="p-4">
-                    {project.read_only ? "Read Only" : "Read/Write"}
-                  </TableCell>
-                </TableRow>
-              ))}
-        </TableBody>
-      </Table>
-    </FullWidthPageLayout>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+
+
+        <TabsContent value="active">
+          <Table className="bg-white dark:bg-black rounded">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="p-2">Name</TableHead>
+                <TableHead className="p-2">Owner</TableHead>
+                <TableHead className="p-2">Created At</TableHead>
+                <TableHead className="p-2">Git Branch</TableHead>
+                <TableHead className="p-2">Schema</TableHead>
+                <TableHead className="p-2">Your Access</TableHead>
+                <TableHead className="p-2">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading
+                ? Array.from({ length: 3 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell className="font-semibold hover:underline hover:cursor-pointer p-4">
+                      <div className="h-4 w-full bg-muted rounded animate-pulse" />
+                    </TableCell>
+                    <TableCell className="p-2">
+                      <div className="h-4 w-full bg-muted rounded animate-pulse" />
+                    </TableCell>
+                    <TableCell className="p-2">
+                      <div className="h-4 w-full bg-muted rounded animate-pulse" />
+                    </TableCell>
+                    <TableCell className="p-2">
+                      <div className="h-4 w-full bg-muted rounded animate-pulse" />
+                    </TableCell>
+                  </TableRow>
+                ))
+                : projects
+                  .filter((project: any) => !project.archived)
+                  .map((project: any, i: number) => (
+                    <TableRow key={i}>
+                      <TableCell
+                        className="font-semibold hover:underline hover:cursor-pointer p-4"
+                        onClick={() => router.push(`/editor/${project.id}`)}
+                      >
+                        {project.name}
+                      </TableCell>
+                      <TableCell className="p-2 text-sm">{project.branch_name}</TableCell>
+                      <TableCell className="p-2 text-sm">{project.schema}</TableCell>
+                      <TableCell className="p-2 text-sm">{project.schema}</TableCell>
+                      <TableCell className="p-2 text-sm">{project.created_at}</TableCell>
+                      <TableCell className="p-2 text-sm">
+                        {project.read_only ? "Read Only" : "Read/Write"}
+                      </TableCell>
+                      <TableCell className="p-2 text-sm">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <Ellipsis className="size-3" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" alignOffset={-5}>
+                            <DropdownMenuItem onClick={() => undefined}>
+                              <div className="flex items-center text-xs">
+                                <Trash className="mr-2 h-3 w-3" />
+                                Archive Project
+                              </div>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+            </TableBody>
+          </Table>
+        </TabsContent>
+      </Tabs>
+    </FullWidthPageLayout >
   );
 }

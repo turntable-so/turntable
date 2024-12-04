@@ -145,7 +145,7 @@ export default function JobsPage({ searchParams }: JobsPageProps) {
   return (
     <FullWidthPageLayout title="Jobs" button={<NewJobButton />}>
       <Tabs defaultValue={TabNames.jobs} onValueChange={handleTabChange}>
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList>
           <TabsTrigger value={TabNames.jobs}>Jobs</TabsTrigger>
           <TabsTrigger value={TabNames.runs}>Runs</TabsTrigger>
         </TabsList>

@@ -73,6 +73,12 @@ class ProjectViewSet(viewsets.ViewSet):
 
         return Response(projects.data, status=status.HTTP_200_OK)
 
+    def destroy(self, request, pk=None):
+        project = Project.objects.get(id=pk)
+        project.archived = True
+        project.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     @action(detail=True, methods=["POST"])
     def clone(self, request, pk=None):
         workspace = request.user.current_workspace()
@@ -403,6 +409,9 @@ class ProjectViewSet(viewsets.ViewSet):
                         git_config.set_value("user", "name", "")
                         git_config.set_value("user", "email", "")
 
+    def create(self, request):
+        pass
+
     @action(detail=False, methods=["GET", "POST", "PATCH"])
     def branches(self, request):
         workspace = request.user.current_workspace()
@@ -445,6 +454,7 @@ class ProjectViewSet(viewsets.ViewSet):
                 project = Project.objects.create(
                     name=request.data.get("branch_name"),
                     workspace=workspace,
+                    owner=request.user,
                     repository=dbt_details.repository,
                     branch_name=request.data.get("branch_name"),
                     schema=request.data.get("schema"),
@@ -456,22 +466,6 @@ class ProjectViewSet(viewsets.ViewSet):
 
             project_serializer = ProjectSerializer(project)
             return Response(project_serializer.data, status=status.HTTP_201_CREATED)
-
-        elif request.method == "PATCH":
-            if not request.data.get("branch_name"):
-                return Response(
-                    {"error": "Branch name is required"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            project = Project.objects.get(
-                workspace=workspace,
-                repository=dbt_details.repository,
-                branch_name=request.data.get("branch_name"),
-            )
-            with project.repo_context() as (repo, env):
-                name = project.switch_to_git_branch(repo, env)
-
-            return Response({"branch_name": name})
 
         return Response(status=status.HTTP_501_NOT_IMPLEMENTED)
 

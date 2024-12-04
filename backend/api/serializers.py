@@ -492,6 +492,8 @@ class ProjectSerializer(serializers.ModelSerializer):
     is_cloned = serializers.SerializerMethodField()
     pull_request_url = serializers.SerializerMethodField()
 
+    owner = UserSerializer()
+
     class Meta:
         model = Project
         fields = [
@@ -503,6 +505,8 @@ class ProjectSerializer(serializers.ModelSerializer):
             "is_cloned",
             "pull_request_url",
             "source_branch",
+            "archived",
+            "owner",
         ]
 
     def get_is_cloned(self, obj):
