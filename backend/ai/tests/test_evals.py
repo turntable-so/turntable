@@ -9,7 +9,7 @@ from ai.core.models import ChatRequestBody
 from app.models.resources import DBTCoreDetails
 
 
-# run manually with "pytest -s -v -k TestEvals -n 2"
+# run manually by uncommenting out the the skip and then running "pytest -s -v -k TestEvals -n 2"
 class TestEvals:
     @pytest.fixture
     def local_postgres_dbtresource(self, local_postgres):
@@ -58,7 +58,7 @@ Please answer in the following JSON format:
         json_response = json.loads(response.choices[0].message.content)
         assert json_response["result"] == "true"
 
-    @pytest.mark.manual
+    @pytest.mark.skip(reason="Manual test")
     @pytest.mark.parametrize("data_row", _get_dataset())
     def test_eval(
         self, data_row, local_postgres_dbtresource, openai_client, local_postgres, user
