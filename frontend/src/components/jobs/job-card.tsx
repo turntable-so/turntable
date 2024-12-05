@@ -11,7 +11,7 @@ type JobCardProps = {
 };
 
 export default function JobCard({ job }: JobCardProps) {
-  const cronExpression = cronstrue.toString(job.cron_str);
+
 
   const lastRunDate = job.latest_run?.date_done;
   const formattedLastRunDate = lastRunDate
@@ -36,7 +36,14 @@ export default function JobCard({ job }: JobCardProps) {
               <div className="flex justify-between items-center">
                 <div className="flex flex-col gap-1">
                   <CardTitle>{job.name}</CardTitle>
-                  <CardDescription>{cronExpression}</CardDescription>
+                  {job.workflow_type === "cron" && (
+                    <CardDescription>{cronstrue.toString(job.cron_str); }</CardDescription>
+                  )}
+                  {job.workflow_type === "webhook" && (
+                    <CardDescription>
+                      Webhook
+                    </CardDescription>
+                  )}
                 </div>
 
                 <div className="text-sm text-muted-foreground">

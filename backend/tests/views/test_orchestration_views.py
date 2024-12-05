@@ -1,4 +1,7 @@
+import json
 import time
+import hmac
+import hashlib
 
 import pytest
 import requests
@@ -136,3 +139,45 @@ class TestOrchestrationViews:
 
         response = requests.get(url)
         assert response.status_code == 200
+
+    def test_create_webhook_orchestration(self, client, local_postgres_dbtresource):
+        data = {
+            "workspace_id": local_postgres_dbtresource.workspace.id,
+            "dbtresource_id": local_postgres_dbtresource.id,
+            "workflow_type": "webhook",
+            "hmac_secret_key": "TEST_SECRET_KEY",
+            "commands": ["dbt deps", "dbt parse", "dbt run"],
+        }
+        response = client.post("/jobs/", data, format="json")
+        assert response.status_code == 201
+
+    def test_call_webhook_orchestration(
+        self, client, custom_celery, local_postgres_dbtresource
+    ):
+        time.sleep(1)
+
+        secret_key = "TEST_SECRET_KEY"
+        data = {
+            "workspace_id": local_postgres_dbtresource.workspace.id,
+            "dbtresource_id": local_postgres_dbtresource.id,
+            "workflow_type": "webhook",
+            "hmac_secret_key": secret_key,
+            "commands": ["dbt deps", "dbt parse", "dbt run"],
+        }
+        response = client.post("/jobs/", data, format="json")
+        job_id = response.json().get("id")
+
+        # Add signature to headers
+        headers = {"X-Signature": f"sha256={'sd'}"}
+        response = client.post(
+            f"/webhooks/run_job/{job_id}/",
+            {
+                "event": "run_job"
+            },  # Send the original dict, client.post will handle JSON conversion
+            format="json",
+            **headers,
+        )
+        assert response.status_code == 201
+        job = DBTOrchestrator.objects.get(id=job_id)
+        _, task_id = job.await_next_result()
+        assert task_id is not None

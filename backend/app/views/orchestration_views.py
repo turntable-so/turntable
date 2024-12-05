@@ -22,9 +22,11 @@ class Pagination(PageNumberPagination):
 
 class JobViewSet(viewsets.ModelViewSet):
     def create(self, request):
+        print(request.data)
         workspace = request.user.current_workspace()
         serializer = DBTOrchestratorSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        serializer.is_valid(raise_exception=False)
+        print(serializer.errors)
         serializer.save(workspace=workspace)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -41,7 +43,7 @@ class JobViewSet(viewsets.ModelViewSet):
     def list(self, request):
         workspace = request.user.current_workspace()
         data = DBTOrchestrator.objects.filter(
-            workspace=workspace, crontab__isnull=False
+            workspace=workspace, 
         )
         paginator = Pagination()
         paginated_data = paginator.paginate_queryset(data, request)
