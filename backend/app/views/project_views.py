@@ -482,6 +482,7 @@ class ProjectViewSet(viewsets.ViewSet):
                 branch_name=request.data.get("branch_name"),
                 schema=request.data.get("schema"),
                 source_branch=request.data.get("source_branch"),
+                owner=request.user,
             )
             project.create_git_branch(
                 source_branch=request.data.get("source_branch"),
