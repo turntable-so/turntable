@@ -476,27 +476,16 @@ class ProjectViewSet(viewsets.ViewSet):
 
         with transaction.atomic():
             project = Project.objects.create(
-                name=branch_name,
+                name=request.data.get("branch_name"),
                 workspace=workspace,
-                owner=request.user,
-                repository=repo,
-                branch_name=branch_name,
-                schema=schema,
-                source_branch=source_branch,
+                repository=dbt_details.repository,
+                branch_name=request.data.get("branch_name"),
+                schema=request.data.get("schema"),
+                source_branch=request.data.get("source_branch"),
             )
-            try:
-                project.create_git_branch(
-                    source_branch=source_branch,
-                )
-            except Exception as e:
-                transaction.set_rollback(True)
-                capture_exception(e)
-                error_message = f"Failed to create branch: {str(e)}"
-                print(error_message)
-                return Response(
-                    {"error": error_message},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                )
+            project.create_git_branch(
+                source_branch=request.data.get("source_branch"),
+            )
 
         project_serializer = ProjectSerializer(project)
         return Response(project_serializer.data, status=status.HTTP_201_CREATED)
