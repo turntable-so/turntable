@@ -333,8 +333,6 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
         return;
       }
 
-      console.log("asset_only: ", options.asset_only);
-
       setLineageData((prev) => ({
         ...prev,
         [lineageFetchType.data.filePath]: {
