@@ -333,13 +333,15 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
         return;
       }
 
+      console.log("asset_only: ", options.asset_only);
+
       setLineageData((prev) => ({
         ...prev,
         [lineageFetchType.data.filePath]: {
           isLoading: true,
           data: null,
           error: null,
-          showColumns: options.asset_only,
+          showColumns: !options.asset_only,
         },
       }));
 
@@ -360,7 +362,7 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
           isLoading: false,
           data: data.lineage,
           error: null,
-          showColumns: options.asset_only,
+          showColumns: !options.asset_only,
         },
       }));
     }

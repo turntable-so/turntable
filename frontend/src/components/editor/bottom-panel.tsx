@@ -87,8 +87,6 @@ export default function BottomPanel({
     activeFile?.node.type === "file" &&
     activeFile.node.name.endsWith(".sql");
 
-    console.log(lineageData[activeFile?.node.path || ""]?.showColumns)
-
   return (
     <Fragment>
       <PanelResizeHandle className="h-1 hover:bg-gray-300 dark:hover:bg-zinc-700 hover:cursor-col-resize transition-colors" />
@@ -199,7 +197,7 @@ export default function BottomPanel({
                 <Switch
                   id="asset-only"
                   checked={
-                    !lineageData[activeFile?.node.path || ""]?.showColumns
+                    lineageData[activeFile?.node.path || ""]?.showColumns
                   }
                   onCheckedChange={(checked) => {
                     setLineageOptionsAndRefetch(
