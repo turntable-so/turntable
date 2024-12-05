@@ -3,13 +3,15 @@ import shutil
 from urllib.parse import unquote
 
 from django.db import transaction
-from django.http import JsonResponse
+from django.db.models import Q
+from django.http import HttpResponse, JsonResponse
 from git import GitCommandError
 from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from sentry_sdk import capture_exception
 
-from api.serializers import AssetSerializer, LineageSerializer, ProjectSerializer
+from api.serializers import LineageAssetSerializer, LineageSerializer, ProjectSerializer
 from app.core.lineage import get_lineage_helper
 from app.models.project import Project
 from app.views.query_views import format_query
@@ -47,17 +49,32 @@ def get_file_tree(user_id: str, path: str, base_path: str):
 
 class ProjectViewSet(viewsets.ViewSet):
     def list(self, request):
+        filter_value = request.query_params.get("filter")
         workspace = request.user.current_workspace()
         dbt_details = workspace.get_dbt_dev_details()
+
         if not dbt_details.repository:
             return Response(
                 {"error": "No repository found for this workspace"},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        projects = ProjectSerializer(dbt_details.repository.projects, many=True)
+        # Get base queryset
+        projects = dbt_details.repository.projects
 
-        return Response(projects.data, status=status.HTTP_200_OK)
+        # Apply filters
+        if filter_value:
+            if filter_value == "active":
+                projects = projects.filter(archived=False)
+            elif filter_value == "yours":
+                projects = projects.filter(owner=request.user, archived=False)
+            elif filter_value == "archived":
+                projects = projects.filter(archived=True)
+
+        projects = projects.order_by("-created_at")
+
+        serializer = ProjectSerializer(projects, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def retrieve(self, request, pk=None):
         workspace = request.user.current_workspace()
@@ -72,6 +89,12 @@ class ProjectViewSet(viewsets.ViewSet):
         projects = ProjectSerializer(project)
 
         return Response(projects.data, status=status.HTTP_200_OK)
+
+    def destroy(self, request, pk=None):
+        project = Project.objects.get(id=pk)
+        project.archived = True
+        project.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=["POST"])
     def clone(self, request, pk=None):
@@ -403,10 +426,73 @@ class ProjectViewSet(viewsets.ViewSet):
                         git_config.set_value("user", "name", "")
                         git_config.set_value("user", "email", "")
 
+    def create(self, request):
+        workspace = request.user.current_workspace()
+        dbt_details = workspace.get_dbt_dev_details()
+        if not dbt_details:
+            return Response(
+                {"error": "No DBT details found for this workspace"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        branch_name = request.data.get("branch_name")
+        source_branch = request.data.get("source_branch")
+        schema = request.data.get("schema")
+
+        if not branch_name:
+            return Response(
+                {"error": "Branch name is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not source_branch:
+            return Response(
+                {"error": "Source branch is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not schema:
+            return Response(
+                {"error": "Schema is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Check if a project with the same name exists and is not archived
+        existing_project = Project.objects.filter(
+            name=branch_name, workspace=workspace, archived=False
+        ).first()
+        if existing_project:
+            return Response(
+                {"error": "A project with this name already exists"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Check if the branch already exists in the repository
+        repo = dbt_details.repository
+        remote_branches = repo.remote_branches
+        if branch_name in remote_branches:
+            return Response(
+                {"error": "A branch with this name already exists in the repository"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        with transaction.atomic():
+            project = Project.objects.create(
+                name=request.data.get("branch_name"),
+                workspace=workspace,
+                repository=dbt_details.repository,
+                branch_name=request.data.get("branch_name"),
+                schema=request.data.get("schema"),
+                source_branch=request.data.get("source_branch"),
+            )
+            project.create_git_branch(
+                source_branch=request.data.get("source_branch"),
+            )
+
+        project_serializer = ProjectSerializer(project)
+        return Response(project_serializer.data, status=status.HTTP_201_CREATED)
+
     @action(detail=False, methods=["GET", "POST", "PATCH"])
     def branches(self, request):
         workspace = request.user.current_workspace()
-        # assumes a single repo in the workspace for now
         dbt_details = workspace.get_dbt_dev_details()
         if not dbt_details:
             return Response(
@@ -424,54 +510,8 @@ class ProjectViewSet(viewsets.ViewSet):
                 }
             )
         elif request.method == "POST":
-            # Implement POST logic here
-            if not request.data.get("branch_name"):
-                return Response(
-                    {"error": "Branch name is required"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            if not request.data.get("source_branch"):
-                return Response(
-                    {"error": "Source branch is required"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            if not request.data.get("schema"):
-                return Response(
-                    {"error": "Schema is required"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            with transaction.atomic():
-                project = Project.objects.create(
-                    name=request.data.get("branch_name"),
-                    workspace=workspace,
-                    repository=dbt_details.repository,
-                    branch_name=request.data.get("branch_name"),
-                    schema=request.data.get("schema"),
-                    source_branch=request.data.get("source_branch"),
-                )
-                project.create_git_branch(
-                    source_branch=request.data.get("source_branch"),
-                )
-
-            project_serializer = ProjectSerializer(project)
-            return Response(project_serializer.data, status=status.HTTP_201_CREATED)
-
-        elif request.method == "PATCH":
-            if not request.data.get("branch_name"):
-                return Response(
-                    {"error": "Branch name is required"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            project = Project.objects.get(
-                workspace=workspace,
-                repository=dbt_details.repository,
-                branch_name=request.data.get("branch_name"),
-            )
-            with project.repo_context() as (repo, env):
-                name = project.switch_to_git_branch(repo, env)
-
-            return Response({"branch_name": name})
+            # Redirect to create method
+            return self.create(request)
 
         return Response(status=status.HTTP_501_NOT_IMPLEMENTED)
 
@@ -528,8 +568,13 @@ class ProjectViewSet(viewsets.ViewSet):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-        asset_serializer = AssetSerializer(root_asset, context={"request": request})
-        lineage_serializer = LineageSerializer(lineage, context={"request": request})
+        asset_serializer = LineageAssetSerializer(
+            root_asset, context={"request": request}
+        )
+        lineage_serializer = LineageSerializer(
+            lineage,
+            context={"request": request},
+        )
         return Response(
             {
                 "root_asset": asset_serializer.data,

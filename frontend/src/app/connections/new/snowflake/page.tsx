@@ -10,6 +10,7 @@ import {
 } from "@/components/connections/connection-options";
 import PostgresForm from "@/components/connections/forms/postgres-form";
 import SnowflakeForm from "@/components/connections/forms/snowflake-form";
+import { Card } from "@/components/ui/card";
 
 export default function SnowflakePage() {
   const router = useRouter();
@@ -31,9 +32,9 @@ export default function SnowflakePage() {
       </Button>
       <Separator />
       <div className="flex justify-center">
-        <div className="flex justify-center w-full py-8">
+        <Card className="flex justify-center w-full py-8">
           <SnowflakeForm />
-        </div>
+        </Card>
       </div>
     </div>
   );

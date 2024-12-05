@@ -26,4 +26,8 @@ export const LocalStorageKeys = {
     createLocalStorageKey(branchId, "check-for-problems-on-edit"),
   formatOnSave: (branchId: string): string =>
     createLocalStorageKey(branchId, "format-on-save"),
+  aiMessageHistory: (branchId: string): string =>
+    createLocalStorageKey(branchId, "ai-message-history"),
+  aiSelectedModel: (branchId: string): string =>
+    createLocalStorageKey(branchId, "ai-selected-model"),
 };

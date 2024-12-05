@@ -1,3 +1,6 @@
+x-storage-credentials: &storage-credentials
+  MINIO_TEST_BUCKET_NAME: "test-bucket"
+
 x-dev-credentials: &dev-credentials
   GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS}
   SNOWFLAKE_ACCOUNT: ${SNOWFLAKE_ACCOUNT}
@@ -7,6 +10,10 @@ x-dev-credentials: &dev-credentials
   GITHUB_PRIVATE_KEY_BASE64: ${GITHUB_PRIVATE_KEY_BASE64}
   GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET}
   DEV: "true"
+  OPENAI_API_KEY: ${OPENAI_API_KEY}
+  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+  LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
+  LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
 
 x-telemetry-credentials: &telemetry-credentials
   NEXT_PUBLIC_POSTHOG_KEY: ""
@@ -31,7 +38,7 @@ services:
         - ENV=dev
     command: ["django-admin", "start_server", "--mode", "dev"]
     environment:
-      <<: *dev-credentials
+      <<: [*dev-credentials, *storage-credentials]
     volumes:
       - ./backend:/code
     stdin_open: true
@@ -69,10 +76,22 @@ services:
       file: docker-compose.demo.yml
       service: minio
 
+
   createbuckets:
     extends:
       file: docker-compose.demo.yml
       service: createbuckets
+    entrypoint: >
+      /bin/sh -c "
+      until (/usr/bin/mc config host add myminio $${MINIO_ENDPOINT} $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD}) do echo '...waiting...' && sleep 1; done;
+      /usr/bin/mc mb --ignore-existing myminio/public-assets;
+      /usr/bin/mc mb --ignore-existing myminio/$${MINIO_BUCKET_NAME};
+      /usr/bin/mc mb --ignore-existing myminio/$${MINIO_TEST_BUCKET_NAME};
+      /usr/bin/mc anonymous set public myminio/public-assets;
+      exit 0;
+      "
+    environment:
+      <<: *storage-credentials
 
   worker:
     build:
@@ -83,7 +102,7 @@ services:
       service: worker
     command: ["django-admin", "start_worker", "--mode", "dev"]
     environment:
-      <<: *dev-credentials
+      <<: [*dev-credentials, *storage-credentials]
     volumes:
       - ./backend:/code
     stdin_open: true
@@ -98,7 +117,7 @@ services:
       service: worker
     command: ["django-admin", "start_beat", "--mode", "dev"]
     environment:
-      <<: *dev-credentials
+      <<: [*dev-credentials, *storage-credentials]
 
   flower:
     build:

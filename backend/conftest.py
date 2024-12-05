@@ -13,6 +13,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 from app.utils.test_utils import assert_ingest_output
 from app.workflows.metadata import process_metadata
 from fixtures.local_env import (
+    create_local_alternative_storage,
     create_local_metabase,
     create_local_postgres,
     create_local_user,
@@ -90,8 +91,8 @@ def use_cache(request):
     return request.config.getoption("--use_cache")
 
 
-@pytest.fixture()
-def user():
+@pytest.fixture
+def user(db):
     return create_local_user()
 
 
@@ -125,6 +126,11 @@ def local_postgres(workspace):
 
 
 @pytest.fixture
+def local_alternative_storage(workspace):
+    return create_local_alternative_storage(workspace)
+
+
+@pytest.fixture
 def local_metabase(workspace):
     return create_local_metabase(workspace)
 
@@ -141,7 +147,7 @@ def remote_databricks(user):
 
 @pytest.fixture
 def remote_tableau(user):
-    return group_3(user)[1]
+    return group_6(user)[1]
 
 
 @pytest.fixture
@@ -213,12 +219,7 @@ def session_monkeypatch():
     mp.undo()
 
 
-@pytest.fixture(scope="session")
-def bypass_celery_beat(session_monkeypatch):
-    session_monkeypatch.setenv("BYPASS_CELERY_BEAT", "true")
-
-
-@pytest.fixture(scope="session")
+@pytest.fixture
 def test_queue_name():
     """Generate unique queue name for each pytest-xdist worker"""
     worker_id = os.getenv("PYTEST_XDIST_WORKER")
@@ -227,10 +228,8 @@ def test_queue_name():
     return f"{TEST_QUEUE}_{worker_id}"
 
 
-@pytest.fixture(scope="session")
-def custom_celery_app(test_queue_name, eager):
-    if eager:
-        return None
+@pytest.fixture
+def custom_celery_app(test_queue_name):
     app = Celery("api")
 
     # Load configuration from Django settings
@@ -243,17 +242,13 @@ def custom_celery_app(test_queue_name, eager):
     return app
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def custom_celery_worker(
     custom_celery_app,
     test_queue_name,
-    eager,
+    transactional_db,
     max_retries: int = 10,
 ):
-    if eager:
-        yield
-        return
-
     # Clear the queue before starting the worker
     custom_celery_app.control.purge()
 
@@ -268,6 +263,8 @@ def custom_celery_worker(
                 perform_ping_check=False,
                 pool="threads",
                 concurrency=4,
+                beat=True,
+                scheduler="django_celery_beat.schedulers:DatabaseScheduler",
             ) as worker:
                 yield worker
                 break  # If we get here successfully, exit the retry loop
@@ -282,19 +279,17 @@ def custom_celery_worker(
             )
 
 
-@pytest.fixture(scope="session")
-def suppress_celery_errors(eager):
+@pytest.fixture
+def suppress_celery_errors():
     """
     Suppress error logs from celery.worker.control and kombu.pidbox
     by setting their log levels to CRITICAL.
     """
-    if eager:
-        yield
-        return
-
     loggers_to_suppress = [
         "celery.worker.control",
         "kombu.pidbox",
+        "celery.worker.consumer.pidbox",
+        "celery.worker.pidbox",
         # You can add more loggers here if needed
     ]
 
@@ -312,8 +307,6 @@ def suppress_celery_errors(eager):
         logging.getLogger(logger_name).setLevel(original_level)
 
 
-@pytest.fixture(scope="session")
-def custom_celery(custom_celery_worker, bypass_celery_beat, suppress_celery_errors):
-    if eager:
-        return None
+@pytest.fixture
+def custom_celery(custom_celery_worker, suppress_celery_errors):
     return custom_celery_worker

@@ -1,56 +1,35 @@
-import os
-import re
-
 from asgiref.sync import async_to_sync
+from celery import signals, states
 from channels.layers import get_channel_layer
 from django.core.cache import cache
-from django.db.models.signals import pre_save
-from django.dispatch import receiver
-from django_celery_results.models import TaskResult
 
 from app.models.workflows import (
-    ScheduledWorkflow,
-    WorkflowTaskMap,
     get_periodic_task_key,
 )
 
 
-def signal_periodic_task_started(instance):
-    if os.getenv("BYPASS_CELERY_BEAT") == "true":
-        workflow_id = WorkflowTaskMap.inverse_map.get(instance.task_id)
-        if not workflow_id:
-            return
-
-        workflow = ScheduledWorkflow.objects.get(id=workflow_id)
-        instance.periodic_task_name = workflow.replacement_identifier
-
-    if instance.periodic_task_name:
+def task_start_handler(task_id, task, **kwargs):
+    periodic_task_name = task.request.properties.get("periodic_task_name")
+    if periodic_task_name:
         cache.set(
-            key=get_periodic_task_key(instance.periodic_task_name),
-            value=instance.task_id,
+            key=get_periodic_task_key(periodic_task_name),
+            value=task_id,
             timeout=500,
         )
 
 
-@receiver(pre_save, sender=TaskResult)
-def task_result_pre_save(sender, instance, **task_kwargs):
-    signal_periodic_task_started(instance)
-    try:
-        old_status = TaskResult.objects.get(pk=instance.pk).status
-    except TaskResult.DoesNotExist:
-        old_status = None
-    new_status = instance.status
+def get_signal_name(kwargs):
+    if signal := kwargs.get("signal", ""):
+        return signal.name
+    return ""
 
-    if old_status == new_status:
-        return
 
+def send_status_update(task_id, state, task_kwargs):
     ids_to_fetch = {"workspace_id": True, "resource_id": False}
     ids = {}
     for id, mandatory in ids_to_fetch.items():
-        pattern = r"""['"]""" + id + r"""['"]\s*:\s*(['"])(.*?)\1"""
-        match = re.search(pattern, instance.task_kwargs)
-        if match:
-            ids[id] = match.group(2)
+        if id in task_kwargs:
+            ids[id] = task_kwargs[id]
         elif mandatory:
             raise ValueError(f"{id} is required as a kwarg on all tasks")
 
@@ -60,11 +39,60 @@ def task_result_pre_save(sender, instance, **task_kwargs):
             f"workspace_{ids['workspace_id']}",
             {
                 "type": "workflow_status_update",
-                "status": instance.status,
-                "task_id": str(instance.id),
+                "status": state,
+                "task_id": str(task_id),
                 **ids,
             },
         )
     except Exception as e:
         print(e)
         print("Error sending status update")
+
+
+SIGNAL_STATE_MAP = {
+    "task_prerun": states.STARTED,
+    "task_success": states.SUCCESS,
+    "task_failure": states.FAILURE,
+    "task_revoked": states.REVOKED,
+}
+
+
+@signals.task_prerun.connect
+@signals.task_success.connect
+@signals.task_failure.connect
+@signals.task_revoked.connect
+def handle_task_state(
+    sender=None,
+    headers=None,
+    body=None,
+    task_id=None,
+    task=None,
+    state=None,
+    result=None,
+    **kwargs,
+):
+    """Handle all task state changes"""
+    signal_name = get_signal_name(kwargs)
+    if signal_name == "task_prerun":
+        task_start_handler(task_id, task, **kwargs)
+
+    state = SIGNAL_STATE_MAP.get(signal_name, "")
+
+    # ensure task_id
+    if not task_id:
+        if sender:
+            task_id = sender.request.id
+        else:
+            return
+
+    # Get task kwargs from the appropriate source based on signal
+    if headers and body:  # before_task_publish
+        task_kwargs = body[1]
+    elif task:  # other signals
+        task_kwargs = task.request.kwargs
+    elif sender:  # For success signal
+        task_kwargs = sender.request.kwargs  # sender is the task instance
+    else:
+        return
+
+    send_status_update(task_id, state, task_kwargs)

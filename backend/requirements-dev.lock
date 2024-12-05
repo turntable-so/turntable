@@ -7,30 +7,32 @@
 #   all-features: false
 #   with-sources: false
 #   generate-hashes: false
-#   universal: false
 
-acryl-datahub==0.13.3
-adrf==0.1.6
-aiohappyeyeballs==2.4.2
+acryl-datahub==0.14.1.12
+adrf==0.1.8
+agate==1.9.1
+    # via dbt-adapters
+    # via dbt-common
+    # via dbt-core
+    # via dbt-postgres
+    # via dbt-redshift
+    # via dbt-snowflake
+aiohappyeyeballs==2.4.3
     # via aiohttp
-aiohttp==3.10.8
+aiohttp==3.11.7
     # via acryl-datahub
-    # via aiohttp-retry
-    # via hatchet-sdk
     # via instructor
     # via litellm
-aiohttp-retry==2.8.3
-    # via hatchet-sdk
+    # via realtime
 aiosignal==1.3.1
     # via aiohttp
-aiostream==0.5.2
-    # via hatchet-sdk
-amqp==5.2.0
+amqp==5.3.1
     # via kombu
 annotated-types==0.7.0
     # via pydantic
-anyio==4.4.0
+anyio==4.6.2.post1
     # via httpx
+    # via langfuse
     # via openai
     # via sse-starlette
     # via starlette
@@ -42,6 +44,7 @@ asgiref==3.8.1
     # via django
     # via django-cors-headers
 asn1crypto==1.5.1
+    # via scramp
     # via snowflake-connector-python
 asttokens==2.4.1
     # via stack-data
@@ -49,7 +52,7 @@ async-property==0.2.2
     # via adrf
 atpublic==4.1.0
     # via turntable-spoonbill
-attrs==23.2.0
+attrs==24.2.0
     # via aiohttp
     # via jsonschema
     # via outcome
@@ -64,33 +67,39 @@ automat==24.8.1
 avro==1.11.3
     # via acryl-datahub
     # via avro-gen3
-avro-gen3==0.7.13
+avro-gen3==0.7.16
     # via acryl-datahub
+babel==2.16.0
+    # via agate
 backoff==2.2.1
+    # via langfuse
     # via posthog
-beartype==0.18.5
+beartype==0.19.0
     # via plum-dispatch
 beautifulsoup4==4.12.3
     # via bs4
+    # via redshift-connector
 bidict==0.23.1
     # via turntable-spoonbill
 billiard==4.2.1
     # via celery
-bitarray==2.9.2
+bitarray==2.9.3
     # via netext
-black==24.4.2
+black==24.10.0
     # via shandy-sqlfmt
-blinker==1.8.2
+blinker==1.9.0
     # via flask
 boto3==1.34.20
     # via django-storages
-botocore==1.34.141
+    # via redshift-connector
+botocore==1.34.162
     # via boto3
+    # via redshift-connector
     # via s3transfer
 bs4==0.0.2
-cached-property==1.5.2
+cached-property==2.0.1
     # via acryl-datahub
-cachetools==5.3.3
+cachetools==5.5.0
     # via google-auth
     # via netext
 celery==5.4.0
@@ -98,7 +107,8 @@ celery==5.4.0
     # via django-celery-results
     # via flower
     # via pytest-celery
-certifi==2024.6.2
+    # via sentry-sdk
+certifi==2024.8.30
     # via httpcore
     # via httpx
     # via pyogrio
@@ -107,14 +117,13 @@ certifi==2024.6.2
     # via selenium
     # via sentry-sdk
     # via snowflake-connector-python
-cffi==1.16.0
+cffi==1.17.1
     # via cryptography
-    # via pynacl
     # via snowflake-connector-python
-channels==4.1.0
+channels==4.2.0
     # via channels-redis
-channels-redis==4.2.0
-charset-normalizer==3.3.2
+channels-redis==4.2.1
+charset-normalizer==3.4.0
     # via requests
     # via snowflake-connector-python
 chromedriver-autoinstaller==0.6.4
@@ -126,6 +135,8 @@ click==8.1.7
     # via click-didyoumean
     # via click-plugins
     # via click-repl
+    # via dbt-core
+    # via dbt-semantic-interfaces
     # via flask
     # via litellm
     # via shandy-sqlfmt
@@ -141,14 +152,16 @@ click-repl==0.3.0
     # via celery
 click-spinner==0.1.10
     # via acryl-datahub
+colorama==0.4.6
+    # via dbt-common
 constantly==23.10.4
     # via twisted
-contourpy==1.2.1
+contourpy==1.3.1
     # via matplotlib
 cron-descriptor==1.4.5
     # via django-celery-beat
 croniter==5.0.1
-cryptography==42.0.8
+cryptography==43.0.3
     # via autobahn
     # via pyjwt
     # via pyopenssl
@@ -157,34 +170,67 @@ cryptography==42.0.8
     # via social-auth-core
 cycler==0.12.1
     # via matplotlib
+daff==1.3.46
+    # via dbt-core
 daphne==4.1.2
-databricks-sql-connector==3.4.0
-db-dtypes==1.2.0
+databricks-sql-connector==3.6.0
+db-dtypes==1.3.1
+    # via google-cloud-bigquery
     # via turntable-spoonbill
+dbt-adapters==1.9.0
+    # via dbt-bigquery
+    # via dbt-core
+    # via dbt-duckdb
+    # via dbt-postgres
+    # via dbt-redshift
+    # via dbt-snowflake
+dbt-bigquery==1.8.3
+dbt-common==1.12.0
+    # via dbt-adapters
+    # via dbt-bigquery
+    # via dbt-core
+    # via dbt-duckdb
+    # via dbt-postgres
+    # via dbt-redshift
+    # via dbt-snowflake
+dbt-core==1.8.7
+    # via dbt-bigquery
+    # via dbt-duckdb
+    # via dbt-postgres
+    # via dbt-redshift
+    # via dbt-snowflake
+dbt-duckdb==1.8.4
 dbt-extractor==0.5.1
+    # via dbt-core
+dbt-postgres==1.8.2
+    # via dbt-redshift
+dbt-redshift==1.8.1
+dbt-semantic-interfaces==0.5.1
+    # via dbt-core
+dbt-snowflake==1.8.4
 dbtx==0.0.3
-debugpy==1.8.7
+debugpy==1.8.9
     # via pytest-celery
 decorator==5.1.1
     # via ipython
-deepmerge==1.1.1
-    # via turntable-cli
+deepdiff==7.0.1
+    # via dbt-common
+deepmerge==2.0
 defusedxml==0.7.1
     # via python3-openid
     # via social-auth-core
-deprecated==1.2.14
+deprecated==1.2.15
     # via acryl-datahub
-    # via pygithub
 deprecation==2.1.0
     # via postgrest
-dill==0.3.8
+dill==0.3.9
     # via multiprocess
 diskcache==5.6.3
 distro==1.9.0
     # via openai
-dj-database-url==2.2.0
-dj-rest-auth==6.0.0
-django==5.0.6
+dj-database-url==2.3.0
+dj-rest-auth==7.0.0
+django==5.1.3
     # via adrf
     # via channels
     # via dj-database-url
@@ -208,14 +254,12 @@ django-allauth==0.61.1
     # via dj-rest-auth
 django-celery-beat==2.7.0
 django-celery-results==2.5.1
-django-cors-headers==4.4.0
+django-cors-headers==4.6.0
 django-health-check==3.18.3
 django-invitations==2.1.0
-django-pgbulk==3.0.0
-django-polymorphic @ git+https://github.com/jazzband/django-polymorphic.git@1039f882b99f97bf657bd958c949ee6a3b00377a#egg=django-polymorphic
-django-storages==1.14.3
-django-templated-mail==1.1.1
-    # via djoser
+django-pgbulk==3.2.0
+django-polymorphic @ git+https://github.com/jazzband/django-polymorphic.git@1039f882b99f97bf657bd958c949ee6a3b00377a
+django-storages==1.14.4
 django-timezone-field==7.0
     # via django-celery-beat
 djangorestframework==3.15.2
@@ -224,56 +268,54 @@ djangorestframework==3.15.2
     # via djangorestframework-simplejwt
 djangorestframework-simplejwt==5.3.1
     # via djoser
-djoser==2.2.3
-dnspython==2.6.1
-    # via email-validator
+djoser==2.3.1
 docker==7.1.0
     # via acryl-datahub
     # via pytest-celery
     # via pytest-docker-tools
 docstring-parser==0.16
     # via instructor
-duckdb==1.0.0
+duckdb==1.1.3
+    # via dbt-duckdb
     # via turntable-spoonbill
-email-validator==2.2.0
-    # via fastapi
-et-xmlfile==1.1.0
+et-xmlfile==2.0.0
     # via openpyxl
 execnet==2.1.1
     # via pytest-xdist
-executing==2.0.1
+executing==2.1.0
     # via stack-data
 expandvars==0.12.0
     # via acryl-datahub
-fastapi==0.111.0
-fastapi-cli==0.0.4
-    # via fastapi
+fastapi==0.115.5
 fernet==1.0.1
-filelock==3.15.4
+filelock==3.16.1
     # via huggingface-hub
     # via snowflake-connector-python
-flask==3.0.3
+flask==3.1.0
     # via mpire
 flower==2.0.1
-fonttools==4.53.0
+fonttools==4.55.0
     # via matplotlib
-frozenlist==1.4.1
+frozenlist==1.5.0
     # via aiohttp
     # via aiosignal
-fsspec==2024.6.1
+fsspec==2024.10.0
     # via huggingface-hub
 geopandas==1.0.1
+gevent==24.11.1
+    # via celery
 gitdb==4.0.11
     # via gitpython
-githubkit==0.11.6
+githubkit==0.11.14
 gitpython==3.1.43
-google-api-core==2.19.1
+google-api-core==2.23.0
+    # via dbt-bigquery
     # via google-cloud-bigquery
     # via google-cloud-bigquery-storage
     # via google-cloud-core
     # via google-cloud-dataproc
     # via google-cloud-storage
-google-auth==2.31.0
+google-auth==2.36.0
     # via google-api-core
     # via google-auth-oauthlib
     # via google-cloud-bigquery
@@ -282,80 +324,86 @@ google-auth==2.31.0
     # via google-cloud-dataproc
     # via google-cloud-storage
     # via pydata-google-auth
-google-auth-oauthlib==1.2.0
+google-auth-oauthlib==1.2.1
     # via pydata-google-auth
-google-cloud-bigquery==3.25.0
+google-cloud-bigquery==3.27.0
+    # via dbt-bigquery
     # via turntable-spoonbill
-google-cloud-bigquery-storage==2.25.0
+google-cloud-bigquery-storage==2.27.0
     # via turntable-spoonbill
 google-cloud-core==2.4.1
     # via google-cloud-bigquery
     # via google-cloud-storage
-google-cloud-dataproc==5.10.0
-google-cloud-storage==2.17.0
-google-crc32c==1.5.0
+google-cloud-dataproc==5.15.1
+    # via dbt-bigquery
+google-cloud-storage==2.18.2
+    # via dbt-bigquery
+google-crc32c==1.6.0
     # via google-cloud-storage
     # via google-resumable-media
-google-resumable-media==2.7.1
+google-resumable-media==2.7.2
     # via google-cloud-bigquery
     # via google-cloud-storage
-googleapis-common-protos==1.63.2
+googleapis-common-protos==1.66.0
     # via google-api-core
     # via grpc-google-iam-v1
     # via grpcio-status
-gotrue==2.5.4
+gotrue==2.10.0
     # via supabase
 grandalf==0.7
     # via netext
+greenlet==3.1.1
+    # via gevent
 grpc-google-iam-v1==0.13.1
     # via google-cloud-dataproc
-grpcio==1.64.1
+grpcio==1.68.0
     # via google-api-core
     # via googleapis-common-protos
     # via grpc-google-iam-v1
     # via grpcio-status
-    # via grpcio-tools
-    # via hatchet-sdk
-grpcio-status==1.62.2
+grpcio-status==1.62.3
     # via google-api-core
-grpcio-tools==1.62.2
-    # via hatchet-sdk
-gunicorn==22.0.0
+gunicorn==23.0.0
 h11==0.14.0
     # via httpcore
     # via uvicorn
     # via wsproto
-hatchet-sdk==0.38.3
-hishel==0.0.26
-    # via githubkit
-httpcore==1.0.5
+h2==4.1.0
     # via httpx
-httptools==0.6.1
+hishel==0.0.33
+    # via githubkit
+hpack==4.0.0
+    # via h2
+httpcore==1.0.7
+    # via httpx
+httptools==0.6.4
     # via uvicorn
-httpx==0.27.0
-    # via fastapi
+httpx==0.27.2
     # via githubkit
     # via gotrue
     # via hishel
+    # via langfuse
     # via openai
     # via postgrest
     # via storage3
     # via supabase
     # via supafunc
-huggingface-hub==0.23.4
+huggingface-hub==0.26.2
     # via tokenizers
 humanfriendly==10.0
     # via acryl-datahub
 humanize==4.11.0
     # via flower
+hyperframe==6.0.1
+    # via h2
 hyperlink==21.0.0
     # via autobahn
     # via twisted
-idna==3.7
+idna==3.10
     # via anyio
-    # via email-validator
     # via httpx
     # via hyperlink
+    # via langfuse
     # via requests
     # via snowflake-connector-python
     # via trio
@@ -364,92 +412,117 @@ idna==3.7
 ijson==3.3.0
     # via acryl-datahub
 importlib-metadata==6.11.0
+    # via dbt-semantic-interfaces
     # via litellm
 incremental==24.7.2
     # via twisted
 iniconfig==2.0.0
     # via pytest
-instructor==1.6.3
-ipython==8.18.0
+instructor==1.6.4
+ipython==8.29.0
+isodate==0.6.1
+    # via agate
+    # via dbt-common
 itsdangerous==2.2.0
     # via flask
-jedi==0.19.1
+jaraco-classes==3.4.0
+    # via keyring
+jaraco-context==6.0.1
+    # via keyring
+jaraco-functools==4.1.0
+    # via keyring
+jedi==0.19.2
     # via ipython
 jinja2==3.1.4
-    # via fastapi
+    # via dbt-common
+    # via dbt-core
+    # via dbt-semantic-interfaces
     # via flask
     # via instructor
     # via litellm
     # via shandy-sqlfmt
-jiter==0.5.0
+jiter==0.6.1
     # via instructor
     # via openai
-jmespath==0.10.0
+jmespath==1.0.1
     # via boto3
     # via botocore
 jsonref==1.1.0
     # via acryl-datahub
-jsonschema==4.22.0
+jsonschema==4.23.0
     # via acryl-datahub
+    # via dbt-common
+    # via dbt-semantic-interfaces
     # via litellm
-jsonschema-specifications==2023.12.1
+jsonschema-specifications==2024.10.1
     # via jsonschema
-kiwisolver==1.4.5
+keyring==25.5.0
+    # via snowflake-connector-python
+kiwisolver==1.4.7
     # via matplotlib
 kombu==5.4.2
     # via celery
-lets-plot==4.3.3
+langfuse==2.55.0
+leather==0.4.0
+    # via agate
+lets-plot==4.5.1
 linkify-it-py==2.0.3
     # via markdown-it-py
-litellm==1.41.4
-logtail-python==0.3.0
-    # via turntable-cli
-loguru==0.7.2
-    # via hatchet-sdk
-lxml==5.2.2
+litellm==1.52.14
+logbook==1.5.3
+    # via dbt-core
+lxml==5.3.0
+    # via redshift-connector
 lz4==4.3.3
     # via databricks-sql-connector
 markdown-it-py==3.0.0
     # via mdit-py-plugins
     # via rich
     # via textual
-markupsafe==2.1.5
+markupsafe==3.0.2
     # via jinja2
     # via werkzeug
-matplotlib==3.9.0
+mashumaro==3.15
+    # via dbt-adapters
+    # via dbt-common
+    # via dbt-core
+matplotlib==3.9.2
     # via networkx
 matplotlib-inline==0.1.7
     # via ipython
-mdit-py-plugins==0.4.1
+mdit-py-plugins==0.4.2
     # via markdown-it-py
 mdurl==0.1.2
     # via markdown-it-py
+minimal-snowplow-tracker==0.0.2
+    # via dbt-core
 mixpanel==4.10.1
     # via acryl-datahub
 monotonic==1.6
     # via posthog
+more-itertools==10.5.0
+    # via dbt-semantic-interfaces
+    # via jaraco-classes
+    # via jaraco-functools
 mpire==2.10.2
-    # via turntable-cli
-msgpack==1.0.8
+msgpack==1.1.0
     # via channels-redis
-    # via logtail-python
-multidict==6.0.5
+    # via mashumaro
+multidict==6.1.0
     # via aiohttp
     # via yarl
-multiprocess==0.70.16
+multiprocess==0.70.17
     # via mpire
-mypy==1.10.1
+mypy==1.13.0
 mypy-extensions==1.0.0
     # via black
     # via mypy
     # via typing-inspect
-nest-asyncio==1.6.0
-    # via hatchet-sdk
 netext==0.2.1
-networkx==3.3
+networkx==3.4.2
+    # via dbt-core
     # via netext
-    # via turntable-cli
-ngrok==1.3.0
+ngrok==1.4.0
 numpy==1.26.4
     # via contourpy
     # via databricks-sql-connector
@@ -469,168 +542,179 @@ oauthlib==3.2.2
     # via databricks-sql-connector
     # via requests-oauthlib
     # via social-auth-core
-openai==1.53.0
+openai==1.55.0
     # via instructor
     # via litellm
 openpyxl==3.1.5
     # via databricks-sql-connector
-orjson==3.10.5
-    # via fastapi
-    # via turntable-cli
+ordered-set==4.1.0
+    # via deepdiff
+orjson==3.10.11
 outcome==1.3.0.post0
     # via trio
-packaging==24.1
+packaging==24.2
     # via acryl-datahub
     # via black
     # via chromedriver-autoinstaller
     # via db-dtypes
+    # via dbt-core
     # via deprecation
     # via geopandas
     # via google-cloud-bigquery
     # via gunicorn
     # via huggingface-hub
+    # via langfuse
     # via matplotlib
     # via pyogrio
     # via pytest
+    # via pytest-sugar
+    # via redshift-connector
     # via snowflake-connector-python
 palettable==3.3.3
     # via lets-plot
-pandas==2.2.2
+pandas==2.2.3
     # via databricks-sql-connector
     # via db-dtypes
     # via geopandas
+    # via google-cloud-bigquery
     # via networkx
-    # via turntable-cli
     # via turntable-spoonbill
+parsedatetime==2.6
+    # via agate
 parso==0.8.4
     # via jedi
 parsy==2.1
     # via turntable-spoonbill
 pathspec==0.12.1
     # via black
+    # via dbt-common
+    # via dbt-core
 pexpect==4.9.0
     # via ipython
-pgvector==0.3.0
-pillow==10.4.0
+pgvector==0.3.6
+pillow==11.0.0
     # via matplotlib
-platformdirs==4.2.2
+platformdirs==4.3.6
     # via black
     # via shandy-sqlfmt
     # via snowflake-connector-python
+    # via textual
 pluggy==1.5.0
     # via pytest
-plum-dispatch==2.5.0
+plum-dispatch==2.5.3
     # via netext
-postgrest==0.16.8
+postgrest==0.18.0
     # via supabase
-posthog==3.5.0
-    # via turntable-cli
-progressbar2==4.4.2
+posthog==3.7.2
+progressbar2==4.5.0
     # via acryl-datahub
 prometheus-client==0.21.0
     # via flower
-prompt-toolkit==3.0.36
+prompt-toolkit==3.0.48
     # via click-repl
     # via ipython
-proto-plus==1.24.0
+propcache==0.2.0
+    # via aiohttp
+    # via yarl
+proto-plus==1.25.0
     # via google-api-core
     # via google-cloud-bigquery-storage
     # via google-cloud-dataproc
-protobuf==4.25.3
+protobuf==4.25.5
+    # via dbt-adapters
+    # via dbt-common
+    # via dbt-core
     # via google-api-core
     # via google-cloud-bigquery-storage
     # via google-cloud-dataproc
     # via googleapis-common-protos
     # via grpc-google-iam-v1
     # via grpcio-status
-    # via grpcio-tools
-    # via hatchet-sdk
     # via proto-plus
-psutil==6.0.0
+psutil==6.1.0
     # via acryl-datahub
     # via pytest-celery
-psycopg==3.1.19
-psycopg-binary==3.1.19
+psycopg==3.2.3
+psycopg-binary==3.2.3
     # via psycopg
-psycopg2-binary==2.9.9
+psycopg2-binary==2.9.10
+    # via dbt-postgres
     # via turntable-spoonbill
 ptyprocess==0.7.0
     # via pexpect
-pure-eval==0.2.2
+pure-eval==0.2.3
     # via stack-data
 pyaes==1.6.1
     # via fernet
 pyarrow==16.1.0
     # via databricks-sql-connector
     # via db-dtypes
+    # via google-cloud-bigquery
     # via turntable-spoonbill
 pyarrow-hotfix==0.6
     # via turntable-spoonbill
-pyasn1==0.6.0
+pyasn1==0.6.1
     # via pyasn1-modules
     # via rsa
     # via service-identity
-pyasn1-modules==0.4.0
+pyasn1-modules==0.4.1
     # via google-auth
     # via service-identity
 pycparser==2.22
     # via cffi
 pydantic==2.8.2
     # via acryl-datahub
+    # via dbt-semantic-interfaces
     # via fastapi
     # via githubkit
     # via gotrue
-    # via hatchet-sdk
     # via instructor
+    # via langfuse
     # via litellm
     # via openai
     # via postgrest
-    # via turntable-cli
 pydantic-core==2.20.1
     # via instructor
     # via pydantic
-pydata-google-auth==1.8.2
+pydata-google-auth==1.9.0
     # via turntable-spoonbill
-pygithub==2.3.0
-    # via turntable-cli
 pygments==2.18.0
     # via ipython
     # via mpire
     # via rich
-pyinstrument==4.6.2
-pyjwt==2.8.0
+pyinstrument==5.0.0
+pyjwt==2.10.0
     # via django-allauth
     # via djangorestframework-simplejwt
-    # via pygithub
     # via snowflake-connector-python
     # via social-auth-core
-pynacl==1.5.0
-    # via pygithub
-pyogrio==0.9.0
+pyogrio==0.10.0
     # via geopandas
-pyopenssl==24.1.0
+pyopenssl==24.2.1
     # via snowflake-connector-python
     # via twisted
-pyparsing==3.1.2
+pyparsing==3.2.0
     # via grandalf
     # via matplotlib
 pypng==0.20220715.0
     # via lets-plot
-pyproj==3.6.1
+pyproj==3.7.0
     # via geopandas
 pysocks==1.7.1
     # via urllib3
-pytest==8.2.2
+pytest==8.3.3
     # via pytest-asyncio
     # via pytest-django
     # via pytest-docker-tools
+    # via pytest-sugar
     # via pytest-timeout
     # via pytest-xdist
-pytest-asyncio==0.23.8
+pytest-asyncio==0.24.0
 pytest-celery==1.1.3
-pytest-django==4.8.0
+pytest-django==4.9.0
 pytest-docker-tools==3.1.3
     # via pytest-celery
+pytest-sugar==1.0.0
 pytest-timeout==2.3.1
 pytest-xdist==3.6.1
 python-crontab==3.2.0
@@ -640,67 +724,77 @@ python-dateutil==2.9.0.post0
     # via botocore
     # via celery
     # via croniter
+    # via dbt-common
+    # via dbt-semantic-interfaces
     # via google-cloud-bigquery
-    # via hatchet-sdk
     # via matplotlib
     # via pandas
     # via posthog
     # via python-crontab
     # via realtime
     # via storage3
-    # via turntable-cli
     # via turntable-spoonbill
 python-dotenv==1.0.1
-    # via hatchet-sdk
     # via litellm
     # via uvicorn
-python-multipart==0.0.9
-    # via fastapi
-python-utils==3.8.2
+python-slugify==8.0.4
+    # via agate
+python-utils==3.9.0
     # via progressbar2
 python3-openid==3.2.0
     # via django-allauth
     # via social-auth-core
-pytz==2024.1
+pytimeparse==1.1.8
+    # via agate
+pytz==2024.2
     # via croniter
+    # via dbt-adapters
+    # via dbt-core
     # via flower
     # via pandas
+    # via redshift-connector
     # via snowflake-connector-python
     # via turntable-spoonbill
 pyyaml==6.0.2
     # via acryl-datahub
+    # via dbt-core
+    # via dbt-semantic-interfaces
     # via dbtx
-    # via hatchet-sdk
     # via huggingface-hub
-    # via turntable-cli
     # via uvicorn
     # via watchdog
-realtime==1.0.6
+realtime==2.0.6
     # via supabase
-redis==5.0.7
+redis==5.2.0
     # via celery
     # via channels-redis
     # via redis-cli
 redis-cli==1.0.1
+redshift-connector==2.0.917
+    # via dbt-redshift
 referencing==0.35.1
     # via jsonschema
     # via jsonschema-specifications
-regex==2024.5.15
+regex==2024.11.6
     # via tiktoken
     # via turntable-spoonbill
 requests==2.32.3
     # via databricks-sql-connector
+    # via dbt-common
+    # via dbt-core
     # via django-allauth
     # via docker
     # via google-api-core
     # via google-cloud-bigquery
     # via google-cloud-storage
     # via huggingface-hub
+    # via instructor
+    # via langfuse
     # via litellm
-    # via logtail-python
+    # via minimal-snowplow-tracker
     # via mixpanel
     # via posthog
-    # via pygithub
+    # via redshift-connector
     # via requests-file
     # via requests-oauthlib
     # via snowflake-connector-python
@@ -712,46 +806,47 @@ requests-oauthlib==2.0.0
     # via django-allauth
     # via google-auth-oauthlib
     # via social-auth-core
-rich==13.7.1
+rich==13.9.4
     # via instructor
     # via netext
     # via plum-dispatch
     # via textual
     # via turntable-spoonbill
     # via typer
-rpds-py==0.18.1
+rpds-py==0.21.0
     # via jsonschema
     # via referencing
 rsa==4.9
     # via google-auth
-rtree==1.2.0
+rtree==1.3.0
     # via netext
 ruamel-yaml==0.18.6
     # via acryl-datahub
-    # via turntable-cli
-ruamel-yaml-clib==0.2.8
+ruamel-yaml-clib==0.2.12
     # via ruamel-yaml
-ruff==0.7.3
+ruff==0.8.0
 rustworkx==0.15.1
-s3transfer==0.10.2
+s3transfer==0.10.4
     # via boto3
-scipy==1.14.0
+scipy==1.14.1
     # via networkx
-selenium==4.22.0
-sentry-sdk==2.18.0
+scramp==1.4.5
+    # via redshift-connector
+selenium==4.26.1
+sentry-sdk==2.19.0
     # via acryl-datahub
-service-identity==24.1.0
+service-identity==24.2.0
     # via twisted
-setuptools==75.3.0
+setuptools==75.6.0
     # via autobahn
-    # via grpcio-tools
     # via incremental
     # via pydata-google-auth
     # via pytest-celery
+    # via redshift-connector
+    # via zope-event
     # via zope-interface
-shandy-sqlfmt==0.23.2
-    # via turntable-cli
-shapely==2.0.4
+shandy-sqlfmt==0.24.0
+shapely==2.0.6
     # via geopandas
     # via netext
 shellingham==1.5.4
@@ -759,6 +854,8 @@ shellingham==1.5.4
 six==1.16.0
     # via asttokens
     # via avro-gen3
+    # via isodate
+    # via minimal-snowplow-tracker
     # via mixpanel
     # via posthog
     # via python-dateutil
@@ -770,62 +867,62 @@ sniffio==1.3.1
     # via httpx
     # via openai
     # via trio
-snowflake-connector-python==3.11.0
+snowflake-connector-python==3.12.3
+    # via dbt-snowflake
     # via turntable-spoonbill
-social-auth-app-django==5.4.1
+social-auth-app-django==5.4.2
     # via djoser
 social-auth-core==4.5.4
     # via social-auth-app-django
 sortedcontainers==2.4.0
     # via snowflake-connector-python
     # via trio
-soupsieve==2.5
+soupsieve==2.6
     # via beautifulsoup4
 sqlglot==25.0.3
-    # via turntable-cli
     # via turntable-spoonbill
 sqlglotrs==0.2.5
     # via sqlglot
-sqlparse==0.5.0
+sqlparse==0.5.2
+    # via dbt-core
+    # via dbt-redshift
     # via django
-sse-starlette==2.1.2
+sse-starlette==2.1.3
 stack-data==0.6.3
     # via ipython
-starlette==0.37.2
+starlette==0.41.3
     # via fastapi
     # via sse-starlette
-storage3==0.7.6
+storage3==0.9.0
     # via supabase
-strenum==0.4.15
-    # via postgrest
-supabase==2.5.1
-supafunc==0.4.6
+supabase==2.10.0
+supafunc==0.7.0
     # via supabase
 tabulate==0.9.0
     # via acryl-datahub
-    # via turntable-cli
 tenacity==9.0.0
-    # via hatchet-sdk
     # via instructor
     # via pytest-celery
-termcolor==2.4.0
-    # via acryl-datahub
-textual==0.72.0
-thrift==0.20.0
+termcolor==2.5.0
+    # via pytest-sugar
+text-unidecode==1.3
+    # via python-slugify
+textual==0.86.3
+thrift==0.16.0
     # via databricks-sql-connector
-tiktoken==0.7.0
+tiktoken==0.8.0
     # via litellm
-tokenizers==0.19.1
+tokenizers==0.20.3
     # via litellm
 toml==0.10.2
     # via acryl-datahub
-tomlkit==0.12.5
+tomlkit==0.13.2
     # via snowflake-connector-python
 toolz==0.12.1
     # via turntable-spoonbill
-tornado==6.4.1
+tornado==6.4.2
     # via flower
-tqdm==4.66.4
+tqdm==4.67.0
     # via huggingface-hub
     # via mpire
     # via openai
@@ -833,43 +930,43 @@ tqdm==4.66.4
 traitlets==5.14.3
     # via ipython
     # via matplotlib-inline
-trio==0.25.1
+trio==0.27.0
     # via selenium
     # via trio-websocket
 trio-websocket==0.11.1
     # via selenium
-turntable-cli==0.4.8
 turntable-spoonbill==10.0.2
-twisted==24.7.0
+twisted==24.10.0
     # via daphne
 txaio==23.1.1
     # via autobahn
-typer==0.12.3
-    # via fastapi-cli
+typer==0.13.1
     # via instructor
-    # via turntable-cli
-types-pytz==2024.1.0.20240417
-types-pyyaml==6.0.12.20240311
+types-pytz==2024.2.0.20241003
+types-pyyaml==6.0.12.20240917
 types-toml==0.10.8.20240310
 typing-extensions==4.12.2
     # via acryl-datahub
-    # via aiostream
+    # via dbt-adapters
+    # via dbt-common
+    # via dbt-core
+    # via dbt-semantic-interfaces
     # via dj-database-url
     # via fastapi
     # via githubkit
     # via hishel
     # via huggingface-hub
+    # via mashumaro
     # via mypy
     # via openai
+    # via plum-dispatch
     # via psycopg
     # via pydantic
     # via pydantic-core
-    # via pygithub
     # via python-utils
     # via realtime
     # via selenium
     # via snowflake-connector-python
-    # via storage3
     # via textual
     # via turntable-spoonbill
     # via twisted
@@ -877,55 +974,54 @@ typing-extensions==4.12.2
     # via typing-inspect
 typing-inspect==0.9.0
     # via acryl-datahub
-tzdata==2024.1
+tzdata==2024.2
     # via celery
     # via django-celery-beat
     # via kombu
     # via pandas
 uc-micro-py==1.0.3
     # via linkify-it-py
-ujson==5.10.0
-    # via fastapi
-urllib3==2.2.2
+urllib3==2.2.3
     # via botocore
     # via databricks-sql-connector
     # via docker
-    # via hatchet-sdk
     # via mixpanel
-    # via pygithub
     # via requests
     # via selenium
     # via sentry-sdk
-uv==0.4.16
+uv==0.5.4
     # via dbtx
-uvicorn==0.31.0
-    # via fastapi
+uvicorn==0.32.1
     # via sse-starlette
-uvloop==0.19.0
+uvloop==0.21.0
     # via uvicorn
 vine==5.1.0
     # via amqp
     # via celery
     # via kombu
-watchdog==4.0.1
-watchfiles==0.22.0
+watchdog==6.0.0
+watchfiles==0.24.0
     # via uvicorn
 wcwidth==0.2.13
     # via prompt-toolkit
 websocket-client==1.8.0
     # via selenium
-websockets==12.0
+websockets==13.1
     # via realtime
     # via uvicorn
-werkzeug==3.0.3
+werkzeug==3.1.3
     # via flask
-wrapt==1.16.0
+wrapt==1.17.0
     # via deprecated
+    # via langfuse
 wsproto==1.2.0
     # via trio-websocket
-yarl==1.13.1
+yarl==1.18.0
     # via aiohttp
-zipp==3.19.2
+zipp==3.21.0
     # via importlib-metadata
-zope-interface==7.1.0
+zope-event==5.0
+    # via gevent
+zope-interface==7.1.1
+    # via gevent
     # via twisted

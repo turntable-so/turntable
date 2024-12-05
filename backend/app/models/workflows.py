@@ -2,7 +2,7 @@ import json
 import os
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timedelta
 
 from celery import current_app, states
 from celery.result import AsyncResult
@@ -11,15 +11,16 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import QuerySet
+from django.db.models import OuterRef, QuerySet, Subquery
 from django_celery_beat.models import ClockedSchedule, CrontabSchedule, PeriodicTask
 from django_celery_results.models import TaskResult
 from polymorphic.models import PolymorphicModel
 
 from app.models.project import Project
 from app.models.resources import DBTResource, Resource
+from app.models.settings import StorageSettings
 from app.models.workspace import Workspace
-from app.services.storage_backends import CustomS3Boto3Storage
+from app.services.storage_backends import CustomFileField
 from app.workflows.metadata import sync_metadata
 from app.workflows.orchestration import run_dbt_commands
 
@@ -36,16 +37,6 @@ class WorkflowType(models.TextChoices):
     ONE_TIME = "one_time", "One Time"
 
 
-class WorkflowTaskMap:
-    map: dict[str, list[str]] = {}
-    inverse_map: dict[str, str] = {}
-
-    @classmethod
-    def add(cls, workflow_id: str, task_id: str):
-        cls.map.setdefault(workflow_id, []).append(task_id)
-        cls.inverse_map[task_id] = workflow_id
-
-
 class ScheduledWorkflow(PolymorphicModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     workflow_type = models.CharField(
@@ -55,9 +46,11 @@ class ScheduledWorkflow(PolymorphicModel):
 
     # relationships
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
-    clocked = models.ForeignKey(ClockedSchedule, on_delete=models.CASCADE, null=True)
-    crontab = models.ForeignKey(CrontabSchedule, on_delete=models.CASCADE, null=True)
-    periodic_task = models.ForeignKey(PeriodicTask, on_delete=models.CASCADE, null=True)
+    clocked = models.OneToOneField(ClockedSchedule, on_delete=models.CASCADE, null=True)
+    crontab = models.OneToOneField(CrontabSchedule, on_delete=models.CASCADE, null=True)
+    periodic_task = models.OneToOneField(
+        PeriodicTask, on_delete=models.CASCADE, null=True
+    )
 
     # derived fields
     replacement_identifier = models.CharField(
@@ -117,7 +110,7 @@ class ScheduledWorkflow(PolymorphicModel):
         }
 
     def get_upcoming_tasks(self, n: int = 10):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         if self.workflow_type == WorkflowType.ONE_TIME:
             diff = self.clocked.clocked_time - now
             return [diff.total_seconds()]
@@ -138,6 +131,10 @@ class ScheduledWorkflow(PolymorphicModel):
             now_timestamp = next_time
         return results
 
+    def get_next_run_date(self) -> datetime:
+        next_run_seconds = self.get_upcoming_tasks(1)[0]
+        return datetime.now(UTC) + timedelta(seconds=next_run_seconds)
+
     def get_periodic_task_args(self):
         return {
             "name": self.replacement_identifier,
@@ -154,10 +151,6 @@ class ScheduledWorkflow(PolymorphicModel):
             del kwargs[SUPER_ONLY]
             super().save(*args, **kwargs)
             return
-        bypass_celery_beat = os.getenv("BYPASS_CELERY_BEAT") == "true"
-        custom_celery_eager = (
-            bypass_celery_beat and os.getenv("CUSTOM_CELERY_EAGER") == "true"
-        )
 
         self.clean()
 
@@ -172,68 +165,28 @@ class ScheduledWorkflow(PolymorphicModel):
             )
 
         # Find and cleanup existing instance before creating new one
-        if not custom_celery_eager:
-            try:
-                existing = type(self).objects.get(id=self.id) if self.id else None
-                if existing:
-                    # Clean up the old periodic task
-                    PeriodicTask.objects.filter(
-                        name=existing.replacement_identifier
-                    ).delete()
-
-                    # Clean up old crontab if it's not being used by any other workflows (in this case, not this workflow)
-                    if (
-                        existing.crontab != self.crontab
-                        and not type(self)
-                        .objects.filter(crontab=existing.crontab)
-                        .exclude(id=existing.id)
-                        .exists()
-                    ):
-                        existing.crontab.delete()
-            except type(self).DoesNotExist:
-                pass
-
-            # Create new periodic task
+        if self.periodic_task:
+            for key, value in self.get_periodic_task_args().items():
+                setattr(self.periodic_task, key, value)
+            self.periodic_task.save()
+        else:
             self.periodic_task = PeriodicTask.objects.create(
                 **self.get_periodic_task_args()
             )
 
+        # Create new periodic task
         super().save(*args, **kwargs)
-
-        # if testing, schedule the task immediately
-        if custom_celery_eager:
-            if self.get_upcoming_tasks(1)[0] <= 0:
-                task_id = str(uuid.uuid4())
-                WorkflowTaskMap.add(self.id, task_id)
-                task = self.workflow.si(**self.kwargs).apply_async(task_id=task_id)
-
-        elif bypass_celery_beat:
-            next_delays = self.get_upcoming_tasks(10)
-            for next_delay in next_delays:
-                task = self.workflow.si(**self.kwargs).apply_async(countdown=next_delay)
-                WorkflowTaskMap.add(self.id, task.id)
 
     def delete(self, *args, **kwargs):
         super().delete(*args, **kwargs)
 
-        # delete the periodic task
-        self.periodic_task.delete()
-
-        # delete the crontab if no other workflows are using it
-        if (
-            not type(self)
-            .objects.filter(crontab=self.crontab)
-            .exclude(id=self.id)
-            .exists()
-        ):
+        # ensure all one-to-one related objects are also deleted
+        if self.periodic_task:
+            self.periodic_task.delete()
+        if self.crontab:
             self.crontab.delete()
-
-        # if testing, delete the queued tasks
-        if os.getenv("BYPASS_CELERY_BEAT") == "true":
-            for task_id in WorkflowTaskMap.map[self.id]:
-                current_app.control.revoke(task_id, terminate=False)
-                WorkflowTaskMap.inverse_map.pop(task_id)
-            WorkflowTaskMap.map.pop(self.id)
+        if self.clocked:
+            self.clocked.delete()
 
     def await_next_id(
         self,
@@ -292,7 +245,7 @@ class ScheduledWorkflow(PolymorphicModel):
             return QuerySet()
 
     def schedule_now(self):
-        now = datetime.now(tz=timezone.utc)
+        now = datetime.now(tz=UTC)
         clocked = ClockedSchedule.objects.create(clocked_time=now)
         attrs = {
             k: v
@@ -310,7 +263,7 @@ class ScheduledWorkflow(PolymorphicModel):
         }
 
     @classmethod
-    def get_results(
+    def get_results_with_filters(
         cls,
         **kwargs,
     ):
@@ -319,6 +272,13 @@ class ScheduledWorkflow(PolymorphicModel):
             periodic_task_name__in=cls.objects.filter(**filters).values_list(
                 "replacement_identifier", flat=True
             )
+        )
+        dbt_orchestrators = cls.objects.filter(
+            replacement_identifier=OuterRef("periodic_task_name")
+        )
+        tasks = tasks.annotate(
+            job_id=Subquery(dbt_orchestrators.values("id")[:1]),
+            job_name=Subquery(dbt_orchestrators.values("name")[:1]),
         )
         tasks = tasks.order_by("-date_done")
         return tasks
@@ -346,6 +306,7 @@ class DBTOrchestrator(ScheduledWorkflow):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, null=True)
     commands = ArrayField(models.TextField())
     save_artifacts = models.BooleanField(default=True)
+    name = models.CharField(max_length=255, null=False, default="Job")
 
     @property
     def workflow(self):
@@ -370,16 +331,6 @@ class DBTOrchestrator(ScheduledWorkflow):
         return filters
 
 
-def custom_upload_to(instance, filename):
-    """
-    Determine the custom folder path based on the instance's resource_id.
-    """
-    folder_name = f"task_artifacts/{instance.workspace_id}/{instance.task_id}/"
-
-    # Return the full file path
-    return os.path.join(folder_name, filename)
-
-
 class ArtifactType(models.TextChoices):
     # use label as the file name
     MANIFEST = "manifest", "manifest.json"
@@ -388,12 +339,26 @@ class ArtifactType(models.TextChoices):
 
 
 class TaskArtifact(models.Model):
+    def custom_upload_to(instance, filename):
+        """
+        Determine the custom folder path based on the instance's resource_id.
+        """
+        folder_name = f"task_artifacts/{instance.workspace_id}/{instance.task_id}/"
+
+        # Return the full file path
+        return os.path.join(folder_name, filename)
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    artifact = models.FileField(
-        upload_to=custom_upload_to, storage=CustomS3Boto3Storage()
+    artifact = CustomFileField(
+        upload_to=custom_upload_to,
+        storage_category=StorageSettings.StorageCategories.METADATA,
     )
     artifact_type = models.CharField(choices=ArtifactType.choices, max_length=255)
 
     # relationships
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
     task = models.ForeignKey(TaskResult, on_delete=models.CASCADE, to_field="task_id")
+
+    @property
+    def storage_applies_to(self):
+        return StorageSettings.StorageCategories.METADATA

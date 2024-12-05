@@ -74,13 +74,10 @@ class LiveDBTParser:
     ):
         if before_proj is not None:
             transition = DBTTransition(before_proj, proj)
-            transition.mount_manifest(defer=defer)
-            if not asset_only:
-                transition.mount_catalog(defer=defer)
+            combined_proj_object = transition
         else:
-            proj.mount_manifest(defer=defer)
-            if not asset_only:
-                proj.mount_catalog(defer=defer)
+            combined_proj_object = proj
+        proj.mount_manifest(defer=defer, force_run=True)
 
         proj.build_model_graph()
         all_downstream_nodes = proj.model_graph.get_relatives(
@@ -99,19 +96,36 @@ class LiveDBTParser:
         out.all_nodes = list(set(all_upstream_nodes + all_downstream_nodes))
         out.lineage_nodes = list(set(lineage_upstream_nodes + all_downstream_nodes))
         lineage_parents = proj.model_graph.get_relatives(
-            out.lineage_nodes, depth=1, reverse=True
+            out.lineage_nodes, depth=1, reverse=True, include_sources=False
         )
         out.catalog_nodes = list(set(out.lineage_nodes + lineage_parents))
         out.asset_graph = proj.model_graph.subgraph(out.catalog_nodes).to_networkx()
         out.id_map = {}
 
+        # get catalog info - refresh every time if partial refresh is supported
+        if not asset_only:
+            if tuple(proj.version_list) >= (1, 7):
+                combined_proj_object.mount_catalog(
+                    defer=defer,
+                    partial=True,
+                    partial_nodes=[n.split(".")[-1] for n in out.catalog_nodes],
+                    force_run=True,
+                )
+            else:
+                combined_proj_object.mount_catalog(defer=defer)
+
         # compile sql for relevant nodes
         if not asset_only:
             if before_proj is not None:
                 before_proj.dbt_compile(
-                    [n for n in out.lineage_nodes if n in before_proj.manifest["nodes"]]
+                    [
+                        n
+                        for n in out.lineage_nodes
+                        if n in before_proj.manifest["nodes"]
+                    ],
+                    fast_compile=True,
                 )
-            proj.dbt_compile(out.lineage_nodes, defer=defer)
+            proj.dbt_compile(out.lineage_nodes, fast_compile=True, defer=defer)
 
         # process nodes
         for nid in out.catalog_nodes:
@@ -134,7 +148,9 @@ class LiveDBTParser:
                 workspace_id=resource.workspace.id,
             )
             if not asset_only:
-                compiled_sql, error = proj.get_compiled_sql(nid, defer=defer, errors=[])
+                compiled_sql, error = proj.get_compiled_sql(
+                    nid, defer=defer, errors=[], compile_if_not_found=False
+                )
 
                 if error:
                     out.asset_errors.append(error)

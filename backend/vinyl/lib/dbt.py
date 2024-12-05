@@ -23,7 +23,11 @@ from vinyl.lib.dbt_methods import (
 from vinyl.lib.errors import VinylError, VinylErrorType
 from vinyl.lib.utils.files import adjust_path, cd, file_exists_in_directory, load_orjson
 from vinyl.lib.utils.graph import DAG
+from vinyl.lib.utils.patch import patch_json_with_orjson, patch_yaml_with_libyaml
 from vinyl.lib.utils.query_limit_helper import query_limit_helper
+
+STREAM_SUCCESS_STRING = "PROCESS_STREAM_SUCCESS"
+STREAM_ERROR_STRING = "PROCESS_STREAM_ERROR"
 
 
 def run_adjusted_replace(base_pattern_list, replacement, contents):
@@ -49,8 +53,16 @@ class DBTProject(object):
     max_threads: int = 4
     version: DBTVersion
     version_list: list[int]
-    multitenant: bool
     deferral_target_path: str | None
+
+    supported_api_versions = [DBTVersion.V1_8]
+    supported_api_dialects = [
+        DBTDialect.BIGQUERY,
+        DBTDialect.SNOWFLAKE,
+        DBTDialect.POSTGRES,
+        DBTDialect.REDSHIFT,
+        DBTDialect.DUCKDB,
+    ]  # databricks not currently supported due to package conflicts
 
     def __init__(
         self,
@@ -86,12 +98,6 @@ class DBTProject(object):
         else:
             self.get_project_yml_files()
         self.generate_target_paths()
-
-        # determine tenancy
-        if os.getenv("MULTITENANT") == "true":
-            self.multitenant = True
-        else:
-            self.multitenant = False
 
         # get profiles-dir
         self.dbt_profiles_dir = (
@@ -165,9 +171,11 @@ class DBTProject(object):
         self, read=True, force_read=False, force_run=False, defer: bool = False
     ):
         if hasattr(self, "manifest") and not force_run and not force_read:
-            return "", "", True
+            return self.manifest
         elif force_run or not os.path.exists(self.manifest_path):
-            self.dbt_parse(defer=defer)
+            _, _, success = self.dbt_parse(defer=defer)
+            if not success:
+                raise Exception("Failed to parse manifest")
 
         if read:
             self.manifest = load_orjson(self.manifest_path)
@@ -175,6 +183,8 @@ class DBTProject(object):
         elif (force_read or force_run) and hasattr(self, "manifest"):
             # make sure you don't accidentally read an outdated manifest in the future
             del self.manifest
+
+        return self.manifest
 
     def build_macro_graph(self, rebuild=False) -> DAG:
         self.mount_manifest()
@@ -226,13 +236,22 @@ class DBTProject(object):
         )
 
     def mount_catalog(
-        self, read=True, force_run=False, force_read=False, defer: bool = False
+        self,
+        read=True,
+        force_run=False,
+        force_read=False,
+        defer: bool = False,
+        partial: bool = False,
+        partial_nodes: list[str] | None = None,
     ):
         if hasattr(self, "catalog") and not force_run and not force_read:
-            return "", "", True
+            return self.catalog
         elif force_run or not os.path.exists(self.catalog_path):
-            self.dbt_docs_generate(defer=defer)
-
+            _, _, success = self.dbt_docs_generate(
+                defer=defer, partial=partial, partial_nodes=partial_nodes
+            )
+            if not success:
+                raise Exception("Failed to generate catalog")
         if read:
             if defer:
                 self.catalog = load_orjson(
@@ -250,6 +269,8 @@ class DBTProject(object):
         elif (force_read or force_run) and hasattr(self, "catalog"):
             # make sure you don't accidentally read an outdated artifact in the future
             del self.catalog
+
+        return self.catalog
 
     def get_project_yml_files(self):
         with open(os.path.join(self.dbt_project_dir, "dbt_project.yml"), "r") as f:
@@ -272,6 +293,21 @@ class DBTProject(object):
         else:
             self.target_path = os.path.join(self.dbt_project_dir, "target")
 
+    @property
+    def can_use_dbt_api(self) -> bool:
+        adjusted_supported_api_versions = self.supported_api_versions + [
+            v.value for v in self.supported_api_versions
+        ]
+        adjusted_supported_api_dialects = self.supported_api_dialects + [
+            v.value for v in self.supported_api_dialects
+        ]
+        return (
+            self.version in adjusted_supported_api_versions
+            and self.dialect in adjusted_supported_api_dialects
+        )
+
+    @patch_json_with_orjson
+    @patch_yaml_with_libyaml
     def dbt_runner(self, command: list[str]) -> tuple[str, str, bool]:
         try:
             from dbt.cli.main import dbtRunner, dbtRunnerResult
@@ -285,6 +321,7 @@ class DBTProject(object):
         # Save original streams
         orig_stdout = sys.stdout
         orig_stderr = sys.stderr
+        orig_cwd = os.getcwd()
 
         # Redirect streams to buffers
         sys.stdout = stdout_buffer
@@ -292,32 +329,40 @@ class DBTProject(object):
 
         # Cache env variables
         current_dbt_profiles_dir = os.environ.get("DBT_PROFILES_DIR")
-        os.environ["DBT_PROFILES_DIR"] = self.dbt_profiles_dir
+        if self.dbt_profiles_dir:
+            os.environ["DBT_PROFILES_DIR"] = self.dbt_profiles_dir
         current_dbt_project_dir = os.environ.get("DBT_PROJECT_DIR")
-        os.environ["DBT_PROJECT_DIR"] = self.dbt_project_dir
+        if self.dbt_project_dir:
+            os.environ["DBT_PROJECT_DIR"] = self.dbt_project_dir
 
-        # Invoke dbt
-        result: dbtRunnerResult = runner.invoke(
-            command, send_anonymous_usage_stats=False
-        )
+        try:
+            # Invoke dbt
+            result: dbtRunnerResult = runner.invoke(
+                command, send_anonymous_usage_stats=False
+            )
+            captured_stdout = stdout_buffer.getvalue()
+            captured_stderr = stderr_buffer.getvalue()
 
-        # Restore env variables
-        del os.environ["DBT_PROFILES_DIR"]
-        if current_dbt_profiles_dir:
-            os.environ["DBT_PROFILES_DIR"] = current_dbt_profiles_dir
-        del os.environ["DBT_PROJECT_DIR"]
-        if current_dbt_project_dir:
-            os.environ["DBT_PROJECT_DIR"] = current_dbt_project_dir
+            # Return captured output along with function's result
+            return captured_stdout, captured_stderr, result.success
+        finally:
+            # Restore env variables
+            if "DBT_PROFILES_DIR" in os.environ:
+                if current_dbt_profiles_dir:
+                    os.environ["DBT_PROFILES_DIR"] = current_dbt_profiles_dir
+                else:
+                    os.environ.pop("DBT_PROFILES_DIR")
 
-        captured_stdout = stdout_buffer.getvalue()
-        captured_stderr = stderr_buffer.getvalue()
+            if "DBT_PROJECT_DIR" in os.environ:
+                if current_dbt_project_dir:
+                    os.environ["DBT_PROJECT_DIR"] = current_dbt_project_dir
+                else:
+                    os.environ.pop("DBT_PROJECT_DIR")
 
-        # Restore original streams
-        sys.stdout = orig_stdout
-        sys.stderr = orig_stderr
-
-        # Return captured output along with function's result
-        return captured_stdout, captured_stderr, result.success
+            # Restore original streams
+            sys.stdout = orig_stdout
+            sys.stderr = orig_stderr
+            os.chdir(orig_cwd)
 
     def _dbt_cli_env(self):
         env = {
@@ -387,7 +432,7 @@ class DBTProject(object):
         stderr = "".join(stderrs)
 
         success = self.check_command_success(stdout, stderr)
-        success_str = "PROCESS_STREAM_SUCCESS" if success else "PROCESS_STREAM_ERROR"
+        success_str = STREAM_SUCCESS_STRING if success else STREAM_ERROR_STRING
         yield success_str
 
     @classmethod
@@ -461,7 +506,7 @@ class DBTProject(object):
         cli_args: list[str] | None = None,
         write_json: bool = False,
         dbt_cache: bool = False,
-        force_terminal: bool = True,
+        force_terminal: bool = False,
         defer: bool = False,
         defer_selection: bool = True,
     ) -> tuple[str, str, bool]:
@@ -473,8 +518,7 @@ class DBTProject(object):
             defer,
             defer_selection,
         )
-        if self.dbt1_5 and not force_terminal and not self.multitenant:
-            self.install_dbt_if_necessary()
+        if self.can_use_dbt_api and not force_terminal:
             return self.dbt_runner(full_command)
 
         else:
@@ -487,7 +531,7 @@ class DBTProject(object):
         cli_args: list[str] | None = None,
         write_json: bool = False,
         dbt_cache: bool = False,
-        force_terminal: bool = False,
+        force_terminal: bool = True,
         defer: bool = False,
         defer_selection: bool = True,
     ) -> Generator[str, None, tuple[str, str, bool]]:
@@ -500,7 +544,7 @@ class DBTProject(object):
             defer_selection,
             use_colors=True,
         )
-        if self.dbt1_5 and not force_terminal and not self.multitenant:
+        if self.can_use_dbt_api and not force_terminal:
             # self.install_dbt_if_necessary()
             # TODO: make streaming work for python api
             yield from self.dbt_cli_stream(
@@ -530,6 +574,7 @@ class DBTProject(object):
         defer: bool = False,
         defer_selection: bool = True,
         exclude_introspective: bool = False,
+        fast_compile: bool = False,
     ) -> tuple[str, str, bool]:
         if not node_ids:
             command = ["compile", "-f"]
@@ -539,7 +584,19 @@ class DBTProject(object):
             full_node_list = self.get_ancestors_and_descendants(
                 node_ids, predecessor_depth, successor_depth
             )
-            command += [v.split(".")[-1] for v in full_node_list]
+            adj_full_node_list = []
+            if fast_compile:
+                for node_id in full_node_list:
+                    sql = self.fast_compile_node(node_id)
+                    if sql is None:
+                        adj_full_node_list.append(node_id)
+            else:
+                adj_full_node_list = full_node_list
+
+            if len(adj_full_node_list) == 0:
+                return "", "", True
+
+            command += [v.split(".")[-1] for v in adj_full_node_list]
 
         # determine exclusions
         if models_only:
@@ -555,7 +612,7 @@ class DBTProject(object):
 
         if adj_exclusions:
             ## don't exclude node if explicitly provided
-            adj_exclusions -= set([id.split(".")[-1] for id in node_ids])
+            adj_exclusions -= set([id_.split(".")[-1] for id_ in node_ids])
         if adj_exclusions:
             if "--exclude" not in command:
                 command.append("--exclude")
@@ -573,21 +630,26 @@ class DBTProject(object):
         return stdout, stderr, success
 
     def dbt_docs_generate(
-        self, compile=False, defer: bool = False
+        self,
+        compile=False,
+        defer: bool = False,
+        partial: bool = False,
+        partial_nodes: list[str] | None = None,
     ) -> tuple[str, str, bool]:
+        command = ["docs", "generate"]
         if compile:
-            stdout, stderr, success = self.run_dbt_command(
-                ["docs", "generate"], write_json=True, dbt_cache=True, defer=defer
-            )
-            return stdout, stderr, success
+            command += ["--no-compile"]
 
-        stdout, stderr, success = self.run_dbt_command(
-            ["docs", "generate", "--no-compile"],
-            write_json=True,
-            dbt_cache=False,
-            defer=defer,
-        )
-        return stdout, stderr, success
+        if (
+            partial
+            and tuple(self.version_list) >= (1, 7)
+            and partial_nodes
+            and len(partial_nodes) > 0
+        ):
+            command += ["-s"]
+            command += partial_nodes
+
+        return self.run_dbt_command(command, dbt_cache=True, defer=defer)
 
     def get_compiled_sql(
         self,
@@ -931,6 +993,27 @@ class DBTProject(object):
             return None
         return contents
 
+    def fast_compile_node(self, node_id: str) -> str | None:
+        self.mount_manifest()
+        model_path = self.manifest["nodes"].get(node_id, {}).get("original_file_path")
+        if not model_path:
+            return None
+        model_abs_path = os.path.join(self.dbt_project_dir, model_path)
+        with open(model_abs_path, "r") as f:
+            dbt_sql = f.read()
+        sql = self.fast_compile(dbt_sql)
+        if sql:
+            compiled_sql_abs_path = os.path.join(
+                self.compiled_sql_path,
+                node_id.split(".")[1],
+                model_path,
+            )
+            print(compiled_sql_abs_path)
+            with open(compiled_sql_abs_path, "w") as f:
+                f.write(sql)
+            return sql
+        return None
+
     def get_introspective_models(self):
         self.build_macro_graph()
         run_query_macros = set(self.macro_graph.get_relatives(["macro.dbt.statement"]))
@@ -979,8 +1062,15 @@ class DBTTransition:
         force_run: bool = False,
         force_read: bool = False,
         defer: bool = False,
+        partial: bool = False,
+        partial_nodes: list[str] | None = None,
     ):
         self.before.mount_catalog()
         self.after.mount_catalog(
-            read=read, force_run=force_run, force_read=force_read, defer=defer
+            read=read,
+            force_run=force_run,
+            force_read=force_read,
+            defer=defer,
+            partial=partial,
+            partial_nodes=partial_nodes,
         )

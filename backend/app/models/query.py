@@ -6,7 +6,8 @@ from django.core.files.base import ContentFile
 from django.db import models
 from django.utils import timezone
 
-from app.services.storage_backends import CustomS3Boto3Storage
+from app.models.settings import StorageSettings
+from app.services.storage_backends import CustomFileField
 from vinyl.lib.utils.query import _QUERY_LIMIT
 
 from .project import Project
@@ -24,8 +25,10 @@ class Query(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True, null=True)
     sql = models.TextField(null=True)
-    results = models.FileField(
-        upload_to="query_results/", null=True, storage=CustomS3Boto3Storage()
+    results = CustomFileField(
+        upload_to="query_results/",
+        null=True,
+        storage_category=StorageSettings.StorageCategories.DATA,
     )
     resource = models.ForeignKey(
         Resource,
@@ -66,8 +69,10 @@ class DBTQuery(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True, null=True)
     dbt_sql = models.TextField(null=True)
-    results = models.FileField(
-        upload_to="dbt_query_results/", null=True, storage=CustomS3Boto3Storage()
+    results = CustomFileField(
+        upload_to="dbt_query_results/",
+        null=True,
+        storage_category=StorageSettings.StorageCategories.DATA,
     )
     dbtresource = models.ForeignKey(
         DBTResource,

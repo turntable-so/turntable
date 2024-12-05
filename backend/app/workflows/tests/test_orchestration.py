@@ -1,12 +1,9 @@
 import time
 
-import pytest
-
 from app.models.resources import EnvironmentType
 from app.models.workflows import DBTOrchestrator
 
 
-@pytest.mark.django_db(transaction=True)
 def test_orchestration(custom_celery, local_postgres):
     resource = local_postgres
     dbtresource = resource.dbtresource_set.filter(

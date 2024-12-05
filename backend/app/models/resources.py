@@ -17,8 +17,12 @@ from polymorphic.models import PolymorphicModel
 
 from app.models.project import Project
 from app.models.repository import Repository
+from app.models.settings import StorageSettings
 from app.models.workspace import Workspace
-from app.services.storage_backends import CustomS3Boto3Storage
+from app.services.storage_backends import (
+    CustomFileField,
+    CustomS3Boto3StorageDeprecated,
+)
 from app.utils.fields import encrypt
 from vinyl.lib.connect import (
     BigQueryConnector,
@@ -101,6 +105,11 @@ def repo_path(
 
 
 class Resource(models.Model):
+    def custom_get_storage(self):
+        return CustomS3Boto3StorageDeprecated(
+            workspace_id=self.workspace_id, storage_category=self.storage_applies_to
+        )
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     workspace = models.ForeignKey(
         Workspace, on_delete=models.CASCADE, null=True, related_name="resources"
@@ -112,9 +121,14 @@ class Resource(models.Model):
     creator = models.ForeignKey(
         "User", on_delete=models.SET_NULL, null=True, default=None
     )
-    datahub_db = models.FileField(
-        upload_to="datahub_dbs/", null=True, storage=CustomS3Boto3Storage()
+    datahub_db = CustomFileField(
+        storage_category=StorageSettings.StorageCategories.METADATA,
+        upload_to="datahub_dbs/",
+        null=True,
     )
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
 
     class Meta:
         indexes = [
@@ -343,7 +357,12 @@ class EnvironmentType(models.TextChoices):
     @classmethod
     def jobs_allowed_environments(cls):
         # order of preference
-        return [EnvironmentType.PROD, EnvironmentType.COMBINED, EnvironmentType.STAGING]
+        return [
+            EnvironmentType.PROD,
+            EnvironmentType.COMBINED,
+            EnvironmentType.STAGING,
+            EnvironmentType.DEV,
+        ]
 
     @classmethod
     def metadata_sync_allowed_environments(cls):
@@ -352,15 +371,7 @@ class EnvironmentType(models.TextChoices):
     @classmethod
     def development_allowed_environments(cls):
         # order of preference
-        return [EnvironmentType.DEV, EnvironmentType.COMBINED]
-
-
-def custom_dbtresource_upload_to(instance, filename):
-    """
-    Determine the custom folder path based on the instance's id.cc
-    """
-    folder_name = f"dbt_artifacts/{instance.workspace_id}/{instance.id}/"
-    return os.path.join(folder_name, filename)
+        return [EnvironmentType.DEV, EnvironmentType.COMBINED, EnvironmentType.STAGING]
 
 
 class ArtifactSource(models.TextChoices):
@@ -369,6 +380,13 @@ class ArtifactSource(models.TextChoices):
 
 
 class DBTResource(PolymorphicModel):
+    def custom_upload_to(instance, filename):
+        """
+        Determine the custom folder path based on the instance's id.cc
+        """
+        folder_name = f"dbt_artifacts/{instance.workspace_id}/{instance.id}/"
+        return os.path.join(folder_name, filename)
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     environment = models.CharField(
         choices=EnvironmentType.choices,
@@ -384,15 +402,15 @@ class DBTResource(PolymorphicModel):
         "User", on_delete=models.SET_NULL, null=True, default=None
     )
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE, null=True)
-    manifest = models.FileField(
+    manifest = CustomFileField(
         null=True,
-        upload_to=custom_dbtresource_upload_to,
-        storage=CustomS3Boto3Storage(),
+        upload_to=custom_upload_to,
+        storage_category=StorageSettings.StorageCategories.METADATA,
     )
-    catalog = models.FileField(
+    catalog = CustomFileField(
         null=True,
-        upload_to=custom_dbtresource_upload_to,
-        storage=CustomS3Boto3Storage(),
+        upload_to=custom_upload_to,
+        storage_category=StorageSettings.StorageCategories.METADATA,
     )
     artifact_source = models.CharField(
         choices=ArtifactSource.choices, max_length=255, null=True
@@ -490,6 +508,7 @@ class TableauDetails(ResourceDetails):
     site = encrypt(models.CharField(max_length=255, default="", blank=True))
     username = encrypt(models.CharField(max_length=255, blank=False))
     password = encrypt(models.CharField(max_length=255, blank=False))
+    is_token = models.BooleanField(default=False)
 
     @property
     def datahub_extras(self):
@@ -505,8 +524,9 @@ class TableauDetails(ResourceDetails):
                     "config": {
                         "connect_uri": self.connect_uri,
                         "site": self.site or "",
-                        "username": self.username,
-                        "password": self.password,
+                        "token_name" if self.is_token else "username": self.username,
+                        "token_value" if self.is_token else "password": self.password,
+                        "ingest_tables_external": True,
                     },
                 },
                 "sink": get_sync_config(db_path),
@@ -682,7 +702,6 @@ class DBTCoreDetails(DBTResource):
         repo_override: Repository | None = None,
     ):
         env_vars = self.env_vars or {}
-        dialect_str = self.resource.details.subtype
         if project_id is not None:
             project = Project.objects.get(id=project_id)
             schema = project.schema
@@ -702,6 +721,8 @@ class DBTCoreDetails(DBTResource):
                         self,
                         schema=schema,
                     )
+                    profile_target = profile_contents["target"]
+                    dialect_str = profile_contents["outputs"][profile_target]["type"]
                     adj_profile_contents = {profile_name: profile_contents}
                     yaml.dump(adj_profile_contents, f)
                 yield (
@@ -744,6 +765,7 @@ class DBTCoreDetails(DBTResource):
                 ),
                 (before.catalog_path, prod_environment.catalog, override_catalog),
             ]
+            os.makedirs(before.target_path, exist_ok=True)
             for path, artifact, override in to_update:
                 if artifact and (override or not os.path.exists(path)):
                     with open(path, "w") as f:

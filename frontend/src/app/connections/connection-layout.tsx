@@ -22,11 +22,8 @@ import { Separator } from "@/components/ui/separator";
 import { ChevronLeft, Loader2 } from "lucide-react";
 
 import { testResource } from "@/app/actions/actions";
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
+import dayjs from "@/lib/dayjs";
 import { useRouter } from "next/navigation";
-
-dayjs.extend(relativeTime);
 
 import useSession from "@/app/hooks/use-session";
 import useWorkflowUpdates from "@/app/hooks/use-workflow-updates";

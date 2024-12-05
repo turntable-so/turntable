@@ -5,6 +5,7 @@ from contextlib import contextmanager
 
 from django.conf import settings
 from django.db import models
+from app.models.user import User
 from git import Repo as GitRepo
 from git.exc import GitCommandError
 
@@ -14,12 +15,14 @@ from app.models.workspace import Workspace
 
 class Project(models.Model):
     id = models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     name = models.CharField(max_length=255, null=False)
     branch_name = models.CharField(max_length=255, null=False)
     read_only = models.BooleanField(default=False)
     schema = models.CharField(max_length=255, null=False)
     source_branch = models.CharField(max_length=255, null=True)
-
+    owner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    archived = models.BooleanField(default=False)
     # relationships
     repository = models.ForeignKey(
         Repository, on_delete=models.CASCADE, related_name="projects"
@@ -47,7 +50,7 @@ class Project(models.Model):
 
         if url.endswith(".git"):
             url = url[:-4]
-        return f"{url}/pull/new/{self.branch_name}"
+        return f"{url}/compare/{self.source_branch}...{self.branch_name}"
 
     def clone(self, isolate: bool = False):
         with self._code_repo_path(isolate) as path:
@@ -130,13 +133,15 @@ class Project(models.Model):
     ):
         path = os.path.join(
             "ws",
-            str(self.workspace.id),
-            str(self.repository.id),
+            str(self.workspace_id),
+            str(self.repository_id),
             str(self.id),
             str(separation_id) if separation_id is not None else str(self.id),
             self.repository.repo_name,
         )
-        if isolate or os.getenv("FORCE_ISOLATE") == "true":
+        if os.getenv("FORCE_NO_ISOLATE") == "true":
+            yield os.path.join(settings.MEDIA_ROOT, path)
+        elif isolate or os.getenv("FORCE_ISOLATE") == "true":
             with tempfile.TemporaryDirectory() as temp_dir:
                 yield os.path.join(temp_dir, path)
         else:
@@ -160,8 +165,10 @@ class Project(models.Model):
 
         with self._code_repo_path(isolate) as path:
             if os.path.exists(path) and ".git" in os.listdir(path):
-                yield GitRepo(path), env_override
-                return
+                with self.repository.with_ssh_env(env_override) as env:
+                    repo = GitRepo(path)
+                    yield repo, env
+                    return
 
             with self.repository.with_ssh_env(env_override) as env:
                 repo = GitRepo.clone_from(self.repository.git_repo_url, path, env=env)
@@ -172,7 +179,8 @@ class Project(models.Model):
                 # switch to the branch
                 self.checkout(isolate=isolate, repo_override=repo, env_override=env)
 
-                yield repo, env_override
+                yield repo, env
+                return
 
     def create_git_branch(
         self,

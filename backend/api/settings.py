@@ -16,6 +16,7 @@ from pathlib import Path
 
 import dj_database_url
 import sentry_sdk
+from sentry_sdk.integrations.celery import CeleryIntegration
 
 SENTRY_DSN = os.getenv("SENTRY_DSN")
 
@@ -24,6 +25,7 @@ if SENTRY_DSN:
         dsn=SENTRY_DSN,
         traces_sample_rate=1.0,
         profiles_sample_rate=1.0,
+        integrations=[CeleryIntegration(monitor_beat_tasks=True)],
     )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -339,9 +341,11 @@ CACHES = {
 CELERY_BROKER_URL = redis_url + CELERY_REDIS_CHANNEL
 # CELERY_CACHE_BACKEND = "django-cache"
 CELERY_RESULT_BACKEND = "django-db"
-CELERY_ACCEPT_CONTENT = ["application/json"]
+CELERY_ACCEPT_CONTENT = ["json", "application/json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "UTC"  # Adjust to your timezone
 CELERY_TASK_TRACK_STARTED = True
 CELERY_RESULT_EXTENDED = True
+CELERY_RESULT_BACKEND_ALWAYS_SERIALIZE = False
+CELERY_RESULT_EXPIRES = 1e10

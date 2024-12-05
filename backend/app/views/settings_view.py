@@ -1,6 +1,14 @@
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+
+def truncate_api_key(
+    api_key: str | None, visible_chars: int = 12, mask: str = "********"
+) -> str | None:
+    if not api_key:
+        return None
+    return api_key[:visible_chars] + mask
 
 
 class SettingsView(APIView):
@@ -26,6 +34,21 @@ class SettingsView(APIView):
                 {"filter_name_contains": filter_string, "count": matching_assets_count}
             )
 
+        api_keys = {
+            "openai_api_key": truncate_api_key(workspace.openai_api_key),
+            "anthropic_api_key": truncate_api_key(workspace.anthropic_api_key),
+        }
+
         # Prepare the response data
-        response_data = {"exclusion_filters": exclusion_results}
+        response_data = {"exclusion_filters": exclusion_results, "api_keys": api_keys}
         return Response(response_data)
+
+    def post(self, request):
+        workspace = request.user.current_workspace()
+        api_keys = request.data.get("api_keys", {})
+        if "openai_api_key" in api_keys:
+            workspace.openai_api_key = api_keys["openai_api_key"]
+        if "anthropic_api_key" in api_keys:
+            workspace.anthropic_api_key = api_keys["anthropic_api_key"]
+        workspace.save()
+        return Response(status=status.HTTP_200_OK)

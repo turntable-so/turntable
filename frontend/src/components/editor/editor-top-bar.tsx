@@ -1,9 +1,9 @@
 "use client";
 
+import { TURNTABLE_LOCAL_STORAGE_PREFIX } from "@/app/constants/local-storage-keys";
+import { useFiles } from "@/app/contexts/FilesContext";
 import { useLayoutContext } from "@/app/contexts/LayoutContext";
 import useSession from "@/app/hooks/use-session";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 import SearchBar from "@/components/editor/search-bar/search-bar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -20,18 +20,14 @@ import {
   PanelRightClose,
   Settings,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { ModeToggle } from "../theme-mode-toggle";
 import { Button } from "../ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Switch } from "../ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import BranchReviewDialog from "./branch-review-dialog";
-import { useFiles } from "@/app/contexts/FilesContext";
-import {
-  LocalStorageKeys,
-  TURNTABLE_LOCAL_STORAGE_PREFIX,
-} from "@/app/constants/local-storage-keys";
-import { Switch } from "../ui/switch";
-import { useLocalStorage } from "usehooks-ts";
-import { ModeToggle } from "../theme-mode-toggle";
 
 const clearTurntableCache = () => {
   const keysToRemove = [];
@@ -132,7 +128,7 @@ const EditorTopBar = () => {
       </div>
       <SearchBar />
       <div className=" flex justify-center items-start space-x-2">
-        <Tooltip>
+        <Tooltip delayDuration={300}>
           <TooltipTrigger asChild>
             <Button
               onClick={() => setBottomPanelShown(!bottomPanelShown)}
@@ -151,7 +147,7 @@ const EditorTopBar = () => {
             <p>Toggle Bottom Panel (⌘J)</p>
           </TooltipContent>
         </Tooltip>
-        <Tooltip>
+        <Tooltip delayDuration={300}>
           <TooltipTrigger asChild>
             <Button
               onClick={() => setSidebarRightShown(!sidebarRightShown)}

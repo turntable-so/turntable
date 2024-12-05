@@ -60,7 +60,6 @@ def instruct(prompt: str, sources):
     )
     thread = client.beta.threads.create()
     prompt = make_prompt(prompt, sources)
-    print(prompt)
     client.beta.threads.messages.create(
         thread_id=thread.id,
         role="user",

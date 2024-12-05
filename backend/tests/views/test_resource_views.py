@@ -6,7 +6,6 @@ from api.serializers import (
 from app.models import Resource, SSHKey
 
 
-@pytest.mark.django_db
 class TestResourceViews:
     @pytest.fixture
     def ssh_key(self, workspace):
@@ -56,7 +55,6 @@ class TestResourceViews:
             },
         }
         response = client.post("/resources/", data, format="json")
-        print(response.json())
         assert response.status_code == 201
 
     def test_get_bigquery_resource(self, client, resource_id):
