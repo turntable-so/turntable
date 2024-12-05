@@ -133,8 +133,8 @@ class Project(models.Model):
     ):
         path = os.path.join(
             "ws",
-            str(self.workspace.id),
-            str(self.repository.id),
+            str(self.workspace_id),
+            str(self.repository_id),
             str(self.id),
             str(separation_id) if separation_id is not None else str(self.id),
             self.repository.repo_name,

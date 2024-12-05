@@ -52,7 +52,7 @@ class Repository(models.Model):
             read_only=True,
             repository=self,
             branch_name=self.main_branch_name,
-            workspace=self.workspace,
+            workspace_id=self.workspace_id,
         )
 
     # override main branch id. Useful for tests
@@ -69,20 +69,20 @@ class Repository(models.Model):
             read_only=True,
             repository=self,
             branch_name=self.main_branch_name,
-            workspace=self.workspace,
+            workspace_id=self.workspace_id,
         )
 
     @property
     def main_project(self):
         return self.projects.get(
             branch_name=self.main_branch_name,
-            workspace=self.workspace,
+            workspace_id=self.workspace_id,
         )
 
     def get_project(self, project_id: str | None):
         if project_id is None:
             return self.main_project
-        return self.projects.get(id=project_id, workspace=self.workspace)
+        return self.projects.get(id=project_id, workspace_id=self.workspace_id)
 
     @property
     def remote_branches(self):
