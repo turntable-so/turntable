@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import { useTheme } from "next-themes";
 
 import { Button } from "@/components/ui/button";
@@ -10,10 +9,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { SunMoon, Check } from "lucide-react";
+import { Check, SunMoon } from "lucide-react";
+import { useEffect } from "react";
 
 export function ModeToggle() {
   const { setTheme, theme } = useTheme();
+
+  useEffect(() => {
+    if (theme === "system") {
+      setTheme("dark");
+    }
+  }, [theme]);
 
   return (
     <DropdownMenu>
@@ -31,10 +37,6 @@ export function ModeToggle() {
         <DropdownMenuItem onClick={() => setTheme("dark")}>
           {theme === "dark" && <Check className="h-4 w-4 mr-2" />}
           Dark
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>
-          {theme === "system" && <Check className="h-4 w-4 mr-2" />}
-          System
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

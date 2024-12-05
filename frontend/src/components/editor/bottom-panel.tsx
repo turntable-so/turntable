@@ -14,7 +14,7 @@ import {
   Table as TableIcon,
   Terminal as TerminalIcon,
 } from "lucide-react";
-import { Fragment, useContext, useEffect } from "react";
+import { Fragment, useContext } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { Panel, PanelResizeHandle } from "react-resizable-panels";
 import useResizeObserver from "use-resize-observer";
@@ -22,18 +22,18 @@ import {
   LineageView,
   LineageViewContext,
 } from "../../app/contexts/LineageView";
-import { Button } from "../ui/button";
-import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
-import CommandPanel from "./command-panel";
-import ProblemsPanel from "./problems-panel/problems-panel";
 import { Badge } from "../ui/badge";
-import CommandPanelActionBtn from "./command-panel/command-panel-action-btn";
-import PreviewPanel from "./preview-panel/preview-panel";
-import ErrorMessage from "./error-message";
+import { Button } from "../ui/button";
+import { Label } from "../ui/label";
+import { Switch } from "../ui/switch";
+import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import CustomEditor from "./CustomEditor";
-import { Switch } from "../ui/switch";
-import { Label } from "../ui/label";
+import CommandPanel from "./command-panel";
+import CommandPanelActionBtn from "./command-panel/command-panel-action-btn";
+import ErrorMessage from "./error-message";
+import PreviewPanel from "./preview-panel/preview-panel";
+import ProblemsPanel from "./problems-panel/problems-panel";
 
 export default function BottomPanel({
   rowData,
