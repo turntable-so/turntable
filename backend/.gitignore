@@ -16,6 +16,9 @@ media/ws/**
 *.duckdb.tmp/
 *.duckdb.wal
 
+# cache
+cache/
+
 # export folder
 exports/
 

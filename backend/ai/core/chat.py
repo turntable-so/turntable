@@ -4,8 +4,6 @@ import re
 from typing import Iterator, List
 from urllib.parse import unquote
 
-from diskcache import FanoutCache
-
 from ai.core.custom_litellm import completion
 from ai.core.models import ChatMessage, ChatRequestBody
 from ai.core.prompts import SYSTEM_PROMPT
@@ -16,8 +14,6 @@ from app.models.resources import DBTCoreDetails
 from app.models.user import User
 from app.models.workspace import Workspace
 from app.services.lineage_service import Lineage
-
-cache = FanoutCache(directory="/cache", shards=10, timeout=300)
 
 
 def get_asset_object(asset_dict: dict):

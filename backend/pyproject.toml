@@ -86,7 +86,12 @@ dependencies = [
     "django-celery-results>=2.5.1",
     "django-celery-beat>=2.7.0",
     "croniter>=5.0.1",
-    "sentry-sdk[django]>=2.18.0",
+    "sentry-sdk[django,celery]>=2.18.0",
+    "dbt-bigquery~=1.8.0",
+    "dbt-snowflake~=1.8.0",
+    "dbt-postgres~=1.8.0",
+    "dbt-redshift~=1.8.0",
+    "dbt-duckdb~=1.8.0",
     "langfuse>=2.55.0",
 ]
 

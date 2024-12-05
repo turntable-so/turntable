@@ -702,7 +702,6 @@ class DBTCoreDetails(DBTResource):
         repo_override: Repository | None = None,
     ):
         env_vars = self.env_vars or {}
-        dialect_str = self.resource.details.subtype
         if project_id is not None:
             project = Project.objects.get(id=project_id)
             schema = project.schema
@@ -722,6 +721,8 @@ class DBTCoreDetails(DBTResource):
                         self,
                         schema=schema,
                     )
+                    profile_target = profile_contents["target"]
+                    dialect_str = profile_contents["outputs"][profile_target]["type"]
                     adj_profile_contents = {profile_name: profile_contents}
                     yaml.dump(adj_profile_contents, f)
                 yield (

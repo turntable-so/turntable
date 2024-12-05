@@ -5,6 +5,7 @@ from contextlib import contextmanager
 
 from django.conf import settings
 from django.db import models
+from app.models.user import User
 from git import Repo as GitRepo
 from git.exc import GitCommandError
 
@@ -14,12 +15,14 @@ from app.models.workspace import Workspace
 
 class Project(models.Model):
     id = models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     name = models.CharField(max_length=255, null=False)
     branch_name = models.CharField(max_length=255, null=False)
     read_only = models.BooleanField(default=False)
     schema = models.CharField(max_length=255, null=False)
     source_branch = models.CharField(max_length=255, null=True)
-
+    owner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    archived = models.BooleanField(default=False)
     # relationships
     repository = models.ForeignKey(
         Repository, on_delete=models.CASCADE, related_name="projects"
@@ -130,8 +133,8 @@ class Project(models.Model):
     ):
         path = os.path.join(
             "ws",
-            str(self.workspace.id),
-            str(self.repository.id),
+            str(self.workspace_id),
+            str(self.repository_id),
             str(self.id),
             str(separation_id) if separation_id is not None else str(self.id),
             self.repository.repo_name,
