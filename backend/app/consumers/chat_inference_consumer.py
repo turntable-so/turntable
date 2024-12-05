@@ -20,12 +20,17 @@ class AIChatConsumer(WebsocketConsumer):
             workspace = user.current_workspace()
             dbt_details = workspace.get_dbt_dev_details()
             data = ChatRequestBody.model_validate_json(text_data)
-            stream = stream_chat_completion(payload=data, dbt_details=dbt_details, workspace=workspace, user=user)
+            stream = stream_chat_completion(
+                payload=data, dbt_details=dbt_details, workspace=workspace, user=user
+            )
             for chunk in stream:
-                self.send(text_data=json.dumps({"type": "message_chunk", "content": chunk}))
+                self.send(
+                    text_data=json.dumps({"type": "message_chunk", "content": chunk})
+                )
 
             self.send(text_data=json.dumps({"type": "message_end"}))
         except ValueError as e:
+            print(e)
             if str(e) == "NO_API_KEY":
                 self.send(
                     text_data=json.dumps(
@@ -40,6 +45,7 @@ class AIChatConsumer(WebsocketConsumer):
                     )
                 )
         except Exception as e:
+            print(e)
             capture_exception(e)
             self.send(
                 text_data=json.dumps(
