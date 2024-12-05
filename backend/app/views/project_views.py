@@ -9,6 +9,7 @@ from git import GitCommandError
 from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from sentry_sdk import capture_exception
 
 from api.serializers import LineageAssetSerializer, LineageSerializer, ProjectSerializer
 from app.core.lineage import get_lineage_helper
@@ -489,8 +490,11 @@ class ProjectViewSet(viewsets.ViewSet):
                 )
             except Exception as e:
                 transaction.set_rollback(True)
+                capture_exception(e)
+                error_message = f"Failed to create branch: {str(e)}"
+                print(error_message)
                 return Response(
-                    {"error": f"Failed to create branch: {str(e)}"},
+                    {"error": error_message},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
 
