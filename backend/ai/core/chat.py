@@ -143,8 +143,8 @@ def build_context(
         with project.repo_context() as (repo, _):
             transition.mount_manifest(defer=True)
             asset_mds = []
-
-            for asset in lineage.assets:
+            lineage_assets = lineage.assets if lineage else []
+            for asset in lineage_assets:
                 # don't include the current asset
                 if asset.id == lineage.asset_id:
                     continue
