@@ -4,10 +4,10 @@ WORKDIR /code
 
 # Install uv
 RUN apt-get update && apt-get install -y curl
-ADD --chmod=755 https://astral.sh/uv/0.2.18/install.sh /install.sh
-RUN bash /install.sh && rm /install.sh
+COPY --from=ghcr.io/astral-sh/uv:0.5.6 /uv /uvx /bin/
+
 
 # Install dbtx
-RUN /root/.cargo/bin/uv pip install dbtx --system
+RUN uv pip install dbtx --system
 
 COPY . .

@@ -103,15 +103,16 @@ class LiveDBTParser:
         out.id_map = {}
 
         # get catalog info - refresh every time if partial refresh is supported
-        if tuple(proj.version_list) >= (1, 7):
-            combined_proj_object.mount_catalog(
-                defer=defer,
-                partial=True,
-                partial_nodes=[n.split(".")[-1] for n in out.catalog_nodes],
-                force_run=True,
-            )
-        else:
-            combined_proj_object.mount_catalog(defer=defer)
+        if not asset_only:
+            if tuple(proj.version_list) >= (1, 7):
+                combined_proj_object.mount_catalog(
+                    defer=defer,
+                    partial=True,
+                    partial_nodes=[n.split(".")[-1] for n in out.catalog_nodes],
+                    force_run=True,
+                )
+            else:
+                combined_proj_object.mount_catalog(defer=defer)
 
         # compile sql for relevant nodes
         if not asset_only:

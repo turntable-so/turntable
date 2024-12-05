@@ -23,6 +23,7 @@ from vinyl.lib.dbt_methods import (
 from vinyl.lib.errors import VinylError, VinylErrorType
 from vinyl.lib.utils.files import adjust_path, cd, file_exists_in_directory, load_orjson
 from vinyl.lib.utils.graph import DAG
+from vinyl.lib.utils.patch import patch_json_with_orjson, patch_yaml_with_libyaml
 from vinyl.lib.utils.query_limit_helper import query_limit_helper
 
 STREAM_SUCCESS_STRING = "PROCESS_STREAM_SUCCESS"
@@ -52,8 +53,16 @@ class DBTProject(object):
     max_threads: int = 4
     version: DBTVersion
     version_list: list[int]
-    multitenant: bool
     deferral_target_path: str | None
+
+    supported_api_versions = [DBTVersion.V1_8]
+    supported_api_dialects = [
+        DBTDialect.BIGQUERY,
+        DBTDialect.SNOWFLAKE,
+        DBTDialect.POSTGRES,
+        DBTDialect.REDSHIFT,
+        DBTDialect.DUCKDB,
+    ]  # databricks not currently supported due to package conflicts
 
     def __init__(
         self,
@@ -89,12 +98,6 @@ class DBTProject(object):
         else:
             self.get_project_yml_files()
         self.generate_target_paths()
-
-        # determine tenancy
-        if os.getenv("MULTITENANT") == "true":
-            self.multitenant = True
-        else:
-            self.multitenant = False
 
         # get profiles-dir
         self.dbt_profiles_dir = (
@@ -290,6 +293,21 @@ class DBTProject(object):
         else:
             self.target_path = os.path.join(self.dbt_project_dir, "target")
 
+    @property
+    def can_use_dbt_api(self) -> bool:
+        adjusted_supported_api_versions = self.supported_api_versions + [
+            v.value for v in self.supported_api_versions
+        ]
+        adjusted_supported_api_dialects = self.supported_api_dialects + [
+            v.value for v in self.supported_api_dialects
+        ]
+        return (
+            self.version in adjusted_supported_api_versions
+            and self.dialect in adjusted_supported_api_dialects
+        )
+
+    @patch_json_with_orjson
+    @patch_yaml_with_libyaml
     def dbt_runner(self, command: list[str]) -> tuple[str, str, bool]:
         try:
             from dbt.cli.main import dbtRunner, dbtRunnerResult
@@ -303,6 +321,7 @@ class DBTProject(object):
         # Save original streams
         orig_stdout = sys.stdout
         orig_stderr = sys.stderr
+        orig_cwd = os.getcwd()
 
         # Redirect streams to buffers
         sys.stdout = stdout_buffer
@@ -310,32 +329,40 @@ class DBTProject(object):
 
         # Cache env variables
         current_dbt_profiles_dir = os.environ.get("DBT_PROFILES_DIR")
-        os.environ["DBT_PROFILES_DIR"] = self.dbt_profiles_dir
+        if self.dbt_profiles_dir:
+            os.environ["DBT_PROFILES_DIR"] = self.dbt_profiles_dir
         current_dbt_project_dir = os.environ.get("DBT_PROJECT_DIR")
-        os.environ["DBT_PROJECT_DIR"] = self.dbt_project_dir
+        if self.dbt_project_dir:
+            os.environ["DBT_PROJECT_DIR"] = self.dbt_project_dir
 
-        # Invoke dbt
-        result: dbtRunnerResult = runner.invoke(
-            command, send_anonymous_usage_stats=False
-        )
+        try:
+            # Invoke dbt
+            result: dbtRunnerResult = runner.invoke(
+                command, send_anonymous_usage_stats=False
+            )
+            captured_stdout = stdout_buffer.getvalue()
+            captured_stderr = stderr_buffer.getvalue()
 
-        # Restore env variables
-        del os.environ["DBT_PROFILES_DIR"]
-        if current_dbt_profiles_dir:
-            os.environ["DBT_PROFILES_DIR"] = current_dbt_profiles_dir
-        del os.environ["DBT_PROJECT_DIR"]
-        if current_dbt_project_dir:
-            os.environ["DBT_PROJECT_DIR"] = current_dbt_project_dir
+            # Return captured output along with function's result
+            return captured_stdout, captured_stderr, result.success
+        finally:
+            # Restore env variables
+            if "DBT_PROFILES_DIR" in os.environ:
+                if current_dbt_profiles_dir:
+                    os.environ["DBT_PROFILES_DIR"] = current_dbt_profiles_dir
+                else:
+                    os.environ.pop("DBT_PROFILES_DIR")
 
-        captured_stdout = stdout_buffer.getvalue()
-        captured_stderr = stderr_buffer.getvalue()
+            if "DBT_PROJECT_DIR" in os.environ:
+                if current_dbt_project_dir:
+                    os.environ["DBT_PROJECT_DIR"] = current_dbt_project_dir
+                else:
+                    os.environ.pop("DBT_PROJECT_DIR")
 
-        # Restore original streams
-        sys.stdout = orig_stdout
-        sys.stderr = orig_stderr
-
-        # Return captured output along with function's result
-        return captured_stdout, captured_stderr, result.success
+            # Restore original streams
+            sys.stdout = orig_stdout
+            sys.stderr = orig_stderr
+            os.chdir(orig_cwd)
 
     def _dbt_cli_env(self):
         env = {
@@ -479,7 +506,7 @@ class DBTProject(object):
         cli_args: list[str] | None = None,
         write_json: bool = False,
         dbt_cache: bool = False,
-        force_terminal: bool = True,
+        force_terminal: bool = False,
         defer: bool = False,
         defer_selection: bool = True,
     ) -> tuple[str, str, bool]:
@@ -491,8 +518,7 @@ class DBTProject(object):
             defer,
             defer_selection,
         )
-        if self.dbt1_5 and not force_terminal and not self.multitenant:
-            self.install_dbt_if_necessary()
+        if self.can_use_dbt_api and not force_terminal:
             return self.dbt_runner(full_command)
 
         else:
@@ -505,7 +531,7 @@ class DBTProject(object):
         cli_args: list[str] | None = None,
         write_json: bool = False,
         dbt_cache: bool = False,
-        force_terminal: bool = False,
+        force_terminal: bool = True,
         defer: bool = False,
         defer_selection: bool = True,
     ) -> Generator[str, None, tuple[str, str, bool]]:
@@ -518,7 +544,7 @@ class DBTProject(object):
             defer_selection,
             use_colors=True,
         )
-        if self.dbt1_5 and not force_terminal and not self.multitenant:
+        if self.can_use_dbt_api and not force_terminal:
             # self.install_dbt_if_necessary()
             # TODO: make streaming work for python api
             yield from self.dbt_cli_stream(
