@@ -27,6 +27,7 @@ class AIChatConsumer(WebsocketConsumer):
             self.send(text_data=json.dumps({"type": "message_end"}))
         except ValueError as e:
             if str(e) == "NO_API_KEY":
+                print("No api key found, sending error to client")
                 self.send(
                     text_data=json.dumps(
                         {"type": "error", "message": "No API key configured."}
@@ -34,6 +35,7 @@ class AIChatConsumer(WebsocketConsumer):
                 )
             else:
                 capture_exception(e)
+                print(f"Something went wrong: {e}")
                 self.send(
                     text_data=json.dumps(
                         {"type": "error", "message": "Something went wrong"}
@@ -41,6 +43,7 @@ class AIChatConsumer(WebsocketConsumer):
                 )
         except Exception as e:
             capture_exception(e)
+            print(f"Something went wrong: {e}")
             self.send(
                 text_data=json.dumps(
                     {"type": "error", "message": "Something went wrong"}

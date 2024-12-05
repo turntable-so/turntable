@@ -1,10 +1,11 @@
 "use server";
 
 import { fetcher } from "@/app/fetcher";
+import type { Settings } from "@/app/settings/types";
 import getUrl from "@/app/url";
+import type { FilterValue } from "@/components/projects/types";
 import { revalidateTag } from "next/cache";
 import { cookies } from "next/headers";
-import type { Settings } from "../settings/types";
 
 export async function createWorkspace(body: FormData) {
   const response = await fetcher("/workspaces/", {
@@ -485,7 +486,7 @@ export async function createBranch(
   sourceBranch: string,
   schema: string,
 ) {
-  const response = await fetcher(`/project/branches/`, {
+  const response = await fetcher(`/project/`, {
     cookies,
     method: "POST",
     body: {
@@ -703,8 +704,12 @@ export type ProjectChanges = {
   }>;
 };
 
-export async function getProjects() {
-  const response = await fetcher(`/project/`, {
+export async function getProjects({ filter }: { filter: FilterValue }) {
+  const urlParams = new URLSearchParams();
+  if (filter) {
+    urlParams.set("filter", filter);
+  }
+  const response = await fetcher(`/project/?${urlParams.toString()}`, {
     cookies,
     method: "GET",
   });
@@ -960,6 +965,14 @@ export async function startJob(jobId: string): Promise<Job | null> {
 
 export async function deleteJob(jobId: string) {
   const response = await fetcher(`/jobs/${jobId}/`, {
+    cookies,
+    method: "DELETE",
+  });
+  return await response.ok;
+}
+
+export async function archiveProject({ projectId }: { projectId: string }) {
+  const response = await fetcher(`/project/${projectId}/`, {
     cookies,
     method: "DELETE",
   });
