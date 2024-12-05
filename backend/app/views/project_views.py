@@ -51,7 +51,7 @@ class ProjectViewSet(viewsets.ViewSet):
         filter_value = request.query_params.get("filter")
         workspace = request.user.current_workspace()
         dbt_details = workspace.get_dbt_dev_details()
-        
+
         if not dbt_details.repository:
             return Response(
                 {"error": "No repository found for this workspace"},
@@ -434,35 +434,65 @@ class ProjectViewSet(viewsets.ViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        if not request.data.get("branch_name"):
+        branch_name = request.data.get("branch_name")
+        source_branch = request.data.get("source_branch")
+        schema = request.data.get("schema")
+
+        if not branch_name:
             return Response(
                 {"error": "Branch name is required"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        if not request.data.get("source_branch"):
+        if not source_branch:
             return Response(
                 {"error": "Source branch is required"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        if not request.data.get("schema"):
+        if not schema:
             return Response(
                 {"error": "Schema is required"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # Check if a project with the same name exists and is not archived
+        existing_project = Project.objects.filter(
+            name=branch_name, workspace=workspace, archived=False
+        ).first()
+        if existing_project:
+            return Response(
+                {"error": "A project with this name already exists"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Check if the branch already exists in the repository
+        repo = dbt_details.repository
+        remote_branches = repo.remote_branches
+        if branch_name in remote_branches:
+            return Response(
+                {"error": "A branch with this name already exists in the repository"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         with transaction.atomic():
             project = Project.objects.create(
-                name=request.data.get("branch_name"),
+                name=branch_name,
                 workspace=workspace,
                 owner=request.user,
-                repository=dbt_details.repository,
-                branch_name=request.data.get("branch_name"),
-                schema=request.data.get("schema"),
-                source_branch=request.data.get("source_branch"),
+                repository=repo,
+                branch_name=branch_name,
+                schema=schema,
+                source_branch=source_branch,
             )
-            project.create_git_branch(
-                source_branch=request.data.get("source_branch"),
-            )
+            try:
+                project.create_git_branch(
+                    source_branch=source_branch,
+                )
+            except Exception as e:
+                transaction.set_rollback(True)
+                return Response(
+                    {"error": f"Failed to create branch: {str(e)}"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
 
         project_serializer = ProjectSerializer(project)
         return Response(project_serializer.data, status=status.HTTP_201_CREATED)
