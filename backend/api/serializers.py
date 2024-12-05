@@ -506,6 +506,7 @@ class ProjectSerializer(serializers.ModelSerializer):
             "source_branch",
             "archived",
             "owner",
+            "created_at"
         ]
 
     def get_is_cloned(self, obj):

@@ -8,6 +8,9 @@ export interface Project {
   created_at: string;
   read_only: boolean;
   archived: boolean;
+  owner: {
+    email: string;
+  } | null;
 }
 
 export const projectFormSchema = z.object({

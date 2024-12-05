@@ -70,6 +70,8 @@ class ProjectViewSet(viewsets.ViewSet):
             elif filter_value == "archived":
                 projects = projects.filter(archived=True)
 
+        projects = projects.order_by("-created_at")
+
         serializer = ProjectSerializer(projects, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

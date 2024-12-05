@@ -16,19 +16,20 @@ export default function Projects() {
   const searchParams = useSearchParams();
   const filter = (searchParams.get("filter") || "active") as FilterValue;
 
+  const fetchProjects = async () => {
+    setIsLoading(true);
+    const projects = await getProjects({ filter });
+    setProjects(projects);
+    setIsLoading(false);
+  };
+
   useEffect(() => {
-    const fetchProjects = async () => {
-      setIsLoading(true);
-      const projects = await getProjects({ filter });
-      setProjects(projects);
-      setIsLoading(false);
-    };
     fetchProjects();
   }, [filter]);
 
   return (
     <FullWidthPageLayout title="Projects" button={<ProjectButtons />}>
-      <ProjectTable projects={projects} isLoading={isLoading} />
+      <ProjectTable projects={projects} isLoading={isLoading} fetchProjects={fetchProjects} />
     </FullWidthPageLayout>
   );
 }
