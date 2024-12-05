@@ -113,13 +113,22 @@ def lineage_ascii(edges):
     return ascii_graph
 
 
-def asset_md(asset: Asset, contents: str):
+def asset_md(asset: Asset, columns: dict, contents: str):
     description = asset.description or ""
+    columns_md = [
+    ]
+    for key, col in columns.items():
+        columns_md.append(
+            f"-{col.get('name')}:{col.get('type')} {col.get('comment') or ''}"
+        )
     return f"""
-## {asset.name}
-{description}
+model:{asset.name}
+description:{description}
 
-## Contents
+columns:
+{'\n'.join(columns_md)}
+
+contents:
 ```sql
 {contents}
 ```
@@ -143,31 +152,35 @@ def build_context(
         with project.repo_context() as (repo, _):
             transition.mount_manifest(defer=True)
             asset_mds = []
-            lineage_assets = lineage.assets if lineage else []
-            for asset in lineage_assets:
-                # don't include the current asset
-                if asset.id == lineage.asset_id:
-                    continue
-
-                # find each file for the related assets
-                manifest_node = LiveDBTParser.get_manifest_node(
-                    transition.after, asset.unique_name
-                )
-                if not manifest_node:
-                    continue
-                path = os.path.join(
-                    project_path, manifest_node.get("original_file_path")
-                )
-                if not os.path.exists(path):
-                    continue
-                with open(path) as file:
-                    contents = file.read()
-                    asset_mds.append(
-                        asset_md(
-                            asset,
-                            contents,
-                        )
+            if lineage:
+                for asset in lineage.assets:
+                    # find each file for the related assets
+                    manifest_node = LiveDBTParser.get_manifest_node(
+                        transition.after, asset.unique_name
                     )
+                    if not manifest_node:
+                        continue
+                    catalog_node = LiveDBTParser.get_catalog_node(
+                        transition.after, asset.unique_name
+                    )
+                    if catalog_node:    
+                        columns = catalog_node.get("columns", {})
+                    else:
+                        columns = {}
+                    path = os.path.join(
+                        project_path, manifest_node.get("original_file_path")
+                    )
+                    if not os.path.exists(path):
+                        continue
+                    with open(path) as file:
+                        contents = file.read()
+                        asset_mds.append(
+                            asset_md(
+                                asset,
+                                columns,
+                                contents,
+                            )
+                        )
             file_contents = [
                 open(os.path.join(repo.working_tree_dir, unquote(path)), "r").read()
                 for path in context_files
