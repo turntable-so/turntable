@@ -1,5 +1,6 @@
 import os
 import shutil
+import time
 from urllib.parse import unquote
 
 from django.db import transaction
@@ -527,6 +528,7 @@ class ProjectViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=["GET"])
     def lineage(self, request, pk=None):
+        time.sleep(4)
         workspace = request.user.current_workspace()
         dbt_details = workspace.get_dbt_dev_details()
 

@@ -87,6 +87,8 @@ export default function BottomPanel({
     activeFile?.node.type === "file" &&
     activeFile.node.name.endsWith(".sql");
 
+    console.log(lineageData[activeFile?.node.path || ""]?.showColumns)
+
   return (
     <Fragment>
       <PanelResizeHandle className="h-1 hover:bg-gray-300 dark:hover:bg-zinc-700 hover:cursor-col-resize transition-colors" />
@@ -265,11 +267,11 @@ export default function BottomPanel({
                       </div>
                     )}
                   {lineageData?.[activeFile?.node.path || ""] &&
-                    lineageData[activeFile?.node.path || ""].data && (
-                      <LineageView
-                        style={{ height: (bottomPanelHeight ?? 0) - 28 }}
-                      />
-                    )}
+                  lineageData[activeFile?.node.path || ""].data ? (
+                    <LineageView
+                      style={{ height: (bottomPanelHeight ?? 0) - 28 }}
+                    />
+                  ) : null}
                   {lineageData?.[activeFile?.node.path || ""] &&
                     lineageData[activeFile?.node.path || ""].error && (
                       <ErrorMessage

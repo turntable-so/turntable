@@ -1,14 +1,14 @@
 "use client";
 
+import { type Edge, ReactFlowProvider } from "@xyflow/react";
+import { AlertCircle } from "lucide-react";
+import { useParams, usePathname } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import { type Edge, ReactFlowProvider } from "@xyflow/react";
 import ColumnLineage from "../../components/lineage/ColumnLineage";
-import { AlertCircle } from "lucide-react";
-import { getLineage, getProjectBasedLineage } from "../actions/actions";
-import { useAppContext } from "../../contexts/AppContext";
 import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert";
-import { useParams, usePathname } from "next/navigation";
+import { useAppContext } from "../../contexts/AppContext";
+import { getLineage, getProjectBasedLineage } from "../actions/actions";
 import { useFiles } from "./FilesContext";
 
 export type WithMousePosition<T> = T & {
@@ -86,7 +86,7 @@ export const LineageViewContext = React.createContext<{
   lineage: null,
   isTableOnly: true,
   isFilterOpen: false,
-  toggleFilter: () => { },
+  toggleFilter: () => {},
   isLoading: true,
   isLoadingColumns: true,
   error: null,
@@ -105,20 +105,20 @@ export const LineageViewContext = React.createContext<{
     asset_only: true,
   },
   isLineageOptionsPanelOpen: false,
-  setIsLineageOptionsPanelOpen: () => { },
-  handleSelectColumn: () => { },
-  handleExpandNode: () => { },
-  handleColumnHover: () => { },
+  setIsLineageOptionsPanelOpen: () => {},
+  handleSelectColumn: () => {},
+  handleExpandNode: () => {},
+  handleColumnHover: () => {},
   onTableHeaderClick: () => Promise.resolve(),
-  onMouseEnterNode: () => { },
-  onMouseLeaveNode: () => { },
-  updateHoveredEdge: () => { },
-  updateSelectedEdge: () => { },
-  updateGraph: () => { },
+  onMouseEnterNode: () => {},
+  onMouseLeaveNode: () => {},
+  updateHoveredEdge: () => {},
+  updateSelectedEdge: () => {},
+  updateGraph: () => {},
   rootAsset: null,
   isLineageLevelSelectorOpen: false,
-  setIsLineageLevelSelectorOpen: () => { },
-  setLineageOptionsAndRefetch: () => { },
+  setIsLineageLevelSelectorOpen: () => {},
+  setLineageOptionsAndRefetch: () => {},
 });
 
 type Column = {
@@ -148,18 +148,18 @@ type LineageViewProviderProps = {
 
 type LineageFetchType =
   | {
-    type: "asset";
-    data: {
-      nodeId: string;
-    };
-  }
+      type: "asset";
+      data: {
+        nodeId: string;
+      };
+    }
   | {
-    type: "project";
-    data: {
-      branchId: string;
-      filePath: string;
+      type: "project";
+      data: {
+        branchId: string;
+        filePath: string;
+      };
     };
-  };
 
 export function LineageViewProvider({ children }: LineageViewProviderProps) {
   const { setFocusedAsset, setAssetPreview } = useAppContext();
@@ -372,8 +372,6 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
       setRootAsset(null);
       return;
     }
-
-    setLineageOptionsAndRefetch(lineageOptions);
   };
   useEffect(onLineageFetchTypeChange, [lineageFetchType]);
 
