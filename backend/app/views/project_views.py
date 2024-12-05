@@ -426,12 +426,50 @@ class ProjectViewSet(viewsets.ViewSet):
                         git_config.set_value("user", "email", "")
 
     def create(self, request):
-        pass
+        workspace = request.user.current_workspace()
+        dbt_details = workspace.get_dbt_dev_details()
+        if not dbt_details:
+            return Response(
+                {"error": "No DBT details found for this workspace"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if not request.data.get("branch_name"):
+            return Response(
+                {"error": "Branch name is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not request.data.get("source_branch"):
+            return Response(
+                {"error": "Source branch is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not request.data.get("schema"):
+            return Response(
+                {"error": "Schema is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        with transaction.atomic():
+            project = Project.objects.create(
+                name=request.data.get("branch_name"),
+                workspace=workspace,
+                owner=request.user,
+                repository=dbt_details.repository,
+                branch_name=request.data.get("branch_name"),
+                schema=request.data.get("schema"),
+                source_branch=request.data.get("source_branch"),
+            )
+            project.create_git_branch(
+                source_branch=request.data.get("source_branch"),
+            )
+
+        project_serializer = ProjectSerializer(project)
+        return Response(project_serializer.data, status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=["GET", "POST", "PATCH"])
     def branches(self, request):
         workspace = request.user.current_workspace()
-        # assumes a single repo in the workspace for now
         dbt_details = workspace.get_dbt_dev_details()
         if not dbt_details:
             return Response(
@@ -449,39 +487,8 @@ class ProjectViewSet(viewsets.ViewSet):
                 }
             )
         elif request.method == "POST":
-            # Implement POST logic here
-            if not request.data.get("branch_name"):
-                return Response(
-                    {"error": "Branch name is required"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            if not request.data.get("source_branch"):
-                return Response(
-                    {"error": "Source branch is required"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            if not request.data.get("schema"):
-                return Response(
-                    {"error": "Schema is required"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            with transaction.atomic():
-                project = Project.objects.create(
-                    name=request.data.get("branch_name"),
-                    workspace=workspace,
-                    owner=request.user,
-                    repository=dbt_details.repository,
-                    branch_name=request.data.get("branch_name"),
-                    schema=request.data.get("schema"),
-                    source_branch=request.data.get("source_branch"),
-                )
-                project.create_git_branch(
-                    source_branch=request.data.get("source_branch"),
-                )
-
-            project_serializer = ProjectSerializer(project)
-            return Response(project_serializer.data, status=status.HTTP_201_CREATED)
+            # Redirect to create method
+            return self.create(request)
 
         return Response(status=status.HTTP_501_NOT_IMPLEMENTED)
 

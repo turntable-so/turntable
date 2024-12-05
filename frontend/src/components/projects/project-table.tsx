@@ -36,7 +36,11 @@ export function ProjectTable({ projects, isLoading, fetchProjects }: ProjectTabl
       </TableHeader>
       <TableBody>
         {isLoading ? (
-          <LoadingRow />
+          <>
+            <LoadingRow />
+            <LoadingRow />
+            <LoadingRow />
+          </>
         ) : (
           projects.map((project) => (
             <ProjectRow

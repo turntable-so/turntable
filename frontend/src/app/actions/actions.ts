@@ -1,11 +1,11 @@
 "use server";
 
 import { fetcher } from "@/app/fetcher";
+import type { Settings } from "@/app/settings/types";
 import getUrl from "@/app/url";
-import { FilterValue } from "@/components/projects/types";
+import type { FilterValue } from "@/components/projects/types";
 import { revalidateTag } from "next/cache";
 import { cookies } from "next/headers";
-import type { Settings } from "../settings/types";
 
 export async function createWorkspace(body: FormData) {
   const response = await fetcher("/workspaces/", {
@@ -486,7 +486,7 @@ export async function createBranch(
   sourceBranch: string,
   schema: string,
 ) {
-  const response = await fetcher(`/project/branches/`, {
+  const response = await fetcher(`/project/`, {
     cookies,
     method: "POST",
     body: {
