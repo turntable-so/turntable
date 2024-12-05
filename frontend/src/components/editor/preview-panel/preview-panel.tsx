@@ -1,10 +1,10 @@
-import { AgGridReact } from "ag-grid-react";
-import SkeletonLoadingTable from "./skeleton-loading-table";
 import { useFiles } from "@/app/contexts/FilesContext";
-import CsvPreview from "./csv-preview";
-import MarkdownPreview from "./markdown-preview";
+import { AgGridReact } from "ag-grid-react";
 import { useTheme } from "next-themes";
 import ErrorMessage from "../error-message";
+import CsvPreview from "./csv-preview";
+import MarkdownPreview from "./markdown-preview";
+import SkeletonLoadingTable from "./skeleton-loading-table";
 
 interface PreviewPanelProps {
   isQueryLoading: boolean;
@@ -60,7 +60,7 @@ export default function PreviewPanel({
     default:
       return (
         <AgGridReact
-          key={resolvedTheme} // Add this line to force remount on theme change
+          key={resolvedTheme}
           className={
             resolvedTheme === "dark"
               ? "ag-theme-balham-dark"

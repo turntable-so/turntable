@@ -1,15 +1,16 @@
 "use client";
+
+import "./globals.css";
+
+import { ThemeProvider } from "@/components/theme-provider";
 import dynamic from "next/dynamic";
 import { Inter as FontSans } from "next/font/google";
 import { usePathname } from "next/navigation";
-import { Fragment } from "react";
 import { Toaster } from "sonner";
 import { TooltipProvider } from "../components/ui/tooltip";
 import { cn } from "../lib/utils";
-import "./globals.css";
 import AuthenticatedAppLayout from "./layout/authenticated-app-layout";
 import { PHProvider } from "./providers";
-import { ThemeProvider } from "@/components/theme-provider";
 
 const PostHogPageView = dynamic(() => import("./PostHogPageView"), {
   ssr: false,
