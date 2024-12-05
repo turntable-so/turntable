@@ -4,6 +4,7 @@ import copy
 import os
 import re
 import traceback
+from functools import lru_cache
 from typing import Any, Callable, Literal
 
 import duckdb
@@ -15,6 +16,7 @@ from datahub.metadata.com.linkedin.pegasus2avro.assertion import (
     DatasetAssertionScope,
 )
 from datahub.metadata.urns import ChartUrn, DashboardUrn, DatasetUrn, SchemaFieldUrn
+from datahub.utilities import urn_encoder
 from datahub.utilities.urns.error import InvalidUrnError
 from django.db import transaction
 from django.forms.models import model_to_dict
@@ -30,24 +32,38 @@ from app.models import (
     ColumnLink,
     ContainerMembership,
     Resource,
+    ResourceSubtype,
     ResourceType,
 )
 from app.utils.database import pg_delete_and_upsert
 from vinyl.lib.errors import VinylError, VinylErrorType
 from vinyl.lib.schema import VinylSchema
 from vinyl.lib.sqlast import SQLAstNode
-from vinyl.lib.utils.graph import nx_remove_node_and_reconnect
 
 _STR_JOIN_HELPER = "_____"
+
+# Allow columns with parentheses in their names, normally reserved by DataHub because of their frontend.
+urn_encoder.RESERVED_CHARS = {}
+urn_encoder.RESERVED_CHARS_EXTENDED = {}
+
+
+@lru_cache
+def get_dataset_urn(urn_str: str):
+    return DatasetUrn.from_string(urn_str)
+
+
+@lru_cache
+def get_schema_field_urn(urn_str: str):
+    return SchemaFieldUrn.from_string(urn_str)
 
 
 def get_duplicate_nodes_key(asset_id: str):
     if asset_id.startswith("urn:li:dataset:"):
-        parsed_ds = DatasetUrn.from_string(asset_id)
+        parsed_ds = get_dataset_urn(asset_id)
         key = parsed_ds.name
     elif asset_id.startswith("urn:li:schemaField:"):
-        parsed_sf = SchemaFieldUrn.from_string(asset_id)
-        parsed_ds = DatasetUrn.from_string(parsed_sf.parent)
+        parsed_sf = get_schema_field_urn(asset_id)
+        parsed_ds = get_dataset_urn(parsed_sf.parent)
         key = f"{parsed_ds.name}.{parsed_sf.field_path}"
     else:
         key = asset_id
@@ -82,6 +98,57 @@ def get_duplicate_nodes_helper(
             duplicate_helper.setdefault(key, []).append(id)
 
     return duplicate_helper
+
+
+def _adjust_casing_f(dialect: str):
+    return "upper" if dialect == "snowflake" else "lower"
+
+
+def adjust_casing_base(text: str, dialect: str):
+    if dialect in ResourceSubtype.get_bi_dialects():
+        return text
+    return text.upper() if dialect == "snowflake" else text.lower()
+
+
+def _adjust_dialect_for_casing(dialect: str, platform: str):
+    if dialect in ResourceSubtype.get_bi_dialects() and platform != dialect:
+        return platform
+    return dialect
+
+
+@lru_cache
+def adjust_casing_dataset(id: str, dialect: str):
+    if "urn:li:dataset:" not in id:
+        return id
+
+    urn = get_dataset_urn(id)
+    # use the dialect of the dataset if it's not the same as the dialect we're parsing with for BI tools. This is needed for e2e lineage
+    dialect = _adjust_dialect_for_casing(dialect, urn.platform)
+
+    return DatasetUrn(
+        platform=urn.platform,
+        name=adjust_casing_base(urn.name, dialect),
+    ).urn()
+
+
+@lru_cache
+def adjust_casing_schema_field(id: str, dialect: str):
+    if "urn:li:schemaField:" not in id:
+        return id
+
+    urn = get_schema_field_urn(id)
+    dataset_urn = get_dataset_urn(urn.parent)
+    dialect = _adjust_dialect_for_casing(dialect, dataset_urn.platform)
+    adj_dataset = adjust_casing_dataset(urn.parent, dialect)
+    field_path = adjust_casing_base(urn.field_path, dialect)
+    return (
+        SchemaFieldUrn(
+            parent=adj_dataset,
+            field_path=field_path,
+        ),
+        adj_dataset,
+        field_path,
+    )
 
 
 class DataHubDBParserBase:
@@ -238,7 +305,7 @@ class ChartInfoParser(DataHubDBParserBase):
                         config["url"] = info["chartUrl"]
                     if "inputs" in info:
                         for input in info["inputs"]:
-                            self.asset_graph.add_edge(input["string"], k)
+                            self.asset_graph.add_edge(input, k)
 
         # add name if there's no title
         for k, v in self.asset_dict.items():
@@ -290,7 +357,7 @@ class DatasetInfoParser(DataHubDBParserBase):
                     v.sql = self.get_sql(info_list)
 
     def get_info(self, id):
-        urn = DatasetUrn.from_string(id)
+        urn = get_dataset_urn(id)
         if urn.platform == "urn:li:dataPlatform:dbt":
             dbt_info = self.row_dict.get(id, {}).get("datasetProperties", [])
             dbt_view_info = self.row_dict.get(id, {}).get("viewProperties", [])
@@ -317,7 +384,7 @@ class DatasetInfoParser(DataHubDBParserBase):
                 return info["name"]
 
         # add name if there's no title
-        parsed = DatasetUrn.from_string(id)
+        parsed = get_dataset_urn(id)
         return parsed.name
 
     def get_description(self, info_list: list[dict[str, Any]]):
@@ -430,19 +497,19 @@ class SchemaParser(DataHubDBParserBase):
     def parse(self):
         for k, v in self.asset_dict.items():
             if "urn:li:dataset:" in k:
-                urn = DatasetUrn.from_string(k)
+                urn = get_dataset_urn(k)
                 info = self.get_info(k)
                 self.get_fields(info, urn)
 
     def get_info(self, id):
-        urn = DatasetUrn.from_string(id)
+        urn = get_dataset_urn(id)
         if urn.platform == "urn:li:dataPlatform:dbt:":
             dbt_info = self.row_dict.get(id, {}).get("schemaMetadata", [])
         else:
             db_info = self.row_dict.get(id, {}).get("schemaMetadata", [])
 
             # get dbt_id
-            db_urn = DatasetUrn.from_string(id)
+            db_urn = get_dataset_urn(id)
             dbt_urn = DatasetUrn(platform="urn:li:dataPlatform:dbt", name=db_urn.name)
             dbt_id = dbt_urn.urn()
             dbt_info = self.row_dict.get(dbt_id, {}).get("schemaMetadata", [])
@@ -460,10 +527,13 @@ class SchemaParser(DataHubDBParserBase):
                     if "." in field["fieldPath"]:
                         continue
                     col_urn_str = SchemaFieldUrn(urn, field["fieldPath"]).urn()
-                    self.column_dict[col_urn_str] = Column(
-                        id=col_urn_str,
-                        asset_id=urn.urn(),
-                        name=field["fieldPath"],
+                    adj_col_urn_str, adj_dataset, adj_field_path = (
+                        adjust_casing_schema_field(col_urn_str, self.dialect)
+                    )
+                    self.column_dict[adj_col_urn_str] = Column(
+                        id=adj_col_urn_str,
+                        asset_id=adj_dataset,
+                        name=adj_field_path,
                         type=field["nativeDataType"],
                         nullable=field["nullable"],
                         description=field.get("description"),
@@ -476,15 +546,18 @@ class SchemaParser(DataHubDBParserBase):
                     if "." in field["fieldPath"]:
                         continue
                     col_urn_str = SchemaFieldUrn(urn, field["fieldPath"]).urn()
-                    if col_urn_str in self.column_dict:
+                    adj_col_urn_str, adj_dataset, adj_field_path = (
+                        adjust_casing_schema_field(col_urn_str, self.dialect)
+                    )
+                    if adj_col_urn_str in self.column_dict:
                         # only update type, which should default to postgres type
-                        self.column_dict[col_urn_str].type = field["nativeDataType"]
+                        self.column_dict[adj_col_urn_str].type = field["nativeDataType"]
                     else:
                         # build full Column based off of dbt info
                         self.column_dict[col_urn_str] = Column(
-                            id=col_urn_str,
-                            asset_id=urn.urn(),
-                            name=field["fieldPath"],
+                            id=adj_col_urn_str,
+                            asset_id=adj_dataset,
+                            name=adj_field_path,
                             type=field["nativeDataType"],
                             nullable=field["nullable"],
                             description=field.get("description"),
@@ -502,31 +575,40 @@ class LineageParser(DataHubDBParserBase):
                         upstreams = [upstreams]
 
                     for upstream in upstreams:
-                        self.asset_graph.add_edge(upstream["dataset"], k)
+                        adj_upstream = adjust_casing_dataset(
+                            upstream["dataset"], self.dialect
+                        )
+                        self.asset_graph.add_edge(adj_upstream, k)
 
                     downstreams = lineage.get("downstreams", [])
                     if not isinstance(downstreams, list):
                         downstreams = [downstreams]
                     for downstream in downstreams:
-                        self.asset_graph.add_edge(k, downstream)
+                        adj_downstream = adjust_casing_dataset(downstream, self.dialect)
+                        self.asset_graph.add_edge(k, adj_downstream)
 
                     if "fineGrainedLineages" in lineage and not self.is_db:
                         for field_info in lineage["fineGrainedLineages"]:
                             confidence_score = field_info["confidenceScore"]
                             for upstream_field in field_info["upstreams"]:
-                                upstream_dataset = SchemaFieldUrn.from_string(
-                                    upstream_field
-                                ).parent
+                                adj_upstream_field, adj_upstream_dataset, _ = (
+                                    adjust_casing_schema_field(
+                                        upstream_field, self.dialect
+                                    )
+                                )
                                 self.column_graph.add_node(
-                                    upstream_field,
-                                    dataset=upstream_dataset,
+                                    adj_upstream_field,
+                                    dataset=adj_upstream_dataset,
                                 )
                                 for downstream_field in field_info["downstreams"]:
-                                    downstream_dataset = SchemaFieldUrn.from_string(
-                                        downstream_field
-                                    ).parent
+                                    adj_downstream_field, adj_downstream_dataset, _ = (
+                                        adjust_casing_schema_field(
+                                            downstream_field, self.dialect
+                                        )
+                                    )
                                     self.column_graph.add_node(
-                                        downstream_field, dataset=downstream_dataset
+                                        adj_downstream_field,
+                                        dataset=adj_downstream_dataset,
                                     )
                                     self.column_graph.add_edge(
                                         upstream_field,
@@ -578,16 +660,20 @@ class AssertionParser(DataHubDBParserBase):
                     self._parse_helper(info, k)
 
     def _parse_helper(self, info, assertion_urn):
-        detail = info["customProperties"]["datasetAssertion"]
+        try:
+            detail = info["datasetAssertion"]
+        except KeyError:
+            detail = info["customProperties"]["datasetAssertion"]
+
         test_name = detail["nativeType"]
         if dataset := detail.get("dataset") in self.asset_dict:
             adj_dataset = dataset
         else:
             # find db dataset equivalent
-            dbt_urn = DatasetUrn.from_string(dataset)
+            dbt_urn = get_dataset_urn(dataset)
             adj_dataset = None
             for urn_str in self.asset_dict:
-                urn = DatasetUrn.from_string(urn_str)
+                urn = get_dataset_urn(urn_str)
                 if urn.name == dbt_urn.name and urn.platform != dbt_urn.platform:
                     adj_dataset = urn_str
                     break
@@ -597,10 +683,7 @@ class AssertionParser(DataHubDBParserBase):
 
         if detail.get("scope") == DatasetAssertionScope.DATASET_COLUMN:
             for field in detail["fields"]:
-                adj_field_urn = SchemaFieldUrn(
-                    adj_dataset,
-                    SchemaFieldUrn.from_string(field).field_path,
-                ).urn()
+                adj_field_urn, _, _ = adjust_casing_schema_field(field, self.dialect)
                 if self.column_dict[adj_field_urn].tests is None:
                     self.column_dict[adj_field_urn].tests = []
                 self.column_dict[adj_field_urn].tests.append(test_name)
@@ -646,6 +729,7 @@ class DataHubDBParser:
         self.asset_links = []
         self.asset_errors = []
         self.column_links = []
+        self.id_adjustments = {}
 
     def get_data(self):
         if self.path is None:
@@ -656,7 +740,9 @@ class DataHubDBParser:
     def get_row_dict(self):
         base_asset_dict = {}
         for row in self.get_data():
-            id = row[0]
+            id = adjust_casing_dataset(row[0], self.dialect)
+            print(id)
+            # id = row[0]
             if self.exclude_node(id, full_exclusion=False):
                 continue
             self.input_dict.setdefault(id, {}).setdefault(row[1], []).append(
@@ -735,8 +821,8 @@ class DataHubDBParser:
             self.graph_contraction_helper("asset")
 
     def _get_dbt_field_urn(self, id: str):
-        parsed = SchemaFieldUrn.from_string(id)
-        db_urn = DatasetUrn.from_string(parsed.parent)
+        parsed = get_schema_field_urn(id)
+        db_urn = get_dataset_urn(parsed.parent)
         dbt_field_urn = SchemaFieldUrn(
             DatasetUrn(platform="urn:li:dataPlatform:dbt", name=db_urn.name),
             parsed.field_path,
@@ -793,7 +879,7 @@ class DataHubDBParser:
         }
 
     def get_sqlglot_table_helper(self, k: str):
-        split_name = DatasetUrn.from_string(k).name.split(".")
+        split_name = get_dataset_urn(k).name.split(".")
         if len(split_name) == 1:
             return exp.Table(
                 this=exp.Identifier(this=split_name[0]),
@@ -802,9 +888,9 @@ class DataHubDBParser:
         catalog, schema, *table_list = split_name
         table = ".".join(table_list)
         return exp.Table(
-            catalog=exp.Identifier(this=catalog),
-            db=exp.Identifier(this=schema),
-            this=exp.Identifier(this=table),
+            catalog=exp.Identifier(this=self.adjust_casing_lineage(catalog)),
+            db=exp.Identifier(this=self.adjust_casing_lineage(schema)),
+            this=exp.Identifier(this=self.adjust_casing_lineage(table)),
         )
 
     def get_asset_column_dict(self):
@@ -812,10 +898,14 @@ class DataHubDBParser:
         for col in self.column_dict.values():
             self.asset_column_dict.setdefault(col.asset_id, []).append(col.name)
 
+    def adjust_casing_lineage(self, text: str):
+        return adjust_casing_base(text, self.dialect)
+
     def get_schema_helper(self, k: str):
         # asset_column_dict already created in prior step of cll workflow
         schema_helper = [
-            (col_name, str) for col_name in self.asset_column_dict.get(k, [])
+            (self.adjust_casing_lineage(col_name), str)
+            for col_name in self.asset_column_dict.get(k, [])
         ]
         return VinylSchema(ibis.schema(schema_helper))
 
@@ -828,8 +918,10 @@ class DataHubDBParser:
             use_datahub_nodes=True,
             errors=[],
             default_db=asset.db_location[0] if asset.db_location else None,
+            append_key_casing=_adjust_casing_f(self.dialect),
         )
-        catalog = DatasetUrn.from_string(k).name.split(".")[0]
+        catalog = get_dataset_urn(k).name.split(".")[0]
+        asset.sql = self.adjust_casing_lineage(asset.sql)
         try:
             node.ast = sqlglot.parse(asset.sql, dialect=self.dialect)[0]
             node.original_ast = node.ast.copy()
@@ -851,7 +943,11 @@ class DataHubDBParser:
                 and node.db is not None
                 and node.catalog is None
             ):
-                return exp.Table(catalog=catalog, db=node.db, this=node.this)
+                return exp.Table(
+                    catalog=self.adjust_casing_lineage(catalog),
+                    db=self.adjust_casing_lineage(node.db),
+                    this=self.adjust_casing_lineage(node.this),
+                )
             return node
 
         node.ast.transform(ensure_table_catalog)
@@ -944,18 +1040,25 @@ class DataHubDBParser:
                     if error not in self.asset_errors:
                         self.asset_errors.append(error)
                         print("uncaught error", error)
+            for node in graph_it.copy():
+                try:
+                    get_schema_field_urn(node)
+                except (InvalidUrnError, AssertionError):
+                    breakpoint()
+                    nx_remove_node_and_reconnect(graph_it, node, preserve_ntype=True)
+                    error = AssetError(
+                        asset=asset,
+                        error=VinylError(
+                            node_id=node,
+                            type=VinylErrorType.PARSE_ERROR,
+                            msg=f"Malformed column name: {node}",
+                        ).to_dict(),
+                        workspace_id=self.workspace_id,
+                    )
+                    self.asset_errors.append(error)
             graphs.append(graph_it)
 
         self.column_graph = nx.compose_all([self.column_graph, *graphs])
-
-        # remove malformed nodes from the graph
-        for node in self.column_graph.copy():
-            try:
-                SchemaFieldUrn.from_string(node)
-            except (InvalidUrnError, AssertionError):
-                nx_remove_node_and_reconnect(
-                    self.column_graph, node, preserve_ntype=True
-                )
 
     def parse(self):
         self.get_row_dict()
@@ -1013,7 +1116,7 @@ class DataHubDBParser:
         cls, id: str, all_resource_dict: dict[str, Resource], resource: Resource
     ):
         if "urn:li:dataset:" in id:
-            urn = DatasetUrn.from_string(id)
+            urn = get_dataset_urn(id)
             resource_name = urn.platform.split(":")[-1]
             asset_name = urn.name
             asset_type = Asset.AssetType.DATASET
@@ -1111,7 +1214,7 @@ class DataHubDBParser:
         ) - set([v.id for v in combined["columns"]])
         asset_dict = {v.id: v for v in [*combined["assets"], *indirect_assets]}
         for column_id in columns_to_add:
-            parsed = SchemaFieldUrn.from_string(column_id)
+            parsed = get_schema_field_urn(column_id)
             asset_id = parsed.parent
             if asset_id not in asset_dict:
                 asset = cls._get_indirect_asset(asset_id, all_resource_dict, resource)

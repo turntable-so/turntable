@@ -387,8 +387,8 @@ def nx_remove_node_and_reconnect(
         sources = [source for source, _ in g.in_edges(node)]
         targets = [target for _, target in g.out_edges(node)]
     else:
-        sources = g.neighbors(node)
-        targets = g.neighbors(node)
+        sources = list(g.neighbors(node))
+        targets = sources
 
     new_edges = list(itertools.product(sources, targets))
     new_edges = [
