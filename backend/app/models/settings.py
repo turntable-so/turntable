@@ -17,6 +17,7 @@ class StorageSettings(WorkspaceSettings):
     class StorageCategories(models.TextChoices):
         DATA = "data"
         METADATA = "metadata"
+        EXPORT = "export"
 
     def get_default_categories():
         return list(StorageSettings.StorageCategories.values)

@@ -67,7 +67,7 @@ def run_test_sync(
                         f2.write(f.read())
 
 
-@pytest.mark.usefixtures("custom_celery")
+@pytest.mark.usefixtures("custom_celery", "storage")
 class TestMetadataSync:
     @pytest.mark.parametrize("use_cache", [True, False])
     def test_metadata_sync_postgres(

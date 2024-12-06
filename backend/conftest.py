@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 
+import boto3
 import django
 import pytest
 from celery import Celery
@@ -126,8 +127,43 @@ def local_postgres(workspace):
 
 
 @pytest.fixture
-def local_alternative_storage(workspace):
-    return create_local_alternative_storage(workspace)
+def storage(workspace):
+    # Create storage settings
+    storage_settings = create_local_alternative_storage(workspace)
+
+    # Set up S3 client
+    s3_client = boto3.client(
+        "s3",
+        aws_access_key_id=storage_settings.s3_access_key,
+        aws_secret_access_key=storage_settings.s3_secret_key,
+        endpoint_url=storage_settings.s3_endpoint_url,
+        config=boto3.session.Config(signature_version="s3v4"),
+    )
+
+    # Create a test bucket with a unique name
+    test_bucket_root_name = os.getenv("TEST_BUCKET_ROOT_NAME", "test-bucket")
+    worker_id = os.getenv("PYTEST_XDIST_WORKER")
+    if not worker_id:
+        bucket_name = f"{test_bucket_root_name}-{workspace.id}"
+    else:
+        bucket_name = f"{test_bucket_root_name}-{workspace.id}-{worker_id}"
+
+    try:
+        print(f"Creating testbucket {bucket_name}")
+        s3_client.create_bucket(Bucket=bucket_name)
+        storage_settings.s3_bucket_name = bucket_name
+        storage_settings.save()
+    except Exception as e:
+        print(f"Warning: Could not create bucket: {e}")
+
+    yield storage_settings
+
+    # Cleanup after test - delete bucket directly
+    print("Cleaning up test bucket...")
+    try:
+        s3_client.delete_bucket(Bucket=bucket_name)
+    except Exception as e:
+        print(f"Warning: Could not clean up bucket: {e}")
 
 
 @pytest.fixture
