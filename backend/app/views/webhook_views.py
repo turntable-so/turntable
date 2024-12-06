@@ -14,23 +14,23 @@ class WebhookViewSet(viewsets.ViewSet):
     permission_classes = [AllowAny]
     authentication_classes = []
 
-    def verify_signature(self, request):
+    def verify_signature(self, request, secret_key):
         """Verify the HMAC signature from the webhook"""
-        breakpoint()
         received_signature = request.headers.get("X-Signature")
         if not received_signature:
             return False
 
         body = request.body
 
-        secret = "TEST_SECRET_KEY"
         expected_signature = hmac.new(
-            secret, msg=body, digestmod=hashlib.sha256
+            secret_key, msg=body, digestmod=hashlib.sha256
         ).hexdigest()
         return hmac.compare_digest(expected_signature, received_signature)
 
     @action(detail=True, methods=["POST"])
     def run_job(self, request, pk=None):
+        print("run_job", request.data)
+        print("run_job", request.headers)
         # if not self.verify_signature(request):
         #     return Response(
         #         {"error": "Invalid signature"}, status=status.HTTP_401_UNAUTHORIZED

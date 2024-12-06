@@ -924,7 +924,7 @@ type CreateJobPayload = {
   commands: string[];
   cron_str: string;
   save_artifacts: boolean;
-  worflow_type: string
+  workflow_type: string
 };
 
 export async function createJob(payload: CreateJobPayload) {
