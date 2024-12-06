@@ -372,8 +372,12 @@ export function LineageViewProvider({ children }: LineageViewProviderProps) {
       setRootAsset(null);
       return;
     }
+
+    if (!isProjectLineage) {
+      setLineageOptionsAndRefetch(lineageOptions);
+    }
   };
-  useEffect(onLineageFetchTypeChange, [lineageFetchType]);
+  useEffect(onLineageFetchTypeChange, [lineageFetchType, isProjectLineage]);
 
   const onPathnameChange = () => {
     if (isAssetLineage) {
