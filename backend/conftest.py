@@ -128,8 +128,16 @@ def local_postgres(workspace):
 
 @pytest.fixture
 def storage(workspace):
+    # Create a test bucket with a unique name
+    test_bucket_root_name = os.getenv("TEST_AWS_STORAGE_BUCKET_NAME", "test-bucket")
+    worker_id = os.getenv("PYTEST_XDIST_WORKER")
+    if not worker_id:
+        bucket_name = f"{test_bucket_root_name}-{workspace.id}"
+    else:
+        bucket_name = f"{test_bucket_root_name}-{workspace.id}-{worker_id}"
+
     # Create storage settings
-    storage_settings = create_local_alternative_storage(workspace)
+    storage_settings = create_local_alternative_storage(workspace, bucket_name)
 
     # Set up S3 client
     s3_client = boto3.client(
@@ -140,19 +148,9 @@ def storage(workspace):
         config=boto3.session.Config(signature_version="s3v4"),
     )
 
-    # Create a test bucket with a unique name
-    test_bucket_root_name = os.getenv("TEST_BUCKET_ROOT_NAME", "test-bucket")
-    worker_id = os.getenv("PYTEST_XDIST_WORKER")
-    if not worker_id:
-        bucket_name = f"{test_bucket_root_name}-{workspace.id}"
-    else:
-        bucket_name = f"{test_bucket_root_name}-{workspace.id}-{worker_id}"
-
     try:
         print(f"Creating testbucket {bucket_name}")
         s3_client.create_bucket(Bucket=bucket_name)
-        storage_settings.s3_bucket_name = bucket_name
-        storage_settings.save()
     except Exception as e:
         print(f"Warning: Could not create bucket: {e}")
 

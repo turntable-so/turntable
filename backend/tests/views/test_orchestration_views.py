@@ -146,6 +146,9 @@ class TestOrchestrationViews:
 
         # check artifacts export
         local_postgres_dbtresource.refresh_from_db()
+        print(local_postgres_dbtresource.exported_manifest)
+        print(local_postgres_dbtresource.exported_catalog)
+        print(local_postgres_dbtresource.exported_run_results)
         assert local_postgres_dbtresource.exported_manifest
         assert local_postgres_dbtresource.exported_catalog
         assert local_postgres_dbtresource.exported_run_results
