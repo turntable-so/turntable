@@ -866,14 +866,14 @@ class DBTCoreDetails(DBTResource):
         run_results_jsons: list[str] | None = None,
     ):
         exported = False
-        if self.is_exportable:
-            for run_results_json in run_results_jsons:
-                self.exported_run_results.save(
-                    self.run_results_filename, ContentFile(run_results_json)
-                )
-                self.refresh_from_db()
-                if not self.exported_run_results.url:
-                    raise Exception("Run results not uploaded")
+        run_results_jsons = [i for i in run_results_jsons if i is not None]
+        if self.is_exportable and run_results_jsons:
+            # for now, only uploads the last run results
+            run_results_json = run_results_jsons[-1]
+            self.exported_run_results.save(
+                self.run_results_filename, ContentFile(run_results_json)
+            )
+            exported = True
         return exported
 
     @contextmanager
