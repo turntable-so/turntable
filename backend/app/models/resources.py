@@ -7,10 +7,12 @@ import uuid
 from contextlib import contextmanager
 from typing import Any, Generator
 
+import orjson
 import yaml
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.files import File
+from django.core.files.base import ContentFile
 from django.db import models
 from django_celery_results.models import TaskResult
 from polymorphic.models import PolymorphicModel
@@ -380,7 +382,7 @@ class ArtifactSource(models.TextChoices):
 
 
 class DBTResource(PolymorphicModel):
-    def custom_upload_to(instance, filename):
+    def custom_metadata_upload_to(instance, filename):
         """
         Determine the custom folder path based on the instance's id.cc
         """
@@ -404,13 +406,28 @@ class DBTResource(PolymorphicModel):
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE, null=True)
     manifest = CustomFileField(
         null=True,
-        upload_to=custom_upload_to,
+        upload_to=custom_metadata_upload_to,
         storage_category=StorageSettings.StorageCategories.METADATA,
     )
     catalog = CustomFileField(
         null=True,
-        upload_to=custom_upload_to,
+        upload_to=custom_metadata_upload_to,
         storage_category=StorageSettings.StorageCategories.METADATA,
+    )
+    exported_manifest = CustomFileField(
+        null=True,
+        upload_to=".",  # for now, assume we are exporting to the base of the bucket
+        storage_category=StorageSettings.StorageCategories.EXPORT,
+    )
+    exported_catalog = CustomFileField(
+        null=True,
+        upload_to=".",  # for now, assume we are exporting to the base of the bucket
+        storage_category=StorageSettings.StorageCategories.EXPORT,
+    )
+    exported_run_results = CustomFileField(
+        null=True,
+        upload_to=".",  # for now, assume we are exporting to the base of the bucket
+        storage_category=StorageSettings.StorageCategories.EXPORT,
     )
     artifact_source = models.CharField(
         choices=ArtifactSource.choices, max_length=255, null=True
@@ -645,6 +662,10 @@ class DBTCoreDetails(DBTResource):
     def catalog_filename(self):
         return "catalog.json"
 
+    @property
+    def run_results_filename(self):
+        return "run_results.json"
+
     @classmethod
     def get_job_dbtresource(cls, workspace_id: str, resource_id: str = None):
         prod_env_options = EnvironmentType.jobs_allowed_environments()
@@ -782,6 +803,20 @@ class DBTCoreDetails(DBTResource):
                     git_repo,
                 )
 
+    @property
+    def is_exportable(self):
+        return StorageSettings.objects.filter(
+            workspace=self.workspace,
+            applies_to__contains=[StorageSettings.StorageCategories.EXPORT],
+        ).exists()
+
+    def export_run_results(self, run_results: dict | None = None):
+        if self.is_exportable and run_results:
+            run_results_json = orjson.dumps(run_results).decode("utf-8")
+            self.exported_run_results.save(
+                self.run_results_filename, ContentFile(run_results_json)
+            )
+
     def upload_artifacts(
         self,
         project_id: str | None = None,
@@ -789,6 +824,7 @@ class DBTCoreDetails(DBTResource):
         repo_override: Repository | None = None,
         artifact_source: ArtifactSource = ArtifactSource.ORCHESTRATION,
         exclude_introspective: bool = True,
+        export: bool = False,
     ):
         with self.dbt_repo_context(
             isolate=True, project_id=project_id, repo_override=repo_override
@@ -819,10 +855,15 @@ class DBTCoreDetails(DBTResource):
                     return stdout, stderr, False
 
             # save artifacts to file
+            ## must have custom export storage bucket to export artifacts
             with open(dbtproj.manifest_path, "r") as f:
                 self.manifest.save(self.manifest_filename, f)
+                if export and self.is_exportable:
+                    self.exported_manifest.save(self.manifest_filename, f)
             with open(dbtproj.catalog_path, "r") as f:
                 self.catalog.save(self.catalog_filename, f)
+                if export and self.is_exportable:
+                    self.exported_catalog.save(self.catalog_filename, f)
             self.artifact_source = artifact_source
             self.save()
             return stdout, stderr, success

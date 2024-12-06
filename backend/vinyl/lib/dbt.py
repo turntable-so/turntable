@@ -536,12 +536,12 @@ class DBTProject(object):
         defer_selection: bool = True,
     ) -> Generator[str, None, tuple[str, str, bool]]:
         full_command = self.get_dbt_command(
-            command,
-            cli_args,
-            write_json,
-            dbt_cache,
-            defer,
-            defer_selection,
+            command=command,
+            cli_args=cli_args,
+            write_json=write_json,
+            dbt_cache=dbt_cache,
+            defer=defer,
+            defer_selection=defer_selection,
             use_colors=True,
         )
         if self.can_use_dbt_api and not force_terminal:

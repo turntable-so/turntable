@@ -3,8 +3,9 @@ import shlex
 import shutil
 import tempfile
 import time
-from typing import Callable
+from typing import Any, Callable
 
+import orjson
 from celery import states
 from git import Repo as GitRepo
 
@@ -16,7 +17,7 @@ from vinyl.lib.utils.files import load_orjson
 STREAM_BUFFER_INTERVAL = 1.0
 
 
-def return_helper(success, stdout, stderr, run_results=None):
+def return_helper(success, stdout, stderr, run_results: dict | None = None):
     return {
         "success": success,
         "stdout": stdout,
@@ -32,6 +33,24 @@ def returns_helper(outs):
         "stderrs": [out["stderr"] for out in outs],
         "run_results": [out["run_results"] for out in outs],
     }
+
+
+def get_run_results(dbtproj):
+    if os.path.exists(dbtproj.run_results_path):
+        return load_orjson(dbtproj.run_results_path)
+    return {}
+
+
+def export_run_results_from_outputs(
+    outs: list[dict], dbt_resource: Any, repo: str | None = None
+) -> None:
+    run_results_jsons = [
+        orjson.dumps(out["run_results"]).decode("utf-8") for out in outs
+    ]
+    run_results_jsons = [j for j in run_results_jsons if j is not None]
+    return dbt_resource.export_run_results(
+        repo_override=repo, run_results_jsons=run_results_jsons
+    )
 
 
 @task
@@ -54,53 +73,49 @@ def run_dbt_command(
     with dbt_resource.dbt_repo_context(
         project_id=project_id, isolate=True, repo_override=GitRepo(repo_override_dir)
     ) as (dbtproj, project_dir, _):
-        # run command
-        try:
-            split_command = shlex.split(command)
-            if split_command[0] == "dbt":
-                split_command.pop(0)
-            if stream:
-                success = None
-                stdout = ""
-                stderr = ""
-                last_update = time.time()
+        success = None
+        stdout = ""
+        stderr = ""
+        split_command = shlex.split(command)
+        if split_command[0] == "dbt":
+            split_command.pop(0)
 
-                for line in dbtproj.stream_dbt_command(split_command, write_json=True):
-                    if line == STREAM_SUCCESS_STRING:
-                        success = True
-                        return return_helper(
-                            success=success, stdout=stdout, stderr=stderr
-                        )
-                    elif line == STREAM_ERROR_STRING:
-                        success = False
-                        return return_helper(
-                            success=success, stdout=stdout, stderr=stderr
-                        )
+        if stream:
+            last_update = time.time()
 
-                    stdout += line
-                    current_time = time.time()
+            for line in dbtproj.stream_dbt_command(split_command, write_json=True):
+                if line == STREAM_SUCCESS_STRING:
+                    success = True
+                    break
+                elif line == STREAM_ERROR_STRING:
+                    success = False
+                    break
 
-                    # Only update state if buffer_interval has elapsed
-                    if current_time - last_update >= buffer_interval:
-                        result = return_helper(
-                            success=success, stdout=stdout, stderr=stderr
-                        )
-                        self.update_state(
-                            state=states.STARTED,
-                            meta=result,
-                        )
-                        last_update = current_time
+                stdout += line
+                current_time = time.time()
 
-            else:
-                stdout, stderr, success = dbtproj.run_dbt_command(
-                    split_command, write_json=True
-                )
-        finally:
-            if os.path.exists(dbtproj.run_results_path):
-                run_results = load_orjson(dbtproj.run_results_path)
-            else:
-                run_results = {}
+                if current_time - last_update >= buffer_interval:
+                    result = return_helper(
+                        success=success,
+                        stdout=stdout,
+                        stderr=stderr,
+                    )
+                    self.update_state(
+                        state=states.STARTED,
+                        meta=result,
+                    )
+                    last_update = current_time
 
+            if success is None:
+                raise RuntimeError("Stream ended without success or error signal")
+        else:
+            stdout, stderr, success = dbtproj.run_dbt_command(
+                split_command, write_json=True
+            )
+
+        run_results = get_run_results(dbtproj)
+        if save_artifacts and run_results:
+            dbt_resource.export_run_results(run_results=run_results)
         return return_helper(success, stdout, stderr, run_results)
 
 
@@ -121,6 +136,7 @@ def save_artifacts_task(
     stdout, stderr, success = dbt_resource.upload_artifacts(
         artifact_source=ArtifactSource.ORCHESTRATION,
         repo_override=GitRepo(repo_override_dir),
+        export=True,
     )
     if not success:
         return return_helper(
