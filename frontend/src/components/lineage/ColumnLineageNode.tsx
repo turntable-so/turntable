@@ -1,3 +1,10 @@
+import {
+  Handle,
+  Position,
+  useReactFlow,
+  useUpdateNodeInternals,
+} from "@xyflow/react";
+import { usePathname } from "next/navigation";
 // @ts-nocheck
 import type React from "react";
 import {
@@ -6,21 +13,13 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useMemo,
-  useState,
+  useMemo
 } from "react";
-import {
-  Handle,
-  Position,
-  useReactFlow,
-  useUpdateNodeInternals,
-} from "@xyflow/react";
+import { LineageViewContext } from "../../app/contexts/LineageView";
 import { useAppContext } from "../../contexts/AppContext";
 import { getAssetIcon } from "../../lib/utils";
 import { ColumnTypeIcon } from "../ColumnTypeIcon";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { LineageViewContext } from "../../app/contexts/LineageView";
-import { usePathname } from "next/navigation";
 // import { useHotkeys } from 'react-hotkeys-hook';
 
 const ModelIcon = () => (
@@ -343,7 +342,7 @@ function LineageNode({ id, data, yPos }: any) {
                   }}
                   onMouseEnter={(e) => onHover(column.columnId, e)}
                   onMouseLeave={(e) => onHover(null)}
-                  className={"nodeColumn h-5"}
+                  className={"nodeColumn h-5 sticky top-[15px] left-0 right-0 bottom-[-15px]"}
                 >
                   <div
                     className={`
