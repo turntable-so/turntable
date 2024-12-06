@@ -55,17 +55,14 @@ export default function JobsPage({ searchParams }: JobsPageProps) {
     if (!isMountedRef.current) return;
 
     const sortedJobs = (jobsData?.results || []).sort((a, b) => {
-      if (
-        a.latest_run?.status === "STARTED" &&
-        b.latest_run?.status !== "STARTED"
-      )
-        return -1;
-      if (
-        a.latest_run?.status !== "STARTED" &&
-        b.latest_run?.status === "STARTED"
-      )
-        return 1;
-      return dayjs.utc(a.next_run).diff(dayjs.utc(b.next_run));
+      const dateA = dayjs.utc(a.latest_run?.date_done || 0);
+      const dateB = dayjs.utc(b.latest_run?.date_done || 0);
+
+      const dateDiff = dateB.diff(dateA);
+      if (dateDiff !== 0) {
+        return dateDiff;
+      }
+      return a.id.localeCompare(b.id);
     });
 
     const sortedRuns = (runsData?.results || []).sort((a, b) => {
