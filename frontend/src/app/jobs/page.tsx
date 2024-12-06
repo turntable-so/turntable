@@ -78,6 +78,25 @@ export default function JobsPage({ searchParams }: JobsPageProps) {
     setRunsResult({ ...runsData, results: sortedRuns });
   };
 
+  const TabNames = { jobs: "Jobs", runs: "Runs" };
+
+  const NewJobButton = () => (
+    <Link href="/jobs/new">
+      <Button className="rounded-full space-x-2">
+        <Plus className="size-4" />
+        <div>New Job</div>
+      </Button>
+    </Link>
+  );
+
+  const onMount = () => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.toString()) {
+      router.replace("/jobs");
+    }
+  }
+  useEffect(onMount, []);
+
   useEffect(() => {
     isMountedRef.current = true;
 
@@ -117,21 +136,6 @@ export default function JobsPage({ searchParams }: JobsPageProps) {
     };
   }, [page, pageSize]);
 
-  const TabNames = { jobs: "Jobs", runs: "Runs" };
-
-  const handleTabChange = (value: string) => {
-    router.push("/jobs");
-  };
-
-  const NewJobButton = () => (
-    <Link href="/jobs/new">
-      <Button className="rounded-full space-x-2">
-        <Plus className="size-4" />
-        <div>New Job</div>
-      </Button>
-    </Link>
-  );
-
   if (!jobsResult || !runsResult) {
     return (
       <FullWidthPageLayout title="Jobs" button={<NewJobButton />}>
@@ -144,7 +148,7 @@ export default function JobsPage({ searchParams }: JobsPageProps) {
 
   return (
     <FullWidthPageLayout title="Jobs" button={<NewJobButton />}>
-      <Tabs defaultValue={TabNames.jobs} onValueChange={handleTabChange}>
+      <Tabs defaultValue={TabNames.jobs}>
         <TabsList>
           <TabsTrigger value={TabNames.jobs}>Jobs</TabsTrigger>
           <TabsTrigger value={TabNames.runs}>Runs</TabsTrigger>
