@@ -19,6 +19,8 @@ type JobIdPageProps = {
   jobAnalytics: JobAnalytics;
 };
 
+
+const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 export default function JobIdPage({
   job,
   paginatedRuns,
@@ -35,13 +37,31 @@ export default function JobIdPage({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <p className="text-sm font-medium">Next Run</p>
-        <p className="flex items-center gap-2 text-muted-foreground">
-          <AlarmClock className="w-4 h-4" />
-          {job.next_run
-            ? dayjs.utc(job.next_run).local().format("MMM D, YYYY, h:mma")
-            : "No next run"}
-        </p>
+        {job.workflow_type === "cron" && (
+          <>
+            <p className="text-sm font-medium">Next Run</p>
+            <p className="flex items-center gap-2 text-muted-foreground">
+              <AlarmClock className="w-4 h-4" />
+              {job.next_run
+                ? dayjs.utc(job.next_run).local().format("MMM D, YYYY, h:mma")
+                : "No next run"}
+            </p>
+          </>
+        )}
+        {job.workflow_type === "webhook" && (
+          <>
+            <p className="flex items-center gap-2 text-muted-foreground">
+              Webhook trigger
+              <a
+                href={`${window.location.origin}/api/jobs/${job.id}/trigger`}
+                className="text-blue-500"
+              >
+                {`${apiUrl}/run_job/${job.id}`}
+              </a>
+            </p>
+
+          </>
+        )}
       </div>
 
       <Card>
