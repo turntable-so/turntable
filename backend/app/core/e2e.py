@@ -145,7 +145,7 @@ def adjust_casing_schema_field(id: str, dialect: str):
         SchemaFieldUrn(
             parent=adj_dataset,
             field_path=field_path,
-        ),
+        ).urn(),
         adj_dataset,
         field_path,
     )
@@ -741,8 +741,6 @@ class DataHubDBParser:
         base_asset_dict = {}
         for row in self.get_data():
             id = adjust_casing_dataset(row[0], self.dialect)
-            print(id)
-            # id = row[0]
             if self.exclude_node(id, full_exclusion=False):
                 continue
             self.input_dict.setdefault(id, {}).setdefault(row[1], []).append(
