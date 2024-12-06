@@ -797,6 +797,7 @@ export async function sync(projectId: string) {
 
 export type Job = {
   id: string;
+  workflow_type: "cron" | "webhook";
   workspace_id: string;
   dbtresource_id: string;
   commands: Array<string>;
@@ -923,9 +924,11 @@ type CreateJobPayload = {
   commands: string[];
   cron_str: string;
   save_artifacts: boolean;
+  workflow_type: string
 };
 
 export async function createJob(payload: CreateJobPayload) {
+  console.log(payload);
   const response = await fetcher("/jobs/", {
     cookies,
     method: "POST",

@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import dayjs from "dayjs";
 import { AlarmClock, CircleHelp } from "lucide-react";
 import RunsList from "../runs/runs-list";
+import { buildWebhookUrl } from "@/lib/webhooks";
 
 type JobIdPageProps = {
   job: Job;
@@ -18,6 +19,7 @@ type JobIdPageProps = {
   pageSize: number;
   jobAnalytics: JobAnalytics;
 };
+
 
 export default function JobIdPage({
   job,
@@ -35,13 +37,31 @@ export default function JobIdPage({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <p className="text-sm font-medium">Next Run</p>
-        <p className="flex items-center gap-2 text-muted-foreground">
-          <AlarmClock className="w-4 h-4" />
-          {job.next_run
-            ? dayjs.utc(job.next_run).local().format("MMM D, YYYY, h:mma")
-            : "No next run"}
-        </p>
+        {job.workflow_type === "cron" && (
+          <>
+            <p className="text-sm font-medium">Next Run</p>
+            <p className="flex items-center gap-2 text-muted-foreground">
+              <AlarmClock className="w-4 h-4" />
+              {job.next_run
+                ? dayjs.utc(job.next_run).local().format("MMM D, YYYY, h:mma")
+                : "No next run"}
+            </p>
+          </>
+        )}
+        {job.workflow_type === "webhook" && (
+          <>
+            <p className="flex items-center gap-2 text-muted-foreground">
+              Webhook trigger
+              <a
+                href={`${window.location.origin}/api/jobs/${job.id}/trigger`}
+                className="text-blue-500"
+              >
+                {buildWebhookUrl(job.id)}
+              </a>
+            </p>
+
+          </>
+        )}
       </div>
 
       <Card>
