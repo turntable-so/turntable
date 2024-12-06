@@ -197,6 +197,12 @@ export default function buildLineageReactFlow({
     hoveredNode,
   );
 
+  // for (const node of nodesWithDisplayColumns) {
+  //   for (const column of node.data.filteredColumns) {
+  //     const columnId = column.columnId;
+  //   }
+  // }
+
   // Turn off animated edges when there are more than 100 edges to be rendered.
   const finalColumnEdges = filteredEdges.map((edge: Edge) => ({
     ...edge,

@@ -1,5 +1,12 @@
 import "@xyflow/react/dist/style.css";
 
+import {
+  Background,
+  Panel,
+  ReactFlow,
+  type ReactFlowInstance,
+  useNodesInitialized,
+} from "@xyflow/react";
 import type React from "react";
 import {
   useContext,
@@ -8,30 +15,23 @@ import {
   useMemo,
   useState,
 } from "react";
-import {
-  ReactFlow,
-  Background,
-  Panel,
-  type ReactFlowInstance,
-  useNodesInitialized,
-} from "@xyflow/react";
 
+import { useFiles } from "@/app/contexts/FilesContext";
+import { LineageViewContext } from "@/app/contexts/LineageView";
+import { Loader2 } from "lucide-react";
+import { useTheme } from "next-themes";
+import { usePathname } from "next/navigation";
+import { useAppContext } from "../../contexts/AppContext";
 import { getColumnLineageForAsset } from "../../lib/lineage";
 import ColumnConnectionEdge from "./ColumnConnectionEdge";
 import ColumnLineageNode from "./ColumnLineageNode";
 import ErrorNode from "./ErrorNode";
-import { LineageViewContext } from "@/app/contexts/LineageView";
-import LoadingNode from "./LoadingNode";
-import buildLineageReactFlow from "./renderLineage";
 import { FilterPanel } from "./FilterPanel";
 import "./lineage.css";
-import { Loader2 } from "lucide-react";
-import { useAppContext } from "../../contexts/AppContext";
 import { LineageControls } from "./LineageControls";
 import LineageOptionsPanel from "./LineageOptionsPanel";
-import { useTheme } from "next-themes";
-import { useFiles } from "@/app/contexts/FilesContext";
-import { usePathname } from "next/navigation";
+import LoadingNode from "./LoadingNode";
+import buildLineageReactFlow from "./renderLineage";
 
 const nodeTypes = {
   custom: ColumnLineageNode,
@@ -204,11 +204,7 @@ const ColumnLineageFlow = () => {
       edges={edges}
       edgeTypes={edgeTypes}
       onEdgeMouseEnter={(e, edge) => {
-        if (edge.type !== "column_connection_edge") {
-          return;
-        }
-
-        if (!reactFlowInstance) {
+        if (!reactFlowInstance || edge.type !== "column_connection_edge") {
           return;
         }
 

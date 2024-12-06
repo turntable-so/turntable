@@ -1,10 +1,10 @@
 "use client";
 
 import { getLineage } from "@/app/actions/actions";
-import { LineageView } from "../../app/contexts/LineageView";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
+import { LineageView } from "../../app/contexts/LineageView";
 
 export default function LineagePreview({ nodeId }: { nodeId: string }) {
   const [isLoading, setIsLoading] = useState<boolean>(false);

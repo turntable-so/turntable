@@ -200,30 +200,36 @@ export function getVisibleEdges(columnId: string, edges: any[]) {
 function getDirectedVisibleEdges(
   columnId: string,
   edges: any[],
-  visited: Set<string>,
+  visited: Set<string>, 
   isOutbound: boolean,
 ): any[] {
   if (visited.has(columnId)) return [];
   visited.add(columnId);
 
-  const relevantEdges = edges.filter((edge) =>
-    isOutbound
-      ? edge.sourceHandle === `${columnId}-source`
-      : edge.targetHandle === `${columnId}-target`,
-  );
+  // Create a Map for O(1) lookups of edges by source/target handle
+  const edgeMap = new Map<string, any[]>();
+  edges.forEach(edge => {
+    const key = isOutbound ? edge.sourceHandle : edge.targetHandle;
+    if (!edgeMap.has(key)) {
+      edgeMap.set(key, []);
+    }
+    edgeMap.get(key).push(edge);
+  });
 
+  const relevantEdges = edgeMap.get(`${columnId}-${isOutbound ? 'source' : 'target'}`) || [];
   let allEdges = [...relevantEdges];
+
+  const remainingEdges = edges.filter(e => !relevantEdges.includes(e));
 
   for (const edge of relevantEdges) {
     const relatedColumn = getRelatedColumn(edge, isOutbound);
-    const otherEdges = edges.filter((e) => e !== edge);
     allEdges = [
       ...allEdges,
       ...getDirectedVisibleEdges(
         relatedColumn,
-        otherEdges,
+        remainingEdges,
         visited,
-        isOutbound,
+        isOutbound
       ),
     ];
   }
