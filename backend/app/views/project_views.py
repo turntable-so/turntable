@@ -3,13 +3,11 @@ import shutil
 from urllib.parse import unquote
 
 from django.db import transaction
-from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
 from git import GitCommandError
 from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from sentry_sdk import capture_exception
 
 from api.serializers import LineageAssetSerializer, LineageSerializer, ProjectSerializer
 from app.core.lineage import get_lineage_helper

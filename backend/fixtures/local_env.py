@@ -1,7 +1,5 @@
 import os
 
-from django.conf import settings
-
 from app.models import (
     DBTCoreDetails,
     MetabaseDetails,
@@ -43,17 +41,15 @@ def create_local_workspace(user):
         return workspace
 
 
-def create_local_alternative_storage(workspace):
+def create_local_alternative_storage(workspace, bucket_name: str | None = None):
     return StorageSettings.objects.create(
         workspace=workspace,
-        s3_access_key=settings.AWS_S3_ACCESS_KEY_ID,
-        s3_secret_key=settings.AWS_S3_SECRET_ACCESS_KEY,
-        s3_bucket_name=os.getenv(
-            "MINIO_TEST_BUCKET_NAME", settings.AWS_STORAGE_BUCKET_NAME
-        ),
-        s3_endpoint_url=settings.AWS_S3_ENDPOINT_URL,
-        s3_public_url=settings.AWS_S3_PUBLIC_URL,
-        s3_region_name=getattr(settings, "AWS_S3_REGION_NAME", None),
+        s3_access_key=os.getenv("TEST_AWS_S3_ACCESS_KEY_ID"),
+        s3_secret_key=os.getenv("TEST_AWS_S3_SECRET_ACCESS_KEY"),
+        s3_bucket_name=bucket_name or os.getenv("TEST_AWS_STORAGE_BUCKET_NAME"),
+        s3_endpoint_url=os.getenv("TEST_AWS_S3_ENDPOINT_URL"),
+        s3_public_url=os.getenv("TEST_AWS_S3_PUBLIC_URL"),
+        s3_region_name=os.getenv("TEST_AWS_S3_REGION_NAME", None),
     )
 
 

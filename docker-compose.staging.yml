@@ -76,32 +76,20 @@ services:
       file: docker-compose.dev-internal.yml
       service: metabase
 
-  # Disabled services -- needed because they are dependencies in upstream docker compose yml file.
   postgres:
     extends:
       file: docker-compose.dev-internal.yml
       service: postgres
-    # command: /bin/sh -c "echo 'Service postgres disabled' && sleep 240"
-    # restart: always
-    # healthcheck:
-    #   test: ["CMD", "true"]
-    #   interval: 10s
-    #   start_period: 20s
-    #   timeout: 5s
-    #   retries: 10
 
   createbuckets:
     extends:
       file: docker-compose.dev-internal.yml
       service: createbuckets
-    entrypoint: ["echo", "Service createbuckets disabled"]
 
   minio:
     extends:
       file: docker-compose.dev-internal.yml
       service: minio
-    entrypoint: ["echo", "Service minio disabled"]
-    restart: no
 
 volumes:
   postgres_data:

@@ -1,4 +1,7 @@
+import json
 import time
+import hmac
+import hashlib
 
 import pytest
 import requests
@@ -99,7 +102,14 @@ class TestOrchestrationViews:
         assert response.status_code == 400
         assert "All commands must start with 'dbt'" in response.data["commands"]
 
-    def test_orchestration_integration(self, client, custom_celery, scheduled_workflow):
+    def test_orchestration_integration(
+        self,
+        client,
+        custom_celery,
+        scheduled_workflow,
+        storage,
+        local_postgres_dbtresource,
+    ):
         time.sleep(1)
         # check start
         response = client.post(f"/jobs/{scheduled_workflow.id}/start/")
@@ -136,3 +146,48 @@ class TestOrchestrationViews:
 
         response = requests.get(url)
         assert response.status_code == 200
+
+        # check artifacts export
+        local_postgres_dbtresource.refresh_from_db()
+        assert local_postgres_dbtresource.exported_manifest
+        assert local_postgres_dbtresource.exported_catalog
+        assert local_postgres_dbtresource.exported_run_results
+
+    def test_create_webhook_orchestration(self, client, local_postgres_dbtresource):
+        data = {
+            "workspace_id": local_postgres_dbtresource.workspace.id,
+            "dbtresource_id": local_postgres_dbtresource.id,
+            "workflow_type": "webhook",
+            "hmac_secret_key": "TEST_SECRET_KEY",
+            "commands": ["dbt deps", "dbt parse", "dbt run"],
+        }
+        response = client.post("/jobs/", data, format="json")
+        assert response.status_code == 201
+
+    def test_call_webhook_orchestration(
+        self, client, custom_celery, local_postgres_dbtresource
+    ):
+        time.sleep(1)
+
+        secret_key = "TEST_SECRET_KEY"
+        data = {
+            "workspace_id": local_postgres_dbtresource.workspace.id,
+            "dbtresource_id": local_postgres_dbtresource.id,
+            "workflow_type": "webhook",
+            "hmac_secret_key": secret_key,
+            "commands": ["dbt deps", "dbt parse", "dbt run"],
+        }
+        response = client.post("/jobs/", data, format="json")
+        job_id = response.json().get("id")
+
+        # Add signature to headers
+        headers = {"X-Signature": f"sha256={'sd'}"}
+        response = client.post(
+            f"/webhooks/run_job/{job_id}/",
+            {
+                "event": "run_job"
+            },  # Send the original dict, client.post will handle JSON conversion
+            format="json",
+            **headers,
+        )
+        assert response.status_code == 201

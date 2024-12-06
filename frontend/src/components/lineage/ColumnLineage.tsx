@@ -79,7 +79,7 @@ const ColumnLineageFlow = () => {
   const isInEditor = pathname.includes("editor");
   const showFilterPanel =
     isInEditor && activeFile
-      ? !lineageData[activeFile.node.path]?.showColumns
+      ? lineageData[activeFile.node.path]?.showColumns
       : true;
 
   const onReactFlowInit = (reactFlowInstance: ReactFlowInstance) => {

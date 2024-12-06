@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -24,18 +24,12 @@ export function ApiKeysTable({ apiKeys }: ApiKeysTableProps) {
   const handleSubmit = async () => {
     try {
       setIsSaving(true);
-      const response = await updateSettings({
+      await updateSettings({
         api_keys: {
           openai_api_key: openAIKey,
           anthropic_api_key: anthropicKey,
         },
       });
-
-      if (!response.ok) {
-        console.error("Failed to update API keys");
-      } else {
-        console.log("API keys updated successfully");
-      }
     } catch (error) {
       console.error("Error updating API keys:", error);
     } finally {

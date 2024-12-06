@@ -23,7 +23,7 @@ def _validate_query_test(response, limit):
     return url
 
 
-@pytest.mark.usefixtures("force_isolate", "custom_celery")
+@pytest.mark.usefixtures("force_isolate", "custom_celery", "storage")
 class TestQueryViews:
     def _test(
         self,
@@ -46,14 +46,6 @@ class TestQueryViews:
     def test_sql_query_postgres(self, client, user, local_postgres, limit):
         self._test(client, user, local_postgres, limit=limit)
 
-    @pytest.mark.parametrize("limit", [None, 100])
-    def test_sql_query_postgres_alternative_storage(
-        self, client, user, local_alternative_storage, local_postgres, limit
-    ):
-        url = self._test(client, user, local_postgres, limit=limit)
-        assert url.startswith(local_alternative_storage.s3_public_url)
-        assert local_alternative_storage.s3_bucket_name in url
-
     @require_env_vars("REDSHIFT_0_WORKSPACE_ID")
     def test_sql_query_redshift(self, client, user, remote_redshift):
         self._test(client, user, remote_redshift)
@@ -73,7 +65,7 @@ class TestQueryViews:
         self._test(client, user, remote_databricks)
 
 
-@pytest.mark.usefixtures("force_isolate", "custom_celery")
+@pytest.mark.usefixtures("force_isolate", "custom_celery", "storage")
 class TestDBTQueryViews:
     @classmethod
     def _test(

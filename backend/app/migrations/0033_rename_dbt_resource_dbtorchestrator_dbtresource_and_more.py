@@ -53,7 +53,7 @@ class Migration(migrations.Migration):
             field=models.FileField(
                 null=True,
                 storage=app.services.storage_backends.CustomS3Boto3StorageDeprecated(),
-                upload_to=app.models.resources.DBTResource.custom_upload_to,
+                upload_to=app.models.resources.DBTResource.custom_metadata_upload_to,
             ),
         ),
         migrations.AddField(
@@ -62,7 +62,7 @@ class Migration(migrations.Migration):
             field=models.FileField(
                 null=True,
                 storage=app.services.storage_backends.CustomS3Boto3StorageDeprecated(),
-                upload_to=app.models.resources.DBTResource.custom_upload_to,
+                upload_to=app.models.resources.DBTResource.custom_metadata_upload_to,
             ),
         ),
         migrations.AlterField(

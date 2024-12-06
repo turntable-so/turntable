@@ -197,7 +197,7 @@ export default function BottomPanel({
                 <Switch
                   id="asset-only"
                   checked={
-                    !lineageData[activeFile?.node.path || ""]?.showColumns
+                    lineageData[activeFile?.node.path || ""]?.showColumns
                   }
                   onCheckedChange={(checked) => {
                     setLineageOptionsAndRefetch(
@@ -265,11 +265,11 @@ export default function BottomPanel({
                       </div>
                     )}
                   {lineageData?.[activeFile?.node.path || ""] &&
-                    lineageData[activeFile?.node.path || ""].data && (
-                      <LineageView
-                        style={{ height: (bottomPanelHeight ?? 0) - 28 }}
-                      />
-                    )}
+                  lineageData[activeFile?.node.path || ""].data ? (
+                    <LineageView
+                      style={{ height: (bottomPanelHeight ?? 0) - 28 }}
+                    />
+                  ) : null}
                   {lineageData?.[activeFile?.node.path || ""] &&
                     lineageData[activeFile?.node.path || ""].error && (
                       <ErrorMessage
