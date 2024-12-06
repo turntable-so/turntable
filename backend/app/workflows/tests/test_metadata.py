@@ -45,7 +45,7 @@ def run_test_sync(
                 resource=resource, workspace=resource.workspace
             ).schedule_now()
             workflow.await_next_result()
-            periodic_task_name = workflow.replacement_identifier
+            periodic_task_name = workflow.id
             task_result = (
                 TaskResult.objects.filter(periodic_task_name=periodic_task_name)
                 .order_by("-date_done")

@@ -340,7 +340,7 @@ CACHES = {
 ## Celery settings
 CELERY_BROKER_URL = redis_url + CELERY_REDIS_CHANNEL
 # CELERY_CACHE_BACKEND = "django-cache"
-CELERY_RESULT_BACKEND = "django-db"
+CELERY_RESULT_BACKEND = "django_celery_results.backends:DatabaseBackend"
 CELERY_ACCEPT_CONTENT = ["json", "application/json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"

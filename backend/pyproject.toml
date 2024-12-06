@@ -83,7 +83,7 @@ dependencies = [
     "daphne>=4.1.2",
     "celery[redis,gevent]>=5.4.0",
     "flower>=2.0.1",
-    "django-celery-results>=2.5.1",
+    "django-celery-results @ git+https://github.com/turntable-so/django-celery-results",
     "django-celery-beat>=2.7.0",
     "croniter>=5.0.1",
     "sentry-sdk[django,celery]>=2.18.0",
