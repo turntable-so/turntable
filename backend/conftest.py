@@ -161,6 +161,13 @@ def storage(workspace):
     # Cleanup after test - delete bucket directly
     print("Cleaning up test bucket...")
     try:
+        # Delete all objects in the bucket first
+        objects = s3_client.list_objects_v2(Bucket=bucket_name)
+        if "Contents" in objects:
+            for obj in objects["Contents"]:
+                s3_client.delete_object(Bucket=bucket_name, Key=obj["Key"])
+
+        # Now delete the empty bucket
         s3_client.delete_bucket(Bucket=bucket_name)
     except Exception as e:
         print(f"Warning: Could not clean up bucket: {e}")
