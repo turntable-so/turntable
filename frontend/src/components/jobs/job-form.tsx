@@ -30,6 +30,7 @@ import { z } from "zod";
 import { CommandList } from "./command-list";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PasswordInput } from "../ui/password-input";
+import { buildWebhookUrl } from "@/lib/webhooks";
 
 const FormSchema = z.object({
   name: z.string().min(2, {
@@ -224,6 +225,11 @@ export default function JobForm({ title, job }: { title: string; job?: any }) {
                   />
                 </TabsContent>
                 <TabsContent value="webhook" className="space-y-4">
+                  <FormLabel className="my-2"  >
+                    <p>Webhook Trigger URL</p>
+
+                    <a href={buildWebhookUrl(job?.id)} className="text-blue-500 underline">{buildWebhookUrl(job?.id)}</a>
+                  </FormLabel>
                   <FormField
                     control={form.control}
                     name="hmac_secret_key"
@@ -238,7 +244,7 @@ export default function JobForm({ title, job }: { title: string; job?: any }) {
                           />
                         </FormControl>
                         <FormDescription>
-                          This secret key will be required to authenticate webhook requests.
+                          This secret key will be required to authenticate webhook requests using <a href="https://dev.to/prismatic/how-to-secure-webhook-endpoints-with-hmac-39cb" target="_blank" className="text-blue-500 underline">HMAC</a>
                         </FormDescription>
                         <FormMessage />
                       </FormItem>

@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import dayjs from "dayjs";
 import { AlarmClock, CircleHelp } from "lucide-react";
 import RunsList from "../runs/runs-list";
+import { buildWebhookUrl } from "@/lib/webhooks";
 
 type JobIdPageProps = {
   job: Job;
@@ -20,7 +21,6 @@ type JobIdPageProps = {
 };
 
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 export default function JobIdPage({
   job,
   paginatedRuns,
@@ -56,7 +56,7 @@ export default function JobIdPage({
                 href={`${window.location.origin}/api/jobs/${job.id}/trigger`}
                 className="text-blue-500"
               >
-                {`${apiUrl}/run_job/${job.id}`}
+                {buildWebhookUrl(job.id)}
               </a>
             </p>
 
