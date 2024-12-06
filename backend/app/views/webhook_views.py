@@ -34,7 +34,7 @@ class WebhookViewSet(viewsets.ViewSet):
         # if not self.verify_signature(request):
         #     return Response(
         #         {"error": "Invalid signature"}, status=status.HTTP_401_UNAUTHORIZED
-        #     )
+        # )
 
         job = DBTOrchestrator.objects.get(id=pk)
         job.schedule_now()

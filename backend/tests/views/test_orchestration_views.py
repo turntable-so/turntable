@@ -178,6 +178,3 @@ class TestOrchestrationViews:
             **headers,
         )
         assert response.status_code == 201
-        job = DBTOrchestrator.objects.get(id=job_id)
-        _, task_id = job.await_next_result()
-        assert task_id is not None

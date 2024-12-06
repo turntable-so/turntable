@@ -104,6 +104,9 @@ export default function JobForm({ title, job }: { title: string; job?: any }) {
     if (data.workflow_type === 'webhook') {
       delete data.cron_str;
     }
+    if (data.workflow_type === 'cron') {
+      delete data.hmac_secret_key;
+    }
     if (job) {
       const result = await updateJob(job.id, data);
       if (result.id) {
