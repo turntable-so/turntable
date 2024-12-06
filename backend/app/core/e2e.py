@@ -305,7 +305,7 @@ class ChartInfoParser(DataHubDBParserBase):
                         config["url"] = info["chartUrl"]
                     if "inputs" in info:
                         for input in info["inputs"]:
-                            self.asset_graph.add_edge(input, k)
+                            self.asset_graph.add_edge(input["string"], k)
 
         # add name if there's no title
         for k, v in self.asset_dict.items():
