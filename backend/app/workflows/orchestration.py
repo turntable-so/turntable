@@ -73,38 +73,27 @@ def run_dbt_command(
     with dbt_resource.dbt_repo_context(
         project_id=project_id, isolate=True, repo_override=GitRepo(repo_override_dir)
     ) as (dbtproj, project_dir, _):
-        # run command
         success = None
         stdout = ""
         stderr = ""
         split_command = shlex.split(command)
         if split_command[0] == "dbt":
             split_command.pop(0)
+
         if stream:
             last_update = time.time()
 
             for line in dbtproj.stream_dbt_command(split_command, write_json=True):
                 if line == STREAM_SUCCESS_STRING:
                     success = True
-                    return return_helper(
-                        success=success,
-                        stdout=stdout,
-                        stderr=stderr,
-                        run_results=get_run_results(dbtproj),
-                    )
+                    break
                 elif line == STREAM_ERROR_STRING:
                     success = False
-                    return return_helper(
-                        success=success,
-                        stdout=stdout,
-                        stderr=stderr,
-                        run_results=get_run_results(dbtproj),
-                    )
+                    break
 
                 stdout += line
                 current_time = time.time()
 
-                # Only update state if buffer_interval has elapsed, no need to upload run_results here
                 if current_time - last_update >= buffer_interval:
                     result = return_helper(
                         success=success,
@@ -116,13 +105,18 @@ def run_dbt_command(
                         meta=result,
                     )
                     last_update = current_time
-            raise RuntimeError("Stream ended without success or error signal")
+
+            if success is None:
+                raise RuntimeError("Stream ended without success or error signal")
         else:
             stdout, stderr, success = dbtproj.run_dbt_command(
                 split_command, write_json=True
             )
-            run_results = get_run_results(dbtproj)
-            return return_helper(success, stdout, stderr, run_results)
+
+        run_results = get_run_results(dbtproj)
+        if save_artifacts and run_results:
+            dbt_resource.export_run_results(run_results=run_results)
+        return return_helper(success, stdout, stderr, run_results)
 
 
 @task
@@ -205,15 +199,13 @@ def run_dbt_commands(
             run_dbt_command.si(**task_kwargs, command=command, stream=True)
             for command in commands
         ]
-        outs = self.run_subtasks(*tasks)
+
         if save_artifacts:
-            export_run_results_from_outputs(outs, dbt_resource, repo)
-            task = save_artifacts_task.si(
-                **task_kwargs,
-                parent_task_id=self.request.id,
+            tasks.append(
+                save_artifacts_task.si(**task_kwargs, parent_task_id=self.request.id)
             )
-            more_outs = self.run_subtasks(task)
-            outs.extend(more_outs)
+
+        outs = self.run_subtasks(*tasks)
 
     return returns_helper(outs)
 

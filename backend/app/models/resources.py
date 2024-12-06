@@ -7,6 +7,7 @@ import uuid
 from contextlib import contextmanager
 from typing import Any, Generator
 
+import orjson
 import yaml
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
@@ -809,6 +810,13 @@ class DBTCoreDetails(DBTResource):
             applies_to__contains=[StorageSettings.StorageCategories.EXPORT],
         ).exists()
 
+    def export_run_results(self, run_results: dict | None = None):
+        if self.is_exportable and run_results:
+            run_results_json = orjson.dumps(run_results).decode("utf-8")
+            self.exported_run_results.save(
+                self.run_results_filename, ContentFile(run_results_json)
+            )
+
     def upload_artifacts(
         self,
         project_id: str | None = None,
@@ -859,22 +867,6 @@ class DBTCoreDetails(DBTResource):
             self.artifact_source = artifact_source
             self.save()
             return stdout, stderr, success
-
-    def export_run_results(
-        self,
-        repo_override: Repository | None = None,
-        run_results_jsons: list[str] | None = None,
-    ):
-        exported = False
-        run_results_jsons = [i for i in run_results_jsons if i is not None]
-        if self.is_exportable and run_results_jsons:
-            # for now, only uploads the last run results
-            run_results_json = run_results_jsons[-1]
-            self.exported_run_results.save(
-                self.run_results_filename, ContentFile(run_results_json)
-            )
-            exported = True
-        return exported
 
     @contextmanager
     def datahub_yaml_path(self, db_path):
