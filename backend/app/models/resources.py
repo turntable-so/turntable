@@ -871,7 +871,9 @@ class DBTCoreDetails(DBTResource):
                 self.exported_run_results.save(
                     self.run_results_filename, ContentFile(run_results_json)
                 )
-                exported = True
+                self.refresh_from_db()
+                if not self.exported_run_results.url:
+                    raise Exception("Run results not uploaded")
         return exported
 
     @contextmanager

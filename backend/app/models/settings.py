@@ -43,3 +43,42 @@ class StorageSettings(WorkspaceSettings):
             raise ValueError("Only one StorageSettings per workspace is allowed")
 
         super().save(*args, **kwargs)
+
+    def list_bucket_contents(self, prefix=None):
+        import boto3
+        from botocore.client import Config
+
+        # Initialize S3 client
+        s3_client = boto3.client(
+            "s3",
+            aws_access_key_id=self.s3_access_key,
+            aws_secret_access_key=self.s3_secret_key,
+            endpoint_url=self.s3_endpoint_url,
+            region_name=self.s3_region_name,
+            config=Config(signature_version="s3v4"),
+        )
+
+        try:
+            # List objects with optional prefix
+            params = {"Bucket": self.s3_bucket_name}
+            if prefix:
+                params["Prefix"] = prefix
+
+            response = s3_client.list_objects_v2(**params)
+
+            # Extract and return the contents
+            contents = []
+            if "Contents" in response:
+                contents = [
+                    {
+                        "key": obj["Key"],
+                        "size": obj["Size"],
+                        "last_modified": obj["LastModified"],
+                    }
+                    for obj in response["Contents"]
+                ]
+
+            return contents
+
+        except Exception as e:
+            raise Exception(f"Failed to list bucket contents: {str(e)}")
