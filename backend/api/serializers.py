@@ -35,7 +35,12 @@ from app.models import (
 )
 from app.models.project import Project
 from app.models.resources import MetabaseDetails
-from app.models.workflows import DBTOrchestrator, ScheduledWorkflow, TaskArtifact
+from app.models.workflows import (
+    DBTOrchestrator,
+    ScheduledWorkflow,
+    TaskArtifact,
+    WorkflowType,
+)
 from vinyl.lib.dbt_methods import DBTVersion
 
 Invitation = get_invitation_model()
@@ -598,6 +603,12 @@ class DBTOrchestratorSerializer(CrontabWorkflowSerializer):
         queryset=DBTCoreDetails.objects.all(), source="dbtresource"
     )
     commands = serializers.ListField(child=serializers.CharField())
+    hmac_secret_key = serializers.CharField(required=False)
+    workflow_type = serializers.ChoiceField(
+        choices=WorkflowType.choices, default=WorkflowType.CRON
+    )
+    cron_str = serializers.CharField(allow_null=True, required=False)
+
     latest_run = serializers.SerializerMethodField()
     next_run = serializers.SerializerMethodField()
 
@@ -608,8 +619,10 @@ class DBTOrchestratorSerializer(CrontabWorkflowSerializer):
             "id",
             "dbtresource_id",
             "cron_str",
+            "workflow_type",
             "save_artifacts",
             "commands",
+            "hmac_secret_key",
             "name",
             "latest_run",
             "next_run",
@@ -642,6 +655,8 @@ class DBTOrchestratorSerializer(CrontabWorkflowSerializer):
         return TaskResultSerializer(latest_run).data if latest_run else None
 
     def get_next_run(self, obj):
+        if obj.workflow_type == WorkflowType.WEBHOOK:
+            return None
         return obj.get_next_run_date()
 
 

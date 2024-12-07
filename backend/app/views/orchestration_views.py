@@ -41,9 +41,7 @@ class JobViewSet(viewsets.ModelViewSet):
 
     def list(self, request):
         workspace = request.user.current_workspace()
-        data = DBTOrchestrator.objects.filter(
-            workspace=workspace, crontab__isnull=False
-        )
+        data = DBTOrchestrator.objects.filter(workspace=workspace, clocked__isnull=True)
         paginator = Pagination()
         paginated_data = paginator.paginate_queryset(data, request)
         serializer = DBTOrchestratorSerializer(paginated_data, many=True)

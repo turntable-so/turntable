@@ -4,6 +4,7 @@ import time
 import uuid
 from datetime import UTC, datetime, timedelta
 
+from app.utils.fields import encrypt
 from celery import current_app, states
 from celery.result import AsyncResult
 from croniter import croniter
@@ -38,6 +39,7 @@ def get_periodic_task_key(periodic_task_name: str) -> str:
 class WorkflowType(models.TextChoices):
     CRON = "cron", "Cron"
     ONE_TIME = "one_time", "One Time"
+    WEBHOOK = "webhook", "Webhook"
 
 
 def uuid_str():
@@ -58,6 +60,7 @@ class ScheduledWorkflow(PolymorphicModel):
     periodic_task = models.OneToOneField(
         PeriodicTask, on_delete=models.CASCADE, null=True
     )
+    hmac_secret_key = encrypt(models.CharField(max_length=255, null=True))
 
     # derived fields
     aggregation_identifier = models.CharField(
@@ -67,7 +70,16 @@ class ScheduledWorkflow(PolymorphicModel):
     )
 
     def clean(self):
-        if (self.clocked is None) == (self.crontab is None):
+        if self.workflow_type == WorkflowType.WEBHOOK:
+            if self.crontab is not None or self.clocked is not None:
+                raise ValidationError(
+                    "Crontab and clocked must be None for webhook workflows"
+                )
+            if self.hmac_secret_key is None:
+                raise ValidationError(
+                    "HMAC secret key must be set for webhook workflows"
+                )
+        elif (self.clocked is None) == (self.crontab is None):
             raise ValidationError("Exactly one of clocked and crontab must be set")
         if not self.workflow_type:
             self.workflow_type = (
@@ -164,14 +176,15 @@ class ScheduledWorkflow(PolymorphicModel):
             )
 
         # Find and cleanup existing instance before creating new one
-        if self.periodic_task:
-            for key, value in self.get_periodic_task_args().items():
-                setattr(self.periodic_task, key, value)
-            self.periodic_task.save()
-        else:
-            self.periodic_task = PeriodicTask.objects.create(
-                **self.get_periodic_task_args()
-            )
+        if self.workflow_type != WorkflowType.WEBHOOK:
+            if self.periodic_task:
+                for key, value in self.get_periodic_task_args().items():
+                    setattr(self.periodic_task, key, value)
+                self.periodic_task.save()
+            else:
+                self.periodic_task = PeriodicTask.objects.create(
+                    **self.get_periodic_task_args()
+                )
 
         # Create new periodic task
         super().save(*args, **kwargs)

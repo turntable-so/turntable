@@ -1,4 +1,10 @@
-// @ts-nocheck
+import {
+  Handle,
+  Position,
+  useReactFlow,
+  useUpdateNodeInternals,
+} from "@xyflow/react";
+import { usePathname } from "next/navigation";
 import type React from "react";
 import {
   type PropsWithChildren,
@@ -7,21 +13,12 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useState,
 } from "react";
-import {
-  Handle,
-  Position,
-  useReactFlow,
-  useUpdateNodeInternals,
-} from "@xyflow/react";
+import { LineageViewContext } from "../../app/contexts/LineageView";
 import { useAppContext } from "../../contexts/AppContext";
 import { getAssetIcon } from "../../lib/utils";
 import { ColumnTypeIcon } from "../ColumnTypeIcon";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { LineageViewContext } from "../../app/contexts/LineageView";
-import { usePathname } from "next/navigation";
-// import { useHotkeys } from 'react-hotkeys-hook';
 
 const ModelIcon = () => (
   <div className="min-w-[1rem] h-4">
@@ -166,16 +163,11 @@ function LineageNode({ id, data, yPos }: any) {
     handleExpandNode,
     selectedColumn,
     reactFlowWrapper,
-    modelsMap,
     hoveredNode,
     lineageData,
   } = useContext(LineageViewContext);
 
-  const { fetchAssetPreview, assets } = useAppContext();
-
-  const model = useMemo(() => {
-    return modelsMap[id];
-  }, [modelsMap]);
+  const { fetchAssetPreview } = useAppContext();
 
   const reactFlowInstance = useReactFlow();
 
@@ -255,11 +247,7 @@ function LineageNode({ id, data, yPos }: any) {
     ? data.filteredColumns
     : data.allColumns;
 
-  const isWindows = navigator.userAgent.includes("Windows");
-
   const pathname = usePathname();
-
-  const fileName = data.originalFilePath?.split(isWindows ? `\\` : "/").pop();
 
   const hasErrors = errors.length > 0;
 
@@ -343,7 +331,9 @@ function LineageNode({ id, data, yPos }: any) {
                   }}
                   onMouseEnter={(e) => onHover(column.columnId, e)}
                   onMouseLeave={(e) => onHover(null)}
-                  className={"nodeColumn h-5"}
+                  className={
+                    "nodeColumn h-5 sticky top-[15px] left-0 right-0 bottom-[-15px]"
+                  }
                 >
                   <div
                     className={`

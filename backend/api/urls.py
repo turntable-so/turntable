@@ -48,6 +48,7 @@ from app.views.query_views import (
     QueryValidateView,
 )
 from app.views.settings_view import SettingsView
+from app.views.webhook_views import WebhookViewSet
 
 from .views import CustomUserViewSet, LogoutView, OAuthView
 
@@ -127,6 +128,7 @@ urlpatterns = [
     path("ws/subscribe/<str:workspace_id>/", TaskResultConsumer.as_asgi()),
     path("ws/dbt_command/<str:workspace_id>/", DBTCommandConsumer.as_asgi()),
     path("settings/", SettingsView.as_view(), name="settings"),
+    path("webhooks/run_job/<str:pk>/", WebhookViewSet.as_view({"post": "run_job"})),
     path("", include(router.urls)),
 ]
 

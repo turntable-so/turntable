@@ -469,7 +469,7 @@ function EditorPageContent() {
                         <TabsContent value="branch">Branches</TabsContent>
                     </Tabs>
                 </Panel> */}
-        <PanelResizeHandle className="bg-transparent   transition-colors" />
+        <PanelResizeHandle className="bg-transparent transition-colors" />
         <Panel>
           <div className="h-full" ref={topBarRef}>
             <FileTabs

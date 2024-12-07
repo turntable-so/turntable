@@ -55,17 +55,14 @@ export default function JobsPage({ searchParams }: JobsPageProps) {
     if (!isMountedRef.current) return;
 
     const sortedJobs = (jobsData?.results || []).sort((a, b) => {
-      if (
-        a.latest_run?.status === "STARTED" &&
-        b.latest_run?.status !== "STARTED"
-      )
-        return -1;
-      if (
-        a.latest_run?.status !== "STARTED" &&
-        b.latest_run?.status === "STARTED"
-      )
-        return 1;
-      return dayjs.utc(a.next_run).diff(dayjs.utc(b.next_run));
+      const dateA = dayjs.utc(a.latest_run?.date_done || 0);
+      const dateB = dayjs.utc(b.latest_run?.date_done || 0);
+
+      const dateDiff = dateB.diff(dateA);
+      if (dateDiff !== 0) {
+        return dateDiff;
+      }
+      return a.id.localeCompare(b.id);
     });
 
     const sortedRuns = (runsData?.results || []).sort((a, b) => {
@@ -77,6 +74,25 @@ export default function JobsPage({ searchParams }: JobsPageProps) {
     setJobsResult({ ...jobsData, results: sortedJobs });
     setRunsResult({ ...runsData, results: sortedRuns });
   };
+
+  const TabNames = { jobs: "Jobs", runs: "Runs" };
+
+  const NewJobButton = () => (
+    <Link href="/jobs/new">
+      <Button className="rounded-full space-x-2">
+        <Plus className="size-4" />
+        <div>New Job</div>
+      </Button>
+    </Link>
+  );
+
+  const onMount = () => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.toString()) {
+      router.replace("/jobs");
+    }
+  }
+  useEffect(onMount, []);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -117,21 +133,6 @@ export default function JobsPage({ searchParams }: JobsPageProps) {
     };
   }, [page, pageSize]);
 
-  const TabNames = { jobs: "Jobs", runs: "Runs" };
-
-  const handleTabChange = (value: string) => {
-    router.push("/jobs");
-  };
-
-  const NewJobButton = () => (
-    <Link href="/jobs/new">
-      <Button className="rounded-full space-x-2">
-        <Plus className="size-4" />
-        <div>New Job</div>
-      </Button>
-    </Link>
-  );
-
   if (!jobsResult || !runsResult) {
     return (
       <FullWidthPageLayout title="Jobs" button={<NewJobButton />}>
@@ -144,7 +145,7 @@ export default function JobsPage({ searchParams }: JobsPageProps) {
 
   return (
     <FullWidthPageLayout title="Jobs" button={<NewJobButton />}>
-      <Tabs defaultValue={TabNames.jobs} onValueChange={handleTabChange}>
+      <Tabs defaultValue={TabNames.jobs}>
         <TabsList>
           <TabsTrigger value={TabNames.jobs}>Jobs</TabsTrigger>
           <TabsTrigger value={TabNames.runs}>Runs</TabsTrigger>

@@ -3,6 +3,7 @@ import StatusIcon from "@/components/jobs/status-icon";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import dayjs from "dayjs";
 import { capitalize } from "lodash";
+import Link from "next/link";
 
 type RunDetailsProps = {
   run: Run;
@@ -17,14 +18,32 @@ export default function RunDetails({ run, job }: RunDetailsProps) {
       <CardHeader>
         <CardTitle>Run Details</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+      <CardContent>
+        <div className="grid grid-cols-3 gap-4">
           <div>
             <p className="text-sm font-medium text-muted-foreground">Status</p>
             <div className="flex items-center gap-2">
               <StatusIcon status={run.status} />
               <p className="text-sm">{capitalize(run.status)}</p>
             </div>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">Job</p>
+            <Link href={`/jobs/${job.id}`} className="w-fit">
+              <p className="text-sm underline underline-offset-2 hover:text-primary">
+                {job.name}
+              </p>
+            </Link>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">
+              Next Run Date
+            </p>
+            <p className="text-sm">
+              {job.next_run
+                ? dayjs(job.next_run).format("MMM D, YYYY h:mm A")
+                : "N/A"}
+            </p>
           </div>
           <div>
             <p className="text-sm font-medium text-muted-foreground">
@@ -45,9 +64,7 @@ export default function RunDetails({ run, job }: RunDetailsProps) {
             </p>
           </div>
           <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Trigger
-            </p>
+            <p className="text-sm font-medium text-muted-foreground">Trigger</p>
             <p className="text-sm">{trigger}</p>
           </div>
         </div>
