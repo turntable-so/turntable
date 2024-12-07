@@ -1,3 +1,4 @@
+from django_celery_results.models import TaskResult
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
@@ -7,12 +8,11 @@ from api.serializers import (
     DBTCoreDetailsSerializer,
     DBTOrchestratorSerializer,
     TaskResultSerializer,
-    TaskResultWithJobSerializer,
+    TaskResultWithRelationshipsSerializer,
     TaskResultWithSubtasksSerializer,
 )
 from app.models.resources import DBTCoreDetails
 from app.models.workflows import DBTOrchestrator
-from django_celery_results.models import TaskResult
 from scripts.debug.profiling import pyprofile
 
 
@@ -115,13 +115,12 @@ class RunViewSet(viewsets.ModelViewSet):
         data = DBTOrchestrator.get_results_with_filters(**kwargs)
         paginator = Pagination()
         paginated_data = paginator.paginate_queryset(data, request)
-        serializer = TaskResultWithJobSerializer(paginated_data, many=True)
+        serializer = TaskResultWithRelationshipsSerializer(paginated_data, many=True)
         return paginator.get_paginated_response(serializer.data)
 
     def retrieve(self, request, pk=None):
         data = TaskResult.objects.get(task_id=pk)
         serializer = TaskResultWithSubtasksSerializer(data)
-        breakpoint()
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["post"])

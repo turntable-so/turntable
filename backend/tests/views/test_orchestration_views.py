@@ -99,7 +99,6 @@ class TestOrchestrationViews:
         assert response.status_code == 400
         assert "All commands must start with 'dbt'" in response.data["commands"]
 
-    # @pytest.mark.skip(reason="This test is flaky and needs to be rewritten")
     def test_orchestration_integration(
         self,
         client,
@@ -135,12 +134,11 @@ class TestOrchestrationViews:
         assert data["subtasks"]
         assert len(data["subtasks"]) == 4
         for subtask in data["subtasks"]:
-            breakpoint()
             assert not subtask["subtasks"]
 
         # check artifacts
-        assert data["artifacts"]
-        url = data["artifacts"][0]["artifact"]
+        assert data["artifact"]
+        url = data["artifact"]["artifact"]
         url = url.replace(settings.AWS_S3_PUBLIC_URL, settings.AWS_S3_ENDPOINT_URL)
 
         response = requests.get(url)

@@ -16,6 +16,7 @@ from django.db import models
 from django.db.models import Window
 from django.db.models.functions import RowNumber
 from django_celery_beat.models import ClockedSchedule, CrontabSchedule, PeriodicTask
+from django_celery_results.models import TaskResult
 from polymorphic.models import PolymorphicModel
 
 from app.models.project import Project
@@ -25,7 +26,6 @@ from app.models.workspace import Workspace
 from app.services.storage_backends import CustomFileField
 from app.workflows.metadata import sync_metadata
 from app.workflows.orchestration import run_dbt_commands
-from django_celery_results.models import TaskResult
 
 TASK_START_TIMEOUT = 10
 TASK_START_POLLING_INTERVAL = 0.1

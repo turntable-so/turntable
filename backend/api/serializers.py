@@ -3,6 +3,7 @@ import json
 import orjson
 from django.contrib.auth.models import Group
 from django_celery_beat.models import CrontabSchedule
+from django_celery_results.models import TaskResult
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from invitations.utils import get_invitation_model
 from rest_framework import serializers
@@ -35,7 +36,6 @@ from app.models import (
 from app.models.project import Project
 from app.models.resources import MetabaseDetails
 from app.models.workflows import DBTOrchestrator, ScheduledWorkflow, TaskArtifact
-from django_celery_results.models import TaskResult
 from vinyl.lib.dbt_methods import DBTVersion
 
 Invitation = get_invitation_model()
@@ -582,11 +582,9 @@ class DBTOrchestratorListSerializer(serializers.ListSerializer):
         # Create a mapping of orchestrator ID to latest run
         latest_runs_map = {}
         serialized_runs = TaskResultSerializer(latest_runs, many=True).data
-        for run_data in serialized_runs:
-            if run_data[
-                "task_id"
-            ]:  # Using task_id since job_id isn't in the serializer
-                latest_runs_map[str(run_data["task_id"])] = run_data
+        for i, run_data in enumerate(latest_runs):
+            aggregation_identifier = run_data.periodic_task.aggregation_identifier
+            latest_runs_map[aggregation_identifier] = serialized_runs[i]
 
         # Add latest runs to each item
         for item in ret:
@@ -635,8 +633,8 @@ class DBTOrchestratorSerializer(CrontabWorkflowSerializer):
         return super().update(instance, validated_data)
 
     def get_latest_run(self, obj):
-        # If we're in a list context, the latest_run will already be set
-        if hasattr(obj, "latest_run"):
+        # Check if we're in a list context by looking at the parent serializer
+        if getattr(obj, "latest_run", None):
             return obj.latest_run
 
         # Fallback for detail view
@@ -654,8 +652,8 @@ class TaskArtifactSerializer(serializers.ModelSerializer):
 
 
 class TaskResultSerializer(serializers.ModelSerializer):
-    artifact = TaskArtifactSerializer(read_only=True)
     result = serializers.SerializerMethodField()
+    job_id = serializers.SerializerMethodField()
     task_args = serializers.SerializerMethodField()
     task_kwargs = serializers.SerializerMethodField()
 
@@ -691,15 +689,15 @@ class TaskResultSerializer(serializers.ModelSerializer):
         return result
 
     def get_job_id(self, obj):
-        return obj.job_id
-
-    def get_job_name(self, obj):
-        return obj.job_name
+        if obj.periodic_task:
+            return obj.periodic_task.id
+        return None
 
     class Meta:
         model = TaskResult
         fields = [
             "task_id",
+            "job_id",
             "status",
             "task_args",
             "task_kwargs",
@@ -711,13 +709,26 @@ class TaskResultSerializer(serializers.ModelSerializer):
         ]
 
 
-class TaskWithSubtasksListSerializer(serializers.ListSerializer):
+class TaskResultWithRelationshipsSerializer(TaskResultSerializer):
+    artifact = TaskArtifactSerializer(read_only=True)
+    job_name = serializers.SerializerMethodField()
+
+    def get_job_name(self, obj):
+        if obj.periodic_task:
+            return obj.periodic_task.name
+        return None
+
+    class Meta(TaskResultSerializer.Meta):
+        fields = TaskResultSerializer.Meta.fields + ["artifact", "job_name"]
+
+
+class TaskResultWithSubtasksListSerializer(serializers.ListSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._instance_cache = {i.task_id: i for i in self.instance if i is not None}
 
 
-class TaskResultWithSubtasksSerializer(TaskResultSerializer):
+class TaskResultWithSubtasksSerializer(TaskResultWithRelationshipsSerializer):
     subtasks = serializers.SerializerMethodField()
 
     def _ensure_task_cached(self, task_ids: list[str]) -> None:
@@ -745,7 +756,7 @@ class TaskResultWithSubtasksSerializer(TaskResultSerializer):
         self._ensure_task_cached(task_ids)
 
         # Serialize available tasks
-        tasks = TaskResultSerializer(
+        tasks = TaskResultWithSubtasksSerializer(
             [self.context["task_cache"].get(task_id) for task_id in task_ids],
             many=True,
             context=self.context,
@@ -778,19 +789,5 @@ class TaskResultWithSubtasksSerializer(TaskResultSerializer):
         return []
 
     class Meta(TaskResultSerializer.Meta):
-        list_serializer_class = TaskWithSubtasksListSerializer
+        list_serializer_class = TaskResultWithSubtasksListSerializer
         fields = TaskResultSerializer.Meta.fields + ["subtasks"]
-
-
-class TaskResultWithJobSerializer(TaskResultSerializer):
-    job_id = serializers.SerializerMethodField()
-    job_name = serializers.SerializerMethodField()
-
-    def get_job_id(self, obj):
-        return obj.periodic_task.id
-
-    def get_job_name(self, obj):
-        return obj.periodic_task.name
-
-    class Meta(TaskResultSerializer.Meta):
-        fields = TaskResultSerializer.Meta.fields + ["job_id", "job_name"]

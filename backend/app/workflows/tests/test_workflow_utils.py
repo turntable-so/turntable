@@ -6,7 +6,7 @@ import uuid
 import pytest
 from django_celery_results.models import TaskResult
 
-from api.serializers import TaskResultSerializer
+from api.serializers import TaskResultWithSubtasksSerializer
 from app.workflows.utils import task
 from vinyl.lib.utils.sequence import _get_list_depth, _get_list_key_depth
 
@@ -63,7 +63,7 @@ def test_nested_task(custom_celery):
 
     # Test serializer
     trs = TaskResult.objects.all()
-    serializer = TaskResultSerializer(trs, many=True)
+    serializer = TaskResultWithSubtasksSerializer(trs, many=True)
     for tr in serializer.data:
         # confirm the structure of the result and subtasks are the same
         result_depth = _get_list_depth(tr["result"])
