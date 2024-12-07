@@ -8,7 +8,8 @@ from api.serializers import (
     DBTCoreDetailsSerializer,
     DBTOrchestratorSerializer,
     TaskResultSerializer,
-    TaskResultWithJobSerializer,
+    TaskResultWithRelationshipsSerializer,
+    TaskResultWithSubtasksSerializer,
 )
 from app.models.resources import DBTCoreDetails
 from app.models.workflows import DBTOrchestrator
@@ -104,18 +105,18 @@ class JobViewSet(viewsets.ModelViewSet):
 class RunViewSet(viewsets.ModelViewSet):
     def list(self, request):
         workspace = request.user.current_workspace()
-        dbtresource_id = request.query_params.get("dbtresource_id")
-        data = DBTOrchestrator.get_results_with_filters(
-            workspace_id=workspace.id, dbtresource_id=dbtresource_id
-        )
+        kwargs = {"workspace_id": workspace.id}
+        if "dbtresource_id" in request.query_params:
+            kwargs["dbtresource_id"] = request.query_params.get("dbtresource_id")
+        data = DBTOrchestrator.get_results_with_filters(**kwargs)
         paginator = Pagination()
         paginated_data = paginator.paginate_queryset(data, request)
-        serializer = TaskResultWithJobSerializer(paginated_data, many=True)
+        serializer = TaskResultWithRelationshipsSerializer(paginated_data, many=True)
         return paginator.get_paginated_response(serializer.data)
 
     def retrieve(self, request, pk=None):
         data = TaskResult.objects.get(task_id=pk)
-        serializer = TaskResultSerializer(data)
+        serializer = TaskResultWithSubtasksSerializer(data)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["post"])

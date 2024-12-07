@@ -140,8 +140,8 @@ class TestOrchestrationViews:
             assert not subtask["subtasks"]
 
         # check artifacts
-        assert data["artifacts"]
-        url = data["artifacts"][0]["artifact"]
+        assert data["artifact"]
+        url = data["artifact"]["artifact"]
         url = url.replace(settings.AWS_S3_PUBLIC_URL, settings.AWS_S3_ENDPOINT_URL)
 
         response = requests.get(url)

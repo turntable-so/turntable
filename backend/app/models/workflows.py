@@ -12,7 +12,10 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import OuterRef, QuerySet, Subquery
+
+# Use a window function to rank tasks by date within each periodic_task_name
+from django.db.models import Window
+from django.db.models.functions import RowNumber
 from django_celery_beat.models import ClockedSchedule, CrontabSchedule, PeriodicTask
 from django_celery_results.models import TaskResult
 from polymorphic.models import PolymorphicModel
@@ -39,8 +42,12 @@ class WorkflowType(models.TextChoices):
     WEBHOOK = "webhook", "Webhook"
 
 
+def uuid_str():
+    return str(uuid.uuid4())
+
+
 class ScheduledWorkflow(PolymorphicModel):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    id = models.CharField(primary_key=True, default=uuid_str, max_length=36)
     workflow_type = models.CharField(
         choices=WorkflowType.choices, max_length=255, editable=False
     )
@@ -56,11 +63,6 @@ class ScheduledWorkflow(PolymorphicModel):
     hmac_secret_key = encrypt(models.CharField(max_length=255, null=True))
 
     # derived fields
-    replacement_identifier = models.CharField(
-        max_length=64,
-        editable=False,
-        db_comment="The identifier of the periodic task that determines whether a new workflow should be created or an existing workflow should be updated",
-    )
     aggregation_identifier = models.CharField(
         max_length=64,
         editable=False,
@@ -108,7 +110,6 @@ class ScheduledWorkflow(PolymorphicModel):
             "periodic_task_id",
             "crontab_id",
             "clocked_id",
-            "replacement_identifier",
             "one_off",
             "polymorphic_ctype_id",
             "scheduledworkflow_ptr_id" "workflow_type",
@@ -149,7 +150,7 @@ class ScheduledWorkflow(PolymorphicModel):
 
     def get_periodic_task_args(self):
         return {
-            "name": self.replacement_identifier,
+            "name": self.id,
             "task": self.workflow.name,
             "kwargs": json.dumps(self.kwargs),
             "one_off": self.one_off,
@@ -169,8 +170,6 @@ class ScheduledWorkflow(PolymorphicModel):
         # Calculate identifiers first
         if not self.aggregation_identifier:
             self.aggregation_identifier = str(self.id)
-        if not self.replacement_identifier:
-            self.replacement_identifier = str(self.id)
         if not self.workflow_type:
             self.workflow_type = (
                 WorkflowType.ONE_TIME if self.clocked else WorkflowType.CRON
@@ -207,7 +206,7 @@ class ScheduledWorkflow(PolymorphicModel):
         polling_interval: float = TASK_START_POLLING_INTERVAL,
     ):
         seconds = 0
-        key = get_periodic_task_key(self.replacement_identifier)
+        key = get_periodic_task_key(self.id)
         while seconds < timeout:
             task_id = cache.get(key, "")
             if task_id:
@@ -240,22 +239,43 @@ class ScheduledWorkflow(PolymorphicModel):
         successes_only: bool = False,
         failures_only: bool = False,
     ):
-        try:
-            tasks = TaskResult.objects.filter(
-                periodic_task_name__in=type(self)
-                .objects.filter(aggregation_identifier=self.aggregation_identifier)
-                .values_list("replacement_identifier", flat=True)
-            )
-            if successes_only:
-                tasks = tasks.filter(status=states.SUCCESS)
-            if failures_only:
-                tasks = tasks.filter(status=states.FAILURE)
-            tasks = tasks.order_by("-date_done")
-            if n is not None:
-                tasks = tasks[:n]
+        return self.most_recent_multiple([self.id], n, successes_only, failures_only)
+
+    @classmethod
+    def most_recent_multiple(
+        cls,
+        ids: list[str],
+        n: int | None = 1,
+        successes_only: bool = False,
+        failures_only: bool = False,
+    ) -> list[TaskResult]:
+        tasks = TaskResult.objects.prefetch_related("periodic_task")
+
+        if len(ids) == 1:
+            tasks = tasks.filter(periodic_task__aggregation_identifier=ids[0])
+        else:
+            tasks = tasks.filter(periodic_task__aggregation_identifier__in=ids)
+
+        if successes_only:
+            tasks = tasks.filter(status=states.SUCCESS)
+        if failures_only:
+            tasks = tasks.filter(status=states.FAILURE)
+
+        tasks = tasks.order_by("-date_done")
+
+        if n is None:
             return tasks
-        except TaskResult.DoesNotExist:
-            return QuerySet()
+        elif len(ids) == 1:
+            return tasks[:n]
+        else:
+            tasks = tasks.annotate(
+                row_num=Window(
+                    expression=RowNumber(),
+                    partition_by=["periodic_task__aggregation_identifier"],
+                    order_by="-date_done",
+                )
+            )
+            return tasks.filter(row_num__lte=n)
 
     def schedule_now(self):
         now = datetime.now(tz=UTC)
@@ -270,28 +290,14 @@ class ScheduledWorkflow(PolymorphicModel):
         )
 
     @classmethod
-    def get_results_filters(cls, **kwargs):
-        return {
-            "workspace_id": kwargs.get("workspace_id"),
-        }
-
-    @classmethod
     def get_results_with_filters(
         cls,
         **kwargs,
     ):
-        filters = cls.get_results_filters(**kwargs)
         tasks = TaskResult.objects.filter(
-            periodic_task_name__in=cls.objects.filter(**filters).values_list(
-                "replacement_identifier", flat=True
-            )
-        )
-        dbt_orchestrators = cls.objects.filter(
-            replacement_identifier=OuterRef("periodic_task_name")
-        )
-        tasks = tasks.annotate(
-            job_id=Subquery(dbt_orchestrators.values("id")[:1]),
-            job_name=Subquery(dbt_orchestrators.values("name")[:1]),
+            periodic_task__aggregation_identifier__in=cls.objects.filter(
+                **kwargs
+            ).values_list("aggregation_identifier", flat=True)
         )
         tasks = tasks.order_by("-date_done")
         return tasks
@@ -370,7 +376,12 @@ class TaskArtifact(models.Model):
 
     # relationships
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE)
-    task = models.ForeignKey(TaskResult, on_delete=models.CASCADE, to_field="task_id")
+    task = models.OneToOneField(
+        TaskResult,
+        on_delete=models.CASCADE,
+        to_field="task_id",
+        related_name="artifact",
+    )
 
     @property
     def storage_applies_to(self):
