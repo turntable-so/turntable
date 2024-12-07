@@ -38,21 +38,23 @@ def run_test_sync(
             ).apply_async()
             task.get()
             task_id = task.id
-            periodic_task_name = None
+            periodic_task_id = None
             task_result = TaskResult.objects.get(task_id=task_id)
         else:
             workflow = MetadataSyncWorkflow(
                 resource=resource, workspace=resource.workspace
             ).schedule_now()
             workflow.await_next_result()
-            periodic_task_name = workflow.id
+
+            # periodic_task_id is the workflow_name on the TaskResult table. Weird nomenclature is tied to django-celery-results integration.
+            periodic_task_id = workflow.id
             task_result = (
-                TaskResult.objects.filter(periodic_task_name=periodic_task_name)
+                TaskResult.objects.filter(periodic_task_id=periodic_task_id)
                 .order_by("-date_done")
                 .first()
             )
         assert task_result.status == states.SUCCESS
-        assert task_result.periodic_task_name == periodic_task_name
+        assert task_result.periodic_task_id == periodic_task_id
     assert_ingest_output(resources, produce_columns, produce_column_links)
 
     # recache datahub_dbs if successful and arg is passed
