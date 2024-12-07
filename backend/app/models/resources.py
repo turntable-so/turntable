@@ -60,6 +60,15 @@ class ResourceSubtype(models.TextChoices):
     DBT = "dbt", "Dbt"
     DBT_CLOUD = "dbt_cloud", "Dbt Cloud"
 
+    @classmethod
+    def get_bi_dialects(cls):
+        return [
+            cls.LOOKER.value,
+            cls.TABLEAU.value,
+            cls.METABASE.value,
+            cls.POWERBI.value,
+        ]
+
 
 # helper functions
 def get_sync_config(db_path):

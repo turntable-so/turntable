@@ -241,7 +241,6 @@ def union_helper(ast, name_override: str | None = None):
 
 
 class SQLAstNode:
-    append_key = "_" + _generate_random_ascii_string(10)
     join_str = "_____"
 
     def __init__(
@@ -256,6 +255,7 @@ class SQLAstNode:
         lineage: DAG | None = None,
         use_datahub_nodes: bool = False,
         default_db: str | None = None,
+        append_key_casing: str | None = None,
     ):
         self.id: str = id
         self.ast = ast
@@ -268,6 +268,10 @@ class SQLAstNode:
         self.lineage = lineage
         self.use_datahub_nodes = use_datahub_nodes
         self.default_db = default_db
+        if append_key_casing != "upper":
+            self.append_key = "_" + _generate_random_ascii_string(10)
+        else:
+            self.append_key = "_" + _generate_random_ascii_string(10).upper()
 
     def pre_qualify_transform(self, ast: Expression) -> Expression:
         if not isinstance(ast, exp.Table):
