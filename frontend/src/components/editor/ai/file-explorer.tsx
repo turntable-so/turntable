@@ -19,11 +19,8 @@ export default function FileExplorer({
   setContextFiles,
 }: FileExplorerProps) {
   const { files } = useFiles();
-
-  // State variable for search query
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Recursive function to collect matching files (unchanged)
   const collectMatchingFiles = (node: FileNode): FileNode[] => {
     let result: FileNode[] = [];
 
@@ -51,7 +48,6 @@ export default function FileExplorer({
 
   const flatMap = files ? files.flatMap(collectMatchingFiles) : [];
 
-  // Filtered files based on search query
   const filteredFiles = flatMap.filter((file) =>
     file.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -78,7 +74,7 @@ export default function FileExplorer({
   return (
     <div
       ref={explorerRef}
-      className="bg-white dark:bg-black rounded-md text-xs min-w-[250px]"
+      className="bg-white dark:bg-black rounded-md text-xs max-w-[250px]"
     >
       <Input
         ref={inputRef}
@@ -95,7 +91,9 @@ export default function FileExplorer({
             className="flex justify-between items-start py-1 cursor-pointer"
             onClick={(e) => handleClick(e, file)}
           >
-            <span className="ml-2">{file.name}</span>
+            <span className="ml-2 overflow-hidden text-ellipsis whitespace-nowrap">
+              {file.name}
+            </span>
           </li>
         ))}
       </ul>
