@@ -1,5 +1,3 @@
-import json
-
 import orjson
 from django.contrib.auth.models import Group
 from django_celery_beat.models import CrontabSchedule
@@ -672,6 +670,11 @@ class TaskResultSerializer(serializers.ModelSerializer):
     task_args = serializers.SerializerMethodField()
     task_kwargs = serializers.SerializerMethodField()
 
+    def _parse_json(self, data):
+        if not data:
+            return None
+        return orjson.loads(data)
+
     def _parse_meta(self, instance) -> dict | None:
         """Parse instance metadata, returning None if invalid"""
         if not hasattr(instance, "meta"):
@@ -680,18 +683,7 @@ class TaskResultSerializer(serializers.ModelSerializer):
         if isinstance(instance.meta, dict):
             return instance.meta
 
-        try:
-            return orjson.loads(instance.meta)
-        except (json.JSONDecodeError, AttributeError):
-            return None
-
-    def _parse_json(self, data):
-        if not data:
-            return None
-        try:
-            return orjson.loads(data)
-        except orjson.JSONDecodeError:
-            return data
+        return self._parse_json(instance.meta)
 
     def get_result(self, obj):
         return self._parse_json(obj.result)
