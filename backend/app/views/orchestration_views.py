@@ -13,7 +13,6 @@ from api.serializers import (
 )
 from app.models.resources import DBTCoreDetails
 from app.models.workflows import DBTOrchestrator
-from scripts.debug.profiling import pyprofile
 
 
 class Pagination(PageNumberPagination):
@@ -40,7 +39,6 @@ class JobViewSet(viewsets.ModelViewSet):
         serializer.save(workspace=workspace)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @pyprofile()
     def list(self, request):
         workspace = request.user.current_workspace()
         data = DBTOrchestrator.objects.filter(
