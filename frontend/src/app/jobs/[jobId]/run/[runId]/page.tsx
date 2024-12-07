@@ -94,9 +94,7 @@ export default function JobRunPage({ params }: JobRunPageProps) {
   }
 
   return (
-    <FullWidthPageLayout
-      title={`${job.name} / Run ${truncateUuid(run.task_id)}`}
-    >
+    <FullWidthPageLayout title={`Run ${truncateUuid(run.task_id)}`}>
       <JobRunIdPage run={run} job={job} />
     </FullWidthPageLayout>
   );
