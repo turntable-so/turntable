@@ -1,19 +1,12 @@
-import type { FileNode, OpenedFile } from "@/app/contexts/FilesContext";
-import type { Lineage } from "@/app/contexts/LineageView";
+import type { FileNode } from "@/app/contexts/FilesContext";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { CornerDownLeft, Loader2, Plus, X, XCircle } from "lucide-react";
+import { CornerDownLeft, Loader2, Plus, Table, X, XCircle } from "lucide-react";
 import type React from "react";
-import {
-  type Dispatch,
-  type SetStateAction,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "../../ui/button";
 import {
   Select,
@@ -24,44 +17,39 @@ import {
   SelectValue,
 } from "../../ui/select";
 import { Textarea } from "../../ui/textarea";
+import { useAISidebar } from "./ai-sidebar-context";
 import { SUPPORTED_AI_MODELS } from "./constants";
 import FileExplorer from "./file-explorer";
 
 interface ChatControlsProps {
-  input: string;
-  setInput: (value: string) => void;
-  isLoading: boolean;
   isConnected: boolean;
   handleSubmit: (e: React.FormEvent) => void;
   stopWebSocket: () => void;
-  aiActiveFile: OpenedFile | null;
-  setAiActiveFile: Dispatch<SetStateAction<OpenedFile | null>>;
-  aiLineageContext: Lineage | null;
-  setAiLineageContext: Dispatch<SetStateAction<Lineage | null>>;
-  contextFiles: FileNode[];
-  setContextFiles: Dispatch<SetStateAction<FileNode[]>>;
-  selectedModel: string;
-  setSelectedModel: Dispatch<SetStateAction<string>>;
   autoFocus?: boolean;
 }
 
 export default function ChatControls({
-  input,
-  setInput,
-  isLoading,
   isConnected,
   handleSubmit,
   stopWebSocket,
-  aiActiveFile,
-  setAiActiveFile,
-  aiLineageContext,
-  setAiLineageContext,
-  contextFiles,
-  setContextFiles,
-  selectedModel,
-  setSelectedModel,
   autoFocus = false,
 }: ChatControlsProps) {
+  const {
+    input,
+    setInput,
+    isLoading,
+    aiActiveFile,
+    setAiActiveFile,
+    aiLineageContext,
+    setAiLineageContext,
+    contextFiles,
+    setContextFiles,
+    selectedModel,
+    setSelectedModel,
+    contextPreview,
+    setContextPreview,
+  } = useAISidebar();
+
   const [isFileExplorerOpen, setIsFileExplorerOpen] = useState(false);
   const numberOfLineageFiles = aiLineageContext?.assets?.length || 0;
   const lineageContextString =
@@ -119,6 +107,7 @@ export default function ChatControls({
             onClick={() => setIsFileExplorerOpen((prev) => !prev)}
           >
             <Plus className="w-4 h-4" />
+
             {isFileExplorerOpen && (
               <div className="absolute left-0 top-full mt-1 z-10">
                 <FileExplorer
@@ -128,13 +117,14 @@ export default function ChatControls({
               </div>
             )}
           </div>
+
           {aiActiveFile ? (
-            <div
-              className="bg-muted/50 rounded-md p-1 text-xs flex items-center justify-between gap-1"
-              onClick={handleRemoveAiActiveFile}
-            >
+            <div className="bg-muted/50 rounded-md p-1 text-xs flex items-center justify-between gap-1">
               {aiActiveFile.node.name}{" "}
-              <span className="text-[10px] text-muted-foreground cursor-pointer">
+              <span
+                className="text-[10px] text-muted-foreground cursor-pointer"
+                onClick={handleRemoveAiActiveFile}
+              >
                 <X className="w-[0.6rem] h-[0.6rem]" />
               </span>
             </div>
@@ -166,15 +156,30 @@ export default function ChatControls({
             <div
               key={file.path}
               className="bg-muted/50 rounded-md p-1 text-xs flex items-center justify-between gap-1"
-              onClick={() => handleRemoveContextFile(file)}
             >
               {file.name}{" "}
               <span className="text-[10px] text-muted-foreground">File</span>
-              <span className="text-[10px] text-muted-foreground cursor-pointer">
+              <span
+                className="text-[10px] text-muted-foreground cursor-pointer"
+                onClick={() => handleRemoveContextFile(file)}
+              >
                 <X className="w-[0.6rem] h-[0.6rem]" />
               </span>
             </div>
           ))}
+
+          {contextPreview && (
+            <div className="bg-muted/50 rounded-md p-1 text-xs flex items-center justify-between gap-1">
+              <Table className="w-3 h-3" />
+              Preview
+              <span
+                className="text-[10px] text-muted-foreground cursor-pointer"
+                onClick={() => setContextPreview(null)}
+              >
+                <X className="w-[0.6rem] h-[0.6rem]" />
+              </span>
+            </div>
+          )}
         </div>
         <Textarea
           ref={textareaRef}

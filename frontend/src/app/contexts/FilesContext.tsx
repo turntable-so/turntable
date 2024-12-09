@@ -178,6 +178,10 @@ type FilesContextType = {
     >
   >;
   isSqlFile: boolean;
+  colDefs: any[];
+  rowData: any[];
+  setColDefs: Dispatch<SetStateAction<any[]>>;
+  setRowData: Dispatch<SetStateAction<any[]>>;
 };
 
 type QueryPreview = {
@@ -276,6 +280,8 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     >
   >({});
   const isSqlFile = activeFile?.node.name.endsWith(".sql") ?? false;
+  const [colDefs, setColDefs] = useState<any[]>([]);
+  const [rowData, setRowData] = useState<any[]>([]);
 
   const fetchBranch = async (id: string) => {
     if (id) {
@@ -917,6 +923,10 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         lineageData,
         setLineageData,
         isSqlFile,
+        colDefs,
+        setColDefs,
+        rowData,
+        setRowData,
       }}
     >
       {children}

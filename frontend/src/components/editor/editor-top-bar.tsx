@@ -16,9 +16,8 @@ import {
   PanelBottomClose,
   PanelLeft,
   PanelLeftClose,
-  PanelRight,
-  PanelRightClose,
   Settings,
+  Sparkles,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -155,11 +154,7 @@ const EditorTopBar = () => {
               className="hover:bg-white"
               size="icon"
             >
-              {sidebarRightShown ? (
-                <PanelRightClose className="h-4 w-4" />
-              ) : (
-                <PanelRight className="h-4 w-4" />
-              )}
+              <Sparkles className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>

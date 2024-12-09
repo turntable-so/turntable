@@ -10,6 +10,7 @@ export type MessageHistoryPayload = {
   project_id: string;
   model: string;
   context_files: Array<string>;
+  context_preview: string | null;
   asset_id: string | undefined;
   related_assets: Asset[] | undefined;
   asset_links: any | undefined;
