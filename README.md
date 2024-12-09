@@ -31,18 +31,8 @@
 
 ## Open Source Web IDE for Data Teams that use dbt Core
 
-<video src="https://github.com/user-attachments/assets/d0bb1be5-6b6c-4ab1-b949-ce5ec4c18c5e.mp4" width="320" height="240" controls autoplay></video>
 
-**The problem:** Today's data stack is highly fragmented and expensive
-
-- Most modern data teams have at least 5-10 tools in their data stack. They often don't work well together.
-- Vendor lock-in has led to [exorbitant costs](https://aws.amazon.com/marketplace/pp/prodview-tjpcf42nbnhko) and [rent-seeking behavior](https://www.fool.com/investing/2022/08/26/3-wild-metrics-highlight-snowflakes-staggering-mom/):
-
-**The Solution:** Turntable, a post-modern data stack
-
-- _Open:_ Our whole repo is AGPL and always will be.
-- _Private:_ Self-deploy our open-source version or use our cloud product with our customer-deployed agent. Either way, your data never leaves your infrastructure.
-- _Integrated:_ With Turntable, all of your metrics, models, and data documents exist in the same context. We think this will allow for some totally new experiences. Think clicking on a dashboard and seeing exactly where a number came from.
+<video src="https://github.com/user-attachments/assets/8790f3e6-698a-4305-b80c-f4c7d28dcbfa" width="320" height="240" controls autoplay></video>
 
 ## ✨ Features
 
