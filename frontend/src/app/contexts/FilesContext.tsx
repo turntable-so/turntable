@@ -295,7 +295,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     rows: any[];
     cols: any[];
     file_name: string;
-  } | null>([]);
+  } | null>(null);
 
   const fetchBranch = async (id: string) => {
     if (id) {

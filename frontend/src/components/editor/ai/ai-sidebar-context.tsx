@@ -16,7 +16,12 @@ import {
 } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import { SUPPORTED_AI_MODELS } from "./constants";
-import type { AICompiledSql, AIMessage, AIQueryPreview } from "./types";
+import type {
+  AICompiledSql,
+  AIFileProblems,
+  AIMessage,
+  AIQueryPreview,
+} from "./types";
 import { generatePreviewForAI } from "./utils";
 
 interface AISidebarContextType {
@@ -40,6 +45,8 @@ interface AISidebarContextType {
   setAiLineageContext: Dispatch<SetStateAction<Lineage | null>>;
   aiCompiledSql: AICompiledSql | null;
   setAiCompiledSql: Dispatch<SetStateAction<AICompiledSql | null>>;
+  aiFileProblems: AIFileProblems | null;
+  setAiFileProblems: Dispatch<SetStateAction<AIFileProblems | null>>;
 }
 
 const AISidebarContext = createContext<AISidebarContextType | undefined>(
@@ -58,7 +65,8 @@ export function AISidebarProvider({ children }: AISidebarProviderProps) {
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [contextFiles, setContextFiles] = useState<FileNode[]>([]);
-  const [aiContextPreview, setAiContextPreview] = useState<AIQueryPreview | null>(null);
+  const [aiContextPreview, setAiContextPreview] =
+    useState<AIQueryPreview | null>(null);
   const [messageHistory, setMessageHistory] = useLocalStorage<Array<AIMessage>>(
     LocalStorageKeys.aiMessageHistory(branchId),
     [],
@@ -74,11 +82,15 @@ export function AISidebarProvider({ children }: AISidebarProviderProps) {
   const [aiCompiledSql, setAiCompiledSql] = useState<AICompiledSql | null>(
     null,
   );
+  const [aiFileProblems, setAiFileProblems] = useState<AIFileProblems | null>(
+    null,
+  );
 
   const visibleLineage = lineageData[activeFile?.node.path || ""] || null;
 
   useEffect(() => {
     setAiActiveFile(activeFile);
+    setAiFileProblems(null);
   }, [activeFile]);
 
   useEffect(() => {
@@ -133,6 +145,8 @@ export function AISidebarProvider({ children }: AISidebarProviderProps) {
         setAiLineageContext,
         aiCompiledSql,
         setAiCompiledSql,
+        aiFileProblems,
+        setAiFileProblems,
       }}
     >
       {children}

@@ -4,7 +4,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { CornerDownLeft, DatabaseZap, Loader2, Plus, Table, X, XCircle } from "lucide-react";
+import { CircleAlert, CornerDownLeft, DatabaseZap, Loader2, Plus, Table, X, XCircle } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "../../ui/button";
@@ -50,6 +50,8 @@ export default function ChatControls({
     setAiContextPreview,
     aiCompiledSql,
     setAiCompiledSql,
+    aiFileProblems,
+    setAiFileProblems,
   } = useAISidebar();
 
   const [isFileExplorerOpen, setIsFileExplorerOpen] = useState(false);
@@ -198,6 +200,16 @@ export default function ChatControls({
                 onClick={() => setAiCompiledSql(null)}
               >
                 <X className="w-[0.6rem] h-[0.6rem]" />
+              </span>
+            </div>
+          )}
+
+          {aiFileProblems && (
+            <div className="bg-muted/50 rounded-md p-1 text-xs flex items-center justify-between gap-1">
+              <CircleAlert className="w-3 h-3" />
+              Problems
+              <span className="text-[10px] text-muted-foreground">
+                {aiFileProblems.file_name}
               </span>
             </div>
           )}

@@ -115,8 +115,7 @@ def lineage_ascii(edges):
 
 def asset_md(asset: Asset, columns: dict, contents: str):
     description = asset.description or ""
-    columns_md = [
-    ]
+    columns_md = []
     for key, col in columns.items():
         columns_md.append(
             f"-{col.get('name')}:{col.get('type')} {col.get('comment') or ''}"
@@ -143,6 +142,7 @@ def build_context(
     context_files: List[str] | None = None,
     context_preview: str | None = None,
     compiled_query: str | None = None,
+    file_problems: List[str] | None = None,
 ):
     user_instruction = next(
         msg.content for msg in reversed(message_history) if msg.role == "user"
@@ -172,9 +172,7 @@ def build_context(
                         continue
                     with open(path) as file:
                         contents = file.read()
-                        asset_mds.append(
-                            asset_md(asset, columns, contents)
-                        )
+                        asset_mds.append(asset_md(asset, columns, contents))
 
             assets_str = "\n".join(asset_mds)
 
@@ -186,7 +184,9 @@ def build_context(
                     ).read()
                     file_content_blocks.append(f"```sql\n{content}\n```")
 
-            file_contents_str = "\n".join(file_content_blocks) if file_content_blocks else ""
+            file_contents_str = (
+                "\n".join(file_content_blocks) if file_content_blocks else ""
+            )
 
             edges = []
             if lineage:
@@ -194,6 +194,8 @@ def build_context(
                     source_model = extract_model_name(link.source_id)
                     target_model = extract_model_name(link.target_id)
                     edges.append({"source": source_model, "target": target_model})
+
+            file_problems_str = "\n".join(file_problems) if file_problems else None
 
             output = f"""
 # Dialect
@@ -211,6 +213,7 @@ IMPORTANT: keep in mind how these are connected to each other. You may need to a
 
 {f"Compiled Query:\n\n```sql\n{compiled_query}\n```" if compiled_query else ''}
 
+{f"File Problems:\n{file_problems_str}" if file_problems_str else ''}
 User Instructions: {user_instruction}
 
 Answer the user's question based on the above context. Do not answer anything else, just answer the question.
@@ -249,6 +252,7 @@ def stream_chat_completion(
         project_id=payload.project_id,
         context_preview=payload.context_preview,
         compiled_query=payload.compiled_query,
+        file_problems=payload.file_problems,
     )
     message_history = []
     for idx, msg in enumerate(payload.message_history):

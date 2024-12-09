@@ -3,6 +3,7 @@ import "ag-grid-community/styles/ag-theme-balham.css";
 import "./ag-grid-custom-theme.css";
 
 import { useFiles } from "@/app/contexts/FilesContext";
+import { useLayoutContext } from "@/app/contexts/LayoutContext";
 import { useBottomPanelTabs } from "@/components/editor/use-bottom-panel-tabs";
 import {
   CircleAlertIcon,
@@ -36,6 +37,7 @@ import CommandPanel from "./command-panel";
 import CommandPanelActionBtn from "./command-panel/command-panel-action-btn";
 import ErrorMessage from "./error-message";
 import PreviewPanel from "./preview-panel/preview-panel";
+import ProblemsBtnGroup from "./problems-panel/problems-btn-group";
 import ProblemsPanel from "./problems-panel/problems-panel";
 
 export default function BottomPanel({
@@ -83,6 +85,11 @@ export default function BottomPanel({
     setAiCompiledSql,
   } = useAISidebar();
 
+  const {
+    sidebarRightShown,
+    setSidebarRightShown,
+  } = useLayoutContext();
+
   const [activeTab, setActiveTab] = useBottomPanelTabs({
     branchId: branchId || "",
   });
@@ -100,6 +107,9 @@ export default function BottomPanel({
         table,
         file_name: queryPreviewData.file_name,
       });
+      if (!sidebarRightShown) {
+        setSidebarRightShown(true);
+      }
     }
   };
 
@@ -109,6 +119,9 @@ export default function BottomPanel({
         compiled_query: compiledSql.sql,
         file_name: compiledSql.file_name,
       });
+      if (!sidebarRightShown) {
+        setSidebarRightShown(true);
+      }
     }
   };
 
@@ -303,6 +316,7 @@ export default function BottomPanel({
             </div>
           )}
           {activeTab === "command" && <CommandPanelActionBtn />}
+          {activeTab === "problems" && <ProblemsBtnGroup />}
         </div>
       </div>
       <Panel

@@ -33,6 +33,7 @@ export default function AiSidebarChat() {
     selectedModel,
     aiContextPreview,
     aiCompiledSql,
+    aiFileProblems,
   } = useAISidebar();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -121,6 +122,7 @@ export default function AiSidebarChat() {
       column_links: aiLineageContext?.column_links,
       message_history: newMessageHistory.map(({ id, ...rest }) => rest),
       compiled_query: aiCompiledSql?.compiled_query ?? null,
+      file_problems: aiFileProblems?.problems ?? null,
     };
     startWebSocket(payload);
 

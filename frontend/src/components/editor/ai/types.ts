@@ -17,6 +17,7 @@ export type MessageHistoryPayload = {
   column_links: any | undefined;
   message_history: Omit<AIMessage, "id">[];
   compiled_query: string | null;
+  file_problems: string[] | null;
 };
 
 export type AICompiledSql = {
@@ -26,5 +27,10 @@ export type AICompiledSql = {
 
 export type AIQueryPreview = {
   table: string;
+  file_name: string;
+}
+
+export type AIFileProblems = {
+  problems: string[];
   file_name: string;
 }
