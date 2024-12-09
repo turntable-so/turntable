@@ -138,8 +138,8 @@ type FilesContextType = {
   createDirectoryAndRefresh: (path: string) => Promise<void>;
   filesLoading: boolean;
   downloadFile: (path: string) => Promise<void>;
-  compileActiveFile: (content?: string) => Promise<void>;
-  compiledSql: string | null;
+  compileActiveFile: (filename: string) => Promise<void>;
+  compiledSql: { sql: string; file_name: string } | null;
   isCompiling: boolean;
   compileError: string | null;
   showConfirmSaveDialog: boolean;
@@ -178,10 +178,18 @@ type FilesContextType = {
     >
   >;
   isSqlFile: boolean;
-  colDefs: any[];
-  rowData: any[];
-  setColDefs: Dispatch<SetStateAction<any[]>>;
-  setRowData: Dispatch<SetStateAction<any[]>>;
+  queryPreviewData: {
+    rows: any[];
+    cols: any[];
+    file_name: string;
+  } | null;
+  setQueryPreviewData: Dispatch<
+    SetStateAction<{
+      rows: any[];
+      cols: any[];
+      file_name: string;
+    } | null>
+  >;
 };
 
 type QueryPreview = {
@@ -251,7 +259,10 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     [],
   );
   const [isCompiling, setIsCompiling] = useState(false);
-  const [compiledSql, setCompiledSql] = useState<string | null>(null);
+  const [compiledSql, setCompiledSql] = useState<{
+    sql: string;
+    file_name: string;
+  } | null>(null);
   const [compileError, setCompileError] = useState<string | null>(null);
   const [isCloning, setIsCloning] = useState(false);
   const [checkForProblemsOnEdit, setCheckForProblemsOnEdit] = useLocalStorage(
@@ -280,8 +291,11 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     >
   >({});
   const isSqlFile = activeFile?.node.name.endsWith(".sql") ?? false;
-  const [colDefs, setColDefs] = useState<any[]>([]);
-  const [rowData, setRowData] = useState<any[]>([]);
+  const [queryPreviewData, setQueryPreviewData] = useState<{
+    rows: any[];
+    cols: any[];
+    file_name: string;
+  } | null>([]);
 
   const fetchBranch = async (id: string) => {
     if (id) {
@@ -758,7 +772,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     await fetchFiles();
   };
 
-  const compileActiveFile = async () => {
+  const compileActiveFile = async (filename: string) => {
     setIsCompiling(true);
     setCompileError(null);
     setCompiledSql(null);
@@ -768,7 +782,10 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     if (result.error) {
       setCompileError(result.error);
     } else {
-      setCompiledSql(result);
+      setCompiledSql({
+        sql: result,
+        file_name: filename,
+      });
     }
     setIsCompiling(false);
   };
@@ -923,10 +940,8 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         lineageData,
         setLineageData,
         isSqlFile,
-        colDefs,
-        setColDefs,
-        rowData,
-        setRowData,
+        queryPreviewData,
+        setQueryPreviewData,
       }}
     >
       {children}

@@ -51,7 +51,7 @@ interface AISidebarProviderProps {
 }
 
 export function AISidebarProvider({ children }: AISidebarProviderProps) {
-  const { branchId, activeFile, lineageData, rowData, colDefs, compiledSql } =
+  const { branchId, activeFile, lineageData, queryPreviewData, compiledSql } =
     useFiles();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -86,26 +86,29 @@ export function AISidebarProvider({ children }: AISidebarProviderProps) {
   }, [visibleLineage]);
 
   useEffect(() => {
-    if (rowData && colDefs && activeFile) {
-      const table = generatePreviewForAI(rowData, colDefs);
+    if (queryPreviewData?.rows && queryPreviewData?.cols && activeFile) {
+      const table = generatePreviewForAI(
+        queryPreviewData.rows,
+        queryPreviewData.cols,
+      );
       setAiContextPreview({
         table,
-        file_name: activeFile.node.name,
+        file_name: queryPreviewData.file_name,
       });
     }
-  }, [rowData, colDefs, activeFile]);
+  }, [queryPreviewData]);
 
   useEffect(() => {
     if (activeFile && compiledSql) {
       setAiCompiledSql({
-        compiled_query: compiledSql,
-        file_name: activeFile.node.name,
+        compiled_query: compiledSql.sql,
+        file_name: compiledSql.file_name,
       });
       return;
     }
 
     setAiCompiledSql(null);
-  }, [compiledSql, activeFile]);
+  }, [compiledSql]);
 
   return (
     <AISidebarContext.Provider

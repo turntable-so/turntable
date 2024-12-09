@@ -73,6 +73,7 @@ export default function BottomPanel({
     compileError,
     isQueryPreviewLoading,
     isSqlFile,
+    queryPreviewData,
   } = useFiles();
 
   const {
@@ -86,15 +87,18 @@ export default function BottomPanel({
     branchId: branchId || "",
   });
 
-  const showAddPreviewToChatButton = !aiContextPreview && rowData && colDefs;
+  const showAddPreviewToChatButton = !aiContextPreview && queryPreviewData;
   const showAddCompiledSqlToChatButton = !aiCompiledSql && compiledSql;
 
   const addPreviewToChat = () => {
-    if (rowData && colDefs && activeFile) {
-      const table = generatePreviewForAI(rowData, colDefs);
+    if (queryPreviewData?.rows && queryPreviewData?.cols && activeFile) {
+      const table = generatePreviewForAI(
+        queryPreviewData.rows,
+        queryPreviewData.cols,
+      );
       setAiContextPreview({
         table,
-        file_name: activeFile.node.name,
+        file_name: queryPreviewData.file_name,
       });
     }
   };
@@ -102,8 +106,8 @@ export default function BottomPanel({
   const addCompiledSqlToChat = () => {
     if (compiledSql && activeFile) {
       setAiCompiledSql({
-        compiled_query: compiledSql,
-        file_name: activeFile.node.name,
+        compiled_query: compiledSql.sql,
+        file_name: compiledSql.file_name,
       });
     }
   };
@@ -232,13 +236,18 @@ export default function BottomPanel({
                       <Sparkles className="h-4 w-4 mr-2" />
                     </Button>
                   </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Add to chat</p>
+                  </TooltipContent>
                 </Tooltip>
               ) : null}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     size="sm"
-                    onClick={() => compileActiveFile()}
+                    onClick={() =>
+                      compileActiveFile(activeFile?.node.name || "")
+                    }
                     disabled={isCompiling}
                     variant="outline"
                   >
@@ -355,8 +364,8 @@ export default function BottomPanel({
                 <ErrorMessage error={compileError} />
               ) : (
                 <CustomEditor
-                  key={compiledSql}
-                  value={compiledSql || ""}
+                  key={compiledSql?.sql}
+                  value={compiledSql?.sql || ""}
                   language="sql"
                   options={{
                     readOnly: true,

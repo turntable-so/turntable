@@ -215,7 +215,7 @@ function EditorContent({
 
         editor.addCommand(
           monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Enter,
-          () => compileActiveFile(editor.getValue()),
+          () => compileActiveFile(activeFile?.node.name || ""),
         );
       }}
     />
@@ -241,10 +241,8 @@ function EditorPageContent() {
     isQueryPreviewLoading,
     setIsQueryPreviewLoading,
     saveFile,
-    colDefs,
-    setColDefs,
-    rowData,
-    setRowData,
+    queryPreviewData,
+    setQueryPreviewData,
   } = useFiles();
 
   const {
@@ -332,7 +330,7 @@ function EditorPageContent() {
           case "enter":
             event.preventDefault();
             if (event.shiftKey) {
-              compileActiveFile();
+              compileActiveFile(activeFile?.node.name || "");
             } else {
               runQueryPreview();
             }
@@ -377,7 +375,7 @@ function EditorPageContent() {
     compileActiveFile,
   ]);
 
-  const getTablefromSignedUrl = async () => {
+  const getTablefromSignedUrl = async (fileName: string) => {
     const response = await fetch("https://s3.us-east-2.amazonaws.com/turntable-artifacts-staging/query_results/dfc18bb6-e07f-4938-ae77-fe27ff86e989.json?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA4N524A5FMHKYWQ7P%2F20241209%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20241209T221003Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=44a4b55f8c9dd94ff4409757f588cc67669b5c5931f4053be68cd794e041e310");
     if (response.ok) {
       const table = await response.json();
@@ -395,8 +393,11 @@ function EditorPageContent() {
         },
         cellClass: "p-0",
       }));
-      setColDefs(defs as any);
-      setRowData(table.data);
+      setQueryPreviewData({
+        rows: table.data,
+        cols: defs,
+        file_name: fileName,
+      });
     }
     setIsQueryPreviewLoading(false);
   };
@@ -404,7 +405,7 @@ function EditorPageContent() {
   useEffect(() => {
     const fetchQueryPreview = async () => {
       // if (queryPreview?.signed_url) {
-        getTablefromSignedUrl();
+      getTablefromSignedUrl(activeFile?.node.name || "");
       // }
     };
     fetchQueryPreview();
@@ -487,9 +488,9 @@ function EditorPageContent() {
                 </Panel>
                 {bottomPanelShown && (
                   <BottomPanel
-                    rowData={rowData}
+                    rowData={queryPreviewData?.rows}
                     gridRef={gridRef}
-                    colDefs={colDefs}
+                    colDefs={queryPreviewData?.cols}
                     runQueryPreview={runQueryPreview}
                     queryPreviewError={queryPreviewError}
                     isLoading={isQueryPreviewLoading}

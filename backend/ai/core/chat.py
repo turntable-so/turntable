@@ -207,9 +207,9 @@ IMPORTANT: keep in mind how these are connected to each other. You may need to a
 
 {f"Context Files:\n{file_contents_str}" if file_contents_str else ''}
 
-{f"Preview of active file:\n{context_preview}" if context_preview else ''}
+{f"Preview of active file:\n\n{context_preview}" if context_preview else ''}
 
-{f"Compiled Query:\n{compiled_query}" if compiled_query else ''}
+{f"Compiled Query:\n\n```sql\n{compiled_query}\n```" if compiled_query else ''}
 
 User Instructions: {user_instruction}
 
