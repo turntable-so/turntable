@@ -20,9 +20,7 @@ import useResizeObserver from "use-resize-observer";
 import { type OpenedFile, useFiles } from "../../contexts/FilesContext";
 import { useLayoutContext } from "../../contexts/LayoutContext";
 
-function EditorContent({
-  containerWidth,
-}: { containerWidth: number }) {
+function EditorContent({ containerWidth }: { containerWidth: number }) {
   const { resolvedTheme } = useTheme();
   const {
     activeFile,
@@ -375,8 +373,8 @@ function EditorPageContent() {
     compileActiveFile,
   ]);
 
-  const getTablefromSignedUrl = async (fileName: string) => {
-    const response = await fetch("https://s3.us-east-2.amazonaws.com/turntable-artifacts-staging/query_results/dfc18bb6-e07f-4938-ae77-fe27ff86e989.json?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA4N524A5FMHKYWQ7P%2F20241209%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20241209T221003Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=44a4b55f8c9dd94ff4409757f588cc67669b5c5931f4053be68cd794e041e310");
+  const getTablefromSignedUrl = async (signedUrl: string, fileName: string) => {
+    const response = await fetch(signedUrl);
     if (response.ok) {
       const table = await response.json();
       const defs = Object.keys(table.data[0]).map((key) => ({
@@ -404,9 +402,12 @@ function EditorPageContent() {
 
   useEffect(() => {
     const fetchQueryPreview = async () => {
-      // if (queryPreview?.signed_url) {
-      getTablefromSignedUrl(activeFile?.node.name || "");
-      // }
+      if (queryPreview?.signed_url) {
+        getTablefromSignedUrl(
+          queryPreview.signed_url,
+          activeFile?.node.name || "",
+        );
+      }
     };
     fetchQueryPreview();
   }, [queryPreview?.signed_url]);
@@ -482,9 +483,7 @@ function EditorPageContent() {
             <div className="w-full h-full">
               <PanelGroup direction="vertical" className="h-fit">
                 <Panel className="h-full relative z-0">
-                  <EditorContent
-                    containerWidth={topBarWidth as number}
-                  />
+                  <EditorContent containerWidth={topBarWidth as number} />
                 </Panel>
                 {bottomPanelShown && (
                   <BottomPanel
