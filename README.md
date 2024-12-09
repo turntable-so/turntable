@@ -44,8 +44,8 @@
 - [x] **BI tool integration**: Ingest charts and dashboards from BI tools and discover usage patterns, unused assets and identify breaking changes.
 - [ ] **Agentic workflows (coming soon)**: Longer-running AI workflows to build multiple dbt models and dashboards, deprecate unused assets and optimize your pipelines.
 - [ ] **Full observability suite (coming soon)**: Detect anomalies, monitor data quality, reduce cost, secure PII and more.
-- [ ] **Metrics:** Define once, use anywhere, in pure SQL and GUI. No need to learn a new semantic layer framework.
-- [ ] **Subscriptions**: Subscribe to data assets and get notified when they change. Each user gets their own dashboard
+- [ ] **Semantic Layer Integrations (coming soon):** Define once, use anywhere, in pure SQL and GUI. 
+- [ ] **Subscriptions (coming soon)**: Subscribe to data assets and get notified when they change. Each user gets their own dashboard
 
 ## 🔌 Integrations
 
