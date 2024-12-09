@@ -6,7 +6,7 @@ import _ from "lodash";
 import type React from "react";
 import { useRef } from "react";
 import AiMessageBox from "./ai-message-box";
-import { AISidebarProvider, useAISidebar } from "./ai-sidebar-context";
+import { useAISidebar } from "./ai-sidebar-context";
 import ChatControls from "./chat-controls";
 import ChatHeader from "./chat-header";
 import ErrorDisplay from "./error-display";
@@ -16,7 +16,7 @@ const baseUrl = getUrl();
 const base = new URL(baseUrl).host;
 const protocol = process.env.NODE_ENV === "development" ? "ws" : "wss";
 
-function AiSidebarChatInner() {
+export default function AiSidebarChat() {
   const { branchId } = useFiles();
   const {
     setIsLoading,
@@ -31,7 +31,8 @@ function AiSidebarChatInner() {
     contextFiles,
     setContextFiles,
     selectedModel,
-    contextPreview,
+    aiContextPreview,
+    aiCompiledSql,
   } = useAISidebar();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -113,12 +114,13 @@ function AiSidebarChatInner() {
         ...(aiActiveFile?.node.path ? [aiActiveFile.node.path] : []),
         ...contextFiles.map((file) => file.path),
       ],
-      context_preview: contextPreview,
+      context_preview: aiContextPreview?.table ?? null,
       asset_id: aiLineageContext?.asset_id,
       related_assets: aiLineageContext?.assets,
       asset_links: aiLineageContext?.asset_links,
       column_links: aiLineageContext?.column_links,
       message_history: newMessageHistory.map(({ id, ...rest }) => rest),
+      compiled_query: aiCompiledSql?.compiled_query ?? null,
     };
     startWebSocket(payload);
 
@@ -177,13 +179,5 @@ function AiSidebarChatInner() {
       )}
       <ErrorDisplay error={error} />
     </div>
-  );
-}
-
-export default function AiSidebarChat() {
-  return (
-    <AISidebarProvider>
-      <AiSidebarChatInner />
-    </AISidebarProvider>
   );
 }

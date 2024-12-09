@@ -4,7 +4,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { CornerDownLeft, Loader2, Plus, Table, X, XCircle } from "lucide-react";
+import { CornerDownLeft, DatabaseZap, Loader2, Plus, Table, X, XCircle } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "../../ui/button";
@@ -46,8 +46,10 @@ export default function ChatControls({
     setContextFiles,
     selectedModel,
     setSelectedModel,
-    contextPreview,
-    setContextPreview,
+    aiContextPreview,
+    setAiContextPreview,
+    aiCompiledSql,
+    setAiCompiledSql,
   } = useAISidebar();
 
   const [isFileExplorerOpen, setIsFileExplorerOpen] = useState(false);
@@ -168,13 +170,32 @@ export default function ChatControls({
             </div>
           ))}
 
-          {contextPreview && (
+          {aiContextPreview && (
             <div className="bg-muted/50 rounded-md p-1 text-xs flex items-center justify-between gap-1">
               <Table className="w-3 h-3" />
               Preview
+              <span className="text-[10px] text-muted-foreground">
+                {aiContextPreview.file_name}
+              </span>
               <span
                 className="text-[10px] text-muted-foreground cursor-pointer"
-                onClick={() => setContextPreview(null)}
+                onClick={() => setAiContextPreview(null)}
+              >
+                <X className="w-[0.6rem] h-[0.6rem]" />
+              </span>
+            </div>
+          )}
+
+          {aiCompiledSql && (
+            <div className="bg-muted/50 rounded-md p-1 text-xs flex items-center justify-between gap-1">
+              <DatabaseZap className="w-3 h-3" />
+              Compiled SQL
+              <span className="text-[10px] text-muted-foreground">
+                {aiCompiledSql.file_name}
+              </span>
+              <span
+                className="text-[10px] text-muted-foreground cursor-pointer"
+                onClick={() => setAiCompiledSql(null)}
               >
                 <X className="w-[0.6rem] h-[0.6rem]" />
               </span>

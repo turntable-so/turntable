@@ -142,6 +142,7 @@ def build_context(
     project_id: str,
     context_files: List[str] | None = None,
     context_preview: str | None = None,
+    compiled_query: str | None = None,
 ):
     user_instruction = next(
         msg.content for msg in reversed(message_history) if msg.role == "user"
@@ -208,6 +209,8 @@ IMPORTANT: keep in mind how these are connected to each other. You may need to a
 
 {f"Preview of active file:\n{context_preview}" if context_preview else ''}
 
+{f"Compiled Query:\n{compiled_query}" if compiled_query else ''}
+
 User Instructions: {user_instruction}
 
 Answer the user's question based on the above context. Do not answer anything else, just answer the question.
@@ -245,6 +248,7 @@ def stream_chat_completion(
         context_files=payload.context_files,
         project_id=payload.project_id,
         context_preview=payload.context_preview,
+        compiled_query=payload.compiled_query,
     )
     message_history = []
     for idx, msg in enumerate(payload.message_history):

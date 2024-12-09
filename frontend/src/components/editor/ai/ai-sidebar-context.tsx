@@ -16,7 +16,8 @@ import {
 } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import { SUPPORTED_AI_MODELS } from "./constants";
-import type { AIMessage } from "./types";
+import type { AICompiledSql, AIMessage, AIQueryPreview } from "./types";
+import { generatePreviewForAI } from "./utils";
 
 interface AISidebarContextType {
   isLoading: boolean;
@@ -27,8 +28,8 @@ interface AISidebarContextType {
   setError: Dispatch<SetStateAction<string | null>>;
   contextFiles: FileNode[];
   setContextFiles: Dispatch<SetStateAction<FileNode[]>>;
-  contextPreview: string | null;
-  setContextPreview: Dispatch<SetStateAction<string | null>>;
+  aiContextPreview: AIQueryPreview | null;
+  setAiContextPreview: Dispatch<SetStateAction<AIQueryPreview | null>>;
   messageHistory: AIMessage[];
   setMessageHistory: Dispatch<SetStateAction<AIMessage[]>>;
   selectedModel: string;
@@ -37,6 +38,8 @@ interface AISidebarContextType {
   setAiActiveFile: Dispatch<SetStateAction<OpenedFile | null>>;
   aiLineageContext: Lineage | null;
   setAiLineageContext: Dispatch<SetStateAction<Lineage | null>>;
+  aiCompiledSql: AICompiledSql | null;
+  setAiCompiledSql: Dispatch<SetStateAction<AICompiledSql | null>>;
 }
 
 const AISidebarContext = createContext<AISidebarContextType | undefined>(
@@ -48,13 +51,14 @@ interface AISidebarProviderProps {
 }
 
 export function AISidebarProvider({ children }: AISidebarProviderProps) {
-  const { branchId, activeFile, lineageData, rowData, colDefs } = useFiles();
+  const { branchId, activeFile, lineageData, rowData, colDefs, compiledSql } =
+    useFiles();
 
   const [isLoading, setIsLoading] = useState(false);
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [contextFiles, setContextFiles] = useState<FileNode[]>([]);
-  const [contextPreview, setContextPreview] = useState<string | null>(null);
+  const [aiContextPreview, setAiContextPreview] = useState<AIQueryPreview | null>(null);
   const [messageHistory, setMessageHistory] = useLocalStorage<Array<AIMessage>>(
     LocalStorageKeys.aiMessageHistory(branchId),
     [],
@@ -65,6 +69,9 @@ export function AISidebarProvider({ children }: AISidebarProviderProps) {
   );
   const [aiActiveFile, setAiActiveFile] = useState<OpenedFile | null>(null);
   const [aiLineageContext, setAiLineageContext] = useState<Lineage | null>(
+    null,
+  );
+  const [aiCompiledSql, setAiCompiledSql] = useState<AICompiledSql | null>(
     null,
   );
 
@@ -79,20 +86,26 @@ export function AISidebarProvider({ children }: AISidebarProviderProps) {
   }, [visibleLineage]);
 
   useEffect(() => {
-    if (rowData && colDefs) {
-      const columns = colDefs.map((col) => col.field);
-      const headers = colDefs.map((col) => col.headerName);
-      const topRows = rowData.slice(0, 5);
-
-      let table = `| ${headers.join(" | ")} |\n`;
-      table += `| ${headers.map(() => "---").join(" | ")} |\n`;
-      topRows.forEach((row) => {
-        table += `| ${columns.map((field) => String(row[field])).join(" | ")} |\n`;
+    if (rowData && colDefs && activeFile) {
+      const table = generatePreviewForAI(rowData, colDefs);
+      setAiContextPreview({
+        table,
+        file_name: activeFile.node.name,
       });
-
-      setContextPreview(table);
     }
-  }, [rowData, colDefs]);
+  }, [rowData, colDefs, activeFile]);
+
+  useEffect(() => {
+    if (activeFile && compiledSql) {
+      setAiCompiledSql({
+        compiled_query: compiledSql,
+        file_name: activeFile.node.name,
+      });
+      return;
+    }
+
+    setAiCompiledSql(null);
+  }, [compiledSql, activeFile]);
 
   return (
     <AISidebarContext.Provider
@@ -105,8 +118,8 @@ export function AISidebarProvider({ children }: AISidebarProviderProps) {
         setError,
         contextFiles,
         setContextFiles,
-        contextPreview,
-        setContextPreview,
+        aiContextPreview,
+        setAiContextPreview,
         messageHistory,
         setMessageHistory,
         selectedModel,
@@ -115,6 +128,8 @@ export function AISidebarProvider({ children }: AISidebarProviderProps) {
         setAiActiveFile,
         aiLineageContext,
         setAiLineageContext,
+        aiCompiledSql,
+        setAiCompiledSql,
       }}
     >
       {children}

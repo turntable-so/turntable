@@ -16,4 +16,15 @@ export type MessageHistoryPayload = {
   asset_links: any | undefined;
   column_links: any | undefined;
   message_history: Omit<AIMessage, "id">[];
+  compiled_query: string | null;
 };
+
+export type AICompiledSql = {
+  compiled_query: string;
+  file_name: string;
+}
+
+export type AIQueryPreview = {
+  table: string;
+  file_name: string;
+}

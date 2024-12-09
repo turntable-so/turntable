@@ -378,7 +378,7 @@ function EditorPageContent() {
   ]);
 
   const getTablefromSignedUrl = async () => {
-    const response = await fetch("https://s3.us-east-2.amazonaws.com/turntable-artifacts-staging/query_results/a04c7a4e-0e5f-43d2-a257-33a2bef5833f.json?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA4N524A5FMHKYWQ7P%2F20241209%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20241209T184024Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=01329214cf54a42124e3cee188077494a6c73374f4faf81da731e5cc2a8a4727");
+    const response = await fetch("https://s3.us-east-2.amazonaws.com/turntable-artifacts-staging/query_results/dfc18bb6-e07f-4938-ae77-fe27ff86e989.json?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA4N524A5FMHKYWQ7P%2F20241209%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20241209T221003Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=44a4b55f8c9dd94ff4409757f588cc67669b5c5931f4053be68cd794e041e310");
     if (response.ok) {
       const table = await response.json();
       const defs = Object.keys(table.data[0]).map((key) => ({
