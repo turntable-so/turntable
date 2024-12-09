@@ -7,7 +7,7 @@
      <span style="font-size: 24px;">The open source IDE for data teams that use dbt</span>
     <br />
     <br />
-     <span style="font-size: 16px;">Asset catalog, end-to-end column-level lineage, isolated environments & workspaces, code IDE, AI assistant and more!</span>
+     <span style="font-size: 16px;">dbt Core project IDE, AI assistant, End-to-end column-level lineage, asset catalog, user management, isolated environments & workspaces and more!</span>
     <br />
     <br />
     <a href="https://join.slack.com/t/turntable-community/shared_invite/zt-25p0olvhz-Z~c5QWq1jv2YFHQ46mMFDA">Slack</a>
