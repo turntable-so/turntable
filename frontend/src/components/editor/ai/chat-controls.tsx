@@ -4,7 +4,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { CircleAlert, CornerDownLeft, DatabaseZap, Loader2, Plus, Table, X, XCircle } from "lucide-react";
+import { CircleAlert, CornerDownLeft, DatabaseZap, Loader2, Network, Plus, Table, X, XCircle } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "../../ui/button";
@@ -138,6 +138,7 @@ export default function ChatControls({
             <Tooltip delayDuration={100}>
               <TooltipTrigger asChild>
                 <div className="bg-muted/50 rounded-md p-1 text-xs flex items-center justify-between gap-1">
+                  <Network className="w-3 h-3" />
                   {numberOfLineageFiles}{" "}
                   <span className="text-[10px] text-muted-foreground">
                     models from lineage
@@ -210,6 +211,12 @@ export default function ChatControls({
               Problems
               <span className="text-[10px] text-muted-foreground">
                 {aiFileProblems.file_name}
+              </span>
+              <span
+                className="text-[10px] text-muted-foreground cursor-pointer"
+                onClick={() => setAiFileProblems(null)}
+              >
+                <X className="w-[0.6rem] h-[0.6rem]" />
               </span>
             </div>
           )}

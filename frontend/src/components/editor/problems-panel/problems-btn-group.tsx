@@ -2,9 +2,9 @@ import { useFiles } from "@/app/contexts/FilesContext";
 import { useLayoutContext } from "@/app/contexts/LayoutContext";
 import { Button } from "@/components/ui/button";
 import {
-    Tooltip,
-    TooltipContent,
-    TooltipTrigger,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Sparkles } from "lucide-react";
 import { useAISidebar } from "../ai/ai-sidebar-context";
@@ -12,9 +12,10 @@ import { useAISidebar } from "../ai/ai-sidebar-context";
 export default function ProblemsBtnGroup() {
   const { problems, activeFile } = useFiles();
   const { sidebarRightShown, setSidebarRightShown } = useLayoutContext();
-  const { setAiFileProblems } = useAISidebar();
+  const { setAiFileProblems, aiFileProblems} = useAISidebar();
 
-  const showAddProblemsToChatButton = problems.data.length > 0;
+  const showAddProblemsToChatButton =
+    problems.data.length > 0 && !aiFileProblems;
 
   const addProblemsToChat = () => {
     setAiFileProblems({

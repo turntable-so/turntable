@@ -39,6 +39,8 @@ export default function PreviewPanel({
     activeFile.node.name.endsWith(".md") &&
     activeFile.node.type === "file";
 
+  const showTable = rowData && colDefs;
+
   switch (true) {
     case isQueryLoading:
       return <SkeletonLoadingTable />;
@@ -59,20 +61,22 @@ export default function PreviewPanel({
       return <MarkdownPreview content={activeFileContent} />;
     default:
       return (
-        <AgGridReact
-          key={resolvedTheme}
-          className={
-            resolvedTheme === "dark"
-              ? "ag-theme-balham-dark"
-              : "ag-theme-balham"
-          }
-          ref={gridRef}
-          suppressRowHoverHighlight={true}
-          columnHoverHighlight={true}
-          pagination={true}
-          rowData={rowData}
-          columnDefs={colDefs}
-        />
+        showTable && (
+          <AgGridReact
+            key={resolvedTheme}
+            className={
+              resolvedTheme === "dark"
+                ? "ag-theme-balham-dark"
+                : "ag-theme-balham"
+            }
+            ref={gridRef}
+            suppressRowHoverHighlight={true}
+            columnHoverHighlight={true}
+            pagination={true}
+            rowData={rowData}
+            columnDefs={colDefs}
+          />
+        )
       );
   }
 }

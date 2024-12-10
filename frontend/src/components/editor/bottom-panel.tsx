@@ -85,10 +85,7 @@ export default function BottomPanel({
     setAiCompiledSql,
   } = useAISidebar();
 
-  const {
-    sidebarRightShown,
-    setSidebarRightShown,
-  } = useLayoutContext();
+  const { sidebarRightShown, setSidebarRightShown } = useLayoutContext();
 
   const [activeTab, setActiveTab] = useBottomPanelTabs({
     branchId: branchId || "",

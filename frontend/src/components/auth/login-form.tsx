@@ -1,9 +1,9 @@
 "use client";
-import { AuthActions } from "@/lib/auth";
-import { SignInResponse, signIn } from "next-auth/react";
+
+import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
