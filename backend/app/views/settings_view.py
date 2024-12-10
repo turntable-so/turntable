@@ -40,15 +40,21 @@ class SettingsView(APIView):
         }
 
         # Prepare the response data
-        response_data = {"exclusion_filters": exclusion_results, "api_keys": api_keys}
+        response_data = {
+            "exclusion_filters": exclusion_results,
+            "api_keys": api_keys,
+            "ai_custom_instructions": workspace.ai_custom_instructions,
+        }
         return Response(response_data)
 
     def post(self, request):
         workspace = request.user.current_workspace()
         api_keys = request.data.get("api_keys", {})
         if "openai_api_key" in api_keys:
-            workspace.openai_api_key = api_keys["openai_api_key"]
+            workspace.openai_api_key = api_keys["openai_api_key"] or None
         if "anthropic_api_key" in api_keys:
-            workspace.anthropic_api_key = api_keys["anthropic_api_key"]
+            workspace.anthropic_api_key = api_keys["anthropic_api_key"] or None
+        if "ai_custom_instructions" in request.data:
+            workspace.ai_custom_instructions = request.data["ai_custom_instructions"] or None
         workspace.save()
         return Response(status=status.HTTP_200_OK)

@@ -30,6 +30,7 @@ class Workspace(models.Model):
     )
     openai_api_key = encrypt(models.CharField(max_length=255, blank=True, null=True))
     anthropic_api_key = encrypt(models.CharField(max_length=255, blank=True, null=True))
+    ai_custom_instructions = models.TextField(blank=True, null=True)
 
     class Meta:
         permissions = [
