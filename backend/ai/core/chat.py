@@ -228,6 +228,7 @@ def stream_chat_completion(
     dbt_details: DBTCoreDetails,
     workspace: Workspace,
     user: User,
+    workspace_instructions: str | None = None,
 ) -> Iterator[str]:
     if payload.model.startswith("claude"):
         api_key = workspace.anthropic_api_key
@@ -260,8 +261,9 @@ def stream_chat_completion(
             msg.content = prompt
         message_history.append(msg.model_dump())
 
+    system_prompt = workspace_instructions or SYSTEM_PROMPT
     messages = [
-        {"content": SYSTEM_PROMPT, "role": "system"},
+        {"content": system_prompt, "role": "system"},
         *message_history,
     ]
 

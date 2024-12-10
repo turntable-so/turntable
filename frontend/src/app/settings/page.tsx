@@ -12,12 +12,14 @@ import FullWidthPageLayout from "../../components/layout/FullWidthPageLayout";
 import { getSettings } from "../actions/actions";
 import { ApiKeysTable } from "./api-keys-table";
 import { AssetExclusionTable } from "./asset-exclusion-table";
+import { CustomInstructions } from "./custom-instructions";
 import type { Settings } from "./types";
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings>({
     exclusion_filters: [],
     api_keys: {},
+    ai_custom_instructions: "",
   });
 
   useEffect(() => {
@@ -55,6 +57,18 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent>
               <ApiKeysTable apiKeys={settings.api_keys} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>AI Custom Instructions</CardTitle>
+              <CardDescription>
+                Customize how the AI assistant behaves and responds.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CustomInstructions instructions={settings.ai_custom_instructions} />
             </CardContent>
           </Card>
         </div>
