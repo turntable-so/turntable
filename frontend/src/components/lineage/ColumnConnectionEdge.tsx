@@ -1,4 +1,4 @@
-import React, { useContext, useMemo } from "react";
+import React, { useContext, useMemo, CSSProperties, MouseEvent } from "react";
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -6,9 +6,32 @@ import {
   getBezierPath,
   useEdges,
   useStoreApi,
+  Position,
+  XYPosition,
+  Edge,
+  Node,
+  ReactFlowState,
+  Connection,
 } from "@xyflow/react";
 import * as colors from "tailwindcss/colors";
 import { LineageViewContext } from "../../app/contexts/LineageView";
+
+type EdgeData = {
+  ntype: string[];
+  sourceColumnName: string;
+  targetColumnName: string;
+  [key: string]: unknown;
+};
+
+type CustomEdge = Edge<EdgeData>;
+
+type ColumnEdgeProps = Omit<EdgeProps, 'data'> & {
+  data: EdgeData;
+};
+
+interface EdgeGradientsProps {
+  edges: CustomEdge[];
+}
 
 function getStrokeColorForConnectionType(type: string) {
   switch (type) {
@@ -118,22 +141,83 @@ export const getLabelName = (type) => {
     default:
       return "Unknown";
   }
-};
+}
 
-export function CustomEdge({
+const EdgeGradients: React.FC<EdgeGradientsProps> = React.memo(({ edges }) => {
+  const store = useStoreApi();
+
+  return (
+    <defs>
+      {edges
+        .filter((edge) => {
+          const data = edge.data;
+          return Array.isArray(data?.ntype) && data.ntype.length > 1;
+        })
+        .map((edge) => {
+          const { data, source, target } = edge;
+          if (!data) return null;
+
+          // Get nodes from the store
+          const state = store.getState() as ReactFlowState;
+          const nodes = state.nodes as Node[];
+          const sourceNode = nodes.find((node: Node) => node.id === source);
+          const targetNode = nodes.find((node: Node) => node.id === target);
+
+          if (!sourceNode || !targetNode) return null;
+
+          // Calculate positions based on node positions
+          const sourcePos = {
+            x: sourceNode.position.x + (sourceNode.width ?? 0) / 2,
+            y: sourceNode.position.y + (sourceNode.height ?? 0) / 2,
+          };
+          const targetPos = {
+            x: targetNode.position.x + (targetNode.width ?? 0) / 2,
+            y: targetNode.position.y + (targetNode.height ?? 0) / 2,
+          };
+
+          return (
+            <linearGradient
+              key={`gradient-${source}-${target}`}
+              gradientUnits="userSpaceOnUse"
+              id={`multiColorGradient-${data.sourceColumnName}-${data.targetColumnName}`}
+              x1={sourcePos.x}
+              y1={sourcePos.y}
+              x2={targetPos.x}
+              y2={targetPos.y}
+            >
+              {data.ntype.map((type: string, index: number) => {
+                const offset = (index / (data.ntype.length - 1)) * 100;
+                const color = getStrokeColorForConnectionType(type);
+                return (
+                  <stop
+                    key={index}
+                    offset={`${offset}%`}
+                    style={{ stopColor: color, stopOpacity: 1 }}
+                  />
+                );
+              })}
+            </linearGradient>
+          );
+        })}
+    </defs>
+  );
+});
+
+export function ColumnConnectionEdge({
   id,
   source,
-  sourceX,
-  sourceY,
   target,
-  targetX,
-  targetY,
-  data,
-  sourcePosition,
-  targetPosition,
   style = {},
   markerEnd,
-}: EdgeProps) {
+  data,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  sourcePosition,
+  targetPosition,
+  ...props
+}: ColumnEdgeProps) {
   const {
     hoveredColumn,
     hoveredEdge,
@@ -141,169 +225,101 @@ export function CustomEdge({
     selectedEdge,
     updateSelectedEdge,
   } = useContext(LineageViewContext);
-  const store = useStoreApi();
-  const edges = useEdges();
+  const edges = useEdges<CustomEdge>();
 
-  const { edgePath } = useMemo(() => {
-    const [edgePath, labelX, labelY] = getBezierPath({
-      sourceX,
-      sourceY,
-      sourcePosition,
-      targetX,
-      targetY,
-      targetPosition,
-    });
-
-    return { edgePath, labelX, labelY };
-  }, [sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition]);
+  const [edgePath, labelX, labelY] = getBezierPath({
+    sourceX,
+    sourceY,
+    targetX,
+    targetY,
+    sourcePosition: sourcePosition ?? Position.Right,
+    targetPosition: targetPosition ?? Position.Left,
+  });
 
   const isHovered = hoveredEdge?.id === id;
   const isSelected = selectedEdge?.id === id;
 
-  const edgeStyles = useMemo(() => {
-    const isColumnInNodeHovered =
-      hoveredColumn &&
-      selectedColumn &&
-      selectedColumn !== hoveredColumn.columnId;
-    return {
-      opacity: !selectedColumn ? 0.5 : 1,
-      ...style,
-      strokeWidth: isSelected || isHovered || isColumnInNodeHovered ? 4 : 2,
-      stroke:
-        data?.ntype.length === 1
-          ? getStrokeColorForConnectionType(data.ntype[0])
-          : `url(#multiColorGradient-${data?.sourceColumnName}-${data?.targetColumnName})`,
+  const edgeStyles: CSSProperties = {
+    ...(style as CSSProperties),
+    stroke: data.ntype.length === 1
+      ? getStrokeColorForConnectionType(data.ntype[0])
+      : `url(#multiColorGradient-${data.sourceColumnName}-${data.targetColumnName})`,
+    strokeWidth: isHovered || isSelected ? 2 : 1,
+    opacity: !selectedColumn ? 0.5 : 1,
+    strokeDasharray: edges.length > 100 ? "5,5" : "",
+    zIndex: 10000,
+  };
 
-      strokeDasharray: edges.length > 100 ? "5,5" : "",
-      zIndex: 10000,
-    };
-  }, [
-    hoveredColumn,
-    selectedColumn,
-    selectedEdge,
-    isHovered,
-    isSelected,
-    target,
-    source,
-    data,
-    edges,
-  ]);
+  const detailsPosition = {
+    x: labelX,
+    y: labelY,
+  };
 
-  const detailsPosition = isSelected
-    ? selectedEdge?.mousePosition
-    : isHovered
-      ? hoveredEdge?.mousePosition
-      : null;
+  const handleEdgeClick = (event: MouseEvent<SVGPathElement>) => {
+    event.stopPropagation();
+    if (updateSelectedEdge) {
+      const selectedEdge: Edge<EdgeData> & { mousePosition: { x: number; y: number } } = {
+        id,
+        source,
+        target,
+        sourceHandle: null,
+        targetHandle: null,
+        type: 'custom',
+        data,
+        selected: true,
+        animated: false,
+        hidden: false,
+        deletable: true,
+        selectable: true,
+        focusable: true,
+        label: '',
+        interactionWidth: 20,
+        zIndex: 0,
+        mousePosition: {
+          x: event.clientX,
+          y: event.clientY,
+        },
+      };
+      updateSelectedEdge(selectedEdge);
+    }
+  };
 
   return (
     <>
-      {data.ntype.length > 1 && (
-        <defs>
-          <linearGradient
-            gradientUnits="userSpaceOnUse"
-            id={`multiColorGradient-${data?.sourceColumnName}-${data?.targetColumnName}`}
-            x1="0%"
-            y1="0%"
-            x2="100%"
-            y2="0%"
-          >
-            {data?.ntype.map((type, index) => {
-              const offset = (index / (data?.ntype.length - 1)) * 100;
-              const color = getStrokeColorForConnectionType(type);
-              return (
-                <stop
-                  key={index}
-                  offset={`${offset}%`}
-                  style={{ stopColor: color, stopOpacity: 1 }}
-                />
-              );
-            })}
-          </linearGradient>
-        </defs>
-      )}
-
-      <BaseEdge
-        key={`${id}-${data.ntype.join("-")}`}
-        path={edgePath}
+      <EdgeGradients edges={edges} />
+      <path
+        id={id}
+        className="react-flow__edge-path"
+        d={edgePath}
         markerEnd={markerEnd}
         style={edgeStyles}
+        onClick={handleEdgeClick}
       />
-
       <EdgeLabelRenderer>
-        {(isSelected || (isHovered && !selectedEdge)) && detailsPosition && (
-          <div
-            style={{
-              position: "absolute",
-              zIndex: 101,
-              transform: `translate(${detailsPosition.x}px, ${detailsPosition.y}px)`,
-              fontSize: 12,
-              // everything inside EdgeLabelRenderer has no pointer events by default
-              // if you have an interactive element, set pointer-events: all
-              pointerEvents: "all",
-              cursor: "default",
-            }}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-            onMouseEnter={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-          >
-            <div
-              style={{ fontSize: "10px" }}
-              className="z-100 min-w-[100px] rounded-lg pt-1 pb-2 px-2
-                  bg-white dark:bg-zinc-800
-                  border border-blue-400 dark:border-blue-600 border-solid
-                  shadow-md
-                "
+        <div
+          style={{
+            position: 'absolute',
+            transform: `translate(-50%, -50%) translate(${detailsPosition.x}px,${detailsPosition.y}px)`,
+            pointerEvents: 'all',
+          }}
+          className="nodrag nopan"
+        >
+          {data.ntype.map((type: string, index: number) => (
+            <span
+              key={`${id}-${type}-${index}`}
+              className="px-2 py-1 text-xs rounded bg-white shadow-sm"
+              style={{
+                color: getStrokeColorForConnectionType(type),
+                marginRight: index < data.ntype.length - 1 ? '4px' : 0,
+              }}
             >
-              <div className="flex justify-between">
-                <div className="space-y-1 py-1">
-                  {data.ntype.map((type, index) => (
-                    <div
-                      key={`${type}-${index}`}
-                      className="flex space-x-1 items-center"
-                    >
-                      <ConnectionTypeLabel type={type} />
-                      <div>{getLabelName(type)}</div>
-                    </div>
-                  ))}
-                </div>
-                {isSelected && (
-                  <div className="font-bold hover:opacity-50">
-                    <span
-                      className="codicon codicon-close cursor-pointer"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        store.getState().resetSelectedElements();
-                        updateSelectedEdge(null);
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
-              <div>
-                <div>
-                  from:{" "}
-                  <span className="font-mono font-bold truncate">
-                    {data.sourceColumnName}
-                  </span>
-                </div>
-                <div>
-                  to:{" "}
-                  <span className="font-mono font-bold truncate">
-                    {data.targetColumnName}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+              {getLabelName(type)}
+            </span>
+          ))}
+        </div>
       </EdgeLabelRenderer>
     </>
   );
 }
 
-export default React.memo(CustomEdge);
+export default React.memo(ColumnConnectionEdge);
