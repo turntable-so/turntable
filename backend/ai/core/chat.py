@@ -261,7 +261,11 @@ def stream_chat_completion(
             msg.content = prompt
         message_history.append(msg.model_dump())
 
-    system_prompt = workspace_instructions or SYSTEM_PROMPT
+    system_prompt = f"""{SYSTEM_PROMPT}
+
+Here are some additional instructions set by the user for you to follow. These are very important and you must follow them.
+{workspace_instructions}
+"""
     messages = [
         {"content": system_prompt, "role": "system"},
         *message_history,
