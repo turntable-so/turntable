@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { Copy } from "lucide-react";
+import { useCopyToClipboard } from "usehooks-ts";
 import {
   darcula as darkStyle,
   prism as lightStyle,
@@ -15,6 +17,7 @@ interface ResponseDisplayProps {
 export default function ResponseDisplay({ content }: ResponseDisplayProps) {
   const { resolvedTheme } = useTheme();
   const { updateFileContent, activeFile } = useFiles();
+  const [copiedText, copy] = useCopyToClipboard();
   const syntaxStyle = resolvedTheme === "dark" ? darkStyle : lightStyle;
 
   const handleApply = (code: string) => {
@@ -47,14 +50,23 @@ export default function ResponseDisplay({ content }: ResponseDisplayProps) {
                 >
                   {codeString}
                 </SyntaxHighlighter>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleApply(codeString)}
-                  className="absolute top-1 right-1"
-                >
-                  Apply
-                </Button>
+                <div className="flex gap-2 p-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => copy(codeString)}
+                  >
+                    <Copy className="w-4 h-4 mr-2" />
+                    Copy
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleApply(codeString)}
+                  >
+                    Apply
+                  </Button>
+                </div>
               </div>
             ) : (
               <code className={className} {...props}>
