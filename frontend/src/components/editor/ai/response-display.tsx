@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { Copy } from "lucide-react";
 import {
   darcula as darkStyle,
   prism as lightStyle,
@@ -47,14 +48,25 @@ export default function ResponseDisplay({ content }: ResponseDisplayProps) {
                 >
                   {codeString}
                 </SyntaxHighlighter>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleApply(codeString)}
-                  className="absolute top-1 right-1"
-                >
-                  Apply
-                </Button>
+                <div className="absolute top-1 right-1 flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(codeString);
+                    }}
+                  >
+                    <Copy className="w-4 h-4 mr-2" />
+                    Copy
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleApply(codeString)}
+                  >
+                    Apply
+                  </Button>
+                </div>
               </div>
             ) : (
               <code className={className} {...props}>
