@@ -280,7 +280,7 @@ export default function EditorContent({
             }
 
             addToChatButton = document.createElement("button");
-            addToChatButton.textContent = "Chat (⌘L)";
+            addToChatButton.textContent = "Add to Chat (⌘L)";
             addToChatButton.className = "add-to-chat-button";
             addToChatButton.style.position = "absolute";
             addToChatButton.style.left = `${absoluteLeft}px`;
