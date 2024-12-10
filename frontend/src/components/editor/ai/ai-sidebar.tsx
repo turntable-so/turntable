@@ -34,6 +34,8 @@ export default function AiSidebarChat() {
     aiContextPreview,
     aiCompiledSql,
     aiFileProblems,
+    aiCustomSelections,
+    setAiCustomSelections,
   } = useAISidebar();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -47,6 +49,7 @@ export default function AiSidebarChat() {
     setError(null);
     setContextFiles([]);
     setMessageHistory([]);
+    setAiCustomSelections(null);
   };
 
   const { startWebSocket, sendMessage, stopWebSocket, isConnected } =
@@ -123,6 +126,7 @@ export default function AiSidebarChat() {
       message_history: newMessageHistory.map(({ id, ...rest }) => rest),
       compiled_query: aiCompiledSql?.compiled_query ?? null,
       file_problems: aiFileProblems?.problems ?? null,
+      custom_selections: aiCustomSelections ?? null,
     };
     startWebSocket(payload);
 

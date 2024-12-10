@@ -287,3 +287,21 @@ pre {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+.add-to-chat-button {
+  background-color: hsl(var(--muted));
+  color: var(--foreground);
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.dark .add-to-chat-button {
+  background-color: hsl(var(--background));
+}
+
+.dark .add-to-chat-button:hover {
+  background-color: hsl(var(--muted));
+}

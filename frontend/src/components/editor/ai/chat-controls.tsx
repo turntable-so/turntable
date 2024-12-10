@@ -52,6 +52,8 @@ export default function ChatControls({
     setAiCompiledSql,
     aiFileProblems,
     setAiFileProblems,
+    aiCustomSelections,
+    setAiCustomSelections,
   } = useAISidebar();
 
   const [isFileExplorerOpen, setIsFileExplorerOpen] = useState(false);
@@ -75,6 +77,15 @@ export default function ChatControls({
   };
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleRemoveCustomSelection = (index: number) => {
+    setAiCustomSelections((prev) => {
+      if (!prev) return null;
+      const newSelections = [...prev];
+      newSelections.splice(index, 1);
+      return newSelections;
+    });
+  };
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -220,6 +231,18 @@ export default function ChatControls({
               </span>
             </div>
           )}
+
+          {aiCustomSelections?.map((selection, index) => (
+            <div key={`${selection.file_name}-${selection.start_line}-${selection.end_line}`} className="bg-muted/50 rounded-md p-1 text-xs flex items-center justify-between gap-1">
+              {selection.file_name} ({selection.start_line}-{selection.end_line})
+              <span
+                className="text-[10px] text-muted-foreground cursor-pointer"
+                onClick={() => handleRemoveCustomSelection(index)}
+              >
+                <X className="w-[0.6rem] h-[0.6rem]" />
+              </span>
+            </div>
+          ))}
         </div>
         <Textarea
           ref={textareaRef}

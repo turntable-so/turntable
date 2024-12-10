@@ -18,6 +18,12 @@ export type MessageHistoryPayload = {
   message_history: Omit<AIMessage, "id">[];
   compiled_query: string | null;
   file_problems: string[] | null;
+  custom_selections: Array<{
+    selection: string;
+    start_line: number;
+    end_line: number;
+    file_name: string;
+  }> | null;
 };
 
 export type AICompiledSql = {
@@ -32,5 +38,12 @@ export type AIQueryPreview = {
 
 export type AIFileProblems = {
   problems: string[];
+  file_name: string;
+}
+
+export type AICustomSelections = {
+  selection: string;
+  start_line: number;
+  end_line: number;
   file_name: string;
 }

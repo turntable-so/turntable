@@ -143,6 +143,7 @@ def build_context(
     context_preview: str | None = None,
     compiled_query: str | None = None,
     file_problems: List[str] | None = None,
+    custom_selections: List[str] | None = None,
 ):
     user_instruction = next(
         msg.content for msg in reversed(message_history) if msg.role == "user"
@@ -196,18 +197,23 @@ def build_context(
                     edges.append({"source": source_model, "target": target_model})
 
             file_problems_str = "\n".join(file_problems) if file_problems else None
+            custom_selections_str = "\n".join(
+                f"Selected code from {selection.file_name} (lines {selection.start_line}-{selection.end_line}):\n```{selection.selection}```\n"
+                for selection in custom_selections
+            ) if custom_selections else None
+            lineage_str = f"Model lineage\nIMPORTANT: keep in mind how these are connected to each other. You may need to add or modify this structure to complete a task.\n{lineage_ascii(edges)}" if edges else None
 
             output = f"""
 # Dialect
 Use the {resource.details.subtype} dialect when writing any sql code.
 
-# Model lineage
-IMPORTANT: keep in mind how these are connected to each other. You may need to add or modify this structure to complete a task.
-{lineage_ascii(edges)}
+{lineage_str}
 
 {assets_str}
 
 {f"Context Files:\n{file_contents_str}" if file_contents_str else ''}
+
+{f"Custom Selections. These are selections of files that the user has selected to include in the context. Pay close attention to these files.\n{custom_selections_str}" if custom_selections_str else ''}
 
 {f"Preview of active file:\n\n{context_preview}" if context_preview else ''}
 
@@ -254,6 +260,7 @@ def stream_chat_completion(
         context_preview=payload.context_preview,
         compiled_query=payload.compiled_query,
         file_problems=payload.file_problems,
+        custom_selections=payload.custom_selections,
     )
     message_history = []
     for idx, msg in enumerate(payload.message_history):

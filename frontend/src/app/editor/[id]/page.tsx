@@ -1,230 +1,23 @@
 "use client";
 
-import CustomDiffEditor from "@/components/editor/CustomDiffEditor";
-import CustomEditor from "@/components/editor/CustomEditor";
 import AiSidebarChat from "@/components/editor/ai/ai-sidebar";
 import BottomPanel from "@/components/editor/bottom-panel";
 import ConfirmSaveDialog from "@/components/editor/dialogs/confirm-save-dialog";
+import EditorContent from "@/components/editor/editor-content";
 import EditorSidebar from "@/components/editor/editor-sidebar";
 import EditorTopBar from "@/components/editor/editor-top-bar";
 import FileTabs from "@/components/editor/file-tabs";
-import InlineTabSearch from "@/components/editor/search-bar/inline-tab-search";
-import { Button } from "@/components/ui/button";
 import type { AgGridReact } from "ag-grid-react";
-import { Download, Loader2 } from "lucide-react";
-import { useTheme } from "next-themes";
 import { usePathname } from "next/navigation";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import useResizeObserver from "use-resize-observer";
-import { type OpenedFile, useFiles } from "../../contexts/FilesContext";
+import { useFiles } from "../../contexts/FilesContext";
 import { useLayoutContext } from "../../contexts/LayoutContext";
-
-function EditorContent({ containerWidth }: { containerWidth: number }) {
-  const { resolvedTheme } = useTheme();
-  const {
-    activeFile,
-    updateFileContent,
-    saveFile,
-    setActiveFile,
-    isCloning,
-    downloadFile,
-    runQueryPreview,
-    compileActiveFile,
-  } = useFiles();
-
-  const editorRef = useRef<any>(null);
-  const monacoRef = useRef<any>(null);
-
-  // Define your custom theme
-  const customTheme = {
-    base: resolvedTheme === "dark" ? "vs-dark" : "vs",
-    inherit: true,
-    rules: [],
-  };
-
-  useEffect(() => {
-    if (monacoRef.current) {
-      monacoRef.current.editor.defineTheme("mutedTheme", {
-        ...customTheme,
-        colors: {
-          ...customTheme.colors,
-        },
-      });
-      monacoRef.current.editor.setTheme("mutedTheme");
-    }
-  }, [resolvedTheme]);
-
-  if (activeFile?.node?.type === "error") {
-    if (activeFile.content === "FILE_EXCEEDS_SIZE_LIMIT") {
-      return (
-        <div className="h-full w-full flex flex-col gap-4 items-center justify-center">
-          <div>
-            This file is too large to open. Please download the file instead.
-          </div>
-          <Button onClick={() => downloadFile(activeFile.node.path)}>
-            <Download className="mr-2 h-4 w-4" />
-            Download
-          </Button>
-        </div>
-      );
-    }
-    return (
-      <div className="h-full w-full flex items-center justify-center">
-        {activeFile.content}
-      </div>
-    );
-  }
-
-  if (activeFile?.node?.type === "loader") {
-    return (
-      <div className="h-full w-full flex items-center justify-center">
-        <Loader2 className="h-4 w-4 animate-spin" />
-      </div>
-    );
-  }
-
-  if (
-    activeFile?.node?.type === "url" &&
-    typeof activeFile.content === "string"
-  ) {
-    return (
-      <iframe
-        src={activeFile.content}
-        title={activeFile.node.name}
-        width="100%"
-        height="100%"
-      />
-    );
-  }
-
-  if (activeFile?.view === "diff") {
-    return (
-      <CustomDiffEditor
-        text-muted-foreground
-        original={activeFile?.diff?.original || ""}
-        modified={activeFile?.diff?.modified || ""}
-        width={containerWidth - 2}
-        language="sql"
-        options={{
-          minimap: { enabled: false },
-          scrollbar: {
-            vertical: "visible",
-            horizontal: "visible",
-            verticalScrollbarSize: 8,
-            horizontalScrollbarSize: 8,
-            verticalSliderSize: 8,
-            horizontalSliderSize: 8,
-          },
-          lineNumbers: "on",
-          wordWrap: "on",
-          fontSize: 14,
-          lineNumbersMinChars: 3,
-        }}
-        theme="mutedTheme"
-      />
-    );
-  }
-
-  if (activeFile?.view === "new") {
-    return (
-      <div className="h-full w-full flex justify-center text-muted-foreground dark:bg-black bg-white">
-        {isCloning ? (
-          <div className="flex items-center space-x-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <div>Setting up environment</div>
-          </div>
-        ) : (
-          <div className="w-full h-full flex pt-10 justify-center">
-            <InlineTabSearch />
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  const getLanguage = (activeFile: OpenedFile) => {
-    if (activeFile.node?.path.endsWith(".sql")) {
-      return "sql";
-    }
-    if (
-      activeFile.node?.path.endsWith(".yml") ||
-      activeFile.node?.path.endsWith(".yaml")
-    ) {
-      return "yaml";
-    }
-    if (activeFile.node?.path.endsWith(".md")) {
-      return "markdown";
-    }
-    if (activeFile.node?.path.endsWith(".json")) {
-      return "javascript";
-    }
-    return "sql";
-  };
-
-  return (
-    <CustomEditor
-      key={activeFile?.node.path}
-      value={typeof activeFile?.content === "string" ? activeFile.content : ""}
-      onChange={(value) => {
-        if (activeFile) {
-          updateFileContent(activeFile.node.path, value || "");
-          setActiveFile({
-            ...activeFile,
-            content: value || "",
-          });
-        }
-      }}
-      language={activeFile ? getLanguage(activeFile) : "sql"}
-      options={{
-        minimap: { enabled: false },
-        scrollbar: {
-          vertical: "visible",
-          horizontal: "visible",
-          verticalScrollbarSize: 8,
-          horizontalScrollbarSize: 8,
-          verticalSliderSize: 8,
-          horizontalSliderSize: 8,
-        },
-        lineNumbers: "on",
-        wordWrap: "on",
-        fontSize: 14,
-        lineNumbersMinChars: 3,
-        renderLineHighlight: "none",
-      }}
-      width={containerWidth - 2}
-      onMount={(editor, monaco) => {
-        editorRef.current = editor;
-        monacoRef.current = monaco;
-        editor.updateOptions({ theme: "mutedTheme" });
-
-        // Prevent default behavior for cmd+s
-        editor.addCommand(
-          monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
-          (e: any) => {
-            saveFile(activeFile?.node.path || "", editor.getValue());
-          },
-        );
-
-        // Prevent default behavior for cmd+s
-        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () =>
-          runQueryPreview(editor.getValue()),
-        );
-
-        editor.addCommand(
-          monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Enter,
-          () => compileActiveFile(activeFile?.node.name || ""),
-        );
-      }}
-    />
-  );
-}
 
 function EditorPageContent() {
   const [leftWidth, setLeftWidth] = useState(20);
   const [rightWidth, setRightWidth] = useState(20);
-  const [branches, setBranches] = useState([]);
-  const [activeBranch, setActiveBranch] = useState("");
   const {
     ref: topBarRef,
     width: topBarWidth,
