@@ -1,21 +1,14 @@
-import { LocalStorageKeys } from "@/app/constants/local-storage-keys";
-import {
-  type FileNode,
-  type OpenedFile,
-  useFiles,
-} from "@/app/contexts/FilesContext";
-import type { Lineage } from "@/app/contexts/LineageView";
+import { useFiles } from "@/app/contexts/FilesContext";
 import { useWebSocket } from "@/app/hooks/use-websocket";
 import getUrl from "@/app/url";
 import { AuthActions } from "@/lib/auth";
 import _ from "lodash";
 import type React from "react";
-import { useEffect, useRef, useState } from "react";
-import { useLocalStorage } from "usehooks-ts";
+import { useRef } from "react";
 import AiMessageBox from "./ai-message-box";
+import { useAISidebar } from "./ai-sidebar-context";
 import ChatControls from "./chat-controls";
 import ChatHeader from "./chat-header";
-import { SUPPORTED_AI_MODELS } from "./constants";
 import ErrorDisplay from "./error-display";
 import type { AIMessage, MessageHistoryPayload } from "./types";
 
@@ -24,25 +17,25 @@ const base = new URL(baseUrl).host;
 const protocol = process.env.NODE_ENV === "development" ? "ws" : "wss";
 
 export default function AiSidebarChat() {
-  const { activeFile, lineageData, branchId } = useFiles();
-  const visibleLineage = lineageData[activeFile?.node.path || ""] || null;
+  const { branchId } = useFiles();
+  const {
+    setIsLoading,
+    input,
+    setInput,
+    error,
+    setError,
+    messageHistory,
+    setMessageHistory,
+    aiActiveFile,
+    aiLineageContext,
+    contextFiles,
+    setContextFiles,
+    selectedModel,
+    aiContextPreview,
+    aiCompiledSql,
+    aiFileProblems,
+  } = useAISidebar();
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [input, setInput] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [contextFiles, setContextFiles] = useState<FileNode[]>([]);
-  const [messageHistory, setMessageHistory] = useLocalStorage<Array<AIMessage>>(
-    LocalStorageKeys.aiMessageHistory(branchId),
-    [],
-  );
-  const [selectedModel, setSelectedModel] = useLocalStorage<string>(
-    LocalStorageKeys.aiSelectedModel(branchId),
-    SUPPORTED_AI_MODELS[0],
-  );
-  const [aiActiveFile, setAiActiveFile] = useState<OpenedFile | null>(null);
-  const [aiLineageContext, setAiLineageContext] = useState<Lineage | null>(
-    null,
-  );
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { getToken } = AuthActions();
@@ -122,15 +115,18 @@ export default function AiSidebarChat() {
         ...(aiActiveFile?.node.path ? [aiActiveFile.node.path] : []),
         ...contextFiles.map((file) => file.path),
       ],
+      context_preview: aiContextPreview?.table ?? null,
       asset_id: aiLineageContext?.asset_id,
       related_assets: aiLineageContext?.assets,
       asset_links: aiLineageContext?.asset_links,
       column_links: aiLineageContext?.column_links,
       message_history: newMessageHistory.map(({ id, ...rest }) => rest),
+      compiled_query: aiCompiledSql?.compiled_query ?? null,
+      file_problems: aiFileProblems?.problems ?? null,
     };
     startWebSocket(payload);
 
-    // Append assistant's placeholder message
+    // Append assistant's placeholder message after we send the message
     setMessageHistory((prev) => [
       ...prev,
       { id: _.uniqueId(), role: "assistant" as const, content: "" },
@@ -151,33 +147,14 @@ export default function AiSidebarChat() {
     handleSubmit(null, newMessageHistory);
   };
 
-  useEffect(() => {
-    setAiActiveFile(activeFile);
-  }, [activeFile]);
-
-  useEffect(() => {
-    setAiLineageContext(visibleLineage?.data);
-  }, [visibleLineage]);
-
   return (
     <div className="flex flex-col w-full h-full">
       <ChatHeader resetState={resetState} />
       {messageHistory.length === 0 ? (
         <ChatControls
-          input={input}
-          setInput={setInput}
-          isLoading={isLoading}
           isConnected={isConnected}
           handleSubmit={handleSubmit}
           stopWebSocket={stopWebSocket}
-          aiActiveFile={aiActiveFile}
-          setAiActiveFile={setAiActiveFile}
-          aiLineageContext={aiLineageContext}
-          setAiLineageContext={setAiLineageContext}
-          contextFiles={contextFiles}
-          setContextFiles={setContextFiles}
-          selectedModel={selectedModel}
-          setSelectedModel={setSelectedModel}
         />
       ) : (
         <div className="flex-1 flex flex-col overflow-hidden">
@@ -185,38 +162,20 @@ export default function AiSidebarChat() {
             {messageHistory.map((message, index) => (
               <AiMessageBox
                 key={message.id}
+                isConnected={isConnected}
+                stopWebSocket={stopWebSocket}
                 message={message}
                 isLastMessage={index === messageHistory.length - 1}
-                isConnected={isConnected}
                 index={index}
                 onEditMessage={handleEditMessage}
-                aiActiveFile={aiActiveFile}
-                setAiActiveFile={setAiActiveFile}
-                aiLineageContext={aiLineageContext}
-                setAiLineageContext={setAiLineageContext}
-                contextFiles={contextFiles}
-                setContextFiles={setContextFiles}
-                selectedModel={selectedModel}
-                setSelectedModel={setSelectedModel}
               />
             ))}
             <div ref={messagesEndRef} />
           </div>
           <ChatControls
-            input={input}
-            setInput={setInput}
-            isLoading={isLoading}
             isConnected={isConnected}
             handleSubmit={handleSubmit}
             stopWebSocket={stopWebSocket}
-            aiActiveFile={aiActiveFile}
-            setAiActiveFile={setAiActiveFile}
-            aiLineageContext={aiLineageContext}
-            setAiLineageContext={setAiLineageContext}
-            contextFiles={contextFiles}
-            setContextFiles={setContextFiles}
-            selectedModel={selectedModel}
-            setSelectedModel={setSelectedModel}
           />
         </div>
       )}

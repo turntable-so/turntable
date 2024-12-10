@@ -1,6 +1,3 @@
-import type { FileNode, OpenedFile } from "@/app/contexts/FilesContext";
-import type { Lineage } from "@/app/contexts/LineageView";
-import type { Dispatch, SetStateAction } from "react";
 import { useEffect, useRef, useState } from "react";
 import ChatControls from "./chat-controls";
 import ResponseDisplay from "./response-display";
@@ -12,14 +9,7 @@ type AiMessageBoxProps = {
   isConnected: boolean;
   index: number;
   onEditMessage: (index: number, newContent: string) => void;
-  aiActiveFile: OpenedFile | null;
-  setAiActiveFile: Dispatch<SetStateAction<OpenedFile | null>>;
-  aiLineageContext: Lineage | null;
-  setAiLineageContext: Dispatch<SetStateAction<Lineage | null>>;
-  contextFiles: FileNode[];
-  setContextFiles: Dispatch<SetStateAction<FileNode[]>>;
-  selectedModel: string;
-  setSelectedModel: Dispatch<SetStateAction<string>>;
+  stopWebSocket: () => void;
 };
 
 export default function AiMessageBox({
@@ -28,14 +18,7 @@ export default function AiMessageBox({
   isConnected,
   index,
   onEditMessage,
-  aiActiveFile,
-  setAiActiveFile,
-  aiLineageContext,
-  setAiLineageContext,
-  contextFiles,
-  setContextFiles,
-  selectedModel,
-  setSelectedModel,
+  stopWebSocket,
 }: AiMessageBoxProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [input, setInput] = useState(message.content);
@@ -59,9 +42,10 @@ export default function AiMessageBox({
           !containerRef.current.contains(event.target as Node)
         ) {
           const target = event.target as HTMLElement;
-          const isSelectClick = target.closest('[role="combobox"]') || 
-                              target.closest('[role="listbox"]');
-          
+          const isSelectClick =
+            target.closest('[role="combobox"]') ||
+            target.closest('[role="listbox"]');
+
           if (!isSelectClick) {
             setIsEditing(false);
           }
@@ -84,26 +68,16 @@ export default function AiMessageBox({
         message.role === "user"
           ? "bg-background p-2 rounded-md border border-transparent hover:border-muted-foreground"
           : isLastMessage
-          ? "p-1 mb-96"
-          : "p-1 mb-8"
+            ? "p-1 mb-96"
+            : "p-1 mb-8"
       }`}
       onClick={message.role === "user" && !isEditing ? handleEdit : undefined}
     >
       {isEditing ? (
         <ChatControls
-          input={input}
-          setInput={setInput}
-          isLoading={false}
           isConnected={isConnected}
           handleSubmit={handleSubmit}
-          aiActiveFile={aiActiveFile}
-          setAiActiveFile={setAiActiveFile}
-          aiLineageContext={aiLineageContext}
-          setAiLineageContext={setAiLineageContext}
-          contextFiles={contextFiles}
-          setContextFiles={setContextFiles}
-          selectedModel={selectedModel}
-          setSelectedModel={setSelectedModel}
+          stopWebSocket={stopWebSocket}
           autoFocus={true}
         />
       ) : message.role === "user" ? (

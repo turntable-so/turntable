@@ -3,6 +3,7 @@ import "ag-grid-community/styles/ag-theme-balham.css";
 import "./ag-grid-custom-theme.css";
 
 import { useFiles } from "@/app/contexts/FilesContext";
+import { useLayoutContext } from "@/app/contexts/LayoutContext";
 import { useBottomPanelTabs } from "@/components/editor/use-bottom-panel-tabs";
 import {
   CircleAlertIcon,
@@ -11,6 +12,7 @@ import {
   Network,
   Play,
   RefreshCcw,
+  Sparkles,
   Table as TableIcon,
   Terminal as TerminalIcon,
 } from "lucide-react";
@@ -29,10 +31,13 @@ import { Switch } from "../ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import CustomEditor from "./CustomEditor";
+import { useAISidebar } from "./ai/ai-sidebar-context";
+import { generatePreviewForAI } from "./ai/utils";
 import CommandPanel from "./command-panel";
 import CommandPanelActionBtn from "./command-panel/command-panel-action-btn";
 import ErrorMessage from "./error-message";
 import PreviewPanel from "./preview-panel/preview-panel";
+import ProblemsBtnGroup from "./problems-panel/problems-btn-group";
 import ProblemsPanel from "./problems-panel/problems-panel";
 
 export default function BottomPanel({
@@ -70,11 +75,52 @@ export default function BottomPanel({
     compileError,
     isQueryPreviewLoading,
     isSqlFile,
+    queryPreviewData,
   } = useFiles();
+
+  const {
+    aiContextPreview,
+    setAiContextPreview,
+    aiCompiledSql,
+    setAiCompiledSql,
+  } = useAISidebar();
+
+  const { sidebarRightShown, setSidebarRightShown } = useLayoutContext();
 
   const [activeTab, setActiveTab] = useBottomPanelTabs({
     branchId: branchId || "",
   });
+
+  const showAddPreviewToChatButton = !aiContextPreview && queryPreviewData;
+  const showAddCompiledSqlToChatButton = !aiCompiledSql && compiledSql;
+
+  const addPreviewToChat = () => {
+    if (queryPreviewData?.rows && queryPreviewData?.cols && activeFile) {
+      const table = generatePreviewForAI(
+        queryPreviewData.rows,
+        queryPreviewData.cols,
+      );
+      setAiContextPreview({
+        table,
+        file_name: queryPreviewData.file_name,
+      });
+      if (!sidebarRightShown) {
+        setSidebarRightShown(true);
+      }
+    }
+  };
+
+  const addCompiledSqlToChat = () => {
+    if (compiledSql && activeFile) {
+      setAiCompiledSql({
+        compiled_query: compiledSql.sql,
+        file_name: compiledSql.file_name,
+      });
+      if (!sidebarRightShown) {
+        setSidebarRightShown(true);
+      }
+    }
+  };
 
   const {
     ref: bottomPanelRef,
@@ -148,48 +194,86 @@ export default function BottomPanel({
         </Tabs>
         <div className="mr-2">
           {showPreviewQueryButton && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="sm"
-                  onClick={() => runQueryPreview()}
-                  disabled={isQueryLoading}
-                  variant="outline"
-                >
-                  {isQueryLoading ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Play className="h-4 w-4 mr-2" />
-                  )}
-                  Preview
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Preview Query (⌘ + Enter)</p>
-              </TooltipContent>
-            </Tooltip>
+            <div className="flex items-center">
+              {showAddPreviewToChatButton ? (
+                <Tooltip delayDuration={0}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={addPreviewToChat}
+                    >
+                      <Sparkles className="h-4 w-4 mr-2" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Add to chat</p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : null}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    onClick={() => runQueryPreview()}
+                    disabled={isQueryLoading}
+                    variant="outline"
+                  >
+                    {isQueryLoading ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Play className="h-4 w-4 mr-2" />
+                    )}
+                    Preview
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Preview Query (⌘ + Enter)</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
           )}
           {activeTab === "compile" && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="sm"
-                  onClick={compileActiveFile}
-                  disabled={isCompiling}
-                  variant="outline"
-                >
-                  {isCompiling ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Play className="h-4 w-4 mr-2" />
-                  )}
-                  Compile
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Compile (⌘ + Shift + Enter)</p>
-              </TooltipContent>
-            </Tooltip>
+            <div className="flex items-center">
+              {showAddCompiledSqlToChatButton ? (
+                <Tooltip delayDuration={0}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={addCompiledSqlToChat}
+                    >
+                      <Sparkles className="h-4 w-4 mr-2" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Add to chat</p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : null}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    onClick={() =>
+                      compileActiveFile(activeFile?.node.name || "")
+                    }
+                    disabled={isCompiling}
+                    variant="outline"
+                  >
+                    {isCompiling ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Play className="h-4 w-4 mr-2" />
+                    )}
+                    Compile
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Compile (⌘ + Shift + Enter)</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
           )}
           {activeTab === "lineage" && (
             <div className="flex items-center justify-center gap-2">
@@ -229,6 +313,7 @@ export default function BottomPanel({
             </div>
           )}
           {activeTab === "command" && <CommandPanelActionBtn />}
+          {activeTab === "problems" && <ProblemsBtnGroup />}
         </div>
       </div>
       <Panel
@@ -290,8 +375,8 @@ export default function BottomPanel({
                 <ErrorMessage error={compileError} />
               ) : (
                 <CustomEditor
-                  key={compiledSql}
-                  value={compiledSql || ""}
+                  key={compiledSql?.sql}
+                  value={compiledSql?.sql || ""}
                   language="sql"
                   options={{
                     readOnly: true,

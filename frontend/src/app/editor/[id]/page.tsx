@@ -20,9 +20,7 @@ import useResizeObserver from "use-resize-observer";
 import { type OpenedFile, useFiles } from "../../contexts/FilesContext";
 import { useLayoutContext } from "../../contexts/LayoutContext";
 
-function EditorContent({
-  containerWidth,
-}: { containerWidth: number }) {
+function EditorContent({ containerWidth }: { containerWidth: number }) {
   const { resolvedTheme } = useTheme();
   const {
     activeFile,
@@ -215,7 +213,7 @@ function EditorContent({
 
         editor.addCommand(
           monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Enter,
-          () => compileActiveFile(editor.getValue()),
+          () => compileActiveFile(activeFile?.node.name || ""),
         );
       }}
     />
@@ -241,6 +239,8 @@ function EditorPageContent() {
     isQueryPreviewLoading,
     setIsQueryPreviewLoading,
     saveFile,
+    queryPreviewData,
+    setQueryPreviewData,
   } = useFiles();
 
   const {
@@ -252,8 +252,6 @@ function EditorPageContent() {
     setBottomPanelShown,
   } = useLayoutContext();
 
-  const [colDefs, setColDefs] = useState([]);
-  const [rowData, setRowData] = useState([]);
   const gridRef = useRef<AgGridReact>(null);
 
   const treeRef = useRef<any>(null);
@@ -330,7 +328,7 @@ function EditorPageContent() {
           case "enter":
             event.preventDefault();
             if (event.shiftKey) {
-              compileActiveFile();
+              compileActiveFile(activeFile?.node.name || "");
             } else {
               runQueryPreview();
             }
@@ -375,7 +373,7 @@ function EditorPageContent() {
     compileActiveFile,
   ]);
 
-  const getTablefromSignedUrl = async (signedUrl: string) => {
+  const getTablefromSignedUrl = async (signedUrl: string, fileName: string) => {
     const response = await fetch(signedUrl);
     if (response.ok) {
       const table = await response.json();
@@ -393,8 +391,11 @@ function EditorPageContent() {
         },
         cellClass: "p-0",
       }));
-      setColDefs(defs as any);
-      setRowData(table.data);
+      setQueryPreviewData({
+        rows: table.data,
+        cols: defs,
+        file_name: fileName,
+      });
     }
     setIsQueryPreviewLoading(false);
   };
@@ -402,7 +403,10 @@ function EditorPageContent() {
   useEffect(() => {
     const fetchQueryPreview = async () => {
       if (queryPreview?.signed_url) {
-        getTablefromSignedUrl(queryPreview.signed_url as string);
+        getTablefromSignedUrl(
+          queryPreview.signed_url,
+          activeFile?.node.name || "",
+        );
       }
     };
     fetchQueryPreview();
@@ -479,15 +483,13 @@ function EditorPageContent() {
             <div className="w-full h-full">
               <PanelGroup direction="vertical" className="h-fit">
                 <Panel className="h-full relative z-0">
-                  <EditorContent
-                    containerWidth={topBarWidth as number}
-                  />
+                  <EditorContent containerWidth={topBarWidth as number} />
                 </Panel>
                 {bottomPanelShown && (
                   <BottomPanel
-                    rowData={rowData}
+                    rowData={queryPreviewData?.rows}
                     gridRef={gridRef}
-                    colDefs={colDefs}
+                    colDefs={queryPreviewData?.cols}
                     runQueryPreview={runQueryPreview}
                     queryPreviewError={queryPreviewError}
                     isLoading={isQueryPreviewLoading}
