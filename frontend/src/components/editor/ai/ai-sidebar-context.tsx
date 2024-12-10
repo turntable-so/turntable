@@ -18,6 +18,7 @@ import { useLocalStorage } from "usehooks-ts";
 import { SUPPORTED_AI_MODELS } from "./constants";
 import type {
   AICompiledSql,
+  AICustomSelections,
   AIFileProblems,
   AIMessage,
   AIQueryPreview,
@@ -47,6 +48,8 @@ interface AISidebarContextType {
   setAiCompiledSql: Dispatch<SetStateAction<AICompiledSql | null>>;
   aiFileProblems: AIFileProblems | null;
   setAiFileProblems: Dispatch<SetStateAction<AIFileProblems | null>>;
+  aiCustomSelections: AICustomSelections[] | null;
+  setAiCustomSelections: Dispatch<SetStateAction<AICustomSelections[] | null>>;
 }
 
 const AISidebarContext = createContext<AISidebarContextType | undefined>(
@@ -83,6 +86,9 @@ export function AISidebarProvider({ children }: AISidebarProviderProps) {
     null,
   );
   const [aiFileProblems, setAiFileProblems] = useState<AIFileProblems | null>(
+    null,
+  );
+  const [aiCustomSelections, setAiCustomSelections] = useState<AICustomSelections[] | null>(
     null,
   );
 
@@ -147,6 +153,8 @@ export function AISidebarProvider({ children }: AISidebarProviderProps) {
         setAiCompiledSql,
         aiFileProblems,
         setAiFileProblems,
+        aiCustomSelections,
+        setAiCustomSelections,
       }}
     >
       {children}
