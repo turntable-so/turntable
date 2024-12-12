@@ -1,11 +1,22 @@
 import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 
 const width = 315 / 2.5;
 const height = 54 / 2.5;
 
 const NameMark = () => {
+  const [mounted, setMounted] = useState(false);
   const { resolvedTheme } = useTheme();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null; // Prevent flash of wrong theme
+
+  // Only access resolvedTheme after mounting to avoid hydration mismatch
   const fillColor = resolvedTheme === "dark" ? "#ffffff" : "#1D1D1D";
+
   return (
     <svg
       aria-label="Turntable Namemark"
@@ -55,4 +66,5 @@ const NameMark = () => {
     </svg>
   );
 };
+
 export default NameMark;
