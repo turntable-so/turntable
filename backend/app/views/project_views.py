@@ -1,5 +1,6 @@
 import os
 import shutil
+import tempfile
 import zipfile
 from urllib.parse import unquote
 
@@ -201,23 +202,24 @@ class ProjectViewSet(viewsets.ViewSet):
                                 )
                                 return response
                         elif os.path.isdir(filepath):
-                            temp_zip = os.path.join("/tmp", f"{os.path.basename(filepath)}.zip")
-                            with zipfile.ZipFile(temp_zip, "w", zipfile.ZIP_DEFLATED) as zipf:
-                                base_path = os.path.dirname(filepath)
-                                for root, _, files in os.walk(filepath):
-                                    for file in files:
-                                        file_path = os.path.join(root, file)
-                                        arcname = os.path.relpath(file_path, base_path)
-                                        zipf.write(file_path, arcname)
-                            
-                            with open(temp_zip, "rb") as f:
+                            with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as temp_zip_file:
+                                temp_zip_path = temp_zip_file.name
+                                with zipfile.ZipFile(temp_zip_file, "w", zipfile.ZIP_DEFLATED) as zipf:
+                                    base_path = os.path.dirname(filepath)
+                                    for root, _, files in os.walk(filepath):
+                                        for file in files:
+                                            file_path = os.path.join(root, file)
+                                            arcname = os.path.relpath(file_path, base_path)
+                                            zipf.write(file_path, arcname)
+
+                            with open(temp_zip_path, "rb") as f:
                                 response = HttpResponse(
                                     f.read(), content_type="application/zip"
                                 )
                                 response["Content-Disposition"] = (
                                     f'attachment; filename="{os.path.basename(filepath)}.zip"'
                                 )
-                            os.remove(temp_zip)
+                            os.remove(temp_zip_path)
                             return response
                         else:
                             return Response(
