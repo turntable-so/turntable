@@ -1,5 +1,6 @@
 import os
 import shutil
+import zipfile
 from urllib.parse import unquote
 
 from django.db import transaction
@@ -190,19 +191,39 @@ class ProjectViewSet(viewsets.ViewSet):
                         request.query_params.get("download", "false").lower() == "true"
                     )
                     if download:
-                        if not os.path.isfile(filepath):
+                        if os.path.isfile(filepath):
+                            with open(filepath, "rb") as file:
+                                response = HttpResponse(
+                                    file.read(), content_type="application/octet-stream"
+                                )
+                                response["Content-Disposition"] = (
+                                    f'attachment; filename="{os.path.basename(filepath)}"'
+                                )
+                                return response
+                        elif os.path.isdir(filepath):
+                            temp_zip = os.path.join("/tmp", f"{os.path.basename(filepath)}.zip")
+                            with zipfile.ZipFile(temp_zip, "w", zipfile.ZIP_DEFLATED) as zipf:
+                                base_path = os.path.dirname(filepath)
+                                for root, _, files in os.walk(filepath):
+                                    for file in files:
+                                        file_path = os.path.join(root, file)
+                                        arcname = os.path.relpath(file_path, base_path)
+                                        zipf.write(file_path, arcname)
+                            
+                            with open(temp_zip, "rb") as f:
+                                response = HttpResponse(
+                                    f.read(), content_type="application/zip"
+                                )
+                                response["Content-Disposition"] = (
+                                    f'attachment; filename="{os.path.basename(filepath)}.zip"'
+                                )
+                            os.remove(temp_zip)
+                            return response
+                        else:
                             return Response(
-                                {"error": "Can only download files, not directories"},
+                                {"error": "Path is neither a file nor a directory"},
                                 status=status.HTTP_400_BAD_REQUEST,
                             )
-                        with open(filepath, "rb") as file:
-                            response = HttpResponse(
-                                file.read(), content_type="application/octet-stream"
-                            )
-                            response["Content-Disposition"] = (
-                                f'attachment; filename="{os.path.basename(filepath)}"'
-                            )
-                            return response
 
                     file_size = os.path.getsize(filepath)
                     FILE_SIZE_LIMIT = 1024 * 1024  # 1MB
