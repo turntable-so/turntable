@@ -1,4 +1,5 @@
 import { getAssets } from "@/app/actions/actions";
+import useSession from "@/app/hooks/use-session";
 import type { SortingState } from "@tanstack/react-table";
 import type React from "react";
 import {
@@ -57,6 +58,9 @@ interface AssetViewerProviderProps {
 export const AssetViewerProvider: React.FC<AssetViewerProviderProps> = ({
   children,
 }) => {
+  const session = useSession();
+  const workspaceId = session.user.current_workspace.id;
+
   const pageSize = 50;
   const [assets, setAssets] = useState<any>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -83,6 +87,7 @@ export const AssetViewerProvider: React.FC<AssetViewerProviderProps> = ({
         const data = await getAssets({
           query,
           page: page || currentPage,
+          workspaceId,
           sources: filters.sources,
           tags: filters.tags,
           types: filters.types,

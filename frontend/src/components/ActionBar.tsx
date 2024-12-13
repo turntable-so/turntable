@@ -1,14 +1,14 @@
 "use client";
 
+import useSession from "@/app/hooks/use-session";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tree } from "@/components/ui/tree";
 import { useAppContext } from "@/contexts/AppContext";
 import { cn, getAssetIcon, getLeafIcon } from "@/lib/utils";
-import { Loader2 } from "lucide-react";
-import { Folder, Workflow } from "lucide-react";
+import { Folder, Loader2, Workflow } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Fragment, useEffect, useRef, useState } from "react";
 import useResizeObserver from "use-resize-observer";
 import { getAssetIndex } from "../app/actions/actions";
@@ -93,6 +93,8 @@ export default function ActionBar({
 }) {
   const searchRef = useRef<HTMLInputElement>(null);
   const { ref: treeRef, width, height } = useResizeObserver();
+  const session = useSession();
+  const workspaceId = session.user.current_workspace.id;
 
   const { clearAssetPreview, assetPreview } = useAppContext();
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -111,7 +113,7 @@ export default function ActionBar({
   useEffect(() => {
     const fetchAssetIndex = async () => {
       setIsLoading(true);
-      const data = await getAssetIndex();
+      const data = await getAssetIndex(workspaceId);
       setIsLoading(false);
       setResourceAssets(data);
     };
