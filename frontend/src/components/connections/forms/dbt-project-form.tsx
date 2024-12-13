@@ -301,9 +301,6 @@ export default function DbtProjectForm({
   async function onSubmit(
     data: z.infer<typeof RemoteFormSchema> | z.infer<typeof LocalFormSchema>,
   ) {
-    console.log("Form Data:", data);
-    console.log("Environment Variables:", data.env_vars);
-
     const payload = {
       resource: {
         type: "db",
@@ -331,7 +328,6 @@ export default function DbtProjectForm({
       },
     };
 
-    console.log("Submission payload:", payload);
     const res = isUpdate
       ? await updateResource(resource.id, payload)
       : await createResource(payload as any);

@@ -198,6 +198,7 @@ class DBTResourceService(ResourceServiceHelper):
                 version=detail_serializer.data.get("version"),
                 database=detail_serializer.data.get("database"),
                 schema=detail_serializer.data.get("schema"),
+                env_vars=detail_serializer.data.get("env_vars"),
             )
             resource.save()
             detail.save()
