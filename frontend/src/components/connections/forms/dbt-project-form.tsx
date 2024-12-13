@@ -1,4 +1,5 @@
 "use client";
+
 import {
   createResource,
   getSshKey,
@@ -28,7 +29,6 @@ import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -43,6 +43,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import EnvironmentVariables from "../environment-variables";
 
 const DbtCoreConfig = ({
   resources,
@@ -158,6 +159,7 @@ const DbtCoreConfig = ({
           />
         </div>
       </div>
+      <EnvironmentVariables form={form} />
     </CardContent>
   </Card>
 );
@@ -173,7 +175,6 @@ export default function DbtProjectForm({
   const [connectionCheckStatus, setConnectionCheckStatus] = useState<
     "PENDING" | "STARTED" | "FAILURE" | "SUCCESS"
   >("PENDING");
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [selectedTab, setSelectedTab] = useState<"remote" | "local">("remote");
 
   useEffect(() => {
@@ -212,6 +213,7 @@ export default function DbtProjectForm({
     subdirectory: z.string().min(1, {
       message: "Please enter a subdirectory (.)",
     }),
+    env_vars: z.record(z.string(), z.string()).default({}),
   });
 
   const LocalFormSchema = z.object({
@@ -233,6 +235,7 @@ export default function DbtProjectForm({
     subdirectory: z.string().min(1, {
       message: "Please enter a subdirectory",
     }),
+    env_vars: z.record(z.string(), z.string()).default({}),
   });
 
   const remoteForm = useForm<z.infer<typeof RemoteFormSchema>>({
@@ -249,6 +252,7 @@ export default function DbtProjectForm({
       database: details?.database || "",
       schema: details?.schema || "",
       targetName: details?.target_name || "",
+      env_vars: details?.env_vars || {},
     },
   });
 
@@ -261,6 +265,7 @@ export default function DbtProjectForm({
       version: details?.version || "",
       database: details?.database || "",
       schema: details?.schema || "f",
+      env_vars: details?.env_vars || {},
     },
   });
 
@@ -291,11 +296,14 @@ export default function DbtProjectForm({
     }
   }
 
-  const isUpdate = resource?.id ? true : false;
+  const isUpdate = !!resource?.id;
 
   async function onSubmit(
     data: z.infer<typeof RemoteFormSchema> | z.infer<typeof LocalFormSchema>,
   ) {
+    console.log('Form Data:', data);
+    console.log('Environment Variables:', data.env_vars);
+    
     const payload = {
       resource: {
         type: "db",
@@ -319,8 +327,11 @@ export default function DbtProjectForm({
         version: data.version,
         database: data.database,
         schema: data.schema,
+        env_vars: data.env_vars,
       },
     };
+    
+    console.log('Submission payload:', payload);
     const res = isUpdate
       ? await updateResource(resource.id, payload)
       : await createResource(payload as any);
@@ -328,12 +339,11 @@ export default function DbtProjectForm({
       if (isUpdate) {
         toast.success("Connection updated");
         return;
-      } else {
-        toast.success("Connection created");
       }
+      toast.success("Connection created");
       router.push(`/connections/${res.id}`);
     } else {
-      toast.error("Failed to save connection: " + res[0]);
+      toast.error(`Failed to save connection: ${res[0]}`);
     }
   }
 
@@ -360,188 +370,192 @@ export default function DbtProjectForm({
           </CardFooter>
         </Card>
       ) : (
-        <Tabs
-          defaultValue="remote"
-          onValueChange={(value) => setSelectedTab(value as "remote" | "local")}
-        >
-          <TabsList>
-            <TabsTrigger value="remote">Remote Repository</TabsTrigger>
-          </TabsList>
-          <TabsContent value="remote">
-            <Form {...remoteForm}>
-              <form
-                onSubmit={remoteForm.handleSubmit(onSubmit)}
-                className="space-y-6 text-black dark:text-white"
-              >
-                <Card className="w-full rounded-sm">
-                  <CardHeader>
-                    <CardTitle className="text-xl">Code Repository</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <FormField
-                      control={remoteForm.control}
-                      name="deployKey"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Deploy Key</FormLabel>
-                          <br />
-                          <FormLabel className="text-sm text-muted-foreground">
-                            Go to your dbt Git repo, go to Deploy Keys, click
-                            Add Deploy Key, and paste this public key. Be sure
-                            to give it write access.
-                          </FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder="ssh key"
-                              {...field}
-                              defaultValue={field.value}
-                              rows={8}
-                              disabled={true}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                          <Button
-                            onClick={(event) => {
-                              event.preventDefault();
-                              navigator.clipboard.writeText(field.value);
-                              toast.info("ssh key copied to clipboard");
-                            }}
-                            className="flex items-center space-x-2 text-xs"
-                            variant="outline"
-                          >
-                            <CopyIcon className="h-4 w-4" />
-                            <div>Copy ssh key</div>
-                          </Button>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={remoteForm.control}
-                      name="dbtGitRepoUrl"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>dbt Git Repo URL</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="git@github.com:org/dbt.git"
-                              {...field}
-                              defaultValue={field.value}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={remoteForm.control}
-                      name="mainGitBranch"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Main Git Branch</FormLabel>
-                          <FormControl>
-                            <Input placeholder="master or main" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={remoteForm.control}
-                      name="subdirectory"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Project subdirectory</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Subdirectory of your repository that contains your dbt project"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                  <CardFooter className="flex justify-end">
-                    <div className="float-right flex ">
-                      {connectionCheckStatus === "SUCCESS" && (
-                        <div className="text-green-500 mt-2 mr-2">
-                          Connection successful
-                        </div>
-                      )}
-                      {connectionCheckStatus === "FAILURE" && (
-                        <div className="text-red-500  mt-2 mr-2">
-                          Connection failed
-                        </div>
-                      )}
-                      <LoaderButton
-                        variant="secondary"
-                        isLoading={connectionCheckStatus === "STARTED"}
-                        isDisabled={connectionCheckStatus === "STARTED"}
-                        onClick={(event) => {
-                          event.preventDefault();
-                          testConnection();
-                        }}
-                      >
-                        Test Connection
-                      </LoaderButton>
-                    </div>
-                  </CardFooter>
-                </Card>
-                <DbtCoreConfig resources={resources} form={remoteForm} />
-                <div className="flex justify-end">
-                  <LoaderButton type="submit">
-                    {isUpdate ? "Update dbt Project" : "Add dbt Project"}
-                  </LoaderButton>
-                </div>
-              </form>
-            </Form>
-          </TabsContent>
-          <TabsContent value="local">
-            <Form {...localForm}>
-              <form
-                onSubmit={localForm.handleSubmit(onSubmit)}
-                className="space-y-6 text-black dark:text-white"
-              >
-                <Card className="w-full rounded-sm">
-                  <CardHeader>
-                    <CardTitle className="text-xl">Local Directory</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <FormField
-                      control={localForm.control}
-                      name="subdirectory"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Project directory</FormLabel>
-                          <CardDescription>
-                            Note: If using Docker, Make sure this path is
-                            mounted as a volume in the container. This should be
-                            the full path where there is a dbt_project.yaml at
-                            the root.
-                          </CardDescription>
-                          <FormControl>
-                            <Input
-                              placeholder="Directory of your repository that contains your dbt project"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
-                <DbtCoreConfig resources={resources} form={localForm} />
-                <div className="flex justify-end">
-                  <LoaderButton type="submit">
-                    {isUpdate ? "Update dbt Project" : "Add dbt Project"}
-                  </LoaderButton>
-                </div>
-              </form>
-            </Form>
-          </TabsContent>
-        </Tabs>
+        <div className="flex flex-col gap-4">
+          <Tabs
+            defaultValue="remote"
+            onValueChange={(value) =>
+              setSelectedTab(value as "remote" | "local")
+            }
+          >
+            <TabsList>
+              <TabsTrigger value="remote">Remote Repository</TabsTrigger>
+            </TabsList>
+            <TabsContent value="remote">
+              <Form {...remoteForm}>
+                <form
+                  onSubmit={remoteForm.handleSubmit(onSubmit)}
+                  className="space-y-6 text-black dark:text-white"
+                >
+                  <Card className="w-full rounded-sm">
+                    <CardHeader>
+                      <CardTitle className="text-xl">Code Repository</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <FormField
+                        control={remoteForm.control}
+                        name="deployKey"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Deploy Key</FormLabel>
+                            <br />
+                            <FormLabel className="text-sm text-muted-foreground">
+                              Go to your dbt Git repo, go to Deploy Keys, click
+                              Add Deploy Key, and paste this public key. Be sure
+                              to give it write access.
+                            </FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="ssh key"
+                                {...field}
+                                defaultValue={field.value}
+                                rows={8}
+                                disabled={true}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                            <Button
+                              onClick={(event) => {
+                                event.preventDefault();
+                                navigator.clipboard.writeText(field.value);
+                                toast.info("ssh key copied to clipboard");
+                              }}
+                              className="flex items-center space-x-2 text-xs"
+                              variant="outline"
+                            >
+                              <CopyIcon className="h-4 w-4" />
+                              <div>Copy ssh key</div>
+                            </Button>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={remoteForm.control}
+                        name="dbtGitRepoUrl"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>dbt Git Repo URL</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="git@github.com:org/dbt.git"
+                                {...field}
+                                defaultValue={field.value}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={remoteForm.control}
+                        name="mainGitBranch"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Main Git Branch</FormLabel>
+                            <FormControl>
+                              <Input placeholder="master or main" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={remoteForm.control}
+                        name="subdirectory"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Project subdirectory</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Subdirectory of your repository that contains your dbt project"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </CardContent>
+                    <CardFooter className="flex justify-end">
+                      <div className="float-right flex ">
+                        {connectionCheckStatus === "SUCCESS" && (
+                          <div className="text-green-500 mt-2 mr-2">
+                            Connection successful
+                          </div>
+                        )}
+                        {connectionCheckStatus === "FAILURE" && (
+                          <div className="text-red-500  mt-2 mr-2">
+                            Connection failed
+                          </div>
+                        )}
+                        <LoaderButton
+                          variant="secondary"
+                          isLoading={connectionCheckStatus === "STARTED"}
+                          isDisabled={connectionCheckStatus === "STARTED"}
+                          onClick={(event) => {
+                            event.preventDefault();
+                            testConnection();
+                          }}
+                        >
+                          Test Connection
+                        </LoaderButton>
+                      </div>
+                    </CardFooter>
+                  </Card>
+                  <DbtCoreConfig resources={resources} form={remoteForm} />
+                  <div className="flex justify-end">
+                    <LoaderButton type="submit">
+                      {isUpdate ? "Update dbt Project" : "Add dbt Project"}
+                    </LoaderButton>
+                  </div>
+                </form>
+              </Form>
+            </TabsContent>
+            <TabsContent value="local">
+              <Form {...localForm}>
+                <form
+                  onSubmit={localForm.handleSubmit(onSubmit)}
+                  className="space-y-6 text-black dark:text-white"
+                >
+                  <Card className="w-full rounded-sm">
+                    <CardHeader>
+                      <CardTitle className="text-xl">Local Directory</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <FormField
+                        control={localForm.control}
+                        name="subdirectory"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Project directory</FormLabel>
+                            <CardDescription>
+                              Note: If using Docker, Make sure this path is
+                              mounted as a volume in the container. This should
+                              be the full path where there is a dbt_project.yaml
+                              at the root.
+                            </CardDescription>
+                            <FormControl>
+                              <Input
+                                placeholder="Directory of your repository that contains your dbt project"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </CardContent>
+                  </Card>
+                  <DbtCoreConfig resources={resources} form={localForm} />
+                  <div className="flex justify-end">
+                    <LoaderButton type="submit">
+                      {isUpdate ? "Update dbt Project" : "Add dbt Project"}
+                    </LoaderButton>
+                  </div>
+                </form>
+              </Form>
+            </TabsContent>
+          </Tabs>
+        </div>
       )}
     </div>
   );

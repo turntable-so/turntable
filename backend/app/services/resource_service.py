@@ -230,6 +230,7 @@ class ResourceService:
     def create_resource(self, data: dict) -> Resource:
         payload = CreateResourceSerializer(data=data)
         payload.is_valid(raise_exception=True)
+        print("payload", payload.data)
         subtype = payload.data.get("subtype")
         for cls in ResourceServiceHelper.__subclasses__():
             if cls.subtype == subtype:
@@ -270,12 +271,14 @@ class ResourceService:
             if data.get("subtype") == "dbt":
                 if resource.dbtresource_set.exists():
                     dbt_resource = resource.dbtresource_set.first()
+                    print("data.config", data.get("config"), flush=True)
                     dbt_payload = DBTCoreDetailsSerializer(
                         dbt_resource,
                         data=data.get("config"),
                     )
                     dbt_payload.is_valid(raise_exception=True)
                     dbt_payload.save()
+                    print("dbt_payload", dbt_payload.data, flush=True)
                     return
                 else:
                     print("creating dbt resource", flush=True)

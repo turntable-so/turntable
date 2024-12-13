@@ -19,8 +19,6 @@ class SettingsView(APIView):
                 {"detail": "Workspace not found."}, status=status.HTTP_404_NOT_FOUND
             )
 
-        dbt_details = workspace.get_dbt_dev_details()
-
         # Get the list of exclusion filters
         exclusion_filters = workspace.assets_exclude_name_contains
 
@@ -46,7 +44,6 @@ class SettingsView(APIView):
             "exclusion_filters": exclusion_results,
             "api_keys": api_keys,
             "ai_custom_instructions": workspace.ai_custom_instructions,
-            "env": dbt_details.env_vars,
         }
         return Response(response_data)
 
@@ -60,9 +57,5 @@ class SettingsView(APIView):
             workspace.anthropic_api_key = api_keys["anthropic_api_key"] or None
         if "ai_custom_instructions" in request.data:
             workspace.ai_custom_instructions = request.data["ai_custom_instructions"] or None
-        if "env" in request.data:
-            dbt_details = workspace.get_dbt_dev_details()
-            dbt_details.env_vars = request.data["env"]
-            dbt_details.save()
         workspace.save()
         return Response(status=status.HTTP_200_OK)

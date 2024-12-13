@@ -13,7 +13,6 @@ import { getSettings } from "../actions/actions";
 import { ApiKeysTable } from "./api-keys-table";
 import { AssetExclusionTable } from "./asset-exclusion-table";
 import { CustomInstructions } from "./custom-instructions";
-import EnvironmentVariables from "./environment-variables";
 import type { Settings } from "./types";
 
 export default function SettingsPage() {
@@ -70,18 +69,6 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent>
               <CustomInstructions instructions={settings.ai_custom_instructions} />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Environment Variables</CardTitle>
-              <CardDescription>
-                Define environment variables for your DBT project.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <EnvironmentVariables env={settings.env} />
             </CardContent>
           </Card>
         </div>
