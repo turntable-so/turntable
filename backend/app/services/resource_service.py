@@ -198,6 +198,7 @@ class DBTResourceService(ResourceServiceHelper):
                 version=detail_serializer.data.get("version"),
                 database=detail_serializer.data.get("database"),
                 schema=detail_serializer.data.get("schema"),
+                env_vars=detail_serializer.data.get("env_vars"),
             )
             resource.save()
             detail.save()
@@ -278,7 +279,6 @@ class ResourceService:
                     dbt_payload.save()
                     return
                 else:
-                    print("creating dbt resource", flush=True)
                     raise ValidationError("Resource does not have a dbt resource")
             if data.get("subtype") is not None:
                 raise ValidationError(

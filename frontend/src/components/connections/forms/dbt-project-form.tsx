@@ -1,4 +1,5 @@
 "use client";
+
 import {
   createResource,
   getSshKey,
@@ -28,7 +29,6 @@ import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -43,6 +43,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import EnvironmentVariables from "../environment-variables";
 
 const DbtCoreConfig = ({
   resources,
@@ -158,6 +159,7 @@ const DbtCoreConfig = ({
           />
         </div>
       </div>
+      <EnvironmentVariables form={form} />
     </CardContent>
   </Card>
 );
@@ -173,7 +175,6 @@ export default function DbtProjectForm({
   const [connectionCheckStatus, setConnectionCheckStatus] = useState<
     "PENDING" | "STARTED" | "FAILURE" | "SUCCESS"
   >("PENDING");
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [selectedTab, setSelectedTab] = useState<"remote" | "local">("remote");
 
   useEffect(() => {
@@ -212,6 +213,7 @@ export default function DbtProjectForm({
     subdirectory: z.string().min(1, {
       message: "Please enter a subdirectory (.)",
     }),
+    env_vars: z.record(z.string(), z.string()).default({}),
   });
 
   const LocalFormSchema = z.object({
@@ -233,6 +235,7 @@ export default function DbtProjectForm({
     subdirectory: z.string().min(1, {
       message: "Please enter a subdirectory",
     }),
+    env_vars: z.record(z.string(), z.string()).default({}),
   });
 
   const remoteForm = useForm<z.infer<typeof RemoteFormSchema>>({
@@ -249,6 +252,7 @@ export default function DbtProjectForm({
       database: details?.database || "",
       schema: details?.schema || "",
       targetName: details?.target_name || "",
+      env_vars: details?.env_vars || {},
     },
   });
 
@@ -261,6 +265,7 @@ export default function DbtProjectForm({
       version: details?.version || "",
       database: details?.database || "",
       schema: details?.schema || "f",
+      env_vars: details?.env_vars || {},
     },
   });
 
@@ -291,7 +296,7 @@ export default function DbtProjectForm({
     }
   }
 
-  const isUpdate = resource?.id ? true : false;
+  const isUpdate = !!resource?.id;
 
   async function onSubmit(
     data: z.infer<typeof RemoteFormSchema> | z.infer<typeof LocalFormSchema>,
@@ -319,8 +324,10 @@ export default function DbtProjectForm({
         version: data.version,
         database: data.database,
         schema: data.schema,
+        env_vars: data.env_vars,
       },
     };
+
     const res = isUpdate
       ? await updateResource(resource.id, payload)
       : await createResource(payload as any);
@@ -328,12 +335,11 @@ export default function DbtProjectForm({
       if (isUpdate) {
         toast.success("Connection updated");
         return;
-      } else {
-        toast.success("Connection created");
       }
+      toast.success("Connection created");
       router.push(`/connections/${res.id}`);
     } else {
-      toast.error("Failed to save connection: " + res[0]);
+      toast.error(`Failed to save connection: ${res[0]}`);
     }
   }
 
