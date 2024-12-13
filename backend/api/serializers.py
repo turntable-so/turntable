@@ -455,11 +455,6 @@ class DBTCoreDetailsSerializer(ResourceDetailsSerializer):
         instance.database = validated_data.get("database")
         instance.schema = validated_data.get("schema")
         instance.env_vars = validated_data.get("env_vars")
-        print(
-            "validated_data.get('env_vars'): ",
-            validated_data.get("env_vars"),
-            flush=True,
-        )
         instance.save()
         return instance
 
