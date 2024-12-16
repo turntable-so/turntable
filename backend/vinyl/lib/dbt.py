@@ -346,7 +346,15 @@ class DBTProject(object):
             # Restore original streams
             sys.stdout = orig_stdout
             sys.stderr = orig_stderr
-            os.chdir(orig_cwd)
+
+            ## dbt changes directory sometimes, so we need to restore the original directory
+            try:
+                current_dir = os.getcwd()
+                if current_dir != orig_cwd:
+                    os.chdir(orig_cwd)
+            except Exception:
+                # restore original directory if everything fails. Can result from an internal dbt bug where cwd is set to a temp directory that no longer exists
+                os.chdir(orig_cwd)
 
     def _dbt_cli_env(self, full_os_env: bool = True):
         env = self.env_vars.copy()
