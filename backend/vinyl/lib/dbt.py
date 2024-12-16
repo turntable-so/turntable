@@ -21,6 +21,7 @@ from vinyl.lib.dbt_methods import (
     DBTVersion,
 )
 from vinyl.lib.errors import VinylError, VinylErrorType
+from vinyl.lib.utils.env import set_env
 from vinyl.lib.utils.files import adjust_path, cd, file_exists_in_directory, load_orjson
 from vinyl.lib.utils.graph import DAG
 from vinyl.lib.utils.patch import patch_json_with_orjson, patch_yaml_with_libyaml
@@ -94,7 +95,6 @@ class DBTProject(object):
         # get target paths
         if target_path:
             self.target_path = adjust_path(target_path)
-            os.environ["DBT_TARGET_PATH"] = self.target_path
         else:
             self.get_project_yml_files()
         self.generate_target_paths()
@@ -173,9 +173,11 @@ class DBTProject(object):
         if hasattr(self, "manifest") and not force_run and not force_read:
             return self.manifest
         elif force_run or not os.path.exists(self.manifest_path):
-            _, _, success = self.dbt_parse(defer=defer)
+            stdout, stderr, success = self.dbt_parse(defer=defer)
             if not success:
-                raise Exception("Failed to parse manifest")
+                raise Exception(
+                    f"Failed to parse manifest. Stdout: {stdout}, Stderr: {stderr}"
+                )
 
         if read:
             self.manifest = load_orjson(self.manifest_path)
@@ -309,6 +311,8 @@ class DBTProject(object):
     @patch_json_with_orjson
     @patch_yaml_with_libyaml
     def dbt_runner(self, command: list[str]) -> tuple[str, str, bool]:
+        env, cwd = self._dbt_cli_env(full_os_env=False)
+
         try:
             from dbt.cli.main import dbtRunner, dbtRunnerResult
         except ImportError:
@@ -326,52 +330,33 @@ class DBTProject(object):
         # Redirect streams to buffers
         sys.stdout = stdout_buffer
         sys.stderr = stderr_buffer
-
-        # Cache env variables
-        current_dbt_profiles_dir = os.environ.get("DBT_PROFILES_DIR")
-        if self.dbt_profiles_dir:
-            os.environ["DBT_PROFILES_DIR"] = self.dbt_profiles_dir
-        current_dbt_project_dir = os.environ.get("DBT_PROJECT_DIR")
-        if self.dbt_project_dir:
-            os.environ["DBT_PROJECT_DIR"] = self.dbt_project_dir
-
         try:
-            # Invoke dbt
-            result: dbtRunnerResult = runner.invoke(
-                command, send_anonymous_usage_stats=False
-            )
-            captured_stdout = stdout_buffer.getvalue()
-            captured_stderr = stderr_buffer.getvalue()
+            with set_env(**env):
+                # Invoke dbt
+                result: dbtRunnerResult = runner.invoke(
+                    command, send_anonymous_usage_stats=False
+                )
+                captured_stdout = stdout_buffer.getvalue()
+                captured_stderr = stderr_buffer.getvalue()
 
-            # Return captured output along with function's result
-            return captured_stdout, captured_stderr, result.success
+                # Return captured output along with function's result
+                return captured_stdout, captured_stderr, result.success
+
         finally:
-            # Restore env variables
-            if "DBT_PROFILES_DIR" in os.environ:
-                if current_dbt_profiles_dir:
-                    os.environ["DBT_PROFILES_DIR"] = current_dbt_profiles_dir
-                else:
-                    os.environ.pop("DBT_PROFILES_DIR")
-
-            if "DBT_PROJECT_DIR" in os.environ:
-                if current_dbt_project_dir:
-                    os.environ["DBT_PROJECT_DIR"] = current_dbt_project_dir
-                else:
-                    os.environ.pop("DBT_PROJECT_DIR")
-
             # Restore original streams
             sys.stdout = orig_stdout
             sys.stderr = orig_stderr
-            os.chdir(orig_cwd)
 
-    def _dbt_cli_env(self):
-        env = {
-            **os.environ.copy(),
-            **{"DBT_PROFILES_DIR": self.dbt_profiles_dir},
-            **{"DBT_TARGET_PATH": self.target_path},
-            **self.env_vars,
-            **{"DBT_VERSION": self.version},
-        }
+    def _dbt_cli_env(self, full_os_env: bool = True):
+        env = self.env_vars.copy()
+        if self.dbt_profiles_dir:
+            env["DBT_PROFILES_DIR"] = self.dbt_profiles_dir
+        if self.target_path:
+            env["DBT_TARGET_PATH"] = self.target_path
+        if self.version:
+            env["DBT_VERSION"] = self.version
+        if full_os_env:
+            env = {**os.environ, **env}
         if self.dbt1_5:
             env["DBT_PROJECT_DIR"] = self.dbt_project_dir
             cwd = None
