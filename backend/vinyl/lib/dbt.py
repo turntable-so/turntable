@@ -347,13 +347,15 @@ class DBTProject(object):
             sys.stdout = orig_stdout
             sys.stderr = orig_stderr
 
-            ## dbt changes directory sometimes, so we need to restore the original directory
+            ## DBT changes directory sometimes, so we need to restore the original directory
+            ## DBT has an internal bug where cwd is still set to a directory after its function call. We use temp directories, so this can cause an error if the temp directory no longer exists.
             try:
                 current_dir = os.getcwd()
-                if current_dir != orig_cwd:
-                    os.chdir(orig_cwd)
-            except Exception:
-                # restore original directory if everything fails. Can result from an internal dbt bug where cwd is set to a temp directory that no longer exists
+            except OSError:
+                current_dir = None
+
+            ## restore original directory if everything fails.
+            if not current_dir or current_dir != orig_cwd:
                 os.chdir(orig_cwd)
 
     def _dbt_cli_env(self, full_os_env: bool = True):
@@ -500,7 +502,7 @@ class DBTProject(object):
         cli_args: list[str] | None = None,
         write_json: bool = False,
         dbt_cache: bool = False,
-        force_terminal: bool = False,
+        force_terminal: bool = True,
         defer: bool = False,
         defer_selection: bool = True,
     ) -> tuple[str, str, bool]:
