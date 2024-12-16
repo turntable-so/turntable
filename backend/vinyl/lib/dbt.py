@@ -346,6 +346,7 @@ class DBTProject(object):
             # Restore original streams
             sys.stdout = orig_stdout
             sys.stderr = orig_stderr
+            os.chdir(orig_cwd)
 
     def _dbt_cli_env(self, full_os_env: bool = True):
         env = self.env_vars.copy()
