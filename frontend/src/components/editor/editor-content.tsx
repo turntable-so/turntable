@@ -151,14 +151,27 @@ export default function EditorContent({
     };
 
     const onApply = () => {
-      console.log("applying!");
+      setActiveFile(
+        (prev) =>
+          ({
+            ...prev,
+            view: "edit",
+            content: activeFile?.diff?.modified,
+            diff: undefined,
+          }) as OpenedFile,
+      );
+      saveFile(activeFile?.node.path || "", activeFile?.diff?.modified || "");
     };
 
     return (
       <div className="h-full w-full flex flex-col items-center justify-center">
         <div className="flex gap-2 justify-end w-full my-1">
-          <Button size="sm" variant="outline" onClick={onCancel}>Cancel</Button>
-          <Button size="sm" variant="outline" onClick={onApply}>Apply</Button>
+          <Button size="sm" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button size="sm" variant="outline" onClick={onApply}>
+            Apply
+          </Button>
         </div>
         <CustomDiffEditor
           original={activeFile?.diff?.original || ""}

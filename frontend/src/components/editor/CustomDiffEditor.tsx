@@ -1,6 +1,6 @@
-import { useRef, useEffect } from "react";
 import { DiffEditor } from "@monaco-editor/react";
 import { useTheme } from "next-themes";
+import { useEffect, useRef } from "react";
 
 interface CustomDiffEditorProps {
   original?: string;
@@ -23,7 +23,6 @@ export default function CustomDiffEditor(props: CustomDiffEditorProps) {
     colors: {
       "editor.foreground": resolvedTheme === "dark" ? "#ffffff" : "#000000",
       "editorLineNumber.foreground": "#A1A1AA",
-
     },
   };
 
