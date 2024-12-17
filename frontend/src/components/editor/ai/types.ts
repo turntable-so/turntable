@@ -47,3 +47,8 @@ export type AICustomSelections = {
   end_line: number;
   file_name: string;
 }
+
+export type InstantApplyPayload = {
+  base_file: string;
+  change: string;
+}

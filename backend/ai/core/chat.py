@@ -285,6 +285,7 @@ Here are some additional instructions set by the user for you to follow. These a
         messages=messages,
         stream=True,
         user_id=user.id,
+        tags=["chat"],
     )
 
     for chunk in response:

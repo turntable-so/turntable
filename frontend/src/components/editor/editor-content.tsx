@@ -141,6 +141,51 @@ export default function EditorContent({
     );
   }
 
+  if (activeFile?.view === "apply") {
+    const onCancel = () => {
+      setActiveFile({
+        ...activeFile,
+        view: "edit",
+        diff: undefined,
+      });
+    };
+
+    const onApply = () => {
+      console.log("applying!");
+    };
+
+    return (
+      <div className="h-full w-full flex flex-col items-center justify-center">
+        <div className="flex gap-2 justify-end w-full my-1">
+          <Button size="sm" variant="outline" onClick={onCancel}>Cancel</Button>
+          <Button size="sm" variant="outline" onClick={onApply}>Apply</Button>
+        </div>
+        <CustomDiffEditor
+          original={activeFile?.diff?.original || ""}
+          modified={activeFile?.diff?.modified || ""}
+          width={containerWidth - 2}
+          language="sql"
+          options={{
+            minimap: { enabled: false },
+            scrollbar: {
+              vertical: "visible",
+              horizontal: "visible",
+              verticalScrollbarSize: 8,
+              horizontalScrollbarSize: 8,
+              verticalSliderSize: 8,
+              horizontalSliderSize: 8,
+            },
+            lineNumbers: "on",
+            wordWrap: "on",
+            fontSize: 14,
+            lineNumbersMinChars: 3,
+          }}
+          theme="mutedTheme"
+        />
+      </div>
+    );
+  }
+
   if (activeFile?.view === "new") {
     return (
       <div className="h-full w-full flex justify-center text-muted-foreground dark:bg-black bg-white">
@@ -230,22 +275,19 @@ export default function EditorContent({
           () => compileActiveFile(activeFile?.node.name || ""),
         );
 
-        editor.addCommand(
-            monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyL,
-            () => {
-              console.log("woo!");
-              const selection = editor.getSelection();
-              if (selection && !selection.isEmpty()) {
-                const selectedText = editor.getModel()?.getValueInRange(selection);
-                addToChat(
-                  selectedText,
-                  selection.startLineNumber,
-                  selection.endLineNumber,
-                  activeFile?.node.name || ""
-                );
-              }
-            }
-          );
+        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyL, () => {
+          console.log("woo!");
+          const selection = editor.getSelection();
+          if (selection && !selection.isEmpty()) {
+            const selectedText = editor.getModel()?.getValueInRange(selection);
+            addToChat(
+              selectedText,
+              selection.startLineNumber,
+              selection.endLineNumber,
+              activeFile?.node.name || "",
+            );
+          }
+        });
 
         let addToChatButton: HTMLElement | null = null;
 

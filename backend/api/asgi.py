@@ -4,7 +4,12 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from django.core.asgi import get_asgi_application
 from django.urls import re_path
 
-from app.consumers import AIChatConsumer, DBTCommandConsumer, TaskResultConsumer
+from app.consumers import (
+    AIChatConsumer,
+    DBTCommandConsumer,
+    InstantApplyConsumer,
+    TaskResultConsumer,
+)
 from app.websocket_auth import JWTAuthMiddlewareStack
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "api.settings")
@@ -27,6 +32,10 @@ application = ProtocolTypeRouter(
                     re_path(
                         r"^ws/infer/$",
                         AIChatConsumer.as_asgi(),
+                    ),
+                    re_path(
+                        r"^ws/instant_apply/$",
+                        InstantApplyConsumer.as_asgi(),
                     ),
                 ]
             )
