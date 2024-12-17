@@ -2,7 +2,6 @@
 import os
 import re
 import select
-import shlex
 import subprocess
 import sys
 import tempfile
@@ -14,7 +13,6 @@ from typing import Any, Callable, Generator
 import orjson
 import yaml
 from dbt_extractor import ExtractionError, py_extract_from_source
-from mpire import WorkerPool
 
 from vinyl.lib.dbt_methods import (
     DBTArgs,
@@ -312,8 +310,7 @@ class DBTProject(object):
 
     @patch_json_with_orjson
     @patch_yaml_with_libyaml
-    def _dbt_runner_helper(self, command_str: str) -> tuple[str, str, bool]:
-        command = shlex.split(command_str)
+    def dbt_runner(self, command: list[str]) -> tuple[str, str, bool]:
         env, cwd = self._dbt_cli_env(full_os_env=False)
 
         try:
@@ -360,16 +357,6 @@ class DBTProject(object):
             ## restore original directory if everything fails.
             if not current_dir or current_dir != orig_cwd:
                 os.chdir(orig_cwd)
-
-    def dbt_runner(
-        self, command: list[str], isolate_with_fork: bool = True
-    ) -> tuple[str, str, bool]:
-        command_str = " ".join(command)
-        if isolate_with_fork:
-            with WorkerPool(n_jobs=1) as pool:
-                return pool.map(self._dbt_runner_helper, [command_str])[0]
-        else:
-            return self._dbt_runner_helper(command_str)
 
     def _dbt_cli_env(self, full_os_env: bool = True):
         env = self.env_vars.copy()
@@ -515,7 +502,7 @@ class DBTProject(object):
         cli_args: list[str] | None = None,
         write_json: bool = False,
         dbt_cache: bool = False,
-        force_terminal: bool = False,
+        force_terminal: bool = True,
         defer: bool = False,
         defer_selection: bool = True,
     ) -> tuple[str, str, bool]:
