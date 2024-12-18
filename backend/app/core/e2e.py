@@ -39,6 +39,7 @@ from app.utils.database import pg_delete_and_upsert
 from vinyl.lib.errors import VinylError, VinylErrorType
 from vinyl.lib.schema import VinylSchema
 from vinyl.lib.sqlast import SQLAstNode
+from vinyl.lib.utils.graph import nx_remove_node_and_reconnect
 
 _STR_JOIN_HELPER = "_____"
 
@@ -1042,7 +1043,6 @@ class DataHubDBParser:
                 try:
                     get_schema_field_urn(node)
                 except (InvalidUrnError, AssertionError):
-                    breakpoint()
                     nx_remove_node_and_reconnect(graph_it, node, preserve_ntype=True)
                     error = AssetError(
                         asset=asset,
