@@ -301,7 +301,6 @@ export default function EditorContent({
         );
 
         editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyL, () => {
-          console.log("woo!");
           const selection = editor.getSelection();
           if (selection && !selection.isEmpty()) {
             const selectedText = editor.getModel()?.getValueInRange(selection);

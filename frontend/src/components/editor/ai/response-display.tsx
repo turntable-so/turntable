@@ -109,7 +109,6 @@ export default function ResponseDisplay({ content }: ResponseDisplayProps) {
    * we only re-render the UI ~once every 350ms.
    */
   useEffect(() => {
-    console.log("throttledFile", throttledFile);
     if (throttledFile) {
       setActiveFile(throttledFile);
     }

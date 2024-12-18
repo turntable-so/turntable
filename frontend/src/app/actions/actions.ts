@@ -931,7 +931,6 @@ type CreateJobPayload = {
 };
 
 export async function createJob(payload: CreateJobPayload) {
-  console.log(payload);
   const response = await fetcher("/jobs/", {
     cookies,
     method: "POST",

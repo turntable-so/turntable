@@ -31,7 +31,6 @@ export function useThrottleState<T>(initialValue: T, delay: number) {
       if (timeSinceLastUpdate >= delay) {
         // If it’s been >= delay ms since last update, update immediately
         setState(resolvedValue);
-        console.log("setState", resolvedValue);
         lastRanRef.current = now;
         pendingUpdateRef.current = null;
       } else {
