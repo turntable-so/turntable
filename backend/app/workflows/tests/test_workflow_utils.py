@@ -7,7 +7,7 @@ import pytest
 from django_celery_results.models import TaskResult
 
 from api.serializers import TaskResultWithSubtasksSerializer
-from app.workflows.utils import task
+from app.workflows.utils import long_running_task, task
 from vinyl.lib.utils.sequence import _get_list_depth, _get_list_key_depth
 
 
@@ -69,3 +69,10 @@ def test_nested_task(custom_celery):
         result_depth = _get_list_depth(tr["result"])
         subtask_depth = _get_list_key_depth(tr["subtasks"], "subtasks")
         assert result_depth == subtask_depth
+
+
+def test_no_status_task(
+    custom_celery,
+):
+    res = long_running_task.si(duration=1).apply_async()
+    assert res.get() is True

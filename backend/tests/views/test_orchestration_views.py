@@ -1,7 +1,4 @@
-import json
 import time
-import hmac
-import hashlib
 
 import pytest
 import requests

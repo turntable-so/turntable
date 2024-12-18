@@ -253,7 +253,7 @@ django==5.1.3
 django-allauth==0.61.1
     # via dj-rest-auth
 django-celery-beat==2.7.0
-django-celery-results @ git+https://github.com/turntable-so/django-celery-results@17488657252a1fa5dda3e2eb98adc401588d2bcb
+django-celery-results @ git+https://github.com/turntable-so/django-celery-results@46736cb2b03270e02773623112d707f63a33f650
 django-cors-headers==4.6.0
 django-health-check==3.18.3
 django-invitations==2.1.0

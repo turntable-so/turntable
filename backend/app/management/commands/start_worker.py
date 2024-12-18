@@ -1,3 +1,4 @@
+import os
 import subprocess
 
 from django.core.management.base import BaseCommand
@@ -26,6 +27,7 @@ class Command(BaseCommand):
             choices=["solo", "threads", "processes", "gevent", "eventlet"],
             default="threads",
         )
+        parser.add_argument("--worker_name", type=str, default=None)
 
     def handle(self, *args, **options):
         if options["concurrency"] < 2:
@@ -34,6 +36,9 @@ class Command(BaseCommand):
             BASE_CELERY_COMMAND
             + f" --concurrency={options['concurrency']} --pool={options['pool']}"
         )
+        worker_name = options["worker_name"] or os.getenv("WORKER_NAME")
+        if worker_name:
+            celery_command += f" --hostname={worker_name}@h"
         if options["mode"] in ["dev", "dev-internal", "staging"]:
             celery_command = WATCHMEDO_COMMAND + celery_command
 

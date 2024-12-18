@@ -4,7 +4,6 @@ import time
 import uuid
 from datetime import UTC, datetime, timedelta
 
-from app.utils.fields import encrypt
 from celery import current_app, states
 from celery.result import AsyncResult
 from croniter import croniter
@@ -25,6 +24,7 @@ from app.models.resources import DBTResource, Resource
 from app.models.settings import StorageSettings
 from app.models.workspace import Workspace
 from app.services.storage_backends import CustomFileField
+from app.utils.fields import encrypt
 from app.workflows.metadata import sync_metadata
 from app.workflows.orchestration import run_dbt_commands
 

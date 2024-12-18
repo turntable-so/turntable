@@ -31,10 +31,8 @@ class JobViewSet(viewsets.ModelViewSet):
 
     def update(self, request, pk=None):
         workspace = request.user.current_workspace()
-        current_orchestrator = DBTOrchestrator.objects.get(id=pk)
-        serializer = DBTOrchestratorSerializer(
-            instance=current_orchestrator, data=request.data
-        )
+        job = DBTOrchestrator.objects.get(id=pk)
+        serializer = DBTOrchestratorSerializer(instance=job, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(workspace=workspace)
         return Response(serializer.data, status=status.HTTP_200_OK)
