@@ -1,5 +1,6 @@
 import inspect
 import os
+import time
 
 from celery import Task, _state, states
 from celery import chain as celery_chain
@@ -35,6 +36,10 @@ class CustomTask(Task):
         elif self.request.is_eager:
             return chain(*tasks).apply(*tasks, parent_task=self).get()
         return chain(*tasks).apply_async(parent_task=self).get()
+
+
+class CustomTaskNoStatusConsumer(CustomTask):
+    pass
 
 
 def _ensure_self(func):
@@ -82,7 +87,10 @@ def _shared_task(*args, **kwargs):
 
 def task(*args, **kwargs):
     kwargs.setdefault("bind", True)
-    kwargs.setdefault("base", CustomTask)
+    if kwargs.get("status_consumer") is False:
+        kwargs.setdefault("base", CustomTaskNoStatusConsumer)
+    else:
+        kwargs.setdefault("base", CustomTask)
     return _shared_task(*args, **kwargs)
 
 
@@ -134,3 +142,14 @@ class chain(celery_chain):
                 res = t.type(*t.args, **t.kwargs)
             outs.append(res)
         return ChainResult(outs)
+
+
+@task(status_consumer=False)
+def noop(self):
+    pass
+
+
+@task(status_consumer=False)
+def long_running_task(self, duration: int):
+    time.sleep(duration)
+    return True

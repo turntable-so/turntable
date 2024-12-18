@@ -6,6 +6,7 @@ from django.core.cache import cache
 from app.models.workflows import (
     get_periodic_task_key,
 )
+from app.workflows.utils import CustomTaskNoStatusConsumer
 
 
 def task_start_handler(task_id, task, **kwargs):
@@ -93,6 +94,17 @@ def handle_task_state(
     elif sender:  # For success signal
         task_kwargs = sender.request.kwargs  # sender is the task instance
     else:
+        return
+
+    if task:
+        base_task = type(task)
+    elif sender:
+        base_task = type(sender)
+    else:
+        return
+
+    # only send status updates if the task is not a CustomTaskNoStatusConsumer
+    if CustomTaskNoStatusConsumer in base_task.__bases__:
         return
 
     send_status_update(task_id, state, task_kwargs)

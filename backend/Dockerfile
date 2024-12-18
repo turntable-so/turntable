@@ -14,6 +14,7 @@ EXPOSE 8000
 # Install curl and other dependencies
 RUN apt-get update && apt-get install -y \
     curl \
+    procps \
     build-essential \
     libssl-dev \
     libffi-dev \
