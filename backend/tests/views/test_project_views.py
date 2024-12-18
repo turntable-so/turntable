@@ -211,14 +211,14 @@ class TestFileChanges:
             {"contents": "a bunch of sales sql"},
         )
         response = client.get(f"/project/{project.id}/changes/")
-        assert response.status_code == 200
+        assert response.status_code == 200, response.json()
         assert len(response.json()["untracked"]) == 1
         assert len(response.json()["modified"]) == 1
 
     def test_sync_remote(self, client, project):
         client.post(f"/project/{project.id}/clone/")
         response = client.post(f"/project/{project.id}/sync/")
-        assert response.status_code == 200
+        assert response.status_code == 200, response.json()
 
     def test_sync_remote_dirty(self, client, project):
         client.put(
@@ -227,5 +227,5 @@ class TestFileChanges:
         )
 
         response = client.post(f"/project/{project.id}/sync/")
-        assert response.status_code == 400
+        assert response.status_code == 400, response.json()
         assert response.json()["error"] == "UNCOMMITTED_CHANGES"

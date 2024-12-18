@@ -89,16 +89,18 @@ export async function getAssets({
   types,
   sortBy,
   sortOrder,
+  workspaceId,
 }: {
   query: string;
   page: number;
+  workspaceId: string;
   sources?: string[];
   tags?: string[];
   types?: string[];
   sortBy?: string;
   sortOrder?: "asc" | "desc";
 }) {
-  let url = `/assets/?q=${encodeURIComponent(query)}&page=${page}`;
+  let url = `/assets/?q=${encodeURIComponent(query)}&page=${page}&workspace_id=${workspaceId}`;
 
   if (sources && sources.length > 0) {
     url += `&resources=${sources.map(encodeURIComponent).join(",")}`;
@@ -133,14 +135,16 @@ export async function getColumns({
   sources,
   tags,
   types,
+  workspaceId,
 }: {
   query: string;
   page: number;
   sources?: string[];
   tags?: string[];
   types?: string[];
+  workspaceId: string;
 }) {
-  let url = `/columns/?q=${encodeURIComponent(query)}&page=${page}`;
+  let url = `/columns/?q=${encodeURIComponent(query)}&page=${page}&workspace_id=${workspaceId}`;
 
   if (sources && sources.length > 0) {
     url += `&resources=${sources.map(encodeURIComponent).join(",")}`;
@@ -165,8 +169,8 @@ export async function getColumns({
   return data;
 }
 
-export async function getAssetIndex() {
-  const response = await fetcher("/assets/index/", {
+export async function getAssetIndex(workspaceId: string) {
+  const response = await fetcher(`/assets/index/?workspace_id=${workspaceId}`, {
     cookies,
     method: "GET",
   });
@@ -927,7 +931,6 @@ type CreateJobPayload = {
 };
 
 export async function createJob(payload: CreateJobPayload) {
-  console.log(payload);
   const response = await fetcher("/jobs/", {
     cookies,
     method: "POST",

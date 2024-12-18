@@ -11,7 +11,8 @@ def completion(*args, **kwargs):
     start_time = time.time()
 
     user_id = kwargs.pop("user_id")
-    trace = langfuse.trace(user_id=user_id, input=kwargs.get("messages"))
+    tags = kwargs.pop("tags", [])
+    trace = langfuse.trace(user_id=user_id, input=kwargs.get("messages"), tags=tags)
 
     langfuse_payload = {
         "start_time": start_time,

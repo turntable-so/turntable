@@ -4,6 +4,8 @@ import re
 from typing import Iterator, List
 from urllib.parse import unquote
 
+import sentry_sdk
+
 from ai.core.custom_litellm import completion
 from ai.core.models import ChatMessage, ChatRequestBody
 from ai.core.prompts import SYSTEM_PROMPT
@@ -268,8 +270,13 @@ def stream_chat_completion(
     for idx, msg in enumerate(payload.message_history):
         if idx == len(payload.message_history) - 1 and prompt:
             msg.content = prompt
-        if msg.content.strip():
-            message_history.append(msg.model_dump())
+        if not msg.content or msg.content.strip() == "":
+            sentry_sdk.capture_message(
+                f"Empty message content: {payload.message_history}",
+                level="warning",
+            )
+            continue
+        message_history.append(msg.model_dump())
 
     system_prompt = f"""{SYSTEM_PROMPT}
 
@@ -287,7 +294,8 @@ Here are some additional instructions set by the user for you to follow. These a
         model=payload.model,
         messages=messages,
         stream=True,
-        user_id=user_id,
+        user_id=user.id,
+        tags=["chat"],
     )
 
     for chunk in response:

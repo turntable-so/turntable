@@ -6,7 +6,7 @@ import CustomDiffEditor from "@/components/editor/CustomDiffEditor";
 import CustomEditor from "@/components/editor/CustomEditor";
 import InlineTabSearch from "@/components/editor/search-bar/inline-tab-search";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2 } from "lucide-react";
+import { CircleCheck, CircleSlash, Download, Loader2 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useRef } from "react";
 import { useAISidebar } from "./ai/ai-sidebar-context";
@@ -26,6 +26,7 @@ export default function EditorContent({
     downloadFile,
     runQueryPreview,
     compileActiveFile,
+    isApplying,
   } = useFiles();
 
   const editorRef = useRef<any>(null);
@@ -141,6 +142,75 @@ export default function EditorContent({
     );
   }
 
+  if (activeFile?.view === "apply") {
+    const onCancel = () => {
+      setActiveFile({
+        ...activeFile,
+        view: "edit",
+        diff: undefined,
+      });
+    };
+
+    const onApply = () => {
+      setActiveFile(
+        (prev) =>
+          ({
+            ...prev,
+            view: "edit",
+            content: activeFile?.diff?.modified,
+            diff: undefined,
+          }) as OpenedFile,
+      );
+      saveFile(activeFile?.node.path || "", activeFile?.diff?.modified || "");
+    };
+
+    return (
+      <div className="h-full w-full flex flex-col items-center justify-center">
+        <div className="flex gap-2 justify-end w-full my-1">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isApplying}
+          >
+            <CircleSlash className="mr-2 h-4 w-4" />
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            onClick={onApply}
+            disabled={isApplying}
+          >
+            <CircleCheck className="mr-2 h-4 w-4" />
+            Apply
+          </Button>
+        </div>
+        <CustomDiffEditor
+          original={activeFile?.diff?.original || ""}
+          modified={activeFile?.diff?.modified || ""}
+          width={containerWidth - 2}
+          language="sql"
+          options={{
+            minimap: { enabled: false },
+            scrollbar: {
+              vertical: "visible",
+              horizontal: "visible",
+              verticalScrollbarSize: 8,
+              horizontalScrollbarSize: 8,
+              verticalSliderSize: 8,
+              horizontalSliderSize: 8,
+            },
+            lineNumbers: "on",
+            wordWrap: "on",
+            fontSize: 14,
+            lineNumbersMinChars: 3,
+          }}
+          theme="mutedTheme"
+        />
+      </div>
+    );
+  }
+
   if (activeFile?.view === "new") {
     return (
       <div className="h-full w-full flex justify-center text-muted-foreground dark:bg-black bg-white">
@@ -230,22 +300,18 @@ export default function EditorContent({
           () => compileActiveFile(activeFile?.node.name || ""),
         );
 
-        editor.addCommand(
-            monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyL,
-            () => {
-              console.log("woo!");
-              const selection = editor.getSelection();
-              if (selection && !selection.isEmpty()) {
-                const selectedText = editor.getModel()?.getValueInRange(selection);
-                addToChat(
-                  selectedText,
-                  selection.startLineNumber,
-                  selection.endLineNumber,
-                  activeFile?.node.name || ""
-                );
-              }
-            }
-          );
+        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyL, () => {
+          const selection = editor.getSelection();
+          if (selection && !selection.isEmpty()) {
+            const selectedText = editor.getModel()?.getValueInRange(selection);
+            addToChat(
+              selectedText,
+              selection.startLineNumber,
+              selection.endLineNumber,
+              activeFile?.node.name || "",
+            );
+          }
+        });
 
         let addToChatButton: HTMLElement | null = null;
 
@@ -288,28 +354,29 @@ export default function EditorContent({
             addToChatButton.style.transform = "translate(-50%, -100%)";
             addToChatButton.style.zIndex = "1000";
 
-            addToChatButton.onclick = () => {
-              const selectedText = model.getValueInRange(selection);
-              const startLine = selection.startLineNumber;
-              const endLine = selection.endLineNumber;
-              const fileName = activeFile?.node.name || "";
+            addToChatButton.onclick = (event) => {
+              event.stopPropagation();
+              const selection = editor.getSelection();
+              const model = editor.getModel();
+              if (selection && model) {
+                const selectedText = model.getValueInRange(selection);
+                const startLine = selection.startLineNumber;
+                const endLine = selection.endLineNumber;
+                const fileName = activeFile?.node.name || "";
 
-              addToChat(selectedText, startLine, endLine, fileName);
+                addToChat(selectedText, startLine, endLine, fileName);
+                removeAddToChatButton();
 
-              if (addToChatButton) {
-                document.body.removeChild(addToChatButton);
-                addToChatButton = null;
+                editor.setPosition(selection.getEndPosition());
+                editor.setSelection(
+                  new monaco.Selection(
+                    selection.endLineNumber,
+                    selection.endColumn,
+                    selection.endLineNumber,
+                    selection.endColumn,
+                  ),
+                );
               }
-
-              editor.setPosition(selection.getEndPosition());
-              editor.setSelection(
-                new monaco.Selection(
-                  selection.endLineNumber,
-                  selection.endColumn,
-                  selection.endLineNumber,
-                  selection.endColumn,
-                ),
-              );
             };
 
             // Append the button to the body
@@ -341,18 +408,24 @@ export default function EditorContent({
         editor.onDidChangeCursorSelection(() => {
           const selection = editor.getSelection();
           if (selection?.isEmpty() && addToChatButton) {
-            document.body.removeChild(addToChatButton);
-            addToChatButton = null;
+            removeAddToChatButton();
           }
         });
 
         // Optionally remove the button when the user clicks elsewhere
-        editor.onMouseDown(() => {
+        editor.onMouseDown((e) => {
+          const targetElement = e.event.target as HTMLElement;
+          if (addToChatButton && !addToChatButton.contains(targetElement)) {
+            removeAddToChatButton();
+          }
+        });
+
+        function removeAddToChatButton() {
           if (addToChatButton) {
             document.body.removeChild(addToChatButton);
             addToChatButton = null;
           }
-        });
+        }
       }}
     />
   );

@@ -27,3 +27,8 @@ class ChatRequestBody(BaseModel):
     column_links: Optional[List[dict]] = None
     message_history: Optional[List[ChatMessage]] = None
     file_problems: Optional[List[str]] = None
+
+
+class InstantApplyRequestBody(BaseModel):
+    base_file: str
+    change: str
