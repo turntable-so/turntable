@@ -58,10 +58,9 @@ class ScheduledWorkflow(PolymorphicModel):
     clocked = models.OneToOneField(ClockedSchedule, on_delete=models.CASCADE, null=True)
     crontab = models.OneToOneField(CrontabSchedule, on_delete=models.CASCADE, null=True)
     periodic_task = models.OneToOneField(
-        PeriodicTask, on_delete=models.SET_NULL, null=True
+        PeriodicTask, on_delete=models.CASCADE, null=True
     )
     hmac_secret_key = encrypt(models.CharField(max_length=255, null=True))
-    archived = models.BooleanField(default=False)
 
     # derived fields
     aggregation_identifier = models.CharField(
@@ -177,7 +176,7 @@ class ScheduledWorkflow(PolymorphicModel):
             )
 
         # Find and cleanup existing instance before creating new one
-        if self.workflow_type != WorkflowType.WEBHOOK and not self.archived:
+        if self.workflow_type != WorkflowType.WEBHOOK:
             if self.periodic_task:
                 for key, value in self.get_periodic_task_args().items():
                     setattr(self.periodic_task, key, value)
@@ -190,23 +189,10 @@ class ScheduledWorkflow(PolymorphicModel):
         # Create new periodic task
         super().save(*args, **kwargs)
 
-    def archive(self):
-        self.archived = True
-
-        # delete periodic task to ensure it is not run again, but keep schedules for more info
-        if self.periodic_task:
-            self.periodic_task.delete()
-
-        self.periodic_task = None
-        self.save()
-
-    def restore(self):
-        self.archived = False
-        self.save()
-
     def delete(self, *args, **kwargs):
         super().delete(*args, **kwargs)
 
+        # ensure all one-to-one related objects are also deleted
         if self.periodic_task:
             self.periodic_task.delete()
         if self.crontab:

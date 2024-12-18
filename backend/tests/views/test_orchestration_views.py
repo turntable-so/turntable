@@ -65,24 +65,11 @@ class TestOrchestrationViews:
         assert len(response.data["results"]) == 1
         assert PeriodicTask.objects.count() == 1
 
-    def test_delete_and_restore_orchestration(self, client, minimal_scheduled_workflow):
-        orig_periodic_task_id = minimal_scheduled_workflow.periodic_task.id
+    def test_delete_orchestration(self, client, minimal_scheduled_workflow):
         response = client.delete(f"/jobs/{minimal_scheduled_workflow.id}/")
         assert response.status_code == 204
         assert PeriodicTask.objects.count() == 0
-        assert DBTOrchestrator.objects.count() == 1
-        job = DBTOrchestrator.objects.get(id=minimal_scheduled_workflow.id)
-        assert job.archived
-        assert job.periodic_task is None
-
-        response = client.post(f"/jobs/{minimal_scheduled_workflow.id}/restore/")
-        assert PeriodicTask.objects.count() == 1
-        assert response.status_code == 204
-        assert DBTOrchestrator.objects.count() == 1
-        job = DBTOrchestrator.objects.get(id=minimal_scheduled_workflow.id)
-        assert not job.archived
-        assert job.periodic_task is not None
-        assert job.periodic_task.id != orig_periodic_task_id
+        assert DBTOrchestrator.objects.count() == 0
 
     @pytest.mark.parametrize(
         "data",
