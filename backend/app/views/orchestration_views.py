@@ -31,17 +31,19 @@ class JobViewSet(viewsets.ModelViewSet):
 
     def update(self, request, pk=None):
         workspace = request.user.current_workspace()
-        current_orchestrator = DBTOrchestrator.objects.get(id=pk)
-        serializer = DBTOrchestratorSerializer(
-            instance=current_orchestrator, data=request.data
-        )
+        job = DBTOrchestrator.objects.get(id=pk)
+        if job.archived:
+            return Response(status=status.HTTP_410_GONE)
+        serializer = DBTOrchestratorSerializer(instance=job, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(workspace=workspace)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def list(self, request):
         workspace = request.user.current_workspace()
-        data = DBTOrchestrator.objects.filter(workspace=workspace, clocked__isnull=True)
+        data = DBTOrchestrator.objects.filter(
+            workspace=workspace, clocked__isnull=True, archived=False
+        )
         paginator = Pagination()
         paginated_data = paginator.paginate_queryset(data, request)
         serializer = DBTOrchestratorSerializer(paginated_data, many=True)
@@ -56,16 +58,32 @@ class JobViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, pk=None):
         data = DBTOrchestrator.objects.get(id=pk)
+        if data.archived:
+            return Response(status=status.HTTP_410_GONE)
         serializer = DBTOrchestratorSerializer(data)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def destroy(self, request, pk=None):
-        DBTOrchestrator.objects.get(id=pk).delete()
+        job = DBTOrchestrator.objects.get(id=pk)
+        if job.archived:
+            return Response(status=status.HTTP_410_GONE)
+        job.archive()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=["post"])
+    def restore(self, request, pk=None):
+        job = DBTOrchestrator.objects.get(id=pk)
+        if job.archived:
+            job.restore()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["post"])
     def start(self, request, pk=None):
-        data = DBTOrchestrator.objects.get(id=pk).schedule_now()
+        job = DBTOrchestrator.objects.get(id=pk)
+        if job.archived:
+            return Response(status=status.HTTP_410_GONE)
+        data = job.schedule_now()
         serializer = DBTOrchestratorSerializer(data)
         return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 
@@ -81,6 +99,8 @@ class JobViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["get"])
     def analytics(self, request, pk=None):
         job = DBTOrchestrator.objects.get(id=pk)
+        if job.archived:
+            return Response(status=status.HTTP_410_GONE)
 
         n = 100
         runs_queryset = job.most_recent(n=n)
@@ -105,7 +125,7 @@ class JobViewSet(viewsets.ModelViewSet):
 class RunViewSet(viewsets.ModelViewSet):
     def list(self, request):
         workspace = request.user.current_workspace()
-        kwargs = {"workspace_id": workspace.id}
+        kwargs = {"workspace_id": workspace.id, "archived": False}
         if "dbtresource_id" in request.query_params:
             kwargs["dbtresource_id"] = request.query_params.get("dbtresource_id")
         data = DBTOrchestrator.get_results_with_filters(**kwargs)
@@ -116,6 +136,9 @@ class RunViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, pk=None):
         data = TaskResult.objects.get(task_id=pk)
+        job = data.periodic_task
+        if job is not None and job.archived:
+            return Response(status=status.HTTP_410_GONE)
         serializer = TaskResultWithSubtasksSerializer(data)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

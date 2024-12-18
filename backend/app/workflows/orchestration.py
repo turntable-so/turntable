@@ -66,12 +66,15 @@ def run_dbt_command(
     stream: bool = False,
     buffer_interval: float = STREAM_BUFFER_INTERVAL,
 ):
+    repo_override = (
+        GitRepo(repo_override_dir) if os.path.exists(repo_override_dir) else None
+    )
     dbt_resource = DBTResource.objects.get(id=dbtresource_id)
     if not dbt_resource.jobs_allowed:
         raise Exception("Cannot orchestrate dbt commands on development resources")
 
     with dbt_resource.dbt_repo_context(
-        project_id=project_id, isolate=True, repo_override=GitRepo(repo_override_dir)
+        project_id=project_id, isolate=True, repo_override=repo_override
     ) as (dbtproj, project_dir, _):
         success = None
         stdout = ""
@@ -132,10 +135,14 @@ def save_artifacts_task(
     from app.models.resources import ArtifactSource
     from app.models.workflows import ArtifactType, TaskArtifact
 
+    repo_override = (
+        GitRepo(repo_override_dir) if os.path.exists(repo_override_dir) else None
+    )
+
     dbt_resource = DBTResource.objects.get(id=dbtresource_id)
     stdout, stderr, success = dbt_resource.upload_artifacts(
         artifact_source=ArtifactSource.ORCHESTRATION,
-        repo_override=GitRepo(repo_override_dir),
+        repo_override=repo_override,
         export=True,
     )
     if not success:
@@ -146,7 +153,7 @@ def save_artifacts_task(
             {},
         )
     with dbt_resource.dbt_repo_context(
-        project_id=project_id, repo_override=GitRepo(repo_override_dir)
+        project_id=project_id, repo_override=repo_override
     ) as (dbtproj, _, _):
         # Save a zip of the target directory
         with tempfile.TemporaryDirectory() as tmp_dir:

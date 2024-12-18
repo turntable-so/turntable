@@ -34,7 +34,7 @@ class CustomTask(Task):
         if self.request.called_directly:
             return chain(*tasks)._run_directly()
         elif self.request.is_eager:
-            return chain(*tasks).apply(*tasks, parent_task=self).get()
+            return chain(*tasks).apply(parent_task=self).get()
         return chain(*tasks).apply_async(parent_task=self).get()
 
 

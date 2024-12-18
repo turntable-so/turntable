@@ -5,11 +5,11 @@ from contextlib import contextmanager
 
 from django.conf import settings
 from django.db import models
-from app.models.user import User
 from git import Repo as GitRepo
 from git.exc import GitCommandError
 
 from app.models.repository import Repository
+from app.models.user import User
 from app.models.workspace import Workspace
 
 
