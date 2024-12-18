@@ -1,11 +1,12 @@
 import { type OpenedFile, useFiles } from "@/app/contexts/FilesContext";
+import { useThrottleState } from "@/app/hooks/use-throttle-state";
 import { useWebSocket } from "@/app/hooks/use-websocket";
 import getUrl from "@/app/url";
 import { Button } from "@/components/ui/button";
 import { AuthActions } from "@/lib/auth";
 import { Copy } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import {
@@ -25,17 +26,22 @@ interface ResponseDisplayProps {
 
 export default function ResponseDisplay({ content }: ResponseDisplayProps) {
   const { resolvedTheme } = useTheme();
-  const { setActiveFile, activeFile, isApplying, setIsApplying } = useFiles();
+  const { activeFile, setActiveFile, isApplying, setIsApplying } = useFiles();
   const [_, copy] = useCopyToClipboard();
   const syntaxStyle = resolvedTheme === "dark" ? darkStyle : lightStyle;
-  const [error, setError] = useState<string | null>(null);
 
+  const [error, setError] = useState<string | null>(null);
   const { getToken } = AuthActions();
   const accessToken = getToken("access");
 
-  const activeFileRef = useRef<OpenedFile | null>(null);
+  // A local throttled state for partial diff updates
+  const [throttledFile, throttledSetFile] = useThrottleState<OpenedFile | null>(
+    activeFile,
+    350 // Throttle delay in ms
+  );
+
+  // We store the appended content in a ref
   const accumulatedContent = useRef<string>("");
-  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const { startWebSocket, sendMessage, stopWebSocket } =
     useWebSocket<InstantApplyPayload>(
@@ -44,6 +50,8 @@ export default function ResponseDisplay({ content }: ResponseDisplayProps) {
         onOpen: ({ payload }) => {
           sendMessage(JSON.stringify(payload));
           setIsApplying(true);
+
+          // Create a new active file with apply mode
           const newActiveFile = {
             ...activeFile,
             view: "apply",
@@ -52,31 +60,29 @@ export default function ResponseDisplay({ content }: ResponseDisplayProps) {
               modified: "",
             },
           } as OpenedFile;
+
+          // Update both the active file and throttled file state
           setActiveFile(newActiveFile);
+          throttledSetFile(newActiveFile); // Set the initial throttled state
         },
         onMessage: ({ event }) => {
           const data = JSON.parse(event.data);
+
           if (data.type === "message_chunk") {
+            // Accumulate chunk data
             accumulatedContent.current += data.content;
 
-            if (!updateTimeoutRef.current) {
-              updateTimeoutRef.current = setTimeout(() => {
-                setActiveFile((prev: OpenedFile) => {
-                  return {
-                    ...prev,
-                    view: "apply",
-                    diff: {
-                      original: prev?.content ?? "",
-                      modified:
-                        (prev?.diff?.modified ?? "") +
-                        accumulatedContent.current,
-                    },
-                  } as OpenedFile;
-                });
-                accumulatedContent.current = "";
-                updateTimeoutRef.current = null;
-              }, 350);
-            }
+            // Throttle the "apply" update
+            throttledSetFile((prev) => {
+              return {
+                ...prev,
+                view: "apply",
+                diff: {
+                  original: prev?.content ?? "",
+                  modified: accumulatedContent.current,
+                },
+              };
+            });
           } else if (data.type === "message_end") {
             setIsApplying(false);
             stopWebSocket();
@@ -92,15 +98,26 @@ export default function ResponseDisplay({ content }: ResponseDisplayProps) {
           console.error("WebSocket error:", event);
           setIsApplying(false);
           stopWebSocket();
-          activeFileRef.current = null;
           accumulatedContent.current = "";
         },
       },
     );
 
+  /**
+   * Whenever our throttledFile state actually *applies*, 
+   * update the global activeFile in context. This ensures 
+   * we only re-render the UI ~once every 350ms.
+   */
+  useEffect(() => {
+    console.log("throttledFile", throttledFile);
+    if (throttledFile) {
+      setActiveFile(throttledFile);
+    }
+  }, [throttledFile]);
+
+  // Handler for the "Apply" button in code blocks
   const handleApply = (code: string) => {
-    if (!activeFile || isApplying || typeof activeFile.content !== "string")
-      return;
+    if (!activeFile || isApplying || typeof activeFile.content !== "string") return;
     startWebSocket({
       base_file: activeFile.content,
       change: code,
@@ -132,11 +149,7 @@ export default function ResponseDisplay({ content }: ResponseDisplayProps) {
                   {codeString}
                 </SyntaxHighlighter>
                 <div className="flex gap-2 p-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => copy(codeString)}
-                  >
+                  <Button variant="outline" size="sm" onClick={() => copy(codeString)}>
                     <Copy className="w-4 h-4 mr-2" />
                     Copy
                   </Button>
