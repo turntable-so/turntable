@@ -271,7 +271,7 @@ function EditorPageContent() {
           <div className="h-full" ref={topBarRef}>
             <FileTabs
               topBarRef={topBarRef as any}
-              topBarWidth={topBarWidth as number}
+              topBarWidth={topBarWidth + 14 as number}
             />
             <div className="w-full h-full">
               <PanelGroup direction="vertical" className="h-fit">
