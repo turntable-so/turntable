@@ -190,6 +190,8 @@ type FilesContextType = {
       file_name: string;
     } | null>
   >;
+  isApplying: boolean;
+  setIsApplying: Dispatch<SetStateAction<boolean>>;
 };
 
 type QueryPreview = {
@@ -296,6 +298,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     cols: any[];
     file_name: string;
   } | null>(null);
+  const [isApplying, setIsApplying] = useState(false);
 
   const fetchBranch = async (id: string) => {
     if (id) {
@@ -942,6 +945,8 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         isSqlFile,
         queryPreviewData,
         setQueryPreviewData,
+        isApplying,
+        setIsApplying,
       }}
     >
       {children}

@@ -3,7 +3,7 @@ import { useWebSocket } from "@/app/hooks/use-websocket";
 import getUrl from "@/app/url";
 import { Button } from "@/components/ui/button";
 import { AuthActions } from "@/lib/auth";
-import { Copy, Loader2 } from "lucide-react";
+import { Copy } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
@@ -25,11 +25,9 @@ interface ResponseDisplayProps {
 
 export default function ResponseDisplay({ content }: ResponseDisplayProps) {
   const { resolvedTheme } = useTheme();
-  const { setActiveFile, activeFile } = useFiles();
+  const { setActiveFile, activeFile, isApplying, setIsApplying } = useFiles();
   const [_, copy] = useCopyToClipboard();
   const syntaxStyle = resolvedTheme === "dark" ? darkStyle : lightStyle;
-
-  const [isApplying, setIsApplying] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const { getToken } = AuthActions();
@@ -37,6 +35,7 @@ export default function ResponseDisplay({ content }: ResponseDisplayProps) {
 
   const activeFileRef = useRef<OpenedFile | null>(null);
   const accumulatedContent = useRef<string>("");
+  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const { startWebSocket, sendMessage, stopWebSocket } =
     useWebSocket<InstantApplyPayload>(
@@ -59,17 +58,27 @@ export default function ResponseDisplay({ content }: ResponseDisplayProps) {
           const data = JSON.parse(event.data);
           if (data.type === "message_chunk") {
             accumulatedContent.current += data.content;
+
+            if (!updateTimeoutRef.current) {
+              updateTimeoutRef.current = setTimeout(() => {
+                setActiveFile((prev: OpenedFile) => {
+                  return {
+                    ...prev,
+                    view: "apply",
+                    diff: {
+                      original: prev?.content ?? "",
+                      modified:
+                        (prev?.diff?.modified ?? "") +
+                        accumulatedContent.current,
+                    },
+                  } as OpenedFile;
+                });
+                accumulatedContent.current = "";
+                updateTimeoutRef.current = null;
+              }, 350);
+            }
           } else if (data.type === "message_end") {
             setIsApplying(false);
-            setActiveFile((prev) => {
-              return {
-                ...prev,
-                diff: {
-                  original: prev?.content ?? "",
-                  modified: prev?.diff?.modified + accumulatedContent.current,
-                },
-              } as OpenedFile;
-            });
             stopWebSocket();
             accumulatedContent.current = "";
           } else if (data.type === "error") {
@@ -137,14 +146,7 @@ export default function ResponseDisplay({ content }: ResponseDisplayProps) {
                     disabled={isApplying}
                     onClick={() => handleApply(codeString)}
                   >
-                    {isApplying ? (
-                      <div className="flex items-center">
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />{" "}
-                        Applying
-                      </div>
-                    ) : (
-                      "Apply"
-                    )}
+                    {isApplying ? "Applying" : "Apply"}
                   </Button>
                 </div>
               </div>

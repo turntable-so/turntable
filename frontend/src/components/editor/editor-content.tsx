@@ -6,7 +6,7 @@ import CustomDiffEditor from "@/components/editor/CustomDiffEditor";
 import CustomEditor from "@/components/editor/CustomEditor";
 import InlineTabSearch from "@/components/editor/search-bar/inline-tab-search";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2 } from "lucide-react";
+import { CircleCheck, CircleSlash, Download, Loader2 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useRef } from "react";
 import { useAISidebar } from "./ai/ai-sidebar-context";
@@ -26,6 +26,7 @@ export default function EditorContent({
     downloadFile,
     runQueryPreview,
     compileActiveFile,
+    isApplying,
   } = useFiles();
 
   const editorRef = useRef<any>(null);
@@ -166,10 +167,21 @@ export default function EditorContent({
     return (
       <div className="h-full w-full flex flex-col items-center justify-center">
         <div className="flex gap-2 justify-end w-full my-1">
-          <Button size="sm" variant="outline" onClick={onCancel}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isApplying}
+          >
+            <CircleSlash className="mr-2 h-4 w-4" />
             Cancel
           </Button>
-          <Button size="sm" variant="outline" onClick={onApply}>
+          <Button
+            size="sm"
+            onClick={onApply}
+            disabled={isApplying}
+          >
+            <CircleCheck className="mr-2 h-4 w-4" />
             Apply
           </Button>
         </div>
