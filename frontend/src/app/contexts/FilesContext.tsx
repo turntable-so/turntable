@@ -39,7 +39,7 @@ export const MAX_RECENT_COMMANDS = 5;
 
 type NodeType = "file" | "directory" | "url" | "loader" | "error";
 
-type FileView = "edit" | "diff" | "new";
+type FileView = "edit" | "diff" | "new" | "apply";
 
 export type FileNode = {
   name: string;
@@ -80,7 +80,7 @@ type FilesContextType = {
   openLoader: ({ id, name }: { id: string; name: string }) => void;
   closeFile: (file: OpenedFile) => void;
   activeFile: OpenedFile | null;
-  setActiveFile: (file: OpenedFile | null) => void;
+  setActiveFile: React.Dispatch<React.SetStateAction<OpenedFile | null>>;
   updateFileContent: (path: string, content: string) => void;
   updateLoaderContent: ({
     path,
@@ -190,6 +190,8 @@ type FilesContextType = {
       file_name: string;
     } | null>
   >;
+  isApplying: boolean;
+  setIsApplying: Dispatch<SetStateAction<boolean>>;
 };
 
 type QueryPreview = {
@@ -296,6 +298,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     cols: any[];
     file_name: string;
   } | null>(null);
+  const [isApplying, setIsApplying] = useState(false);
 
   const fetchBranch = async (id: string) => {
     if (id) {
@@ -942,6 +945,8 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         isSqlFile,
         queryPreviewData,
         setQueryPreviewData,
+        isApplying,
+        setIsApplying,
       }}
     >
       {children}
