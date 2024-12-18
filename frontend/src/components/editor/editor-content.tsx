@@ -354,28 +354,29 @@ export default function EditorContent({
             addToChatButton.style.transform = "translate(-50%, -100%)";
             addToChatButton.style.zIndex = "1000";
 
-            addToChatButton.onclick = () => {
-              const selectedText = model.getValueInRange(selection);
-              const startLine = selection.startLineNumber;
-              const endLine = selection.endLineNumber;
-              const fileName = activeFile?.node.name || "";
+            addToChatButton.onclick = (event) => {
+              event.stopPropagation();
+              const selection = editor.getSelection();
+              const model = editor.getModel();
+              if (selection && model) {
+                const selectedText = model.getValueInRange(selection);
+                const startLine = selection.startLineNumber;
+                const endLine = selection.endLineNumber;
+                const fileName = activeFile?.node.name || "";
 
-              addToChat(selectedText, startLine, endLine, fileName);
+                addToChat(selectedText, startLine, endLine, fileName);
+                removeAddToChatButton();
 
-              if (addToChatButton) {
-                document.body.removeChild(addToChatButton);
-                addToChatButton = null;
+                editor.setPosition(selection.getEndPosition());
+                editor.setSelection(
+                  new monaco.Selection(
+                    selection.endLineNumber,
+                    selection.endColumn,
+                    selection.endLineNumber,
+                    selection.endColumn,
+                  ),
+                );
               }
-
-              editor.setPosition(selection.getEndPosition());
-              editor.setSelection(
-                new monaco.Selection(
-                  selection.endLineNumber,
-                  selection.endColumn,
-                  selection.endLineNumber,
-                  selection.endColumn,
-                ),
-              );
             };
 
             // Append the button to the body
@@ -407,18 +408,24 @@ export default function EditorContent({
         editor.onDidChangeCursorSelection(() => {
           const selection = editor.getSelection();
           if (selection?.isEmpty() && addToChatButton) {
-            document.body.removeChild(addToChatButton);
-            addToChatButton = null;
+            removeAddToChatButton();
           }
         });
 
         // Optionally remove the button when the user clicks elsewhere
-        editor.onMouseDown(() => {
+        editor.onMouseDown((e) => {
+          const targetElement = e.event.target as HTMLElement;
+          if (addToChatButton && !addToChatButton.contains(targetElement)) {
+            removeAddToChatButton();
+          }
+        });
+
+        function removeAddToChatButton() {
           if (addToChatButton) {
             document.body.removeChild(addToChatButton);
             addToChatButton = null;
           }
-        });
+        }
       }}
     />
   );
