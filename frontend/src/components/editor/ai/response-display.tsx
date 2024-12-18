@@ -37,7 +37,7 @@ export default function ResponseDisplay({ content }: ResponseDisplayProps) {
   // A local throttled state for partial diff updates
   const [throttledFile, throttledSetFile] = useThrottleState<OpenedFile | null>(
     activeFile,
-    350 // Throttle delay in ms
+    1000 // Throttle delay in ms
   );
 
   // We store the appended content in a ref
@@ -106,7 +106,7 @@ export default function ResponseDisplay({ content }: ResponseDisplayProps) {
   /**
    * Whenever our throttledFile state actually *applies*, 
    * update the global activeFile in context. This ensures 
-   * we only re-render the UI ~once every 350ms.
+   * we only re-render the UI ~once every X ms.
    */
   useEffect(() => {
     if (throttledFile) {
