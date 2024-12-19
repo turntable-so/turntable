@@ -26,6 +26,8 @@ interface ChatControlsProps {
   handleSubmit: (e: React.FormEvent) => void;
   stopWebSocket: () => void;
   autoFocus?: boolean;
+  input?: string;
+  setInput?: React.Dispatch<React.SetStateAction<string>>;
 }
 
 export default function ChatControls({
@@ -33,19 +35,21 @@ export default function ChatControls({
   handleSubmit,
   stopWebSocket,
   autoFocus = false,
+  input: propInput,
+  setInput: propSetInput,
 }: ChatControlsProps) {
   const {
-    input,
-    setInput,
+    input: contextInput,
+    setInput: contextSetInput,
     isLoading,
+    selectedModel,
+    setSelectedModel,
     aiActiveFile,
     setAiActiveFile,
     aiLineageContext,
     setAiLineageContext,
     contextFiles,
     setContextFiles,
-    selectedModel,
-    setSelectedModel,
     aiContextPreview,
     setAiContextPreview,
     aiCompiledSql,
@@ -55,6 +59,10 @@ export default function ChatControls({
     aiCustomSelections,
     setAiCustomSelections,
   } = useAISidebar();
+
+  // Use props if provided, otherwise use context
+  const input = propInput !== undefined ? propInput : contextInput;
+  const setInput = propSetInput !== undefined ? propSetInput : contextSetInput;
 
   const [isFileExplorerOpen, setIsFileExplorerOpen] = useState(false);
   const numberOfLineageFiles = aiLineageContext?.assets?.length || 0;
