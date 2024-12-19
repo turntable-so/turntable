@@ -140,13 +140,23 @@ export default function AiSidebarChat() {
   };
 
   const handleEditMessage = (index: number, newContent: string) => {
-    const newMessageHistory = messageHistory.slice(0, index + 1);
+    const newMessageHistory = [...messageHistory];
+
     newMessageHistory[index] = {
       ...newMessageHistory[index],
       content: newContent,
     };
+
+    if (
+      newMessageHistory[index + 1] &&
+      newMessageHistory[index + 1].role === "assistant"
+    ) {
+      newMessageHistory.splice(index + 1);
+    } else {
+      newMessageHistory.splice(index + 1);
+    }
+
     setMessageHistory(newMessageHistory);
-    setMessageHistory((prev) => prev.slice(0, index + 1));
     stopWebSocket();
     handleSubmit(null, newMessageHistory);
   };

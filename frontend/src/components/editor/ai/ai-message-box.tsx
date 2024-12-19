@@ -25,6 +25,7 @@ export default function AiMessageBox({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleEdit = () => {
+    setInput(message.content);
     setIsEditing(true);
   };
 
@@ -63,7 +64,6 @@ export default function AiMessageBox({
   return (
     <div
       ref={containerRef}
-      key={message.id}
       className={`${
         message.role === "user"
           ? "bg-background p-2 rounded-md border border-transparent hover:border-muted-foreground"
@@ -79,6 +79,8 @@ export default function AiMessageBox({
           handleSubmit={handleSubmit}
           stopWebSocket={stopWebSocket}
           autoFocus={true}
+          input={input}
+          setInput={setInput}
         />
       ) : message.role === "user" ? (
         <p className="whitespace-pre-wrap">{message.content}</p>
