@@ -9,6 +9,7 @@ from app.workflows.utils import long_running_task
 
 
 # test different task durations to ensure shutdown is happening after the task is done
+# don't resume worker for shortest test. For some reason, doesn't pass for github actions.
 @pytest.mark.parametrize("duration,resume_worker", [(4, False), (9, True), (14, True)])
 def test_suspend_worker(custom_celery, test_queue_name, duration, resume_worker):
     res = long_running_task.si(duration=duration).apply_async()
