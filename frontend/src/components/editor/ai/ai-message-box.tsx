@@ -66,7 +66,7 @@ export default function AiMessageBox({
       ref={containerRef}
       className={`${
         message.role === "user"
-          ? "bg-background p-2 rounded-md border border-transparent hover:border-muted-foreground"
+          ? "bg-white dark:bg-background p-2 rounded-md border border-transparent hover:border-muted-foreground"
           : isLastMessage
             ? "p-1 mb-96"
             : "p-1 mb-8"
