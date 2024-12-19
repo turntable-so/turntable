@@ -203,7 +203,7 @@ const FilesContext = createContext<FilesContextType | undefined>(undefined);
 
 const defaultFileTab = {
   node: {
-    name: "New tab",
+    name: "new_tab",
     path: `Untitled-${crypto.randomUUID()}`,
     type: "file",
   },
@@ -591,10 +591,10 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         prev.map((f) =>
           f.node.path === path
             ? {
-                ...f,
-                content,
-                node: { ...f.node, type: newNodeType },
-              }
+              ...f,
+              content,
+              node: { ...f.node, type: newNodeType },
+            }
             : f,
         ),
       );
@@ -655,7 +655,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
   const createNewFileTab = () => {
     const newTab: OpenedFile = {
       node: {
-        name: "New tab",
+        name: "new_tab",
         path: `Untitled-${crypto.randomUUID()}`,
         type: "file",
       },
