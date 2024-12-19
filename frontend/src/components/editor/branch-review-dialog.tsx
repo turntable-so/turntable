@@ -1,22 +1,16 @@
 "use client";
 
+import { sync } from "@/app/actions/actions";
 import { useFiles } from "@/app/contexts/FilesContext";
+import useSession from "@/app/hooks/use-session";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DiffEditor } from "@monaco-editor/react";
+import { GitMerge, Loader2, Undo2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
-import { toast } from "sonner";
-import { GitMerge, Loader2, Undo2 } from "lucide-react";
-import useSession from "@/app/hooks/use-session";
-import { sync } from "@/app/actions/actions";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-  TooltipProvider,
-} from "../ui/tooltip";
 interface BranchReviewDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -212,48 +206,52 @@ export default function BranchReviewDialog({
                       </Button>
                     </div>
                   </div>
-                  <div className="gap-1 flex flex-col overflow-y-scroll max-h-[300px]">
-                    {(!changes || changes.length === 0) && (
-                      <div className="text-xs text-muted-foreground">
-                        No changes to commit
-                      </div>
-                    )}
-                    {(changes || []).map((change: any, index: number) => (
-                      <div
-                        className={`truncate text-xs flex justify-between py-0.5 hover:bg-muted rounded-md hover:cursor-pointer ${selectedChangeIndex === index ? "bg-muted" : ""}`}
-                        key={index}
-                      >
-                        <div className="flex items-center gap-2">
-                          <Checkbox
-                            checked={selectedFilePaths.includes(change.path)}
-                            onCheckedChange={(checked) =>
-                              handleCheckboxChange(
-                                checked as boolean,
-                                change.path,
-                              )
-                            }
-                          />
-                          <div onClick={() => setSelectedChangeIndex(index)}>
-                            {change.path.split("/").pop()}
-                          </div>
+                  <div className="mt-2 h-[300px] overflow-y-auto">
+                    <div className="flex flex-col gap-1">
+                      {(!changes || changes.length === 0) && (
+                        <div className="text-xs text-muted-foreground">
+                          No changes to commit
                         </div>
-                        {change.type === "untracked" && (
-                          <Badge variant="outline" className="text-green-500">
-                            A
-                          </Badge>
-                        )}
-                        {change.type === "modified" && (
-                          <Badge variant="outline" className="text-blue-500">
-                            M
-                          </Badge>
-                        )}
-                        {change.type === "deleted" && (
-                          <Badge variant="outline" className="text-red-500">
-                            D
-                          </Badge>
-                        )}
-                      </div>
-                    ))}
+                      )}
+                      {(changes || []).map((change: any, index: number) => (
+                        <div
+                          className={`min-h-[24px] flex-shrink-0 truncate text-xs flex justify-between px-2 hover:bg-muted rounded-md hover:cursor-pointer ${
+                            selectedChangeIndex === index ? "bg-muted" : ""
+                          }`}
+                          key={index}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              checked={selectedFilePaths.includes(change.path)}
+                              onCheckedChange={(checked) =>
+                                handleCheckboxChange(
+                                  checked as boolean,
+                                  change.path,
+                                )
+                              }
+                            />
+                            <div onClick={() => setSelectedChangeIndex(index)}>
+                              {change.path.split("/").pop()}
+                            </div>
+                          </div>
+                          {change.type === "untracked" && (
+                            <Badge variant="outline" className="text-green-500">
+                              A
+                            </Badge>
+                          )}
+                          {change.type === "modified" && (
+                            <Badge variant="outline" className="text-blue-500">
+                              M
+                            </Badge>
+                          )}
+                          {change.type === "deleted" && (
+                            <Badge variant="outline" className="text-red-500">
+                              D
+                            </Badge>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
                 <div className="mt-4">
@@ -306,7 +304,7 @@ export default function BranchReviewDialog({
 
           <div className="pl-1 w-3/4">
             {selectedChangeIndex !== undefined &&
-              changes?.[selectedChangeIndex] ? (
+            changes?.[selectedChangeIndex] ? (
               <div className="h-[98%]">
                 <div className="text-sm text-muted-foreground font-medium mb-2 text-center items-center">
                   {changes[selectedChangeIndex].path}
