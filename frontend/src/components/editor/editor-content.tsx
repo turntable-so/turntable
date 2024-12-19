@@ -31,6 +31,12 @@ export default function EditorContent({
 
   const editorRef = useRef<any>(null);
   const monacoRef = useRef<any>(null);
+  const addToChatButtonRef = useRef<HTMLElement | null>(null);
+  const editorDomNodeRef = useRef<HTMLElement | null>(null);
+
+  // We'll keep a reference to the "Add To Chat" button here
+  let addToChatButton: HTMLElement | null = null;
+  let editorDomNode: HTMLElement | null = null;
 
   // Define your custom theme
   const customTheme = {
@@ -70,6 +76,33 @@ export default function EditorContent({
       monacoRef.current.editor.setTheme("mutedTheme");
     }
   }, [resolvedTheme]);
+
+  const removeAddToChatButton = () => {
+    if (addToChatButtonRef.current) {
+      document.body.removeChild(addToChatButtonRef.current);
+      addToChatButtonRef.current = null;
+    }
+  };
+
+  // Handle global clicks outside the editor or the button to remove the AddToChat button
+  const handleGlobalClick = (event: MouseEvent) => {
+    if (addToChatButtonRef.current) {
+      const target = event.target as HTMLElement;
+      const clickedInsideButton = addToChatButtonRef.current.contains(target);
+      const clickedInsideEditor =
+        editorDomNodeRef.current && editorDomNodeRef.current.contains(target);
+      if (!clickedInsideButton && !clickedInsideEditor) {
+        removeAddToChatButton();
+      }
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener("click", handleGlobalClick);
+    return () => {
+      document.removeEventListener("click", handleGlobalClick);
+    };
+  }, []);
 
   if (activeFile?.node?.type === "error") {
     if (activeFile.content === "FILE_EXCEEDS_SIZE_LIMIT") {
@@ -176,11 +209,7 @@ export default function EditorContent({
             <CircleSlash className="mr-2 h-4 w-4" />
             Cancel
           </Button>
-          <Button
-            size="sm"
-            onClick={onApply}
-            disabled={isApplying}
-          >
+          <Button size="sm" onClick={onApply} disabled={isApplying}>
             <CircleCheck className="mr-2 h-4 w-4" />
             Apply
           </Button>
@@ -284,6 +313,9 @@ export default function EditorContent({
 
         editor.updateOptions({ theme: "mutedTheme" });
 
+        // Store the editor DOM node for global click checks
+        editorDomNode = editor.getDomNode() as HTMLElement;
+
         // Prevent default behavior for cmd+s
         editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
           saveFile(activeFile?.node.path || "", editor.getValue());
@@ -313,37 +345,28 @@ export default function EditorContent({
           }
         });
 
-        let addToChatButton: HTMLElement | null = null;
-
         editor.onMouseUp((e) => {
           const selection = editor.getSelection();
           const model = editor.getModel();
 
           if (selection && !selection.isEmpty()) {
             const position = selection.getStartPosition();
-
-            // Get the pixel position of the start of the selection
             const pixelPosition = editor.getScrolledVisiblePosition(position);
-
             if (!pixelPosition) {
               return;
             }
 
+            // Remove any existing button
+            removeAddToChatButton();
+
             // Get the editor's DOM node and its position on the page
-            const editorDomNode = editor.getDomNode() as HTMLElement;
             const editorRect = editorDomNode.getBoundingClientRect();
 
-            // Calculate the absolute position of the pixelPosition relative to the page
+            // Calculate absolute position of the start of selection
             const absoluteLeft =
               editorRect.left + pixelPosition.left - editor.getScrollLeft();
             const absoluteTop =
               editorRect.top + pixelPosition.top - editor.getScrollTop();
-
-            // Remove any existing button
-            if (addToChatButton) {
-              document.body.removeChild(addToChatButton);
-              addToChatButton = null;
-            }
 
             addToChatButton = document.createElement("button");
             addToChatButton.textContent = "Add to Chat (⌘L)";
@@ -353,6 +376,7 @@ export default function EditorContent({
             addToChatButton.style.top = `${absoluteTop}px`;
             addToChatButton.style.transform = "translate(-50%, -100%)";
             addToChatButton.style.zIndex = "1000";
+            addToChatButtonRef.current = addToChatButton;
 
             addToChatButton.onclick = (event) => {
               event.stopPropagation();
@@ -381,51 +405,26 @@ export default function EditorContent({
 
             // Append the button to the body
             document.body.appendChild(addToChatButton);
-
-            // Ensure the button is within the viewport
-            const buttonRect = addToChatButton.getBoundingClientRect();
-            const withinViewport =
-              buttonRect.top >= 0 &&
-              buttonRect.left >= 0 &&
-              buttonRect.bottom <= window.innerHeight &&
-              buttonRect.right <= window.innerWidth;
-
-            if (!withinViewport) {
-              // Center the button if it's outside the viewport
-              addToChatButton.style.left = `${window.innerWidth / 2}px`;
-              addToChatButton.style.top = `${window.innerHeight / 2}px`;
-            }
           } else {
             // Remove the button if selection is empty
-            if (addToChatButton) {
-              document.body.removeChild(addToChatButton);
-              addToChatButton = null;
-            }
+            removeAddToChatButton();
           }
         });
 
         // Remove the button when the selection changes and becomes empty
         editor.onDidChangeCursorSelection(() => {
           const selection = editor.getSelection();
-          if (selection?.isEmpty() && addToChatButton) {
+          if (selection?.isEmpty()) {
             removeAddToChatButton();
           }
         });
 
-        // Optionally remove the button when the user clicks elsewhere
-        editor.onMouseDown((e) => {
-          const targetElement = e.event.target as HTMLElement;
-          if (addToChatButton && !addToChatButton.contains(targetElement)) {
-            removeAddToChatButton();
-          }
-        });
+        editorDomNodeRef.current = editor.getDomNode() as HTMLElement;
 
-        function removeAddToChatButton() {
-          if (addToChatButton) {
-            document.body.removeChild(addToChatButton);
-            addToChatButton = null;
-          }
-        }
+        document.addEventListener("click", handleGlobalClick);
+        editor.onDidDispose(() => {
+          document.removeEventListener("click", handleGlobalClick);
+        });
       }}
     />
   );
