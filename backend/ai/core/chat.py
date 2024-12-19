@@ -239,6 +239,7 @@ def stream_chat_completion(
     dbt_details: DBTCoreDetails | None = None,
     user_id: str | None = None,
     workspace_instructions: str | None = None,
+    tags: List[str] | None = None,
 ) -> Iterator[str]:
     if payload.model.startswith("claude"):
         api_key = api_keys["anthropic"]
@@ -294,8 +295,8 @@ Here are some additional instructions set by the user for you to follow. These a
         model=payload.model,
         messages=messages,
         stream=True,
-        user_id=user.id,
-        tags=["chat"],
+        user_id=user_id,
+        tags=["chat", *(tags or [])],
     )
 
     for chunk in response:
