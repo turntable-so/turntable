@@ -115,7 +115,7 @@ export default function ChatControls({
           </Button>
         </div>
       )}
-      <div className="flex flex-col bg-background rounded-md p-2 gap-2">
+      <div className="flex flex-col bg-white dark:bg-background rounded-md p-2 gap-2">
         <div className="flex gap-1 flex-wrap min-h-6">
           <div
             className="hover:bg-muted rounded-md px-0.5 cursor-pointer border flex items-center justify-center relative"
