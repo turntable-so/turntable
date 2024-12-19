@@ -37,7 +37,7 @@ export default function ResponseDisplay({ content }: ResponseDisplayProps) {
   // A local throttled state for partial diff updates
   const [throttledFile, throttledSetFile] = useThrottleState<OpenedFile | null>(
     activeFile,
-    1000 // Throttle delay in ms
+    1000,
   );
 
   // We store the appended content in a ref
@@ -103,20 +103,22 @@ export default function ResponseDisplay({ content }: ResponseDisplayProps) {
       },
     );
 
-  /**
-   * Whenever our throttledFile state actually *applies*, 
-   * update the global activeFile in context. This ensures 
-   * we only re-render the UI ~once every X ms.
-   */
+  // These effects maintain bidirectional sync between activeFile and throttledFile:
+  // 1. When throttledFile changes (from streaming updates), update activeFile
+  // 2. When activeFile changes (from user switching files), update throttledFile
   useEffect(() => {
     if (throttledFile) {
       setActiveFile(throttledFile);
     }
   }, [throttledFile]);
 
-  // Handler for the "Apply" button in code blocks
+  useEffect(() => {
+    throttledSetFile(activeFile);
+  }, [activeFile]);
+
   const handleApply = (code: string) => {
-    if (!activeFile || isApplying || typeof activeFile.content !== "string") return;
+    if (!activeFile || isApplying || typeof activeFile.content !== "string")
+      return;
     startWebSocket({
       base_file: activeFile.content,
       change: code,
@@ -148,7 +150,11 @@ export default function ResponseDisplay({ content }: ResponseDisplayProps) {
                   {codeString}
                 </SyntaxHighlighter>
                 <div className="flex gap-2 p-1">
-                  <Button variant="outline" size="sm" onClick={() => copy(codeString)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => copy(codeString)}
+                  >
                     <Copy className="w-4 h-4 mr-2" />
                     Copy
                   </Button>
