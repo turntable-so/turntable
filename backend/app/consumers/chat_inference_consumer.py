@@ -19,12 +19,17 @@ class AIChatConsumer(WebsocketConsumer):
             user = self.scope["user"]
             workspace = user.current_workspace()
             dbt_details = workspace.get_dbt_dev_details()
-            data = ChatRequestBody.model_validate_json(text_data)
+            payload = ChatRequestBody.model_validate_json(text_data)
+
             stream = stream_chat_completion(
-                payload=data,
+                payload=payload,
                 dbt_details=dbt_details,
-                workspace=workspace,
-                user=user,
+                dialect=dbt_details.resource.details.subtype,
+                api_keys={
+                    "openai": workspace.openai_api_key,
+                    "anthropic": workspace.anthropic_api_key,
+                },
+                user_id=user.id,
                 workspace_instructions=workspace.ai_custom_instructions,
             )
             for chunk in stream:

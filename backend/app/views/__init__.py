@@ -1,11 +1,13 @@
 from .asset_views import AssetViewSet
 from .block_views import BlockViewSet
 from .embedding_views import EmbeddingViewSet
+from .eval_views import EvalViewSet
 from .healthcheck_views import HealthCheckViewSet
 from .invitation_views import InvitationViewSet
 from .lineage_views import LineageViewSet
 from .notebook_views import NotebookViewSet
 from .orchestration_views import JobViewSet, RunViewSet
+from .project_views import ProjectViewSet
 from .query_views import DbtQueryPreviewView, QueryFormatView, QueryPreviewView
 from .resource_views import ResourceViewSet, SyncResourceView, TestResourceView
 from .ssh_views import SSHViewSet
