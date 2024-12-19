@@ -319,6 +319,11 @@ def custom_celery_worker(
 
 
 @pytest.fixture
+def test_worker_name(custom_celery_worker):
+    return custom_celery_worker.hostname
+
+
+@pytest.fixture
 def suppress_celery_errors():
     """
     Suppress error logs from celery.worker.control and kombu.pidbox

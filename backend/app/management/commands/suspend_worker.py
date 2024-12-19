@@ -41,12 +41,12 @@ def get_active_queues(
         if exclude_workers_without_queues and not v:
             continue
         worker_queue_map.setdefault(k, set())
+        active_workers.add(k)
         for queue in v:
             if queue["name"] in excluded_queues:
                 continue
             name = queue["name"]
             active_queues.add(name)
-            active_workers.add(k)
             worker_queue_map[k].add(name)
     return active_queues, active_workers, worker_queue_map
 
@@ -110,6 +110,7 @@ def cancel_consumer(
     )
     for worker in relevant_workers:
         for queue in worker_queue_map[worker]:
+            print(f"Cancelling consumer for {queue} from {worker}")
             current_app.control.cancel_consumer(queue=queue, destination=[worker])
 
     return relevant_workers

@@ -23,6 +23,7 @@ def add_consumer(
         # add consumer if the worker is not already consuming from the queue
         for queue in active_queues:
             if queue not in worker_queue_map.get(worker, []):
+                print(f"Adding consumer for {queue} to {worker}")
                 current_app.control.add_consumer(queue=queue, destination=[worker])
 
     return relevant_workers
