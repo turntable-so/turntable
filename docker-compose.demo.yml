@@ -50,6 +50,12 @@ services:
       service: worker
     command: ["django-admin", "start_worker", "--mode", "demo"]
 
+  worker_two:
+    extends:
+      file: docker-compose.yml
+      service: worker_two
+    command: ["django-admin", "start_worker", "--mode", "demo"]
+
   scheduler:
     extends:
       file: docker-compose.yml

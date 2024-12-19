@@ -112,6 +112,21 @@ services:
     stdin_open: true
     tty: true
 
+  worker_two:
+    build:
+      args:
+        - ENV=dev
+    extends:
+      file: docker-compose.demo.yml
+      service: worker_two
+    command: ["django-admin", "start_worker", "--mode", "dev"]
+    environment:
+      <<: [*dev-credentials, *storage-credentials]
+      volumes:
+      - ./backend:/code
+    stdin_open: true
+    tty: true
+
   scheduler:
     build:
       args:
