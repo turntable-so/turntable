@@ -43,12 +43,12 @@ const clearTurntableCache = () => {
 
 const EditorTopBar = () => {
   const {
-    sidebarLeftShown,
-    setSidebarLeftShown,
-    bottomPanelShown,
-    setBottomPanelShown,
-    sidebarRightShown,
-    setSidebarRightShown,
+    isSidebarLeftCollapsed,
+    setSidebarLeftWidth,
+    isBottomPanelCollapsed,
+    setBottomPanelWidth,
+    isSidebarRightCollapsed,
+    setSidebarRightWidth,
   } = useLayoutContext();
   const router = useRouter();
   const { user, logout } = useSession();
@@ -72,12 +72,14 @@ const EditorTopBar = () => {
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              onClick={() => setSidebarLeftShown(!sidebarLeftShown)}
+              onClick={() =>
+                setSidebarLeftWidth(isSidebarLeftCollapsed ? 20 : 0)
+              }
               variant="ghost"
               className="hover:bg-white"
               size="icon"
             >
-              {sidebarLeftShown ? (
+              {isSidebarLeftCollapsed ? (
                 <PanelLeftClose className="h-4 w-4" />
               ) : (
                 <PanelLeft className="h-4 w-4" />
@@ -130,12 +132,14 @@ const EditorTopBar = () => {
         <Tooltip delayDuration={300}>
           <TooltipTrigger asChild>
             <Button
-              onClick={() => setBottomPanelShown(!bottomPanelShown)}
+              onClick={() =>
+                setBottomPanelWidth(isBottomPanelCollapsed ? 20 : 0)
+              }
               variant="ghost"
               className="hover:bg-white"
               size="icon"
             >
-              {bottomPanelShown ? (
+              {isBottomPanelCollapsed ? (
                 <PanelBottomClose className="h-4 w-4" />
               ) : (
                 <PanelBottom className="h-4 w-4" />
@@ -149,7 +153,7 @@ const EditorTopBar = () => {
         <Tooltip delayDuration={300}>
           <TooltipTrigger asChild>
             <Button
-              onClick={() => setSidebarRightShown(!sidebarRightShown)}
+              onClick={() => setSidebarRightWidth(isSidebarRightCollapsed ? 20 : 0)}
               variant="ghost"
               className="hover:bg-white"
               size="icon"
