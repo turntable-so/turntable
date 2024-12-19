@@ -30,7 +30,7 @@ def add_consumer(
 
 
 class Command(BaseCommand):
-    help = "Suspend all workers on a given machine."
+    help = "Resume all workers on a given machine."
 
     def add_arguments(self, parser):
         parser.add_argument("--hostname", type=str, required=False)
