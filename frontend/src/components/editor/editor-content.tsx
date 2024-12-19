@@ -11,9 +11,7 @@ import { useTheme } from "next-themes";
 import { useEffect, useRef } from "react";
 import { useAISidebar } from "./ai/ai-sidebar-context";
 
-export default function EditorContent({
-  containerWidth,
-}: { containerWidth: number }) {
+export default function EditorContent({ containerWidth }: { containerWidth: number }) {
   const { setAiCustomSelections } = useAISidebar();
   const { sidebarRightShown, setSidebarRightShown } = useLayoutContext();
   const { resolvedTheme } = useTheme();
@@ -34,11 +32,6 @@ export default function EditorContent({
   const addToChatButtonRef = useRef<HTMLElement | null>(null);
   const editorDomNodeRef = useRef<HTMLElement | null>(null);
 
-  // We'll keep a reference to the "Add To Chat" button here
-  let addToChatButton: HTMLElement | null = null;
-  let editorDomNode: HTMLElement | null = null;
-
-  // Define your custom theme
   const customTheme = {
     base: resolvedTheme === "dark" ? "vs-dark" : "vs",
     inherit: true,
@@ -53,12 +46,7 @@ export default function EditorContent({
   ) => {
     setAiCustomSelections((prev) => [
       ...(prev || []),
-      {
-        selection: selectedText,
-        start_line: startLine,
-        end_line: endLine,
-        file_name: fileName,
-      },
+      { selection: selectedText, start_line: startLine, end_line: endLine, file_name: fileName },
     ]);
     if (!sidebarRightShown) {
       setSidebarRightShown(true);
@@ -84,13 +72,12 @@ export default function EditorContent({
     }
   };
 
-  // Handle global clicks outside the editor or the button to remove the AddToChat button
   const handleGlobalClick = (event: MouseEvent) => {
     if (addToChatButtonRef.current) {
       const target = event.target as HTMLElement;
       const clickedInsideButton = addToChatButtonRef.current.contains(target);
       const clickedInsideEditor =
-        editorDomNodeRef.current && editorDomNodeRef.current.contains(target);
+        editorDomNodeRef.current?.contains(target);
       if (!clickedInsideButton && !clickedInsideEditor) {
         removeAddToChatButton();
       }
@@ -108,9 +95,7 @@ export default function EditorContent({
     if (activeFile.content === "FILE_EXCEEDS_SIZE_LIMIT") {
       return (
         <div className="h-full w-full flex flex-col gap-4 items-center justify-center">
-          <div>
-            This file is too large to open. Please download the file instead.
-          </div>
+          <div>This file is too large to open. Please download the file instead.</div>
           <Button onClick={() => downloadFile(activeFile.node.path)}>
             <Download className="mr-2 h-4 w-4" />
             Download
@@ -133,10 +118,7 @@ export default function EditorContent({
     );
   }
 
-  if (
-    activeFile?.node?.type === "url" &&
-    typeof activeFile.content === "string"
-  ) {
+  if (activeFile?.node?.type === "url" && typeof activeFile.content === "string") {
     return (
       <iframe
         src={activeFile.content}
@@ -185,27 +167,19 @@ export default function EditorContent({
     };
 
     const onApply = () => {
-      setActiveFile(
-        (prev) =>
-          ({
-            ...prev,
-            view: "edit",
-            content: activeFile?.diff?.modified,
-            diff: undefined,
-          }) as OpenedFile,
-      );
+      setActiveFile((prev) => ({
+        ...prev,
+        view: "edit",
+        content: activeFile?.diff?.modified,
+        diff: undefined,
+      }));
       saveFile(activeFile?.node.path || "", activeFile?.diff?.modified || "");
     };
 
     return (
       <div className="h-full w-full flex flex-col items-center justify-center">
         <div className="flex gap-2 justify-end w-full my-1">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isApplying}
-          >
+          <Button size="sm" variant="outline" onClick={onCancel} disabled={isApplying}>
             <CircleSlash className="mr-2 h-4 w-4" />
             Cancel
           </Button>
@@ -258,21 +232,11 @@ export default function EditorContent({
   }
 
   const getLanguage = (activeFile: OpenedFile) => {
-    if (activeFile.node?.path.endsWith(".sql")) {
-      return "sql";
-    }
-    if (
-      activeFile.node?.path.endsWith(".yml") ||
-      activeFile.node?.path.endsWith(".yaml")
-    ) {
+    if (activeFile.node?.path.endsWith(".sql")) return "sql";
+    if (activeFile.node?.path.endsWith(".yml") || activeFile.node?.path.endsWith(".yaml"))
       return "yaml";
-    }
-    if (activeFile.node?.path.endsWith(".md")) {
-      return "markdown";
-    }
-    if (activeFile.node?.path.endsWith(".json")) {
-      return "javascript";
-    }
+    if (activeFile.node?.path.endsWith(".md")) return "markdown";
+    if (activeFile.node?.path.endsWith(".json")) return "javascript";
     return "sql";
   };
 
@@ -313,20 +277,16 @@ export default function EditorContent({
 
         editor.updateOptions({ theme: "mutedTheme" });
 
-        // Store the editor DOM node for global click checks
-        editorDomNode = editor.getDomNode() as HTMLElement;
+        editorDomNodeRef.current = editor.getDomNode() as HTMLElement;
 
-        // Prevent default behavior for cmd+s
         editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
           saveFile(activeFile?.node.path || "", editor.getValue());
         });
 
-        // Run query with cmd+Enter
         editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () =>
           runQueryPreview(editor.getValue()),
         );
 
-        // Compile active file with cmd+shift+Enter
         editor.addCommand(
           monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Enter,
           () => compileActiveFile(activeFile?.node.name || ""),
@@ -336,49 +296,36 @@ export default function EditorContent({
           const selection = editor.getSelection();
           if (selection && !selection.isEmpty()) {
             const selectedText = editor.getModel()?.getValueInRange(selection);
-            addToChat(
-              selectedText,
-              selection.startLineNumber,
-              selection.endLineNumber,
-              activeFile?.node.name || "",
-            );
+            addToChat(selectedText!, selection.startLineNumber, selection.endLineNumber, activeFile?.node.name || "");
           }
         });
 
-        editor.onMouseUp((e) => {
+        editor.onMouseUp(() => {
           const selection = editor.getSelection();
-          const model = editor.getModel();
 
           if (selection && !selection.isEmpty()) {
             const position = selection.getStartPosition();
             const pixelPosition = editor.getScrolledVisiblePosition(position);
-            if (!pixelPosition) {
-              return;
-            }
+            if (!pixelPosition) return;
 
-            // Remove any existing button
             removeAddToChatButton();
 
-            // Get the editor's DOM node and its position on the page
-            const editorRect = editorDomNode.getBoundingClientRect();
+            const editorRect = editorDomNodeRef.current!.getBoundingClientRect();
 
-            // Calculate absolute position of the start of selection
-            const absoluteLeft =
-              editorRect.left + pixelPosition.left - editor.getScrollLeft();
-            const absoluteTop =
-              editorRect.top + pixelPosition.top - editor.getScrollTop();
+            const absoluteLeft = editorRect.left + pixelPosition.left - editor.getScrollLeft();
+            const absoluteTop = editorRect.top + pixelPosition.top - editor.getScrollTop();
 
-            addToChatButton = document.createElement("button");
-            addToChatButton.textContent = "Add to Chat (⌘L)";
-            addToChatButton.className = "add-to-chat-button";
-            addToChatButton.style.position = "absolute";
-            addToChatButton.style.left = `${absoluteLeft}px`;
-            addToChatButton.style.top = `${absoluteTop}px`;
-            addToChatButton.style.transform = "translate(-50%, -100%)";
-            addToChatButton.style.zIndex = "1000";
-            addToChatButtonRef.current = addToChatButton;
+            const button = document.createElement("button");
+            button.textContent = "Add to Chat (⌘L)";
+            button.className = "add-to-chat-button";
+            button.style.position = "absolute";
+            button.style.left = `${absoluteLeft}px`;
+            button.style.top = `${absoluteTop}px`;
+            button.style.transform = "translate(-50%, -100%)";
+            button.style.zIndex = "1000";
+            addToChatButtonRef.current = button;
 
-            addToChatButton.onclick = (event) => {
+            button.onclick = (event) => {
               event.stopPropagation();
               const selection = editor.getSelection();
               const model = editor.getModel();
@@ -403,15 +350,12 @@ export default function EditorContent({
               }
             };
 
-            // Append the button to the body
-            document.body.appendChild(addToChatButton);
+            document.body.appendChild(button);
           } else {
-            // Remove the button if selection is empty
             removeAddToChatButton();
           }
         });
 
-        // Remove the button when the selection changes and becomes empty
         editor.onDidChangeCursorSelection(() => {
           const selection = editor.getSelection();
           if (selection?.isEmpty()) {
@@ -419,9 +363,6 @@ export default function EditorContent({
           }
         });
 
-        editorDomNodeRef.current = editor.getDomNode() as HTMLElement;
-
-        document.addEventListener("click", handleGlobalClick);
         editor.onDidDispose(() => {
           document.removeEventListener("click", handleGlobalClick);
         });
