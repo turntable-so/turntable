@@ -113,7 +113,9 @@ export default function ResponseDisplay({ content }: ResponseDisplayProps) {
   }, [throttledFile]);
 
   useEffect(() => {
-    throttledSetFile(activeFile);
+    if (JSON.stringify(activeFile) !== JSON.stringify(throttledFile)) {
+      throttledSetFile(activeFile);
+    }
   }, [activeFile]);
 
   const handleApply = (code: string) => {
@@ -153,6 +155,7 @@ export default function ResponseDisplay({ content }: ResponseDisplayProps) {
                   <Button
                     variant="outline"
                     size="sm"
+                    className="text-gray-600 dark:text-gray-200"
                     onClick={() => copy(codeString)}
                   >
                     <Copy className="w-4 h-4 mr-2" />
@@ -162,6 +165,7 @@ export default function ResponseDisplay({ content }: ResponseDisplayProps) {
                     variant="outline"
                     size="sm"
                     disabled={isApplying}
+                    className="text-gray-600 dark:text-gray-200"
                     onClick={() => handleApply(codeString)}
                   >
                     {isApplying ? "Applying" : "Apply"}
