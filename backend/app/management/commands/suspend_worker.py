@@ -40,8 +40,8 @@ def get_active_queues(
     for k, v in inspect_helper.items():
         if exclude_workers_without_queues and not v:
             continue
-        worker_queue_map.setdefault(k, set())
         active_workers.add(k)
+        worker_queue_map.setdefault(k, set())
         for queue in v:
             if queue["name"] in excluded_queues:
                 continue
