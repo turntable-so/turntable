@@ -85,7 +85,7 @@ export default function BottomPanel({
     setAiCompiledSql,
   } = useAISidebar();
 
-  const { sidebarRightShown, setSidebarRightShown } = useLayoutContext();
+  const { isSidebarRightCollapsed, setSidebarRightWidth } = useLayoutContext();
 
   const [activeTab, setActiveTab] = useBottomPanelTabs({
     branchId: branchId || "",
@@ -104,8 +104,8 @@ export default function BottomPanel({
         table,
         file_name: queryPreviewData.file_name,
       });
-      if (!sidebarRightShown) {
-        setSidebarRightShown(true);
+      if (isSidebarRightCollapsed) {
+        setSidebarRightWidth(20);
       }
     }
   };
@@ -116,8 +116,8 @@ export default function BottomPanel({
         compiled_query: compiledSql.sql,
         file_name: compiledSql.file_name,
       });
-      if (!sidebarRightShown) {
-        setSidebarRightShown(true);
+      if (isSidebarRightCollapsed) {
+        setSidebarRightWidth(20);
       }
     }
   };

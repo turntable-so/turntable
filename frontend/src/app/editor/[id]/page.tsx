@@ -9,19 +9,21 @@ import EditorTopBar from "@/components/editor/editor-top-bar";
 import FileTabs from "@/components/editor/file-tabs";
 import type { AgGridReact } from "ag-grid-react";
 import { usePathname } from "next/navigation";
-import { Fragment, useEffect, useRef, useState } from "react";
-import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
+import { useEffect, useRef, useState } from "react";
+import {
+  type ImperativePanelHandle,
+  Panel,
+  PanelGroup,
+  PanelResizeHandle,
+} from "react-resizable-panels";
 import useResizeObserver from "use-resize-observer";
 import { useFiles } from "../../contexts/FilesContext";
 import { useLayoutContext } from "../../contexts/LayoutContext";
 
 function EditorPageContent() {
-  const [leftWidth, setLeftWidth] = useState(20);
-  const [rightWidth, setRightWidth] = useState(20);
   const {
     ref: topBarRef,
     width: topBarWidth,
-    height: topBarHeight,
   } = useResizeObserver();
 
   const {
@@ -37,15 +39,20 @@ function EditorPageContent() {
   } = useFiles();
 
   const {
-    sidebarLeftShown,
-    sidebarRightShown,
-    bottomPanelShown,
-    setSidebarLeftShown,
-    setSidebarRightShown,
-    setBottomPanelShown,
+    sidebarLeftWidth,
+    sidebarRightWidth,
+    bottomPanelWidth,
+    setSidebarLeftWidth,
+    setSidebarRightWidth,
+    setBottomPanelWidth,
+    isSidebarLeftCollapsed,
+    isSidebarRightCollapsed,
+    isBottomPanelCollapsed,
   } = useLayoutContext();
 
   const gridRef = useRef<AgGridReact>(null);
+  const leftPanelRef = useRef<ImperativePanelHandle>(null);
+  const rightPanelRef = useRef<ImperativePanelHandle>(null);
 
   const treeRef = useRef<any>(null);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -57,7 +64,6 @@ function EditorPageContent() {
   const {
     fetchFiles,
     fetchBranch,
-    branchName,
     branchId,
     isCloned,
     cloneBranch,
@@ -105,9 +111,9 @@ function EditorPageContent() {
           case "b":
             event.preventDefault();
             if (event.shiftKey) {
-              setSidebarRightShown(!sidebarRightShown);
+              setSidebarRightWidth(isSidebarRightCollapsed ? 20 : 0);
             } else {
-              setSidebarLeftShown(!sidebarLeftShown);
+              setSidebarLeftWidth(isSidebarLeftCollapsed ? 20 : 0);
             }
             break;
           case "p":
@@ -116,7 +122,7 @@ function EditorPageContent() {
             break;
           case "j":
             event.preventDefault();
-            setBottomPanelShown(!bottomPanelShown);
+            setBottomPanelWidth(isBottomPanelCollapsed ? 20 : 0);
             break;
           case "enter":
             event.preventDefault();
@@ -137,11 +143,10 @@ function EditorPageContent() {
             break;
           case "ArrowDown":
             event.preventDefault();
-            setSelectedIndex((prevIndex) => prevIndex + 1); // You might want to add a max limit based on search results
+            setSelectedIndex((prevIndex) => prevIndex + 1);
             break;
           case "Enter":
             event.preventDefault();
-            // Handle file selection here
             setIsSearchFocused(false);
             setFilesearchQuery("");
             break;
@@ -150,14 +155,13 @@ function EditorPageContent() {
     };
 
     window.addEventListener("keydown", handleKeyDown);
-
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [
-    sidebarLeftShown,
-    sidebarRightShown,
-    bottomPanelShown,
+    sidebarLeftWidth,
+    sidebarRightWidth,
+    bottomPanelWidth,
     isSearchFocused,
     selectedIndex,
     activeFile,
@@ -173,8 +177,6 @@ function EditorPageContent() {
       const defs = Object.keys(table.data[0]).map((key) => ({
         field: key,
         headerName: key,
-        // type: [getColumnType(table.column_types[key])],
-        // cellDataType: getColumnType(table.column_types[key]),
         editable: false,
         valueGetter: (p: any) => {
           if (p.colDef.cellDataType === "date") {
@@ -205,80 +207,64 @@ function EditorPageContent() {
     fetchQueryPreview();
   }, [queryPreview?.signed_url]);
 
+  useEffect(() => {
+    const panel = leftPanelRef.current;
+    if (!panel) return;
+    if (sidebarLeftWidth === 0) {
+      panel.collapse();
+    } else {
+      panel.expand();
+      panel.resize(sidebarLeftWidth);
+    }
+  }, [sidebarLeftWidth]);
+
+  useEffect(() => {
+    const panel = rightPanelRef.current;
+    if (!panel) return;
+    if (sidebarRightWidth === 0) {
+      panel.collapse();
+    } else {
+      panel.expand();
+      panel.resize(sidebarRightWidth);
+    }
+  }, [sidebarRightWidth]);
+
   return (
     <div className="flex flex-col h-screen">
       <EditorTopBar />
-      <PanelGroup direction="horizontal" className="h-fit">
-        {sidebarLeftShown && (
-          <Panel
-            defaultSize={leftWidth}
-            minSize={15}
-            maxSize={30}
-            onResize={setLeftWidth}
-            className="border-r text-gray-600 dark:border-zinc-700"
-          >
-            <EditorSidebar />
-          </Panel>
-        )}
-        {/* <Panel defaultSize={leftWidth} minSize={15} maxSize={30} onResize={setLeftWidth} className='border-r bg-muted/50 text-gray-600'>
-                    <Tabs defaultValue="files" className="h-full">
-                        <div
-                            className={cn(
-                                "flex h-[52px] items-center justify-center",
-                                "h-[52px]"
-                            )}
-                        >
-                            <TabsList className="grid w-full grid-cols-2 mx-4">
-                                <TabsTrigger value="files" className="flex items-center justify-center">
-                                    <File className="w-4 h-4 mr-2" />
-                                    Files
-                                </TabsTrigger>
-                                <TabsTrigger value="branch" className="flex items-center justify-center">
-                                    <GitBranch className="w-4 h-4 mr-2" />
-                                    Branch
-                                </TabsTrigger>
-                            </TabsList>
-                        </div>
-                        <Separator />
-                        <TabsContent value="files" className='h-full px-2'>
-                            <div className="h-full" ref={treeContainerRef}>
-                                <Tree
-                                    selection={activeFile?.node.path}
-                                    height={treeHeight}
-                                    width={treeWidth}
-                                    data={files}
-                                    openByDefault={false}
-                                    indent={12}
-                                    ref={treeRef}
-                                    // @ts-ignore
-                                    onCreate={onCreate}
-                                    // @ts-ignore
-                                    onRename={onRename}
-                                    // @ts-ignore
-                                    onMove={onMove}
-                                    // @ts-ignore
-                                    onDelete={onDelete}
-                                >
-                                    {Node as any}
-                                </Tree>
-                            </div>
-                        </TabsContent>
-                        <TabsContent value="branch">Branches</TabsContent>
-                    </Tabs>
-                </Panel> */}
+      <PanelGroup
+        direction="horizontal"
+        className="h-fit"
+        onLayout={(sizes) => {
+          setSidebarLeftWidth(sizes[0]);
+          setSidebarRightWidth(sizes[2]);
+        }}
+      >
+        <Panel
+          ref={leftPanelRef}
+          collapsible
+          minSize={15}
+          maxSize={30}
+          defaultSize={sidebarLeftWidth}
+          onResize={setSidebarLeftWidth}
+          collapsedSize={0}
+          className="border-r text-gray-600 dark:border-zinc-700"
+        >
+          <EditorSidebar />
+        </Panel>
         <PanelResizeHandle className="bg-transparent transition-colors" />
         <Panel>
           <div className="h-full" ref={topBarRef}>
             <FileTabs
               topBarRef={topBarRef as any}
-              topBarWidth={topBarWidth + 14 as number}
+              topBarWidth={(topBarWidth ?? 0) + 14}
             />
             <div className="w-full h-full">
               <PanelGroup direction="vertical" className="h-fit">
                 <Panel className="h-full relative z-0">
-                  <EditorContent containerWidth={topBarWidth as number} />
+                  <EditorContent containerWidth={topBarWidth ?? 0} />
                 </Panel>
-                {bottomPanelShown && (
+                {bottomPanelWidth > 0 && (
                   <BottomPanel
                     rowData={queryPreviewData?.rows}
                     gridRef={gridRef}
@@ -292,21 +278,20 @@ function EditorPageContent() {
             </div>
           </div>
         </Panel>
-        {sidebarRightShown && (
-          <Fragment>
-            <PanelResizeHandle className="border-l w-1 bg-transparent hover:bg-gray-300 hover:cursor-col-resize transition-colors" />
-            <Panel
-              defaultSize={rightWidth}
-              minSize={25}
-              maxSize={60}
-              onResize={setRightWidth}
-            >
-              <div className="bg-muted h-full p-4 flex justify-center">
-                <AiSidebarChat />
-              </div>
-            </Panel>
-          </Fragment>
-        )}
+        <PanelResizeHandle className="border-l w-1 bg-transparent hover:bg-gray-300 hover:cursor-col-resize transition-colors" />
+        <Panel
+          ref={rightPanelRef}
+          collapsible
+          minSize={25}
+          maxSize={60}
+          defaultSize={sidebarRightWidth}
+          onResize={setSidebarRightWidth}
+          collapsedSize={0}
+        >
+          <div className="bg-muted h-full p-4 flex justify-center">
+            <AiSidebarChat />
+          </div>
+        </Panel>
       </PanelGroup>
     </div>
   );

@@ -13,7 +13,7 @@ import { useAISidebar } from "./ai/ai-sidebar-context";
 
 export default function EditorContent({ containerWidth }: { containerWidth: number }) {
   const { setAiCustomSelections } = useAISidebar();
-  const { sidebarRightShown, setSidebarRightShown } = useLayoutContext();
+  const { isSidebarRightCollapsed, setSidebarRightWidth } = useLayoutContext();
   const { resolvedTheme } = useTheme();
   const {
     activeFile,
@@ -48,8 +48,8 @@ export default function EditorContent({ containerWidth }: { containerWidth: numb
       ...(prev || []),
       { selection: selectedText, start_line: startLine, end_line: endLine, file_name: fileName },
     ]);
-    if (!sidebarRightShown) {
-      setSidebarRightShown(true);
+    if (isSidebarRightCollapsed) {
+      setSidebarRightWidth(20);
     }
   };
 

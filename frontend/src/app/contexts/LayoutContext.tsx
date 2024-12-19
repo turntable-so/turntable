@@ -9,13 +9,16 @@ import {
 } from "react";
 
 type LayoutContextType = {
-  sidebarLeftShown: boolean;
-  setSidebarLeftShown: (shown: boolean) => void;
-  sidebarRightShown: boolean;
-  setSidebarRightShown: (shown: boolean) => void;
-  bottomPanelShown: boolean;
-  setBottomPanelShown: (shown: boolean) => void;
+  sidebarLeftWidth: number;
+  setSidebarLeftWidth: React.Dispatch<React.SetStateAction<number>>;
+  sidebarRightWidth: number;
+  setSidebarRightWidth: React.Dispatch<React.SetStateAction<number>>;
+  bottomPanelWidth: number;
+  setBottomPanelWidth: React.Dispatch<React.SetStateAction<number>>;
   appSidebarCollapsed: boolean;
+  isSidebarLeftCollapsed: boolean;
+  isSidebarRightCollapsed: boolean;
+  isBottomPanelCollapsed: boolean;
 };
 
 const LayoutContext = createContext<LayoutContextType | undefined>(undefined);
@@ -31,11 +34,15 @@ export const useLayoutContext = () => {
 export const LayoutProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const [sidebarLeftShown, setSidebarLeftShown] = useState(true);
-  const [bottomPanelShown, setBottomPanelShown] = useState(true);
-  const [sidebarRightShown, setSidebarRightShown] = useState(false);
+  const [sidebarLeftWidth, setSidebarLeftWidth] = useState<number>(20);
+  const [sidebarRightWidth, setSidebarRightWidth] = useState<number>(20);
+  const [bottomPanelWidth, setBottomPanelWidth] = useState<number>(20);
   const [appSidebarCollapsed, setAppSidebarCollapsed] = useState(false);
   const pathName = usePathname();
+
+  const isSidebarLeftCollapsed = sidebarLeftWidth === 0;
+  const isSidebarRightCollapsed = sidebarRightWidth === 0;
+  const isBottomPanelCollapsed = bottomPanelWidth === 0;
 
   useEffect(() => {
     setAppSidebarCollapsed(
@@ -44,13 +51,16 @@ export const LayoutProvider: React.FC<{ children: ReactNode }> = ({
   }, [pathName]);
 
   const value = {
-    sidebarLeftShown,
-    setSidebarLeftShown,
-    sidebarRightShown,
-    setSidebarRightShown,
-    bottomPanelShown,
-    setBottomPanelShown,
+    sidebarLeftWidth,
+    setSidebarLeftWidth,
+    sidebarRightWidth,
+    setSidebarRightWidth,
+    bottomPanelWidth,
+    setBottomPanelWidth,
     appSidebarCollapsed,
+    isSidebarLeftCollapsed,
+    isSidebarRightCollapsed,
+    isBottomPanelCollapsed,
   };
 
   return (

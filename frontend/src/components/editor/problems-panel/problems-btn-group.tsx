@@ -11,7 +11,7 @@ import { useAISidebar } from "../ai/ai-sidebar-context";
 
 export default function ProblemsBtnGroup() {
   const { problems, activeFile } = useFiles();
-  const { sidebarRightShown, setSidebarRightShown } = useLayoutContext();
+  const { isSidebarRightCollapsed, setSidebarRightWidth } = useLayoutContext();
   const { setAiFileProblems, aiFileProblems} = useAISidebar();
 
   const showAddProblemsToChatButton =
@@ -23,8 +23,8 @@ export default function ProblemsBtnGroup() {
       file_name: activeFile?.node.name || "",
     });
 
-    if (!sidebarRightShown) {
-      setSidebarRightShown(true);
+    if (isSidebarRightCollapsed) {
+      setSidebarRightWidth(20);
     }
   };
 
