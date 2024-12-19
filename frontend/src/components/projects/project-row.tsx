@@ -10,7 +10,6 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import dayjs from "@/lib/dayjs";
 import { Archive, Ellipsis } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { Project } from "./types";
 
@@ -25,8 +24,6 @@ export function ProjectRow({
   fetchProjects,
   showActions,
 }: ProjectRowProps) {
-  const router = useRouter();
-
   const handleArchive = async () => {
     const result = await archiveProject({ projectId: project.id });
     if (result.error) {
@@ -39,8 +36,8 @@ export function ProjectRow({
 
   return (
     <TableRow key={project.id}>
-      <TableCell className="font-semibold hover:underline hover:cursor-pointer p-4">
-        <Link href={`/editor/${project.id}`}>{project.name}</Link>
+      <TableCell className="font-semibold p-4">
+        <Link className="hover:underline hover:cursor-pointer" href={`/editor/${project.id}`}>{project.name}</Link>
       </TableCell>
       <TableCell className="p-2 text-sm">{project.owner?.email}</TableCell>
       <TableCell className="p-2 text-sm">
