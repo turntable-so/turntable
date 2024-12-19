@@ -136,11 +136,40 @@ contents:
 """
 
 
+def get_assets_from_lineage(dbt_details: DBTCoreDetails | None = None, lineage: Lineage | None = None) -> List[str]:
+    if lineage is None or dbt_details is None:
+        return []
+
+    with dbt_details.dbt_transition_context() as (transition, project_path, _):
+        transition.mount_manifest(defer=True)
+        assets = []
+        if lineage:
+            for asset in lineage.assets:
+                manifest_node = LiveDBTParser.get_manifest_node(
+                    transition.after, asset.unique_name
+                )
+                if not manifest_node:
+                    continue
+                catalog_node = LiveDBTParser.get_catalog_node(
+                    transition.after, asset.unique_name
+                )
+                columns = catalog_node.get("columns", {}) if catalog_node else {}
+                path = os.path.join(
+                    project_path, manifest_node.get("original_file_path")
+                )
+                if not os.path.exists(path):
+                    continue
+                with open(path) as file:
+                    contents = file.read()
+                    assets.append(asset_md(asset, columns, contents))
+    return assets
+
+
 def build_context(
     lineage: Lineage | None,
     message_history: List[ChatMessage],
-    dbt_details: DBTCoreDetails,
-    project_id: str,
+    dialect: str,
+    dbt_details: DBTCoreDetails | None = None,
     context_files: List[str] | None = None,
     context_preview: str | None = None,
     compiled_query: str | None = None,
@@ -150,64 +179,36 @@ def build_context(
     user_instruction = next(
         msg.content for msg in reversed(message_history) if msg.role == "user"
     )
-    resource = dbt_details.resource
-    project = Project.objects.get(id=project_id)
 
-    with dbt_details.dbt_transition_context() as (transition, project_path, _):
-        with project.repo_context() as (repo, _):
-            transition.mount_manifest(defer=True)
-            asset_mds = []
-            if lineage:
-                for asset in lineage.assets:
-                    manifest_node = LiveDBTParser.get_manifest_node(
-                        transition.after, asset.unique_name
-                    )
-                    if not manifest_node:
-                        continue
-                    catalog_node = LiveDBTParser.get_catalog_node(
-                        transition.after, asset.unique_name
-                    )
-                    columns = catalog_node.get("columns", {}) if catalog_node else {}
-                    path = os.path.join(
-                        project_path, manifest_node.get("original_file_path")
-                    )
-                    if not os.path.exists(path):
-                        continue
-                    with open(path) as file:
-                        contents = file.read()
-                        asset_mds.append(asset_md(asset, columns, contents))
+    asset_mds = get_assets_from_lineage(dbt_details, lineage)
+    assets_str = "\n".join(asset_mds)
 
-            assets_str = "\n".join(asset_mds)
+    file_content_blocks = [
+        f"```sql\n{content}\n```"
+        for content in context_files
+    ]
 
-            file_content_blocks = []
-            if context_files:
-                for path in context_files:
-                    content = open(
-                        os.path.join(repo.working_tree_dir, unquote(path)), "r"
-                    ).read()
-                    file_content_blocks.append(f"```sql\n{content}\n```")
+    file_contents_str = (
+        "\n".join(file_content_blocks) if file_content_blocks else ""
+    )
 
-            file_contents_str = (
-                "\n".join(file_content_blocks) if file_content_blocks else ""
-            )
+    edges = []
+    if lineage:
+        for link in lineage.asset_links:
+            source_model = extract_model_name(link.source_id)
+            target_model = extract_model_name(link.target_id)
+            edges.append({"source": source_model, "target": target_model})
 
-            edges = []
-            if lineage:
-                for link in lineage.asset_links:
-                    source_model = extract_model_name(link.source_id)
-                    target_model = extract_model_name(link.target_id)
-                    edges.append({"source": source_model, "target": target_model})
+    file_problems_str = "\n".join(file_problems) if file_problems else None
+    custom_selections_str = "\n".join(
+        f"Selected code from {selection.file_name} (lines {selection.start_line}-{selection.end_line}):\n```{selection.selection}```\n"
+        for selection in custom_selections
+    ) if custom_selections else None
+    lineage_str = f"Model lineage\nIMPORTANT: keep in mind how these are connected to each other. You may need to add or modify this structure to complete a task.\n{lineage_ascii(edges)}" if edges else None
 
-            file_problems_str = "\n".join(file_problems) if file_problems else None
-            custom_selections_str = "\n".join(
-                f"Selected code from {selection.file_name} (lines {selection.start_line}-{selection.end_line}):\n```{selection.selection}```\n"
-                for selection in custom_selections
-            ) if custom_selections else None
-            lineage_str = f"Model lineage\nIMPORTANT: keep in mind how these are connected to each other. You may need to add or modify this structure to complete a task.\n{lineage_ascii(edges)}" if edges else None
-
-            output = f"""
+    output = f"""
 # Dialect
-Use the {resource.details.subtype} dialect when writing any sql code.
+Use the {dialect} dialect when writing any sql code.
 
 {lineage_str}
 
@@ -227,21 +228,23 @@ User Instructions: {user_instruction}
 Answer the user's question based on the above context. Do not answer anything else, just answer the question.
 """
 
-            return output
+    return output
 
 
 def stream_chat_completion(
     *,
     payload: ChatRequestBody,
-    dbt_details: DBTCoreDetails,
-    workspace: Workspace,
-    user: User,
+    dialect: str,
+    api_keys: dict,
+    dbt_details: DBTCoreDetails | None = None,
+    user_id: str | None = None,
     workspace_instructions: str | None = None,
+    tags: List[str] | None = None,
 ) -> Iterator[str]:
     if payload.model.startswith("claude"):
-        api_key = workspace.anthropic_api_key
+        api_key = api_keys["anthropic"]
     elif payload.model.startswith("gpt") or payload.model.startswith("o1"):
-        api_key = workspace.openai_api_key
+        api_key = api_keys["openai"]
     else:
         raise ValueError(f"Unsupported model: {payload.model}")
     if api_key is None:
@@ -258,11 +261,11 @@ def stream_chat_completion(
         message_history=payload.message_history,
         dbt_details=dbt_details,
         context_files=payload.context_files,
-        project_id=payload.project_id,
         context_preview=payload.context_preview,
         compiled_query=payload.compiled_query,
         file_problems=payload.file_problems,
         custom_selections=payload.custom_selections,
+        dialect=dialect,
     )
     message_history = []
     for idx, msg in enumerate(payload.message_history):
@@ -292,8 +295,8 @@ Here are some additional instructions set by the user for you to follow. These a
         model=payload.model,
         messages=messages,
         stream=True,
-        user_id=user.id,
-        tags=["chat"],
+        user_id=user_id,
+        tags=["chat", *(tags or [])],
     )
 
     for chunk in response:

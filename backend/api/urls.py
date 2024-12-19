@@ -15,6 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.urls import include, path, re_path
@@ -25,11 +26,13 @@ from app.views import (
     AssetViewSet,
     BlockViewSet,
     EmbeddingViewSet,
+    EvalViewSet,
     HealthCheckViewSet,
     InvitationViewSet,
     JobViewSet,
     LineageViewSet,
     NotebookViewSet,
+    ProjectViewSet,
     ResourceViewSet,
     RunViewSet,
     SSHViewSet,
@@ -39,7 +42,6 @@ from app.views import (
     WorkspaceGroupViewSet,
     WorkspaceViewSet,
 )
-from app.views.project_views import ProjectViewSet
 from app.views.query_views import (
     DbtQueryPreviewView,
     DbtQueryValidateView,
@@ -67,6 +69,10 @@ router.register(r"project", ProjectViewSet, basename="project")
 router.register(r"embedding", EmbeddingViewSet, basename="embedding")
 router.register(r"jobs", JobViewSet, basename="jobs")
 router.register(r"runs", RunViewSet, basename="runs")
+
+if settings.DEBUG:
+    router.register(r"eval", EvalViewSet, basename="eval")
+
 urlpatterns = [
     path("oauth/auth", OAuthView.as_view(), name="oauth-auth"),
     path(
