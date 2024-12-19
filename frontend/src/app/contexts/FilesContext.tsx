@@ -384,6 +384,18 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         !file.path.includes("target/"),
     );
     setSearchFileIndex(searchableFiles);
+
+    // Filter out files that no longer exist
+    const filePaths = new Set(flattenedFiles.map(file => file.path));
+    setRecentFiles(prevRecentFiles => 
+      prevRecentFiles.filter(file => filePaths.has(file.path))
+    );
+    setOpenedFiles(prevOpenedFiles => 
+      prevOpenedFiles.filter(file => 
+        file.node.type === "file" ? filePaths.has(file.node.path) : true
+      )
+    );
+
     setFilesLoading(false);
   };
 
