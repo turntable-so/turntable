@@ -104,8 +104,8 @@ export default function FileTabs({
         <Button
           onClick={() => createNewFileTab()}
           size="icon"
-          variant="ghost"
-          className="hover:bg-white"
+          variant="outline"
+          className="hover:bg-white rounded-none"
         >
           <Plus className="h-3 w-3" />
         </Button>
