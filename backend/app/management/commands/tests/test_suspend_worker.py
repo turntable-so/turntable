@@ -23,6 +23,6 @@ def test_suspend_worker(custom_celery, test_queue_name, duration):
 
     # resume worker
     call_command("resume_worker")
-    time.sleep(1)
+    time.sleep(2)
     active_queues, _, _ = get_active_queues()
     assert test_queue_name in active_queues

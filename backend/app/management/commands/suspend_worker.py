@@ -32,7 +32,7 @@ def _get_active_tasks_helper():
 def get_active_queues(
     excluded_queues: list[str] = [],
     exclude_workers_without_queues: bool = True,
-) -> tuple[set[str], set[str]]:
+) -> tuple[set[str], set[str], dict[str, set[str]]]:
     active_queues = set()
     active_workers = set()
     worker_queue_map = {}
