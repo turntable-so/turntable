@@ -596,6 +596,22 @@ export async function changeFilePath(
   return response.ok;
 }
 
+export async function moveFileOrDirectory(
+  branchId: string,
+  dragIds: string[],
+  parentId: string,
+) {
+  const response = await fetcher(`/project/${branchId}/files/move/`, {
+    cookies,
+    method: "PUT",
+    body: {
+      drag_ids: dragIds,
+      parent_id: parentId,
+    },
+  });
+  return response.ok;
+}
+
 export async function createFile(
   branchId: string,
   path: string,

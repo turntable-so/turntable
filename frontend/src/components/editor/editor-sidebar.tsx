@@ -32,13 +32,33 @@ const SkeletonFileTree = () => {
   );
 };
 
+const DragPreview = ({ offset, mouse, id, dragIds, isDragging }: { offset: any; mouse: any; id: string; dragIds: any; isDragging: boolean }) => {
+  if (!isDragging) return null;
+
+  const name = id.split("/").pop();
+
+  return (
+    <div
+      className="bg-background text-muted-foreground text-sm font-medium p-1 border-2 rounded-lg "
+      style={{
+        position: 'fixed',
+        pointerEvents: 'none',
+        left: mouse?.x,
+        top: mouse?.y,
+      }}
+    >
+      {name}
+    </div>
+  );
+};
+
 export default function EditorSidebar() {
   const {
     ref: treeContainerRef,
     width: treeWidth,
     height: treeHeight,
   } = useResizeObserver();
-  const { files, activeFile, updateLoaderContent, openLoader, filesLoading } =
+  const { files, activeFile, updateLoaderContent, openLoader, filesLoading, move } =
     useFiles();
   const treeRef = useRef<any>(null);
 
@@ -46,7 +66,7 @@ export default function EditorSidebar() {
     parentId,
     index,
     type,
-  }: { parentId: string; index: number; type: string }) => {};
+  }: { parentId: string; index: number; type: string }) => { };
   const onRename = ({ id, name }: { id: string; name: string }) => {
     console.log("renaming!", { id, name });
   };
@@ -54,14 +74,10 @@ export default function EditorSidebar() {
   const onMove = ({
     dragIds,
     parentId,
-    index,
   }: { dragIds: string[]; parentId: string; index: number }) => {
-    console.log("moving!", { dragIds, parentId, index });
+    move(dragIds, parentId);
   };
 
-  const onDelete = ({ ids }: { ids: string[] }) => {
-    console.log("deleting!", { ids });
-  };
 
   const onActionBarSelectChange = (item: any) => {
     if (!item?.isSelectable) {
@@ -146,6 +162,7 @@ export default function EditorSidebar() {
                   height={treeHeight}
                   width={treeWidth}
                   data={files}
+                  renderDragPreview={DragPreview}
                   openByDefault={false}
                   indent={8}
                   // opens the root by default
@@ -159,8 +176,6 @@ export default function EditorSidebar() {
                   onRename={onRename}
                   // @ts-ignore
                   onMove={onMove}
-                  // @ts-ignore
-                  onDelete={onDelete}
                 >
                   {Node as any}
                 </Tree>
