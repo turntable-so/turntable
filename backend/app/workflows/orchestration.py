@@ -153,7 +153,9 @@ def save_artifacts_task(
             {},
         )
     with dbt_resource.dbt_repo_context(
-        project_id=project_id, repo_override=repo_override
+        project_id=project_id,
+        isolate=True,
+        repo_override=repo_override,
     ) as (dbtproj, _, _):
         # Save a zip of the target directory
         with tempfile.TemporaryDirectory() as tmp_dir:
