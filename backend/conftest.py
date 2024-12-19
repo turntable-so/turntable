@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+import uuid
 
 import boto3
 import django
@@ -262,11 +263,8 @@ def session_monkeypatch():
 
 @pytest.fixture
 def test_queue_name():
-    """Generate unique queue name for each pytest-xdist worker"""
-    worker_id = os.getenv("PYTEST_XDIST_WORKER")
-    if not worker_id or worker_id == "master":
-        return TEST_QUEUE
-    return f"{TEST_QUEUE}_{worker_id}"
+    """Generate unique queue name for each pytest"""
+    return f"{TEST_QUEUE}_{uuid.uuid4()}"
 
 
 @pytest.fixture

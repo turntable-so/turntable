@@ -42,6 +42,14 @@ services:
     environment:
       <<: [*postgres-credentials, *storage-credentials]
 
+  worker_two:
+    extends:
+      file: docker-compose.dev-internal.yml
+      service: worker_two
+    command: ["django-admin", "start_worker", "--mode", "staging"]
+    environment:
+      <<: [*postgres-credentials, *storage-credentials]
+
   scheduler:
     extends:
       file: docker-compose.dev-internal.yml

@@ -168,6 +168,14 @@ services:
     environment:
       <<: [*internal-credentials, *storage-credentials]
 
+  worker_two:
+    extends:
+      file: docker-compose.dev.yml
+      service: worker_two
+    command: ["django-admin", "start_worker", "--mode", "dev-internal"]
+    environment:
+      <<: [*internal-credentials, *storage-credentials]
+
   scheduler:
     extends:
       file: docker-compose.dev.yml
