@@ -144,9 +144,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--hostname", type=str, required=False)
         parser.add_argument("--max-wait", type=int, required=False, default=3600)
-        parser.add_argument(
-            "--interval", type=int, required=False, default=POLLING_INTERVAL
-        )
+        parser.add_argument("--interval", type=int, required=False, default=1)
         parser.add_argument(
             "--excluded-queues",
             type=str,
