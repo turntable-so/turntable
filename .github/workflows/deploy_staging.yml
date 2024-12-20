@@ -1,0 +1,20 @@
+# only deploy staging workers on push to main since non-workers are handled by render
+# this is to ensure that at least one worker is running
+
+name: Deploy Staging
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/deploy.yml
+    with:
+      blueprint_name: 'Staging'
+    secrets: inherit

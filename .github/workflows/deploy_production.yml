@@ -1,0 +1,17 @@
+name: Deploy Production
+
+on:
+  release:
+    types: [published]
+
+# complete one at a time to ensure workers don't go down
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/deploy.yml
+    with:
+      blueprint_name: 'Prod'
+    secrets: inherit
