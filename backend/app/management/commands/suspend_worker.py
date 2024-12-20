@@ -5,7 +5,7 @@ import time
 from celery import current_app
 from django.core.management.base import BaseCommand
 
-POLLING_INTERVAL = 5
+POLLING_INTERVAL = 1
 MAX_POLLING_ATTEMPTS = 10
 
 
@@ -74,15 +74,21 @@ def ensure_active_workers(
     hostname: str | None = None,
     excluded_queues: list[str] = [],
     mandate_on_worker: bool = True,
+    inexact_hostname: bool = False,
 ) -> bool:
-    active_queues, active_workers, _ = get_active_queues(
-        excluded_queues=excluded_queues
+    _, active_workers, _ = get_active_queues(
+        excluded_queues=excluded_queues,
     )
 
     # hostname is in active_workers
     hostnames = [worker.split("@")[1] for worker in active_workers]
-    if hostname is not None and hostname not in hostnames:
-        return False
+    if hostname is not None:
+        if inexact_hostname:
+            if all(hostname not in h for h in hostnames):
+                return False
+        else:
+            if hostname not in hostnames:
+                return False
 
     # there are at least two active workers
     if mandate_on_worker and len(hostnames) < 2:
@@ -92,21 +98,29 @@ def ensure_active_workers(
 
 
 def get_relevant_workers(
-    active_workers: set[str], hostname: str | None = None
+    active_workers: set[str],
+    hostname: str | None = None,
+    inexact_hostname: bool = False,
 ) -> list[str]:
     if hostname is None:
         return list(active_workers)
-    return [worker for worker in active_workers if worker.split("@")[1] == hostname]
+    if inexact_hostname:
+        return [worker for worker in active_workers if hostname in worker.split("@")[1]]
+    return [worker for worker in active_workers if hostname == worker.split("@")[1]]
 
 
 def cancel_consumer(
-    hostname: str | None = None, excluded_queues: list[str] = []
+    hostname: str | None = None,
+    excluded_queues: list[str] = [],
+    inexact_hostname: bool = False,
 ) -> list[str]:
-    active_queues, active_workers, worker_queue_map = get_active_queues(
-        excluded_queues=excluded_queues
+    _, active_workers, worker_queue_map = get_active_queues(
+        excluded_queues=excluded_queues,
     )
     relevant_workers = get_relevant_workers(
-        active_workers=active_workers, hostname=hostname
+        active_workers=active_workers,
+        hostname=hostname,
+        inexact_hostname=inexact_hostname,
     )
     for worker in relevant_workers:
         for queue in worker_queue_map[worker]:
@@ -130,6 +144,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--hostname", type=str, required=False)
         parser.add_argument("--max-wait", type=int, required=False, default=3600)
+        parser.add_argument("--interval", type=int, required=False, default=1)
         parser.add_argument(
             "--excluded-queues",
             type=str,
@@ -143,23 +158,40 @@ class Command(BaseCommand):
             required=False,
             default=False,
         )
+        parser.add_argument(
+            "--inexact-hostname",
+            action="store_true",
+            required=False,
+            default=False,
+        )
 
     def handle(self, *args, **options):
         hostname = options["hostname"]
         max_wait = options["max_wait"]
         excluded_queues = options["excluded_queues"]
         test_mode = options["test_mode"]
+        inexact_hostname = options["inexact_hostname"]
+        interval = options["interval"]
 
         # ensure the worker we want to suspend is running and there's at least one other worker running
-        poller()(ensure_active_workers)(
-            hostname, excluded_queues, mandate_on_worker=not test_mode
+        poller(max_attempts=2)(ensure_active_workers)(
+            hostname,
+            excluded_queues,
+            mandate_on_worker=not test_mode,
+            inexact_hostname=inexact_hostname,
         )
 
         # prevent the worker from being scheduled
-        relevant_workers = cancel_consumer(hostname, excluded_queues)
+        relevant_workers = cancel_consumer(
+            hostname,
+            excluded_queues,
+            inexact_hostname=inexact_hostname,
+        )
 
         # ensure there are no active tasks on suspended worker
-        active_tasks_poller = poller(interval=5, max_attempts=max_wait // 5)
+        active_tasks_poller = poller(
+            interval=interval, max_attempts=max_wait // interval
+        )
         polled = active_tasks_poller(ensure_no_active_tasks)(relevant_workers)
         if test_mode:
             return str(polled)
