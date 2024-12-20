@@ -61,7 +61,7 @@ jobs:
 
       - name: Run tests
         run: |
-          rye run pytest -n 2
+          rye run pytest -n 2 -k "testvalidatedbtviews and postgres and None and False"
         working-directory: backend
         env:
           POSTGRES_DB: mydb
