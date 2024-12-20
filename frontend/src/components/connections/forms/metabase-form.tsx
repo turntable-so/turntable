@@ -10,6 +10,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -145,8 +146,7 @@ export default function MetabaseForm({
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
+                      <PasswordInput
                         placeholder="password"
                         {...field}
                       />
@@ -165,7 +165,7 @@ export default function MetabaseForm({
               <FormItem>
                 <FormLabel>API Key (Optional)</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <PasswordInput {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -179,7 +179,7 @@ export default function MetabaseForm({
               <FormItem>
                 <FormLabel>JWT Secret Key (Optional)</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <PasswordInput {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
