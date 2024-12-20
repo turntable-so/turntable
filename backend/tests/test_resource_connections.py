@@ -41,6 +41,11 @@ def test_redshift_connection(remote_redshift: Resource):
     assert dialect_test_contents(remote_redshift)
 
 
+@require_env_vars("CLICKHOUSE_0_WORKSPACE_ID")
+def test_clickhouse_connection(remote_clickhouse: Resource):
+    assert dialect_test_contents(remote_clickhouse)
+
+
 @require_env_vars("TABLEAU_0_USERNAME")
 def test_tableau_connection(remote_tableau: Resource):
     assert dialect_test_contents(remote_tableau, is_db=False)

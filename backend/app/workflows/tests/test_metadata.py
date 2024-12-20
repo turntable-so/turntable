@@ -107,6 +107,12 @@ class TestMetadataSync:
     ):
         run_test_sync([remote_tableau], recache, use_cache)
 
+    @require_env_vars("CLICKHOUSE_0_WORKSPACE_ID")
+    def test_metadata_sync_clickhouse(
+        self, remote_clickhouse, recache: bool, use_cache: bool
+    ):
+        run_test_sync([remote_clickhouse], recache, use_cache)
+
     @require_env_vars("POWERBI_0_RESOURCE_NAME")
     def test_metadata_sync_powerbi(
         self, remote_powerbi, recache: bool, use_cache: bool
