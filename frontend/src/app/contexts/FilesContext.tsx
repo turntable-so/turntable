@@ -27,6 +27,7 @@ import {
   getFileIndex,
   getProject,
   getProjectChanges,
+  moveFileOrDirectory,
   persistFile,
 } from "../actions/actions";
 import {
@@ -192,6 +193,7 @@ type FilesContextType = {
   >;
   isApplying: boolean;
   setIsApplying: Dispatch<SetStateAction<boolean>>;
+  move: (dragIds: string[], parentId: string) => Promise<boolean>;
 };
 
 type QueryPreview = {
@@ -387,11 +389,11 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
 
     // Filter out files that no longer exist
     const filePaths = new Set(flattenedFiles.map(file => file.path));
-    setRecentFiles(prevRecentFiles => 
+    setRecentFiles(prevRecentFiles =>
       prevRecentFiles.filter(file => filePaths.has(file.path))
     );
-    setOpenedFiles(prevOpenedFiles => 
-      prevOpenedFiles.filter(file => 
+    setOpenedFiles(prevOpenedFiles =>
+      prevOpenedFiles.filter(file =>
         file.node.type === "file" ? filePaths.has(file.node.path) : true
       )
     );
@@ -768,6 +770,12 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
     return success;
   };
 
+  const move = async (dragIds: string[], parentId: string) => {
+    await moveFileOrDirectory(branchId, dragIds, parentId);
+    fetchFiles();
+    return true
+  };
+
   const formatActiveFile = async () => {
     if (
       !activeFile ||
@@ -959,6 +967,7 @@ export const FilesProvider: React.FC<{ children: ReactNode }> = ({
         setQueryPreviewData,
         isApplying,
         setIsApplying,
+        move,
       }}
     >
       {children}

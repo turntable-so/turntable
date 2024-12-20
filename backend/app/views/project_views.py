@@ -202,14 +202,20 @@ class ProjectViewSet(viewsets.ViewSet):
                                 )
                                 return response
                         elif os.path.isdir(filepath):
-                            with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as temp_zip_file:
+                            with tempfile.NamedTemporaryFile(
+                                suffix=".zip", delete=False
+                            ) as temp_zip_file:
                                 temp_zip_path = temp_zip_file.name
-                                with zipfile.ZipFile(temp_zip_file, "w", zipfile.ZIP_DEFLATED) as zipf:
+                                with zipfile.ZipFile(
+                                    temp_zip_file, "w", zipfile.ZIP_DEFLATED
+                                ) as zipf:
                                     base_path = os.path.dirname(filepath)
                                     for root, _, files in os.walk(filepath):
                                         for file in files:
                                             file_path = os.path.join(root, file)
-                                            arcname = os.path.relpath(file_path, base_path)
+                                            arcname = os.path.relpath(
+                                                file_path, base_path
+                                            )
                                             zipf.write(file_path, arcname)
 
                             with open(temp_zip_path, "rb") as f:
@@ -325,6 +331,68 @@ class ProjectViewSet(viewsets.ViewSet):
                     shutil.copytree(filepath, new_path)
 
             return Response({"success": True}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"success": False, "error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @action(detail=True, methods=["PUT"], url_path="files/move")
+    def move(self, request, pk=None):
+        drag_ids = request.data.get("drag_ids")
+        parent_id = request.data.get("parent_id")
+
+        if not drag_ids or not parent_id:
+            return Response(
+                {
+                    "success": False,
+                    "error": "drag_ids and parent_id are required",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        project = Project.objects.get(id=pk)
+        try:
+            with project.repo_context() as (repo, env):
+                # Convert paths to absolute paths within repo
+                parent_path = os.path.join(repo.working_tree_dir, unquote(parent_id))
+                if not os.path.exists(parent_path):
+                    return Response(
+                        {"success": False, "error": "Parent directory not found"},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+
+                # Move each dragged item
+                for drag_id in drag_ids:
+                    source_path = os.path.join(repo.working_tree_dir, unquote(drag_id))
+                    if not os.path.exists(source_path):
+                        return Response(
+                            {
+                                "success": False,
+                                "error": f"Source path not found: {drag_id}",
+                            },
+                            status=status.HTTP_404_NOT_FOUND,
+                        )
+
+                    # Create destination path
+                    filename = os.path.basename(source_path)
+                    dest_path = os.path.join(parent_path, filename)
+
+                    # Handle case where destination already exists
+                    if os.path.exists(dest_path):
+                        return Response(
+                            {
+                                "success": False,
+                                "error": f"Destination already exists: {filename}",
+                            },
+                            status=status.HTTP_409_CONFLICT,
+                        )
+
+                    # Move the file/directory
+                    shutil.move(source_path, dest_path)
+
+                return Response({"success": True}, status=status.HTTP_200_OK)
+
         except Exception as e:
             return Response(
                 {"success": False, "error": str(e)},
