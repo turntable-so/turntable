@@ -45,7 +45,7 @@ export default function RunArtifacts({ run }: RunArtifactsProps) {
   return (
     <div>
       <h2 className="text-xl font-semibold mb-4">Artifacts</h2>
-      {artifacts.length > 0 ? (
+      {artifacts && artifacts.length > 0 ? (
         <ul className="space-y-2">
           {artifacts.map((artifact) => {
             const isLoading = loadingArtifactIds.includes(artifact.id);
