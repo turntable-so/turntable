@@ -1,3 +1,5 @@
+import pytest
+
 from app.models import Resource
 from app.utils.test_utils import require_env_vars
 
@@ -13,6 +15,7 @@ def dialect_test_contents(resource: Resource, is_db: bool = True):
     return True
 
 
+@pytest.mark.xdist_group(name="postgres")
 def test_postgres_connection(local_postgres: Resource):
     assert dialect_test_contents(local_postgres)
 

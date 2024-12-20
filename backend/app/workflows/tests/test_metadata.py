@@ -72,6 +72,7 @@ def run_test_sync(
 @pytest.mark.usefixtures("custom_celery", "storage")
 class TestMetadataSync:
     @pytest.mark.parametrize("use_cache", [True, False])
+    @pytest.mark.xdist_group(name="postgres")
     def test_metadata_sync_postgres(
         self,
         local_metabase,

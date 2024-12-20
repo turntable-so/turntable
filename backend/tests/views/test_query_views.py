@@ -48,6 +48,7 @@ class BaseQueryTest:
         return url
 
     @pytest.mark.parametrize("limit", [None, 100])
+    @pytest.mark.xdist_group(name="postgres")
     def test_postgres(self, request, client, user, local_postgres, limit, success):
         self._test(
             client,
