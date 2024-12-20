@@ -139,11 +139,7 @@ def local_postgres(workspace):
 def storage(workspace):
     # Create a test bucket with a unique name
     test_bucket_root_name = os.getenv("TEST_AWS_STORAGE_BUCKET_NAME", "test-bucket")
-    worker_id = os.getenv("PYTEST_XDIST_WORKER")
-    if not worker_id:
-        bucket_name = f"{test_bucket_root_name}-{workspace.id}"
-    else:
-        bucket_name = f"{test_bucket_root_name}-{workspace.id}-{worker_id}"
+    bucket_name = f"{test_bucket_root_name}-{workspace.id}-{uuid.uuid4()}"
 
     # Create storage settings
     storage_settings = create_local_alternative_storage(workspace, bucket_name)
