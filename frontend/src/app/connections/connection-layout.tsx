@@ -2,11 +2,12 @@
 
 import {
   BigQueryLogo,
+  ClickhouseLogo,
   DatabricksLogo,
   PowerBiLogo,
   RedshiftLogo,
   SnowflakeLogo,
-  TableauLogo,
+  TableauLogo
 } from "@/components/connections/connection-options";
 import BigqueryForm from "@/components/connections/forms/bigquery-form";
 import { LoaderButton } from "@/components/ui/LoadingSpinner";
@@ -27,6 +28,7 @@ import { useRouter } from "next/navigation";
 
 import useSession from "@/app/hooks/use-session";
 import useWorkflowUpdates from "@/app/hooks/use-workflow-updates";
+import ClickhouseForm from "@/components/connections/forms/clickhouse-form";
 import DatabricksForm from "@/components/connections/forms/databricks-form";
 import DbtProjectForm from "@/components/connections/forms/dbt-project-form";
 import MetabaseForm from "@/components/connections/forms/metabase-form";
@@ -112,6 +114,7 @@ export default function ConnectionLayout({
           {resource.subtype === "tableau" && <TableauLogo />}
           {resource.subtype === "redshift" && <RedshiftLogo />}
           {resource.subtype === "powerbi" && <PowerBiLogo />}
+          {resource.subtype === 'clickhouse' && <ClickhouseLogo />}
           <div>Edit {resource.name}</div>
         </div>
       </Button>
@@ -222,6 +225,9 @@ export default function ConnectionLayout({
               )}
               {resource.subtype === "powerbi" && (
                 <PowerBIForm resource={resource} details={details} />
+              )}
+              {resource.subtype === "clickhouse" && (
+                <ClickhouseForm resource={resource} details={details} />
               )}
             </CardContent>
           </Card>

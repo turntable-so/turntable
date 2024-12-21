@@ -928,6 +928,94 @@ class DatabricksConnector(_DatabaseConnector):
             return ValidationOutput(errors=[error], bytes_processed=None, cost=None)
 
 
+class ClickhouseConnector(_DatabaseConnector):
+    import psycopg
+    from psycopg2.extensions import binary_types, string_types
+
+    _excluded_schemas = [
+        "information_schema",
+        "INFORMATION_SCHEMA",
+        "system",
+    ]
+    _allows_multiple_databases: bool = False
+    _host: str
+    _port: int
+    _user: str
+    _password: str
+    _secure: bool | None
+
+    def __init__(
+        self,
+        host: str,
+        port: int,
+        user: str,
+        password: str,
+        secure: bool | None,
+        tables: list[str],
+    ):
+        self._host = host
+        self._port = port
+        self._user = user
+        self._password = password
+        self._secure = secure
+        self._tables = tables
+
+    def _connect(self) -> BaseBackend:
+        self._conn = self._connect_helper(
+            self._host, self._port, self._user, self._password, self._secure
+        )
+        return self._conn
+
+    def _list_sources(self, with_schema=False) -> list[SourceInfo]:
+        self._connect()
+        out, errors = self._find_sources_in_db(with_schema=with_schema)
+        return out, errors
+
+    def run_query(
+        self,
+        query: str,
+        limit: int | None = _QUERY_LIMIT,
+        bypass_limit_helper: bool = False,
+    ) -> tuple[pd.DataFrame, dict[str, str]]:
+        conn = self._connect()
+        if not bypass_limit_helper:
+            query = query_limit_helper(query, limit)
+        with closing(conn.raw_sql(query)) as cursor:
+            columns = {
+                name: cursor.column_types[i].name
+                for i, name in enumerate(cursor.column_names)
+            }
+            df = pd.DataFrame(cursor.result_rows, columns=[col for col in columns])
+
+        return df, columns
+
+    def validate_sql(self, query: str) -> ValidationOutput:
+        from clickhouse_connect.driver.exceptions import DatabaseError
+
+        query = f"EXPLAIN json=1 ({query})"
+        try:
+            out, _ = self.run_query(query, bypass_limit_helper=True)
+            return ValidationOutput(errors=None, bytes_processed=None, cost=None)
+        except DatabaseError as e:
+            error = VinylError(
+                "NA",
+                VinylErrorType.DATABASE_ERROR,
+                str(e).split("DB::Exception: ", 1)[-1],
+                dialect=self._get_name(),
+            )
+            return ValidationOutput(errors=[error], bytes_processed=None, cost=None)
+
+    # caching ensures we create one bq connection per set of credentials across instances of the class
+    @staticmethod
+    @lru_cache()
+    def _connect_helper(
+        host: str, port: int, user: str, password: str, secure: bool | None
+    ) -> BaseBackend:
+        return ibis.clickhouse.connect(
+            host=host, port=port, user=user, password=password, secure=secure
+        )
+
+
 @dataclass(frozen=True)
 class DBTArgs:
     profiles_dir: str

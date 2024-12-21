@@ -5,114 +5,140 @@ from django.conf import settings
 from app.utils.test_utils import require_env_vars
 
 
-def _validate_query_test(response, limit):
-    assert response.status_code == 201
-    data = response.json()
-    url = data["signed_url"]
-    assert url is not None
-
-    # check signed url data
-    url = url.replace(settings.AWS_S3_PUBLIC_URL, settings.AWS_S3_ENDPOINT_URL)
-    response = requests.get(url)
-    assert response.status_code == 200
-    data = response.json()["data"]
-    assert len(data) >= 100
-    if limit is not None:
-        assert len(data) <= limit
-
-    return url
-
-
 @pytest.mark.usefixtures("force_isolate", "custom_celery", "storage")
-class TestQueryViews:
-    def _test(
-        self,
-        client,
-        user,
-        resource,
-        endpoint="/query/sql/",
-        query="select * from mydb.dbt_sl_test.customers",
-        limit=None,
-    ):
+class BaseQueryTest:
+    endpoint = None
+    default_query = None
+    query_edits = {}
+    success_options = [True]
+
+    def _build_query(self, resource, success=True):
+        return self.query_edits.get(resource.subtype, self.default_query)
+
+    def _test(self, client, user, resource, limit=None, success=True, **kwargs):
         user.active_workspace_id = resource.workspace.id
         user.save()
-        data = {"query": query}
-        if limit is not None:
-            data["limit"] = limit
-        response = client.post(endpoint, data)
-        return _validate_query_test(response, limit)
-
-    @pytest.mark.parametrize("limit", [None, 100])
-    def test_sql_query_postgres(self, client, user, local_postgres, limit):
-        self._test(client, user, local_postgres, limit=limit)
-
-    @require_env_vars("REDSHIFT_0_WORKSPACE_ID")
-    def test_sql_query_redshift(self, client, user, remote_redshift):
-        self._test(client, user, remote_redshift)
-
-    @require_env_vars("BIGQUERY_0_WORKSPACE_ID")
-    def test_sql_query_bigquery(self, client, user, remote_bigquery):
-        self._test(
-            client, user, remote_bigquery, query="select * from dbt_sl_test.customers"
-        )  # override query due to bq syntax
-
-    @require_env_vars("SNOWFLAKE_0_WORKSPACE_ID")
-    def test_sql_query_snowflake(self, client, user, remote_snowflake):
-        self._test(client, user, remote_snowflake)
-
-    @require_env_vars("DATABRICKS_0_WORKSPACE_ID")
-    def test_sql_query_databricks(self, client, user, remote_databricks):
-        self._test(client, user, remote_databricks)
-
-
-@pytest.mark.usefixtures("force_isolate", "custom_celery", "storage")
-class TestDBTQueryViews:
-    @classmethod
-    def _test(
-        cls,
-        client,
-        user,
-        resource,
-        endpoint="/query/dbt/",
-        query="select * from {{ ref('customers') }}",
-        limit=None,
-    ):
-        user.active_workspace_id = resource.workspace.id
-        user.save()
-        project_id = resource.dbtresource_set.first().repository.main_project.id
 
         data = {
-            "query": query,
-            "project_id": project_id,
-            "use_fast_compile": True,
+            "query": self._build_query(resource, success),
+            **kwargs,
         }
         if limit is not None:
             data["limit"] = limit
-        response = client.post(endpoint, data)
-        _validate_query_test(response, limit)
 
-    def test_dbt_query_postgres(self, client, user, local_postgres):
-        self._test(client, user, local_postgres)
+        response = client.post(self.endpoint, data)
+        return self._validate_response(response, limit, success)
 
-    @require_env_vars("REDSHIFT_0_WORKSPACE_ID")
-    def test_dbt_query_redshift(self, client, user, remote_redshift):
-        self._test(client, user, remote_redshift)
+    def _validate_response(self, response, limit, success):
+        assert response.status_code == 201
+        data = response.json()
 
-    @require_env_vars("BIGQUERY_0_WORKSPACE_ID")
-    def test_dbt_query_bigquery(self, client, user, remote_bigquery):
-        self._test(client, user, remote_bigquery)
+        url = data["signed_url"]
+        assert url is not None
 
-    @require_env_vars("SNOWFLAKE_0_WORKSPACE_ID")
-    def test_dbt_query_snowflake(self, client, user, remote_snowflake):
+        # check signed url data
+        url = url.replace(settings.AWS_S3_PUBLIC_URL, settings.AWS_S3_ENDPOINT_URL)
+        response = requests.get(url)
+        assert response.status_code == 200
+        data = response.json()["data"]
+        assert len(data) >= 100
+        if limit is not None:
+            assert len(data) <= limit
+
+        return url
+
+    @pytest.mark.parametrize("limit", [None, 100])
+    @pytest.mark.xdist_group(name="postgres")
+    def test_postgres(self, request, client, user, local_postgres, limit, success):
         self._test(
             client,
             user,
-            remote_snowflake,
+            local_postgres,
+            limit=limit,
+            success=success,
         )
 
+    @require_env_vars("REDSHIFT_0_WORKSPACE_ID")
+    def test_redshift(self, client, user, remote_redshift, success):
+        self._test(client, user, remote_redshift, success=success)
+
+    @require_env_vars("CLICKHOUSE_0_WORKSPACE_ID")
+    def test_clickhouse(self, client, user, remote_clickhouse, success):
+        self._test(client, user, remote_clickhouse, success=success)
+
+    @require_env_vars("BIGQUERY_0_WORKSPACE_ID")
+    def test_bigquery(self, client, user, remote_bigquery, success):
+        self._test(client, user, remote_bigquery, success=success)
+
+    @require_env_vars("SNOWFLAKE_0_WORKSPACE_ID")
+    def test_snowflake(self, client, user, remote_snowflake, success):
+        self._test(client, user, remote_snowflake, success=success)
+
     @require_env_vars("DATABRICKS_0_WORKSPACE_ID")
-    def test_dbt_query_databricks(self, client, user, remote_databricks):
-        self._test(client, user, remote_databricks)
+    def test_databricks(self, client, user, remote_databricks, success):
+        self._test(client, user, remote_databricks, success=success)
+
+
+@pytest.mark.parametrize("success", [True])
+class TestQueryViews(BaseQueryTest):
+    endpoint = "/query/sql/"
+    default_query = "select * from mydb.dbt_sl_test.customers"
+    query_edits = {
+        "clickhouse": "select * from dbt_sl_test.customers",
+        "bigquery": "select * from dbt_sl_test.customers",
+    }
+
+
+class TestDBTQueryViews(TestQueryViews):
+    endpoint = "/query/dbt/"
+    default_query = "select * from {{ ref('customers') }}"
+    query_edits = {}
+
+    def _test(self, client, user, resource, query=None, limit=None, success=True):
+        project_id = resource.dbtresource_set.first().repository.main_project.id
+        super()._test(
+            client,
+            user,
+            resource,
+            limit=limit,
+            project_id=project_id,
+            use_fast_compile=True,
+            success=success,
+        )
+
+
+@pytest.mark.parametrize("success", [True, False])
+class TestValidateViews(BaseQueryTest):
+    endpoint = "/validate/sql/"
+    default_query = TestQueryViews.default_query
+    query_edits = TestQueryViews.query_edits
+
+    def _build_query(self, resource, success=True):
+        out = super()._build_query(resource, success)
+        # add a random character to the query if it should fail
+        return out if success else out + "x"
+
+    def _validate_response(self, response, limit, success):
+        assert response.status_code == 200
+        assert response.json()["status"] == "success" if success else "error"
+
+
+class TestValidateDBTViews(TestValidateViews):
+    endpoint = "/validate/dbt/"
+    default_query = TestDBTQueryViews.default_query
+    query_edits = TestDBTQueryViews.query_edits
+
+    def _test(self, client, user, resource, query=None, limit=None, success=True):
+        project_id = resource.dbtresource_set.first().repository.main_project.id
+        super()._test(
+            client,
+            user,
+            resource,
+            limit=limit,
+            project_id=project_id,
+            use_fast_compile=True,
+            success=success,
+        )
 
 
 FORMAT_QUERY = """with source as (select * from {{ source('ecom', 'raw_customers') }}), renamed as (select id as customer_id, name as customer_name from source) select * from renamed"""

@@ -23,7 +23,15 @@ from fixtures.local_env import (
     create_repository_n,
     create_ssh_key_n,
 )
-from fixtures.staging_env import group_1, group_2, group_3, group_4, group_5, group_6
+from fixtures.staging_env import (
+    group_1,
+    group_2,
+    group_3,
+    group_4,
+    group_5,
+    group_6,
+    group_7,
+)
 
 MOCK_WORKSPACE_ID = "mock_"
 TEST_QUEUE = "test_queue"
@@ -131,11 +139,7 @@ def local_postgres(workspace):
 def storage(workspace):
     # Create a test bucket with a unique name
     test_bucket_root_name = os.getenv("TEST_AWS_STORAGE_BUCKET_NAME", "test-bucket")
-    worker_id = os.getenv("PYTEST_XDIST_WORKER")
-    if not worker_id:
-        bucket_name = f"{test_bucket_root_name}-{workspace.id}"
-    else:
-        bucket_name = f"{test_bucket_root_name}-{workspace.id}-{worker_id}"
+    bucket_name = f"{test_bucket_root_name}-{workspace.id}-{uuid.uuid4()}"
 
     # Create storage settings
     storage_settings = create_local_alternative_storage(workspace, bucket_name)
@@ -215,6 +219,11 @@ def internal_bigquery(user):
 @pytest.fixture
 def internal_bigquery_deprecated(user):
     return group_1(user)[0]
+
+
+@pytest.fixture
+def remote_clickhouse(user):
+    return group_7(user)[0]
 
 
 @pytest.fixture

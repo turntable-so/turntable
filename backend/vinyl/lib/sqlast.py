@@ -1,3 +1,4 @@
+import json
 import re
 import typing as t
 from functools import lru_cache
@@ -33,7 +34,7 @@ from vinyl.lib.table import VinylTable
 from vinyl.lib.utils.graph import DAG
 from vinyl.lib.utils.text import _generate_random_ascii_string
 
-DIALECTS_ALLOWING_DEFAULT_DB = ["postgres"]
+DIALECTS_ALLOWING_IMPLICIT_CATALOG = ["postgres", "clickhouse"]
 
 
 class Catalog(dict[str, sch.Schema]):
@@ -277,7 +278,7 @@ class SQLAstNode:
         if not isinstance(ast, exp.Table):
             return ast
 
-        if self.dialect in DIALECTS_ALLOWING_DEFAULT_DB:
+        if self.dialect in DIALECTS_ALLOWING_IMPLICIT_CATALOG:
             if not ast.catalog and not ast.db:
                 return ast
         else:
@@ -303,7 +304,7 @@ class SQLAstNode:
         db_location = ".".join(db_location.split(self.join_str))
         if (
             db_location.startswith(".")
-            and self.dialect in DIALECTS_ALLOWING_DEFAULT_DB
+            and self.dialect in DIALECTS_ALLOWING_IMPLICIT_CATALOG
             and self.default_db
         ):
             db_location = self.default_db + db_location
@@ -586,11 +587,13 @@ class SQLAstNode:
         try:
             self.lineage.remove_nodes_and_reconnect(nodes_to_remove)
         except Exception as e:
+            breakpoint()
             self.errors.append(
                 VinylError(
                     self.id,
                     VinylErrorType.CYCLE_ERROR,
-                    str(e),
+                    str(e)
+                    + f". Cycles are {json.dumps([list(cycle) for cycle in self.lineage.find_cycles()])}",
                     self.dialect,
                     self.original_ast.sql(pretty=True),
                 )

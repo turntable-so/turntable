@@ -28,6 +28,7 @@ from app.services.storage_backends import (
 from app.utils.fields import encrypt
 from vinyl.lib.connect import (
     BigQueryConnector,
+    ClickhouseConnector,
     DatabaseFileConnector,
     DatabricksConnector,
     PostgresConnector,
@@ -56,6 +57,7 @@ class ResourceSubtype(models.TextChoices):
     REDSHIFT = "redshift", "Redshift"
     DATABRICKS = "databricks", "Databricks"
     DUCKDB = "duckdb", "File"
+    CLICKHOUSE = "clickhouse", "Clickhouse"
     FILE = "file", "File"
     DBT = "dbt", "Dbt"
     DBT_CLOUD = "dbt_cloud", "Dbt Cloud"
@@ -1414,6 +1416,79 @@ class DuckDBDetails(DBDetails):
         return {
             "target": target_name,
             "outputs": {target_name: {"type": "duckdb", "path": self.path}},
+        }
+
+
+class ClickhouseDetails(DBDetails):
+    subtype = models.CharField(max_length=255, default=ResourceSubtype.CLICKHOUSE)
+    host = encrypt(models.CharField(max_length=255, blank=False))
+    port = models.IntegerField(blank=False)
+    user = encrypt(models.CharField(max_length=255, blank=False))
+    password = encrypt(models.CharField(max_length=255, blank=False))
+    secure = models.BooleanField(null=True)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # exclude information_schema and system schemas
+        if self.schema_exclude is None:
+            self.schema_exclude = []
+        self.schema_exclude.extend(
+            ["INFORMATION_SCHEMA", "information_schema", "system"]
+        )
+
+    @property
+    def datahub_extras(self):
+        return ["clickhouse", "dbt"]
+
+    def get_connector(self):
+        return ClickhouseConnector(
+            host=self.host,
+            port=self.port,
+            user=self.user,
+            password=self.password,
+            secure=self.secure,
+            tables=["*.*.*"],
+        )
+
+    def get_datahub_config(self, db_path) -> dict[str, Any]:
+        source = {
+            "type": "clickhouse",
+            "config": {
+                "host_port": f"{self.host}",  # no port for now, causes errors for datahub
+                "scheme": "clickhouse+native",
+                "username": self.user,
+                "password": self.password,
+                "include_table_lineage": False,
+                "include_table_location_lineage": False,
+                "include_view_lineage": False,
+                "include_view_column_lineage": False,
+            },
+        }
+        if self.secure is not None:
+            source["config"]["uri_opts"] = {"secure": self.secure}
+        return {
+            "source": source,
+            "sink": get_sync_config(db_path),
+        }
+
+    def get_dbt_profile_contents(
+        self, dbt_core_resource: DBTCoreDetails, schema: str | None = None
+    ):
+        target_name = dbt_core_resource.target_name or "prod"
+        return {
+            "target": target_name,
+            "outputs": {
+                target_name: {
+                    "type": "clickhouse",
+                    "schema": schema or dbt_core_resource.schema,
+                    "host": self.host,
+                    "port": self.port,
+                    "user": self.user,
+                    "password": self.password,
+                    "secure": self.secure,
+                    "threads": dbt_core_resource.threads,
+                }
+            },
         }
 
 

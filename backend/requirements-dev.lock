@@ -109,6 +109,7 @@ celery==5.4.0
     # via pytest-celery
     # via sentry-sdk
 certifi==2024.8.30
+    # via clickhouse-connect
     # via httpcore
     # via httpx
     # via pyogrio
@@ -152,6 +153,8 @@ click-repl==0.3.0
     # via celery
 click-spinner==0.1.10
     # via acryl-datahub
+clickhouse-connect==0.8.10
+    # via turntable-spoonbill
 colorama==0.4.6
     # via dbt-common
 constantly==23.10.4
@@ -474,6 +477,7 @@ logbook==1.5.3
 lxml==5.3.0
     # via redshift-connector
 lz4==4.3.3
+    # via clickhouse-connect
     # via databricks-sql-connector
 markdown-it-py==3.0.0
     # via mdit-py-plugins
@@ -524,6 +528,7 @@ networkx==3.4.2
     # via netext
 ngrok==1.4.0
 numpy==1.26.4
+    # via clickhouse-connect
     # via contourpy
     # via databricks-sql-connector
     # via db-dtypes
@@ -573,6 +578,7 @@ packaging==24.2
 palettable==3.3.3
     # via lets-plot
 pandas==2.2.3
+    # via clickhouse-connect
     # via databricks-sql-connector
     # via db-dtypes
     # via geopandas
@@ -647,6 +653,7 @@ pure-eval==0.2.3
 pyaes==1.6.1
     # via fernet
 pyarrow==16.1.0
+    # via clickhouse-connect
     # via databricks-sql-connector
     # via db-dtypes
     # via google-cloud-bigquery
@@ -747,6 +754,7 @@ python3-openid==3.2.0
 pytimeparse==1.1.8
     # via agate
 pytz==2024.2
+    # via clickhouse-connect
     # via croniter
     # via dbt-adapters
     # via dbt-core
@@ -983,6 +991,7 @@ uc-micro-py==1.0.3
     # via linkify-it-py
 urllib3==2.2.3
     # via botocore
+    # via clickhouse-connect
     # via databricks-sql-connector
     # via docker
     # via mixpanel
@@ -1025,3 +1034,5 @@ zope-event==5.0
 zope-interface==7.1.1
     # via gevent
     # via twisted
+zstandard==0.23.0
+    # via clickhouse-connect
