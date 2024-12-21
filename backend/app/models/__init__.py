@@ -14,6 +14,7 @@ from .query import DBTQuery, Query
 from .repository import Repository
 from .resources import (
     BigqueryDetails,
+    ClickhouseDetails,
     DatabricksDetails,
     DataFileDetails,
     DBTCloudDetails,

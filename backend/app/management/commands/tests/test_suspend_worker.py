@@ -22,6 +22,7 @@ def setup_worker(custom_celery, test_queue_name, test_worker_name, duration):
 @pytest.mark.parametrize(
     "duration,inexact_hostname", [(4, False), (9, False), (14, False), (4, True)]
 )
+@pytest.mark.xdist_group(name="suspend_worker")
 def test_suspend_worker(
     custom_celery, test_queue_name, test_worker_name, duration, inexact_hostname
 ):

@@ -1,0 +1,36 @@
+name: Deploy Other Services (Helper)
+
+on:
+  workflow_call:
+    inputs:
+      blueprint_name:
+        required: true
+        type: string
+      service_names_json:
+        required: true
+        type: string
+        description: "JSON array of service names"
+
+jobs:
+  deploy_service:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service_name: ${{ fromJSON(inputs.service_names_json) }}
+    steps:
+      - name: Install render cli
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/render-oss/cli/refs/heads/main/bin/install.sh | sh
+
+      - name: Load secrets from One Password
+        uses: 1password/load-secrets-action@v2
+        with:
+          export-env: true
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          RENDER_API_KEY: op://Env/Render/api_key
+          SERVICE_ID: op://Env/Render-${{ inputs.blueprint_name }}/${{ matrix.service_name }}_service_id
+
+      - name: Deploy Service
+        run: |
+          render deploys create ${{ env.SERVICE_ID }} --commit ${{ github.sha }} --wait -o text --confirm 

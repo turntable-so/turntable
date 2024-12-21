@@ -5,6 +5,7 @@ import pytest
 from app.models import (
     Asset,
     AssetContainer,
+    AssetError,
     AssetLink,
     Column,
     ColumnLink,
@@ -90,3 +91,6 @@ def assert_ingest_output(resources, columns=True, column_links=True):
 
     ## at least one asset has a container
     assert Asset.objects.filter(containermembership__isnull=False).count() > 0
+
+    ## no asset errors
+    assert AssetError.objects.count() == 0

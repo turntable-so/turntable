@@ -1,0 +1,33 @@
+# only deploy staging workers on push to main since non-workers are handled by render
+# this is to ensure that at least one worker is running
+
+name: Deploy (Helper)
+
+on:
+  workflow_call:
+    inputs:
+      blueprint_name:
+        required: true
+        type: string
+jobs:
+  deploy_frontend:
+    uses: ./.github/workflows/deploy_other_services.yml
+    with:
+      blueprint_name: ${{ inputs.blueprint_name }}
+      service_names_json: '["web"]'
+    secrets: inherit
+  deploy_backend:
+    uses: ./.github/workflows/deploy_other_services.yml
+    with:
+      blueprint_name: ${{ inputs.blueprint_name }}
+      service_names_json: '["api","scheduler","flower"]'
+    secrets: inherit
+  deploy_workers:
+    uses: ./.github/workflows/deploy_workers.yml
+    with:
+      blueprint_name: ${{ inputs.blueprint_name }}
+    secrets: inherit
+    needs:
+      - deploy_backend
+      - deploy_frontend
+

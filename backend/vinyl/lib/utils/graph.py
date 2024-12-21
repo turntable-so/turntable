@@ -225,6 +225,10 @@ class DAG:
         )
         return list(set(ancestors + descendants))
 
+    def find_cycles(self):
+        for cycle in rx.simple_cycles(self.g):
+            yield [self.node_dict.inv[i] for i in cycle]
+
     def remove_nodes_and_reconnect(
         self, nodes: list[Any], merge_edge_data: bool = True
     ):

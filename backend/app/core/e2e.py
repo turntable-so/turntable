@@ -38,7 +38,7 @@ from app.models import (
 from app.utils.database import pg_delete_and_upsert
 from vinyl.lib.errors import VinylError, VinylErrorType
 from vinyl.lib.schema import VinylSchema
-from vinyl.lib.sqlast import SQLAstNode
+from vinyl.lib.sqlast import DIALECTS_ALLOWING_IMPLICIT_CATALOG, SQLAstNode
 from vinyl.lib.utils.graph import nx_remove_node_and_reconnect
 
 _STR_JOIN_HELPER = "_____"
@@ -882,6 +882,18 @@ class DataHubDBParser:
         if len(split_name) == 1:
             return exp.Table(
                 this=exp.Identifier(this=split_name[0]),
+            )
+        # assume that if the split name has 2 parts, it's a table from a db without a catalog (can happen in clickhouse)
+        elif (
+            len(split_name) == 2 and self.dialect in DIALECTS_ALLOWING_IMPLICIT_CATALOG
+        ):
+            return exp.Table(
+                db=exp.Identifier(this=self.adjust_casing_lineage(split_name[0])),
+                this=exp.Identifier(this=self.adjust_casing_lineage(split_name[1])),
+            )
+        elif len(split_name) == 2:
+            return exp.Table(
+                this=exp.Identifier(this=".".join(split_name)),
             )
 
         catalog, schema, *table_list = split_name

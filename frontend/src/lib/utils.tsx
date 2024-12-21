@@ -1,8 +1,9 @@
 import {
+  ClickhouseLogo,
   DatabricksLogo,
   PowerBiLogo,
   RedshiftLogo,
-  TableauLogo,
+  TableauLogo
 } from "@/components/connections/connection-options";
 import { type ClassValue, clsx } from "clsx";
 import {
@@ -697,6 +698,8 @@ export function getResourceIcon(subtype: string) {
     return <RedshiftLogo height={18} width={18} />;
   } else if (subtype === "powerbi") {
     return <PowerBiLogo />;
+  } else if (subtype === "clickhouse") {
+    return <ClickhouseLogo height={16} width={16} />;
   } else {
     return <File className="size-5" />;
   }

@@ -452,8 +452,18 @@ class DBTProject(object):
             stderr
         )
         if len(stderr) > 0:
-            installation_pattern = r"^Installed \d+ packages? in \d+(?:\.\d+)?\s*\w+$"
-            if not re.match(installation_pattern, stderr.strip()):
+            # List of allowed stderr patterns
+            allowed_patterns = [
+                r"^Installed \d+ packages? in \d+(?:\.\d+)?\s*\w+$",  # Package installation message
+                r"^using legacy validation callback$",  # databricks egacy validation callback message
+            ]
+
+            # Check if stderr matches any allowed pattern
+            stderr_is_allowed = any(
+                re.match(pattern, stderr.strip()) for pattern in allowed_patterns
+            )
+
+            if not stderr_is_allowed:
                 success = False
         return success
 

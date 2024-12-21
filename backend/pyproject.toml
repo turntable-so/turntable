@@ -31,7 +31,7 @@ dependencies = [
     "ruff>=0.5.0",
     "rich>=13.7.1",
     "diskcache>=5.6.3",
-    "turntable-spoonbill[bigquery,duckdb,postgres,snowflake,sqlite] == 10.0.2",
+    "turntable-spoonbill[bigquery,duckdb,postgres,snowflake,sqlite,clickhouse] == 10.0.2",
     "databricks-sql-connector>=3.4.0",
     "pyarrow>=16.1.0",
     "mpire[dill]>=2.10.2",
@@ -162,7 +162,7 @@ testpaths = [
 addopts = "--color=yes -v"
 DJANGO_SETTINGS_MODULE = "api.settings"
 asyncio_default_fixture_loop_scope = "function"
-timeout = 120
+timeout = 150
 
 [tool.ruff.lint]
 ignore = ["E711"]

@@ -4,6 +4,7 @@ from rest_framework.exceptions import ValidationError
 
 from api.serializers import (
     BigQueryDetailsSerializer,
+    ClickHouseDetailsSerializer,
     DatabricksDetailsSerializer,
     DBTCoreDetailsSerializer,
     MetabaseDetailsSerializer,
@@ -18,6 +19,7 @@ from app.models import DBTCoreDetails, Resource, Workspace
 from app.models.repository import Repository
 from app.models.resources import (
     BigqueryDetails,
+    ClickhouseDetails,
     DatabricksDetails,
     DBTResource,
     MetabaseDetails,
@@ -154,6 +156,12 @@ class PowerBIResourceService(ResourceServiceHelper):
     subtype = ResourceSubtype.POWERBI
     serializer = PowerBIDetailsSerializer
     details_obj = PowerBIDetails
+
+
+class ClickHouseResourceService(ResourceServiceHelper):
+    subtype = ResourceSubtype.CLICKHOUSE
+    serializer = ClickHouseDetailsSerializer
+    details_obj = ClickhouseDetails
 
 
 class DBTResourceService(ResourceServiceHelper):

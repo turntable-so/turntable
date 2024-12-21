@@ -3,6 +3,7 @@ import os
 
 from app.models import (
     BigqueryDetails,
+    ClickhouseDetails,
     DatabricksDetails,
     DBTCoreDetails,
     LookerDetails,
@@ -129,6 +130,40 @@ def create_snowflake_n(workspace, n):
             account=account,
             warehouse=warehouse,
             role=role,
+        ).save()
+    return resource
+
+
+def create_clickhouse_n(workspace, n):
+    host = os.getenv(f"CLICKHOUSE_{n}_HOST")
+    port = os.getenv(f"CLICKHOUSE_{n}_PORT")
+    user = os.getenv(f"CLICKHOUSE_{n}_USER")
+    password = os.getenv(f"CLICKHOUSE_{n}_PASSWORD")
+    resource_name = os.getenv(f"CLICKHOUSE_{n}_RESOURCE_NAME")
+    secure = os.getenv(f"CLICKHOUSE_{n}_SECURE")
+    if secure is not None:
+        secure = secure == "true"
+
+    assert host, f"must provide CLICKHOUSE_{n}_HOST to use this test"
+    assert port, f"must provide CLICKHOUSE_{n}_PORT to use this test"
+    assert user, f"must provide CLICKHOUSE_{n}_USER to use this test"
+    assert password, f"must provide CLICKHOUSE_{n}_PASSWORD to use this test"
+
+    resource, _ = Resource.objects.get_or_create(
+        workspace=workspace, type=ResourceType.DB, name=resource_name
+    )
+
+    if not hasattr(resource, "details") or not isinstance(
+        resource.details, ClickhouseDetails
+    ):
+        ClickhouseDetails(
+            resource=resource,
+            workspace=workspace,
+            host=host,
+            port=port,
+            user=user,
+            password=password,
+            secure=secure,
         ).save()
     return resource
 
@@ -392,3 +427,12 @@ def group_6(user):
     repository = create_repository_n(workspace, 3, sshkey)
     create_dbt_n(bigquery, 5, force_db=True, repository=repository)
     return [bigquery, tableau]
+
+
+def group_7(user):
+    workspace = create_workspace_n(user, "clickhouse", 0)
+    clickhouse = create_clickhouse_n(workspace, 0)
+    sshkey = create_ssh_key_n(workspace, 0)
+    repository = create_repository_n(workspace, 0, sshkey)
+    create_dbt_n(clickhouse, 0, repository=repository)
+    return [clickhouse]
