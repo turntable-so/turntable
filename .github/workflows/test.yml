@@ -50,7 +50,7 @@ jobs:
         uses: hoverkraft-tech/compose-action@v2.0.1
         with:
           compose-file: docker-compose.ci.yml
-          up-flags: "--build -d"
+          up-flags: "-d --build"
           down-flags: -v
 
       - name: Install dependencies
