@@ -12,6 +12,7 @@ from app.models import (
     AssetLink,
     BigqueryDetails,
     Block,
+    ClickhouseDetails,
     Column,
     ColumnLink,
     DatabricksDetails,
@@ -389,6 +390,19 @@ class PowerBIDetailsSerializer(ResourceDetailsSerializer):
             "client_secret",
             "powerbi_tenant_id",
             "powerbi_workspace_id",
+        ]
+
+
+class ClickHouseDetailsSerializer(ResourceDetailsSerializer):
+
+    class Meta:
+        model = ClickhouseDetails
+        fields = [
+            "host",
+            "port",
+            "user",
+            "password",
+            "secure",
         ]
 
 

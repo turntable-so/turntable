@@ -1,11 +1,12 @@
-import Image from "next/image";
-import databricksLogo from "/public/databricks.png";
 import DbtCoreLogo from "../logos/dbt-core";
-export const ClickhouseLogo = () => (
+export const ClickhouseLogo = ({ height = 24, width = 24 }: {
+  height: number;
+  width: number;
+}) => (
   <svg
-    height="24"
+    height={height}
     viewBox="0 0 9 8"
-    width="24"
+    width={width}
     xmlns="http://www.w3.org/2000/svg"
   >
     <path d="m0 7h1v1h-1z" fill="#f00" />
@@ -667,7 +668,7 @@ export const WarehouseOptions = [
   },
   {
     name: "dbt_core_project",
-    type: "DBT_PROJECT",
+    url: "/connections/new/clickhouse",
     label: "Clickhouse",
     logo: <ClickhouseLogo />,
   },

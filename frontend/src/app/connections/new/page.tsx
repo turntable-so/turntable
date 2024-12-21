@@ -24,7 +24,7 @@ const ConnectionOptionCard = ({
 
   return (
     <Card
-      className={`rounded-lg hover:bg-muted/50 hover:cursor-pointer shadow-none border ${!option.url && "hover:cursor-not-allowed opacity-50"} ${option.url && "hover:border-black"}`}
+      className={`rounded-lg hover:bg-primary hover:cursor-pointer shadow-none border ${!option.url && "hover:cursor-not-allowed opacity-50"} ${option.url && "hover:bg-muted"}`}
       onClick={() => {
         if (option.url) {
           router.push(option.url);
