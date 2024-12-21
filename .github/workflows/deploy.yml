@@ -12,21 +12,18 @@ on:
 jobs:
   deploy_frontend:
     uses: ./.github/workflows/deploy_other_services.yml
-    if: contains(github.event.head_commit.modified, 'frontend/') || contains(github.event.head_commit.added, 'frontend/') || contains(github.event.head_commit.removed, 'frontend/')
     with:
       blueprint_name: ${{ inputs.blueprint_name }}
       service_names_json: '["web"]'
     secrets: inherit
   deploy_backend:
     uses: ./.github/workflows/deploy_other_services.yml
-    if: contains(github.event.head_commit.modified, 'backend/') || contains(github.event.head_commit.added, 'backend/') || contains(github.event.head_commit.removed, 'backend/')
     with:
       blueprint_name: ${{ inputs.blueprint_name }}
       service_names_json: '["api","scheduler","flower"]'
     secrets: inherit
   deploy_workers:
     uses: ./.github/workflows/deploy_workers.yml
-    if: contains(github.event.head_commit.modified, 'backend/') || contains(github.event.head_commit.added, 'backend/') || contains(github.event.head_commit.removed, 'backend/')
     with:
       blueprint_name: ${{ inputs.blueprint_name }}
     secrets: inherit
