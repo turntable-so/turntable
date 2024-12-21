@@ -74,7 +74,10 @@ def run_dbt_command(
         raise Exception("Cannot orchestrate dbt commands on development resources")
 
     with dbt_resource.dbt_repo_context(
-        project_id=project_id, isolate=True, repo_override=repo_override
+        project_id=project_id,
+        isolate=True,
+        repo_override=repo_override,
+        force_terminal=True,
     ) as (dbtproj, project_dir, _):
         success = None
         stdout = ""
@@ -156,6 +159,7 @@ def save_artifacts_task(
         project_id=project_id,
         isolate=True,
         repo_override=repo_override,
+        force_terminal=True,
     ) as (dbtproj, _, _):
         # Save a zip of the target directory
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -188,11 +192,9 @@ def run_dbt_commands(
     if not dbt_resource.jobs_allowed:
         raise Exception("Cannot orchestrate dbt commands on development resources")
 
-    with dbt_resource.dbt_repo_context(project_id=project_id, isolate=True) as (
-        dbtproj,
-        project_dir,
-        repo,
-    ):
+    with dbt_resource.dbt_repo_context(
+        project_id=project_id, isolate=True, force_terminal=True
+    ) as (dbtproj, project_dir, repo):
         if os.path.exists(dbtproj.target_path):
             shutil.rmtree(dbtproj.target_path)
         outs = []
@@ -236,11 +238,9 @@ def stream_dbt_command(
         workspace_id=workspace_id, resource_id=resource_id
     )
     if job_environment is None or not defer:
-        with dbt_resource.dbt_repo_context(project_id=project_id) as (
-            dbtproj,
-            project_dir,
-            _,
-        ):
+        with dbt_resource.dbt_repo_context(
+            project_id=project_id, force_terminal=True
+        ) as (dbtproj, project_dir, _):
             yield from dbtproj.stream_dbt_command(
                 command, should_terminate=should_terminate, write_json=True
             )

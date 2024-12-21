@@ -78,6 +78,7 @@ class DBTQuery(models.Model):
         DBTResource,
         on_delete=models.CASCADE,
     )
+    force_terminal = models.BooleanField(default=False)
 
     # relationships
     project = models.ForeignKey(Project, on_delete=models.CASCADE, null=True)
@@ -89,11 +90,10 @@ class DBTQuery(models.Model):
         limit: int | None = _QUERY_LIMIT,
     ):
         project_id = self.project.id if self.project else None
-        with self.dbtresource.dbt_repo_context(project_id) as (
-            dbtproj,
-            project_path,
-            _,
-        ):
+        with self.dbtresource.dbt_repo_context(
+            project_id,
+            force_terminal=self.force_terminal,
+        ) as (dbtproj, project_path, _):
             connector = self.dbtresource.resource.details.get_connector()
             sql = None
             if use_fast_compile:

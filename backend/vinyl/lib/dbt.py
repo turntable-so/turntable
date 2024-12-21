@@ -2,6 +2,7 @@
 import os
 import re
 import select
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -13,6 +14,7 @@ from typing import Any, Callable, Generator
 import orjson
 import yaml
 from dbt_extractor import ExtractionError, py_extract_from_source
+from mpire import WorkerPool
 
 from vinyl.lib.dbt_methods import (
     DBTArgs,
@@ -77,6 +79,8 @@ class DBTProject(object):
         compile_exclusions: list[str] | None = None,
         env_vars: dict[str, str] = {},
         deferral_target_path: str | None = None,
+        force_terminal: bool = False,
+        force_fork: bool = True,
     ):
         self.dbt_project_dir = adjust_path(dbt_project_dir)
         self.dialect = dialect
@@ -84,6 +88,8 @@ class DBTProject(object):
         self.compile_exclusions = compile_exclusions
         self.env_vars = env_vars
         self.deferral_target_path = deferral_target_path
+        self.force_terminal = force_terminal
+        self.force_fork = force_fork
 
         # set version bool
         self.version_list = [int(v[0]) for v in self.version.split(".")]
@@ -310,7 +316,8 @@ class DBTProject(object):
 
     @patch_json_with_orjson
     @patch_yaml_with_libyaml
-    def dbt_runner(self, command: list[str]) -> tuple[str, str, bool]:
+    def _dbt_runner_helper(self, command_str: str) -> tuple[str, str, bool]:
+        command = shlex.split(command_str)
         env, cwd = self._dbt_cli_env(full_os_env=False)
 
         try:
@@ -357,6 +364,14 @@ class DBTProject(object):
             ## restore original directory if everything fails.
             if not current_dir or current_dir != orig_cwd:
                 os.chdir(orig_cwd)
+
+    def dbt_runner(self, command: list[str]) -> tuple[str, str, bool]:
+        command_str = " ".join(command)
+        if self.force_fork:
+            with WorkerPool(n_jobs=1) as pool:
+                return pool.map(self._dbt_runner_helper, [command_str])[0]
+        else:
+            return self._dbt_runner_helper(command_str)
 
     def _dbt_cli_env(self, full_os_env: bool = True):
         env = self.env_vars.copy()
@@ -502,7 +517,6 @@ class DBTProject(object):
         cli_args: list[str] | None = None,
         write_json: bool = False,
         dbt_cache: bool = False,
-        force_terminal: bool = True,
         defer: bool = False,
         defer_selection: bool = True,
     ) -> tuple[str, str, bool]:
@@ -514,7 +528,7 @@ class DBTProject(object):
             defer,
             defer_selection,
         )
-        if self.can_use_dbt_api and not force_terminal:
+        if self.can_use_dbt_api and not self.force_terminal:
             return self.dbt_runner(full_command)
 
         else:
@@ -527,7 +541,6 @@ class DBTProject(object):
         cli_args: list[str] | None = None,
         write_json: bool = False,
         dbt_cache: bool = False,
-        force_terminal: bool = True,
         defer: bool = False,
         defer_selection: bool = True,
     ) -> Generator[str, None, tuple[str, str, bool]]:
@@ -540,8 +553,7 @@ class DBTProject(object):
             defer_selection=defer_selection,
             use_colors=True,
         )
-        if self.can_use_dbt_api and not force_terminal:
-            # self.install_dbt_if_necessary()
+        if self.can_use_dbt_api and not self.force_terminal:
             # TODO: make streaming work for python api
             yield from self.dbt_cli_stream(
                 full_command, should_terminate=should_terminate

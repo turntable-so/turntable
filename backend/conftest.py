@@ -301,7 +301,7 @@ def custom_celery_worker(
                 queues=[test_queue_name],
                 perform_ping_check=False,
                 pool="threads",
-                concurrency=4,
+                concurrency=1,
                 beat=True,
                 scheduler="django_celery_beat.schedulers:DatabaseScheduler",
             ) as worker:
