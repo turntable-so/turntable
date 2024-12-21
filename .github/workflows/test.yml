@@ -50,7 +50,7 @@ jobs:
         uses: hoverkraft-tech/compose-action@v2.0.1
         with:
           compose-file: docker-compose.ci.yml
-          up-flags: "--build"
+          up-flags: "--build -d"
           down-flags: -v
 
       - name: Install dependencies
@@ -58,6 +58,10 @@ jobs:
           rye config --set-bool behavior.use-uv=true
           rye sync --no-lock
         working-directory: backend
+
+      - name: Ensure services are up
+        run: |
+          while true; do health_status=$(docker inspect --format='{{.State.Health.Status}}' $(docker-compose ps -q metabase)); echo "Health status: $health_status"; [ "$health_status" == "healthy" ] && echo "metabase is healthy!" && break; [ "$health_status" == "unhealthy" ] && echo "metabase is unhealthy. Exiting." && exit 1; sleep 2; done
 
       - name: Run tests
         run: |
