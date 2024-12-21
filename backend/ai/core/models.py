@@ -16,7 +16,6 @@ class ChatMessage(BaseModel):
 
 
 class ChatRequestBody(BaseModel):
-    project_id: str
     model: str
     context_files: Optional[List[str]] = None
     custom_selections: Optional[List[CustomSelection]] = None

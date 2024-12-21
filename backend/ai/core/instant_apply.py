@@ -1,12 +1,12 @@
 import os
-from typing import Iterator
+from typing import Iterator, List, Optional
 
 from ai.core.custom_litellm import completion
 from ai.core.models import InstantApplyRequestBody
 
 
 def stream_instant_apply(
-    *, payload: InstantApplyRequestBody, user_id: str
+    *, payload: InstantApplyRequestBody, user_id: Optional[str] = None, tags: Optional[List[str]] = None
 ) -> Iterator[str]:
     response = completion(
         api_key=os.getenv("ANTHROPIC_API_KEY"),
@@ -24,7 +24,7 @@ def stream_instant_apply(
         ],
         stream=True,
         user_id=user_id,
-        tags=["instant_apply"],
+        tags=["instant_apply", *(tags or [])],
     )
 
     for chunk in response:
