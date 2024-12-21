@@ -140,6 +140,17 @@ class TestValidateDBTViews(TestValidateViews):
             success=success,
         )
 
+    # No need to run custom limit tests here
+    @pytest.mark.xdist_group(name="postgres")
+    def test_postgres(self, request, client, user, local_postgres, limit, success):
+        self._test(
+            client,
+            user,
+            local_postgres,
+            limit=limit,
+            success=success,
+        )
+
 
 FORMAT_QUERY = """with source as (select * from {{ source('ecom', 'raw_customers') }}), renamed as (select id as customer_id, name as customer_name from source) select * from renamed"""
 

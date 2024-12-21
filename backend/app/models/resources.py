@@ -732,6 +732,8 @@ class DBTCoreDetails(DBTResource):
         isolate: bool = False,
         project_id: str | None = None,
         repo_override: Repository | None = None,
+        force_terminal: bool = False,
+        force_fork: bool = True,
     ):
         env_vars = self.env_vars or {}
         if project_id is not None:
@@ -765,6 +767,8 @@ class DBTCoreDetails(DBTResource):
                         dbt_profiles_dir=dbt_profiles_dir,
                         env_vars={} if env_vars is None else env_vars,
                         compile_exclusions=self.compile_exclusions,
+                        force_terminal=force_terminal,
+                        force_fork=force_fork,
                     ),
                     project_path,
                     git_repo,
@@ -838,7 +842,10 @@ class DBTCoreDetails(DBTResource):
         export: bool = False,
     ):
         with self.dbt_repo_context(
-            isolate=True, project_id=project_id, repo_override=repo_override
+            isolate=True,
+            project_id=project_id,
+            repo_override=repo_override,
+            force_terminal=True,
         ) as (
             dbtproj,
             project_path,

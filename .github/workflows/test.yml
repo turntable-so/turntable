@@ -46,6 +46,11 @@ jobs:
           GIT_0_REPO_URL: op://Env/GitHub/git_0_repo_url
 
 
+      - name: Install dependencies
+        run: |
+          rye config --set-bool behavior.use-uv=true
+          nohup rye sync --no-lock > output.log 2>&1 &
+        working-directory: backend
       - name: Start test resources
         uses: hoverkraft-tech/compose-action@v2.0.1
         with:
@@ -53,11 +58,6 @@ jobs:
           up-flags: "--build"
           down-flags: -v
 
-      - name: Install dependencies
-        run: |
-          rye config --set-bool behavior.use-uv=true
-          rye sync --no-lock
-        working-directory: backend
 
       - name: Run tests
         run: |
